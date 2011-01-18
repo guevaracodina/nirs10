@@ -1,4 +1,4 @@
-%ici Simon
+%ici Phil
 % =========================================================================
 % FUNCTION
 % create_base.m
@@ -13,7 +13,7 @@
 % 
 % COMMENT
 % julien cohen-adad 04/04/2006
-%ici simon
+%ici Phil
 % =========================================================================
 function D = create_base(nb_samples,t,degre,nb_freq,Dphysio)
 
