@@ -187,15 +187,15 @@ for Idx_subj=1:N_subj
     NIRS.Cf.H.n = 'Sainte-Justine';
     
     %Information on fiducials
-    NIRS.Cf.H.F.r.o.mm.p = mat_Fid; %Does this need to be transposed?
+    NIRS.Cf.H.F.r.o.mm.p = mat_Fid'; 
     %sources
     %NIRS.Cf.H.S.n
     NIRS.Cf.H.S.N = oldNIRS.n_Src;
-    NIRS.Cf.H.S.r.o.mm.p = oldNIRS.SrcPos;
+    NIRS.Cf.H.S.r.o.mm.p = oldNIRS.SrcPos';
     %detectors
     %NIRS.Cf.H.D.n
     NIRS.Cf.H.D.N = oldNIRS.n_Det;
-    NIRS.Cf.H.D.r.o.mm.p = oldNIRS.DetPos;
+    NIRS.Cf.H.D.r.o.mm.p = oldNIRS.DetPos';
     %channels
     NIRS.Cf.H.C.n = [oldNIRS.ChnNames; oldNIRS.ChnNames];
     NIRS.Cf.H.C.N = 2*oldNIRS.n_Chn;

@@ -1,4 +1,4 @@
-function out = nirs_run_criugm_paces(job)
+function out = nirs_run_paces(job)
 prefix = 'r'; %heart "rate"
 %_______________________________________________________________________
 % Copyright (C) 2010 Laboratoire d'Imagerie Optique et Moleculaire
@@ -41,9 +41,8 @@ for Idx=1:size(job.NIRSmat,1)
         lst = length(NIRS.Dt.fir.pp);
         rDtp = NIRS.Dt.fir.pp(lst).p; % path for files to be processed
 
-        slab_width = floor(windo_width*fs)-1;   % width of a slab of signal
-        %win is ?
-        win = window(windo,floor(windo_width*fs));
+        slab_width = floor(windo_width*fs)-1;      %width of a slab of signal
+        win = window(windo,floor(windo_width*fs)); %win is ?
 
         %loop over data files
         for f=1:size(rDtp,1)
@@ -110,12 +109,16 @@ for Idx=1:size(job.NIRSmat,1)
                         %channel list that we keep:
                         k1 = [k1 Ci];
                         %clean up aberrant values
-                        for i4=2:length(v)-1
-                            if v(i4) < MinHeartRate
-                        end
-                        v(v) = MinHeartRate;
-                        v(v < MinHeartRate) = MinHeartRate;
-                    else
+                        %for i4=1:length(v)
+                            %if v(i4) <= MinHeartRate || v(i4) >= MaxHeartRate
+                                %quick fix, better would be to take average
+                                %value at ends of bad intervals
+                            %    v(i4) = median1;
+                            %end
+                            
+                        %end
+                        heart.pace(Ci,:) = v;
+                    else                        
                         heart.pace(Ci,:) = zeros(1,ns);
                     end
                 end %end if any

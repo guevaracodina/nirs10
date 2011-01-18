@@ -11,7 +11,9 @@ try
     [~,~,ext1] = fileparts(location);
     if strcmp(ext1,'.nirs')
         load(location,'-mat');
-        d = d';
+        if size(d,1)>size(d,2)
+            d = d';
+        end
     else
         %open a NIR data file and return the data 
         fid = fopen(location,'r');

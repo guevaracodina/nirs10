@@ -9,7 +9,7 @@ for Idx=1:size(job.NIRSmat,1)
                 
         %bl_m = job.Normalize_OD;% method to calculate baseline
         %threshold = job.threshold;%Threshold for cutting off small values of signal
-        PVF = job.PVF;% Partial volume correction factor
+        PVF = job.PVF';% Partial volume correction factor
         %Note that age should have been specified earlier, when reading
         %NIRS data for that subject
         age = NIRS.Dt.s.age;
@@ -63,102 +63,95 @@ for Idx=1:size(job.NIRSmat,1)
 
         for iwl =1:size(wl,2)
             [raw,col] = find(wl(iwl)==table);
-            DPF(iwl,1) = a(raw,col)+b(raw,col)*age^c(raw,col);
+            DPF(1,iwl) = a(raw,col)+b(raw,col)*age^c(raw,col);
         end
 
         EPF = zeros(1,NC); %EPF = L * PPF = L * DPF/PVF at each wavelength
         for Ci = 1:NC
-            EPF(1,Ci) = Cgp(Ci,1)*DPF(Cwl(1,Ci),1)./PVF(1,Cwl(1,Ci)); %PP??? why not ./???
+            EPF(1,Ci) = Cgp(1,Ci)*DPF(1,Cwl(1,Ci))./PVF(1,Cwl(1,Ci)); %PP??? why not ./???
         end
 
         inv_exs = pinv(exs(:,1:2));
         inv_exs2 = kron(inv_exs,eye(NC/size(wl,2)));
 
-        %try
-        %loop over data files
-        for f=1:size(rDtp,1)
-            [dir1 fil1 ext1] = fileparts(rDtp{f});
-            %if ~strcmp(fil1(1:3),prefix)       %???           
-            d = fopen_NIR(rDtp{f},NC);                 
-            %bring in markers - to write out to the next NIRS.Dt.fir.pp
-            %link and importantly for filtering over segments
-            try 
-                bpi = NIRS.Dt.fir.pp(lst).bpi{f,1}; %bad point indices
-                bpd = NIRS.Dt.fir.pp(lst).bpd{f,1}; %bad point durations
-                si = NIRS.Dt.fir.pp(lst).si{f,1};
-                ei = NIRS.Dt.fir.pp(lst).ei{f,1};
-                if ~isempty(bpi)
-                    markers_available = 1;
-                else
+        try
+            %loop over data files
+            for f=1:size(rDtp,1)
+                [dir1 fil1 ext1] = fileparts(rDtp{f});
+                %if ~strcmp(fil1(1:3),prefix)       %???           
+                d = fopen_NIR(rDtp{f},NC);                 
+                %bring in markers - to write out to the next NIRS.Dt.fir.pp
+                %link and importantly for filtering over segments
+                try 
+                    bpi = NIRS.Dt.fir.pp(lst).bpi{f,1}; %bad point indices
+                    bpd = NIRS.Dt.fir.pp(lst).bpd{f,1}; %bad point durations
+                    if ~isempty(bpi)
+                        markers_available = 1;
+                    else
+                        markers_available = 0;
+                    end
+                catch
+                    bpi = [];
+                    bpd = [];
                     markers_available = 0;
                 end
-            catch
-                bpi = [];
-                bpd = [];
-                markers_available = 0;
+                
+                %Define filter
+                if LPFon
+                    K = [];
+                    K.LParam.type = 'Gaussian';
+                    K.LParam.FWHM = fwhm;
+                    K.RT = 1/fs;
+                    K.row = [1:size(d,2)];
+                    K.HParam.type = 'none';
+                    K = spm_filter_HPF_LPF_WMDL(K); %get filter structure
+                end
+
+                if LPFon && (DS_When == 1)
+                    [NIRS d bpi bpd] = NIRS_SPM_filter(NIRS,K,d,DSon,...
+                        df,bpi,bpd,markers_available);                   
+                end
+
+                %Multiply by 1e6 to get micromolar units
+                %negative sign so that an increase in chromophore
+                %concentration corresponds to a decrease in intensity due
+                %to light absorption
+                d = -1e6 * real(log(d));
+                
+                if LPFon && (DS_When == 2)
+                    [NIRS d bpi bpd] = NIRS_SPM_filter(NIRS,K,d,DSon,...
+                        df,bpi,bpd,markers_available);                    
+                end
+                
+                %Effective path length
+                EPF2 = ones(size(d,2),1)*EPF; %PP used to be EPF2 = EPF *ones(1,size(d,2));
+                d = d ./ EPF2'; %PPused to be d = d ./ EPF2; 
+                %MBLL - c consists now of HbO and HbR, even if we had more
+                %than two wavelengths to begin
+                c = inv_exs2 * d;
+
+                if isnan(c(:)), disp(['Some elements are NaN for file ' int2str(f)]); end
+                
+                if LPFon && (DS_When == 3)
+                    [NIRS c bpi bpd] = NIRS_SPM_filter(NIRS,K,c,DSon,...
+                        df,bpi,bpd,markers_available);                   
+                end
+                
+                outfile = fullfile(dir1,[prefix fil1 ext1]);
+                fwrite_NIR(outfile,c);
+                %add outfile name to NIRS
+                if f == 1
+                    NIRS.Dt.fir.pp(lst+1).pre = 'ODtoHbOHbR';
+                    NIRS.Dt.fir.pp(lst+1).job = job;
+                end
+                NIRS.Dt.fir.pp(lst+1).p{f,1} = outfile;
+                NIRS.Dt.fir.pp(lst+1).bpi{f,1} = bpi; %bad point indices
+                NIRS.Dt.fir.pp(lst+1).bpd{f,1} = bpd; %bad point durations
             end
-
-            %Define filter
-            if LPFon
-                K = [];
-                K.LParam.type = 'Gaussian';
-                K.LParam.FWHM = fwhm;
-                K.RT = 1/fs;
-                K.row = [1:size(d,2)];
-                K.HParam.type = 'none';
-                K = spm_filter_HPF_LPF_WMDL(K); %get filter structure
-            end
-
-            if LPFon && (DS_When == 1)
-                [NIRS d bpi bpd] = NIRS_SPM_filter(NIRS,K,d,DSon,...
-                    df,bpi,bpd,markers_available);                   
-            end
-
-            %Multiply by 1e6 to get micromolar units
-            %negative sign so that an increase in chromophore
-            %concentration corresponds to a decrease in intensity due
-            %to light absorption
-            d = -1e6 * real(log(d));
-
-            if LPFon && (DS_When == 2)
-                [NIRS d bpi bpd] = NIRS_SPM_filter(NIRS,K,d,DSon,...
-                    df,bpi,bpd,markers_available);                    
-            end
-
-            %Effective path length
-            EPF2 = ones(size(d,2),1)*EPF; %PP used to be EPF2 = EPF *ones(1,size(d,2));
-            d = d ./ EPF2'; %PPused to be d = d ./ EPF2; 
-            %MBLL - c consists now of HbO and HbR, even if we had more
-            %than two wavelengths to begin
-            c = inv_exs2 * d;
-
-            if isnan(c(:)), disp(['Some elements are NaN for file ' int2str(f)]); end
-
-            if LPFon && (DS_When == 3)
-                [NIRS c bpi bpd] = NIRS_SPM_filter(NIRS,K,c,DSon,...
-                    df,bpi,bpd,markers_available);                   
-            end
-
-            outfile = fullfile(dir1,[prefix fil1 ext1]);
-            fwrite_NIR(outfile,c);
-            %add outfile name to NIRS
-            if f == 1
-                NIRS.Dt.fir.pp(lst+1).pre = 'ODtoHbOHbR';
-                NIRS.Dt.fir.pp(lst+1).job = job;
-            end
-            NIRS.Dt.fir.pp(lst+1).p{f,1} = outfile;
-            try
-            NIRS.Dt.fir.pp(lst+1).bpi{f,1} = bpi; %bad point indices
-            NIRS.Dt.fir.pp(lst+1).bpd{f,1} = bpd; %bad point durations
-            NIRS.Dt.fir.pp(lst+1).si{f,1} = si;
-            NIRS.Dt.fir.pp(lst+1).ei{f,1} = ei;
-            catch
-            end
+        catch
+            disp('Could not convert optical densities to HbO/HbR');
         end
-%         catch
-%             disp('Could not convert optical densities to HbO/HbR');
-%         end
-%         
+        
         save(job.NIRSmat{Idx,1},'NIRS');
     catch
         disp(['Conversion of optical intensities to hemoglobin ',...

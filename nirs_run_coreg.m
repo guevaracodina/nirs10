@@ -87,17 +87,15 @@ for Idx=1:size(job.NIRSmat,1)
         %Below: label with temp_ all the transposed coordinates to avoid confusion
         Q = (NIRS.Dt.ana.wT1.VG.mat/NIRS.Dt.ana.wT1.Affine)/NIRS.Dt.ana.wT1.VF.mat;
 
-        NIRS.Cf.H.F.w.m.mm.p  = [ job.nasion_wMNI;
-            job.AL_wMNI;
-            job.AR_wMNI ];
+        NIRS.Cf.H.F.w.m.mm.p  = [job.nasion_wMNI' job.AL_wMNI' job.AR_wMNI'];
         Fp_wmm = NIRS.Cf.H.F.w.m.mm.p;
         %call temp_... all the transposed positions
-        temp_Fp_wmm = [Fp_wmm'; [1 1 1]]; 
+        temp_Fp_wmm = [Fp_wmm; [1 1 1]]; 
         temp_Fp_rmm = Q\temp_Fp_wmm;
-        NIRS.Cf.H.F.r.m.mm.p = transpose(temp_Fp_rmm(1:3,:));
+        NIRS.Cf.H.F.r.m.mm.p = temp_Fp_rmm(1:3,:);
 
-        y = NIRS.Cf.H.F.r.m.mm.p'; %bizarre - why is y transposed but not x???
-        x = NIRS.Cf.H.F.r.o.mm.p'; %PP I transposed x too
+        y = NIRS.Cf.H.F.r.m.mm.p; 
+        x = NIRS.Cf.H.F.r.o.mm.p;
 
         [s R t] = abs_orientation(x,y); % y = s*R(x) + t
         estY = zeros(size(y));
@@ -110,9 +108,9 @@ for Idx=1:size(job.NIRSmat,1)
         disp(['Error Value for subject ' int2str(Idx) ': ' num2str(errVal)]);
         NIRS.Dt.pro.errValofCoreg_mm2 = errVal;
 
-        try Sp_rom = NIRS.Cf.H.S.r.o.mm.p'; end %PP transposed
-        try Dp_rom = NIRS.Cf.H.D.r.o.mm.p'; end %PP transposed
-        try Qp_rom = NIRS.Cf.H.Q.r.o.mm.p'; end%PP transposed
+        try Sp_rom = NIRS.Cf.H.S.r.o.mm.p; end 
+        try Dp_rom = NIRS.Cf.H.D.r.o.mm.p; end 
+        try Qp_rom = NIRS.Cf.H.Q.r.o.mm.p; end
         try 
             Pp_rom = [Sp_rom Dp_rom Qp_rom];
         catch 
@@ -134,7 +132,7 @@ for Idx=1:size(job.NIRSmat,1)
         end;
 
         %Save MNI coordinates of optodes
-        NIRS.Cf.H.P.r.m.mm.p = Pp_rmm'; %PP transposed
+        NIRS.Cf.H.P.r.m.mm.p = Pp_rmm; 
 
         %unnormalized -> normalized, for optodes
         Pp_wmm = Q * [Pp_rmm;ones(1,NP)];          %% unit : mm
@@ -151,8 +149,8 @@ for Idx=1:size(job.NIRSmat,1)
         Pp_c1_rmm = Pp_c1_rmm(1:3,:);
 
         %Save MNI coordinates of optodes on cortex (c1)
-        NIRS.Cf.H.P.r.m.mm.c1.p = Pp_c1_rmm'; %PP transposed
-        NIRS.Cf.H.P.void = Pvoid'; %PP transposed
+        NIRS.Cf.H.P.r.m.mm.c1.p = Pp_c1_rmm; 
+        NIRS.Cf.H.P.void = Pvoid; 
         save(job.NIRSmat{Idx},'NIRS');
     catch
         disp(['Coregistration failed for subject' int2str(Idx)]);
