@@ -274,7 +274,6 @@ text_brainsight.name    = 'Text file from Brainsight';
 text_brainsight.filter  = '.txt';
 text_brainsight.ufilter = '.*';
 text_brainsight.num     = [0 1];
-text_brainsight.val{1}  = {''};
 text_brainsight.help    = {'Select the text file from Brainsight.'};
 
 helmet         = cfg_branch;
@@ -284,11 +283,11 @@ helmet.val     = {text_brainsight};
 helmet.help    = {'Helmet'};
 
 nirs_file         = cfg_files; 
-nirs_file.name    = '''^.nirs'' files'; % The displayed name
+nirs_file.name    = '''^.nirs'' file'; % The displayed name
 nirs_file.tag     = 'nirs_file';       %file names
 nirs_file.filter  = 'nirs';   
 nirs_file.num     = [1 Inf];     % Number of inputs required 
-nirs_file.help    = {'Select all the ''^.nirs'' files you want to process'}; % help text displayed
+nirs_file.help    = {'Select???.'}; % help text displayed
 
 CWsystem      = cfg_menu;
 CWsystem.tag  = 'CWsystem';
@@ -330,7 +329,7 @@ subj_path.num     = [1 1];
 subj         = cfg_branch;
 subj.tag     = 'subj';
 subj.name    = 'Subject';
-subj.val     = {age1 subj_path helmet gen_acquisition baseline_method};
+subj.val     = {age1 helmet gen_acquisition baseline_method subj_path};
 subj.help    = {'Subject'};
 
 generic         = cfg_repeat;
@@ -345,7 +344,7 @@ generic.num     = [1 Inf];
 criugm1      = cfg_exbranch;
 criugm1.name = 'Read and format CRIUGM data';
 criugm1.tag  = 'criugm1';
-criugm1.val  = {generic};
+criugm1.val  = {LESCA generic};
 criugm1.prog = @nirs_run_criugm;
 criugm1.vout = @nirs_cfg_vout_criugm;
 criugm1.help = {'Help'};
@@ -1219,7 +1218,7 @@ win_type.tag  = 'win_type';
 win_type.name = 'Type of window for probes';
 win_type.labels = {'Hanning','Hamming','Rect'};
 win_type.values = {0,1,2};
-win_type.def  = @(val)nirs_get_defaults('preprocessNIRS.paces1.win_type', val{:});
+win_type.def  = @(val)nirs_get_defaults('preprocessNIRS.criugm_paces1.win_type', val{:});
 win_type.help = {'Help'};
 
 win_width         = cfg_entry;
@@ -1227,7 +1226,7 @@ win_width.name    = 'Window width';
 win_width.tag     = 'win_width';       
 win_width.strtype = 'r';
 win_width.num     = [1 1];
-win_width.def  = @(val)nirs_get_defaults('preprocessNIRS.paces1.win_width', val{:});
+win_width.def  = @(val)nirs_get_defaults('preprocessNIRS.criugm_paces1.win_width', val{:});
 win_width.help    = {'Window width in SECONDS'};
 
 Nprobe         = cfg_entry;
@@ -1235,7 +1234,7 @@ Nprobe.name    = 'Number of probes';
 Nprobe.tag     = 'Nprobe';       
 Nprobe.strtype = 'r';
 Nprobe.num     = [1 1];
-Nprobe.def  = @(val)nirs_get_defaults('preprocessNIRS.paces1.Nprobe', val{:});
+Nprobe.def  = @(val)nirs_get_defaults('preprocessNIRS.criugm_paces1.Nprobe', val{:});
 Nprobe.help    = {'Number of probes taken along the signal (power of 2)'};
 
 fft_size         = cfg_entry;
@@ -1243,7 +1242,7 @@ fft_size.name    = 'FFT size';
 fft_size.tag     = 'fft_size';       
 fft_size.strtype = 'r';
 fft_size.num     = [1 1];
-fft_size.def  = @(val)nirs_get_defaults('preprocessNIRS.paces1.fft_size', val{:});
+fft_size.def  = @(val)nirs_get_defaults('preprocessNIRS.criugm_paces1.fft_size', val{:});
 fft_size.help    = {'FFT size for each probe'};
 
 STFT_param         = cfg_branch;
@@ -1258,7 +1257,7 @@ remove_no_heartbeat.tag  = 'remove_no_heartbeat';
 remove_no_heartbeat.name = 'Remove Channels without clear heart beat';
 remove_no_heartbeat.labels = {'True','False'};
 remove_no_heartbeat.values = {1,0};
-remove_no_heartbeat.def  = @(val)nirs_get_defaults('preprocessNIRS.paces1.remove_no_heartbeat', val{:});
+remove_no_heartbeat.def  = @(val)nirs_get_defaults('preprocessNIRS.criugm_paces1.remove_no_heartbeat', val{:});
 remove_no_heartbeat.help = {['Remove channels without clear heart beat; ',...
         'Detection carried out only on wavelength most sensitive to heart beat. ',...
         'If no heart beat found at that wavelength, the other wavelengths are removed too.'] };
@@ -1269,7 +1268,7 @@ detect_wavelength.name    = 'Detection wavelength number';
 detect_wavelength.tag     = 'detect_wavelength';       
 detect_wavelength.strtype = 'r';
 detect_wavelength.num     = [1 Inf];     
-detect_wavelength.def     = @(val)nirs_get_defaults('preprocessNIRS.paces1.detect_wavelength', val{:}); 
+detect_wavelength.def     = @(val)nirs_get_defaults('preprocessNIRS.criugm_paces1.detect_wavelength', val{:}); 
 detect_wavelength.help    = {['Enter wavelength number(s) for detection of ',...
     'the heart rate. If no heart rate is detected, and the remove channels ',...
     'option is selected, channels for all wavelengths at this location will be removed. ',...
@@ -1281,7 +1280,7 @@ MinHeartRate.name    = 'Minimum Heart Rate for Detection';
 MinHeartRate.tag     = 'MinHeartRate';       
 MinHeartRate.strtype = 'r';
 MinHeartRate.num     = [1 1];     
-MinHeartRate.def     = @(val)nirs_get_defaults('preprocessNIRS.paces1.MinHeartRate', val{:}); 
+MinHeartRate.def     = @(val)nirs_get_defaults('preprocessNIRS.criugm_paces1.MinHeartRate', val{:}); 
 MinHeartRate.help    = {['Enter minimum heart rate allowed for final detection in Hz.']};
 
 MaxHeartRate         = cfg_entry; 
@@ -1289,7 +1288,7 @@ MaxHeartRate.name    = 'Maximum Heart Rate for Detection';
 MaxHeartRate.tag     = 'MaxHeartRate';       
 MaxHeartRate.strtype = 'r';
 MaxHeartRate.num     = [1 1];     
-MaxHeartRate.def     = @(val)nirs_get_defaults('preprocessNIRS.paces1.MaxHeartRate', val{:}); 
+MaxHeartRate.def     = @(val)nirs_get_defaults('preprocessNIRS.criugm_paces1.MaxHeartRate', val{:}); 
 MaxHeartRate.help    = {['Enter maximum heart rate allowed for final detection in Hz.']};
 
 InternalMinHeartRate         = cfg_entry; 
@@ -1297,7 +1296,7 @@ InternalMinHeartRate.name    = 'Internal Minimum Heart Rate for Detection';
 InternalMinHeartRate.tag     = 'InternalMinHeartRate';       
 InternalMinHeartRate.strtype = 'r';
 InternalMinHeartRate.num     = [1 1];     
-InternalMinHeartRate.def     = @(val)nirs_get_defaults('preprocessNIRS.paces1.InternalMinHeartRate', val{:}); 
+InternalMinHeartRate.def     = @(val)nirs_get_defaults('preprocessNIRS.criugm_paces1.InternalMinHeartRate', val{:}); 
 InternalMinHeartRate.help    = {['Enter minimum heart rate allowed for detection in Hz, ',...
                         '"internal", i.e. for check over small data windows for FFT.']};
 
@@ -1306,7 +1305,7 @@ InternalMaxHeartRate.name    = 'Internal Maximum Heart Rate for Detection';
 InternalMaxHeartRate.tag     = 'InternalMaxHeartRate';       
 InternalMaxHeartRate.strtype = 'r';
 InternalMaxHeartRate.num     = [1 1];     
-InternalMaxHeartRate.def     = @(val)nirs_get_defaults('preprocessNIRS.paces1.InternalMaxHeartRate', val{:}); 
+InternalMaxHeartRate.def     = @(val)nirs_get_defaults('preprocessNIRS.criugm_paces1.InternalMaxHeartRate', val{:}); 
 InternalMaxHeartRate.help    = {['Enter maximum heart rate allowed for detection in Hz, ',...
                         '"internal", i.e. for check over small data windows for FFT.']};
 
@@ -1315,22 +1314,22 @@ MaxHeartStdev.name    = 'Maximum Heart Rate Standard Deviation';
 MaxHeartStdev.tag     = 'MaxHeartStdev';       
 MaxHeartStdev.strtype = 'r';
 MaxHeartStdev.num     = [1 1];     
-MaxHeartStdev.def     = @(val)nirs_get_defaults('preprocessNIRS.paces1.MaxHeartStdev', val{:}); 
+MaxHeartStdev.def     = @(val)nirs_get_defaults('preprocessNIRS.criugm_paces1.MaxHeartStdev', val{:}); 
 MaxHeartStdev.help    = {['Enter maximum heart rate standard deviation allowed in Hz, channelwise.']};
                     
 % Executable Branch
-paces1      = cfg_exbranch;       
-paces1.name = 'Heart rate utility';             
-paces1.tag  = 'paces1'; 
-paces1.val  = {NIRSmat STFT_param remove_no_heartbeat detect_wavelength MinHeartRate MaxHeartRate ...
+criugm_paces1      = cfg_exbranch;       
+criugm_paces1.name = 'Heart rate utility';             
+criugm_paces1.tag  = 'criugm_paces1'; 
+criugm_paces1.val  = {NIRSmat STFT_param remove_no_heartbeat detect_wavelength MinHeartRate MaxHeartRate ...
     InternalMinHeartRate InternalMaxHeartRate MaxHeartStdev};   
-paces1.prog = @nirs_run_paces;  
-paces1.vout = @nirs_cfg_vout_paces;
-paces1.help = {['Preprocessing step: Extract heart rate and, if desired, ',...
+criugm_paces1.prog = @nirs_run_criugm_paces;  
+criugm_paces1.vout = @nirs_cfg_vout_criugm_paces;
+criugm_paces1.help = {['Preprocessing step: Extract heart rate and, if desired, ',...
     'remove channels without a clear detectable heart rate.']};
 
 %make NIRS.mat available as a dependency
-function vout = nirs_cfg_vout_paces(job)
+function vout = nirs_cfg_vout_criugm_paces(job)
 vout = cfg_dep;                     
 vout.sname      = 'NIRS.mat';       
 vout.src_output = substruct('.','NIRSmat'); 
@@ -2931,7 +2930,7 @@ heart_pace.help = {'If Yes some processings will be changed.'};
 runVOIRE1      = cfg_exbranch;
 runVOIRE1.name = 'Run VOIRE analysis';
 runVOIRE1.tag  = 'runVOIRE1';
-runVOIRE1.val  = {NIRSmat heart_pace paces1};
+runVOIRE1.val  = {NIRSmat heart_pace};
 runVOIRE1.prog = @nirs_run_runVOIRE;
 runVOIRE1.vout = @nirs_cfg_vout_runVOIRE;
 runVOIRE1.help = {'.'};
@@ -2982,7 +2981,7 @@ coregNIRS.help   = {'These modules perform coregistration ',...
 preprocessNIRS        = cfg_choice; 
 preprocessNIRS.name   = 'Preprocess NIRS data';
 preprocessNIRS.tag    = 'preprocessNIRS';
-preprocessNIRS.values = {remove_chn_stdev paces1 mark_negative ...
+preprocessNIRS.values = {remove_chn_stdev criugm_paces1 mark_negative ...
          mark_movement normalize_baseline ODtoHbOHbR HPF_LPF generate_vhdr_vmrk}; 
 preprocessNIRS.help   = {'These modules preprocess NIRS data: '
     'heart rate check, '

@@ -10,27 +10,16 @@ function out = nirs_run_runVOIRE(job)
 % l'autre partie du sang !!
 % Cox : oxygénation du sang : grossièrement HbO/HbT (on tient pas compte du plasma...)
 % Débit cardiaque = freq card * volume éjecté
-
-% changes in the concentration of total Hb as a measure for changes in cerebral blood volume (CBV)
-% and hemoglobin difference (HbD; oxy- minus deoxy-Hb) : CBF (Tsuji, M., Duplessis, A., Taylor, G., Crocker, R., Volpe, J.J., 1998. Near infrared spectroscopy detects cerebral ischemia during hypotension in piglets. Pediatr. Res. 44, 591–595.)
-
 prefix = 'h';
 
 if job.heart_pace==1
-%     jobHP.NIRSmat = job.NIRSmat;
-%     jobHP.STFT_param.win_type = 0;
-%     jobHP.STFT_param.win_width =6;
-%     jobHP.STFT_param.Nprobe = 200;
-%     jobHP.STFT_param.fft_size = 1024;
-%     remove_no_heartbeat 
-%     detect_wavelength 
-%     MinHeartRate 
-%     MaxHeartRate
-%     InternalMinHeartRate 
-%     InternalMaxHeartRate 
-%     MaxHeartStdev
+    jobHP.NIRSmat = job.NIRSmat;
+    jobHP.STFT_param.win_type = 0;
+    jobHP.STFT_param.win_width =6;
+    jobHP.STFT_param.Nprobe = 200;
+    jobHP.STFT_param.fft_size = 1024;
     
-    outHP = nirs_run_paces(job.paces1);
+    outHP = nirs_run_criugm_paces(jobHP);
     hp = outHP.heartpace;
 end
 
@@ -55,25 +44,24 @@ try
     %loop over data files
     for f=1:size(rDtp,1)
         c = fopen_NIR(rDtp{f});
-        [~,fil1,~] = fileparts(rDtp{f});
+%         [dir1 fil1 ext1] = fileparts(rDtp{f});
+%         if strcmp(ext1,'.nirs')
+%             try load(fullfile(dir1,[prefix,fil1,ext1]),'-mat'); 
+%                 c=c';
+%             catch
+%                 disp('chargement échoué');
+%             end
+%         end
         
         Cid = NIRS.Cf.H.C.id;
-        COx = zeros(size(c,1)/2,size(c,2)); % Saturation O2
-        CBF = zeros(size(c,1)/2,size(c,2)); % CBF
-        HbT = zeros(size(c,1)/2,size(c,2)); % HbT/CBV
-        
+        COx = zeros(size(c,1),size(c,2)/2);
         for iC = 1:size(Cid,2)/2
-            CBF(iC,:) = (c(iC,:)-c(iC+size(c,1)/2,:)); % HbO - HbR : CBF
-            HbT(iC,:) = (c(iC,:)+c(iC+size(c,1)/2,:)); % Hb total : CBV
-            COx(iC,:) = c(iC,:)./HbT(iC,:);
+             COx(:,iC) = c(iC)/(c(iC)+c(iC+size(c,2)/2));
         end
         save(fullfile(NIRS.Dt.s.p,['Cox' fil1 '.mat']),'COx');
-        save(fullfile(NIRS.Dt.s.p,['CBF' fil1 '.mat']),'CBF');
-        save(fullfile(NIRS.Dt.s.p,['HbT' fil1 '.mat']),'HbT');
-        % on ajoute aussi à la matrice NIRS
     end
     
 catch
-    disp('Could not evaluate COx or HbT or CBF');
+    disp('Could not evaluate COx');
 end
 out.NIRSmat = job.NIRSmat;
