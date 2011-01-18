@@ -60,7 +60,8 @@ end
 %contribute to TrRV exactly, and since the indices where they occur will
 %be the same as for trRVRV, approximate trRVRV by those values.
 
-%computation of var1 and var2 is fairly quick
+%computation of var1 and var2 is fairly quick - actually, no: var1 takes
+%about 3.5 minutes. Why is it slower this time than in the earlier test?
 var1 = S * S';
 var2 = var1 - SPM.xX.xKXs.X * (SPM.xX.pKX * var1); % RV * e(kk)
 %var3 = var1*var2 is the long calculation - instead...

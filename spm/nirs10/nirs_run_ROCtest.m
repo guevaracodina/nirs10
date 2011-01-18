@@ -1,9 +1,9 @@
 function out = nirs_run_ROCtest(job)
 %specify some of the directory structure
 dir_dataSPM = 'dataSPM';
-dir_stat = 'StatV';
+%dir_stat = 'StatV';
 IN = job.ROCiternum;
-run_GLM = 1;
+run_GLM = 0;
 run_ROC = 1;
 nSubj = size(job.NIRSmat,1);
 nJob = size(job.ROCLoopJob,1);
@@ -75,6 +75,8 @@ for Idx=1:nSubj
                 testName = LoopJob.matlabbatch{1}.spm.tools.nirs10.readOnsets. ...
                         addTestStimuli.testStimulusName;
                 testFullName = [testName int2str(1)];
+                dir_stat = LoopJob.matlabbatch{2}.spm.tools.nirs10.model_specify. ...
+                    wls_bglm_specify.dir1;
                 dir_spm = [dir1 filesep testFullName filesep dir_stat];
                 SPM = [];
                 load(fullfile(dir_spm,'SPM.mat'));
@@ -100,6 +102,9 @@ for Idx=1:nSubj
                     for i=1:IN
                         t(i,:) = squeeze(beta(i,r,:)) ./sqrt(squeeze(Bvar(i,r,:)));
                     end
+                    %very approximate value for erdf - assume enough
+                    %degrees of freedom to approximate t-stat by Z-score
+                    erdf   = 1000*ones(IN,1);
                 catch
                     %ROC
                     sz_beta = size(SPM.beta);
@@ -134,7 +139,7 @@ for Idx=1:nSubj
             % %         end
 
                     %get t stat for each iteration
-                    r = 1; t = zeros(IN,sz_beta(2));
+                    r = 2; t = zeros(IN,sz_beta(2));
                     for i=1:IN
                         t(i,:) = squeeze(beta(i,r,:)) ./sqrt(squeeze(ResSS(i,:)'*Bcov(i,r,r)/trRV(i)));
                     end
@@ -151,8 +156,8 @@ for Idx=1:nSubj
                 alpha_bonf_TPn = alpha_unc/TPn;
 
                 %[TPb{Jidx,Idx} TPu{Jidx,Idx}] = count_TP_FP(IN,[1:2],t,alpha_bonf_TPn,alpha_unc,erdf,true,true); 
-                [TPb{Jidx,Idx} TPu{Jidx,Idx}] = count_TP_FP(IN,[61:70 109 118],...
-                    t,alpha_bonf_TPn,alpha_unc,erdf,true,true,false); 
+                [TPb{Jidx,Idx} TPu{Jidx,Idx}] = count_TP_FP(IN,[4:5],...
+                    t,alpha_bonf_TPn,alpha_unc,erdf,true,true,true); 
 
                 %Specificity = 1 - false positives
                 %Will be on all other channels than 7 and 8
@@ -160,8 +165,8 @@ for Idx=1:nSubj
                 %and true negatives
                 alpha_bonf_FPn = alpha_unc/FPn;
 
-                [FPb{Jidx,Idx} FPu{Jidx,Idx}] = count_TP_FP(IN,[1:60 71:108 110:117 119:120],...
-                    t,alpha_bonf_FPn,alpha_unc,erdf,false,true,false); 
+                [FPb{Jidx,Idx} FPu{Jidx,Idx}] = count_TP_FP(IN,[1:3 6],...
+                    t,alpha_bonf_FPn,alpha_unc,erdf,false,true,true); 
                 
                 %tFPb = FPb; tFPu = FPu; tTPb = TPb; tTPu = TPu; 
                 %FPb = FPb{Jidx,:}; tFPu = FPu{Jidx,:}; tTPb = TPb{Jidx,:}; tTPu = TPu{Jidx,:};                  
@@ -227,8 +232,9 @@ function [nB nu]  = count_TP_FP(IN,ch,t,alpha_bonf,alpha_unc,erdf,TPorFP,positiv
 %alpha_bonf: Bonferroni corrected p-value
 %alpha-unc: uncorrected p-value
 %erdf: degrees of freedom, a vector of size IN
-%per_ch: Boolean, whether to consolidate results or output per channel
 %TPorFP: Boolean, whether to compute true positives or false positives
+%positive_ttest: Boolean, whether to perform a positive ttest or a negative ttest 
+%by_Iter: Boolean, whether to test and to output for each protocole (iteration) 
 %
 %Outputs:
 %nB: for each channel, percentage of TP or FP, Bonferroni corrected
