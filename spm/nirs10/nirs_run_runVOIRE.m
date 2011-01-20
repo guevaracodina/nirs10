@@ -5,7 +5,8 @@ function out = nirs_run_runVOIRE(job)
 % 2010-12
 
 % le rythme cardiaque me donne
-%Friston_nonlinear_2000 : rCBF lineaire avec sunaptic activity
+%Friston_nonlinear_2000 : 
+% rCBF lineaire avec synaptic activity
 % CBV grossièrement égal à HbT : différence est dans la plasme qui est
 % l'autre partie du sang !!
 % Cox : oxygénation du sang : grossièrement HbO/HbT (on tient pas compte du plasma...)
