@@ -5,68 +5,50 @@ prefix = 'r'; %heart "rate"
 % Clément Bonnéry
 % 2010-10
 
-%Parameters for the FFT
-% Short Term Fourier Transform :
-% windo = job.STFT_param.win_type;                   % Window Hanning
-windo = @hann; %Hamming not coded up?
-windo_width = job.STFT_param.win_width;            % width : 6 seconds
-n = job.STFT_param.Nprobe;                         % number of probes
-fft_size = job.STFT_param.fft_size;                % size of fft
+%Parameters for the Short Term Fourier Transform :
+windo = @hann;                          % windo = job.STFT_param.win_type; %Hamming not coded up?% Window Hanning
+windo_width = job.STFT_param.win_width; % width : 6 seconds
+n = job.STFT_param.Nprobe;              % number of probes
+fft_size = job.STFT_param.fft_size;     % size of fft
 
-%Boolean to remove channels with no heartbeat from data files
-remove_no_heartbeat = job.remove_no_heartbeat;
-%Wavelength number(s) for detection of heart beat
-detect_wavelength = job.detect_wavelength;
-MinHeartRate = job.MinHeartRate;
-MaxHeartRate = job.MaxHeartRate;
-InternalMinHeartRate = job.InternalMinHeartRate;
-InternalMaxHeartRate = job.InternalMaxHeartRate;
-MaxHeartStdev = job.MaxHeartStdev;
+remove_no_heartbeat = job.remove_no_heartbeat; %Boolean to remove channels with no heartbeat from data files
+detect_wavelength = job.detect_wavelength; %Wavelength number(s) for detection of heart beat
+
+% parameters for Philippe's method to select channels
+MinHeartRate = job.choice_method.MinHeartRate;
+MaxHeartRate = job.choice_method.MaxHeartRate;
+InternalMinHeartRate = job.choice_method.InternalMinHeartRate;
+InternalMaxHeartRate = job.choice_method.InternalMaxHeartRate;
+MaxHeartStdev = job.choice_method.MaxHeartStdev;
 %to store output information for all subjects on heartrate
 heartpace_all = {};
 
 %list of NIRS.mat locations, one per subject
 for Idx=1:size(job.NIRSmat,1)
     try
-        NIRS = [];
-        %Load NIRS.mat information
-        load(job.NIRSmat{Idx,1});
+        NIRS = []; %?????
+        load(job.NIRSmat{Idx,1});         %Load NIRS.mat information
         heartpace = {};
-        %NIRS sampling frequency
-        fs = NIRS.Cf.dev.fs;
-        %NIRS total number of channels
-        NC = NIRS.Cf.H.C.N;
         
-        %use last step of preprocessing
-        lst = length(NIRS.Dt.fir.pp);
+        fs = NIRS.Cf.dev.fs;        %NIRS sampling frequency
+        NC = NIRS.Cf.H.C.N;        %NIRS total number of channels
+        
+        lst = length(NIRS.Dt.fir.pp);        %use last step of preprocessing
         rDtp = NIRS.Dt.fir.pp(lst).p; % path for files to be processed
         
         slab_width = floor(windo_width*fs)-1;      %width of a slab of signal
         win = window(windo,floor(windo_width*fs)); %win is ?
         
-        %loop over data files
-        for f=1:size(rDtp,1)
-            %load data
-            d = fopen_NIR(rDtp{f},NC);
+        for f=1:size(rDtp,1)        %loop over data files
+            d = fopen_NIR(rDtp{f},NC);            %load data
             ns = size(d,2);
+            const1 = 1/(n-1)*(ns-windo_width*fs);             %const1 is the window size in data points appproximately ns/n.
+            
             % Heart Rate
-            % Frequency of Mayer Waves not calculated: to be done
-            
-            
-            %CAREFUL, pace and energie have been transposed
-            heart.pace = zeros(NC,ns);
+            heart.pace = zeros(NC,ns);            %CAREFUL, pace and energie have been transposed
             heart.energie = zeros(NC,ns);
-            %const1 is the window size in data points? appproximately ns/n.
-            const1 = 1/(n-1)*(ns-windo_width*fs);
             
-            % mayer_pace = zeros(floor(slab_width/2)+length(d),NC);
-            % mayer_energie = zeros(floor(slab_width/2)+length(d),NC);
-            
-            % on repere la qualite de chaque paire en regardant si on a les battements
-            % physiologiques :
-            
-            %Channels to keep:
-            k1 = [];
+            k1 = []; % liste des Channels to keep
             
             %Loop over channels
             for Ci=1:NC
@@ -76,13 +58,9 @@ for Idx=1:size(job.NIRSmat,1)
                     
                     %Selects pairs where physiology appears (from Script_ProcessDataAccelerometer)
                     for ispectre = 1:n % n spectra to be analysed...
-                        %Ni is the beginning of the window in data points
-                        Ni = floor(1+(ispectre-1)*const1);
-                        %slab is the data in that window multiplied by win
-                        slab = dCi(Ni:(Ni+slab_width)).*win';
-                        %the absolute value of the Fourier transform of
-                        %slab
-                        fft_slab = abs(fft(slab,fft_size));
+                        Ni = floor(1+(ispectre-1)*const1);    %Ni is the beginning of the window in data points
+                        slab = dCi(Ni:(Ni+slab_width)).*win'; %slab is the data in that window multiplied by win
+                        fft_slab = abs(fft(slab,fft_size));   %the absolute value of the Fourier transform of slab
                         fft_freq_step = fs/fft_size;
                         % for plotting purpose: fft_freq_scale = (1:fft_size)*fft_freq_step;
                         
@@ -97,76 +75,67 @@ for Idx=1:size(job.NIRSmat,1)
                         %         mayer_pace(Ni:Ni+slab_width,Ci) = outbeattest.mayer.pace;
                     end
                     
-                    %%
-                    % test sur lq constqnce du ryth;e cqrdiqaue tout qu
-                    % long des sessions... ne convient pqs pour les tests
-                    % qvec qctivit2 physiaue
-                    v = heart.pace(Ci,:);
-                    %figure; plot(v);
-                    median1 = median(v);
-                    std1 = std(v);
-                    count = 0;
-                    if MinHeartRate < median1 && median1 < MaxHeartRate && ...
-                            std1 < 2*MaxHeartStdev
-                        %keep channel
-                        %count=count+1;
-                        %channel list that we keep:
-                        k1 = [k1 Ci];
-                        %clean up aberrant values
-                        %for i4=1:length(v)
-                        %if v(i4) <= MinHeartRate || v(i4) >= MaxHeartRate
-                        %quick fix, better would be to take average
-                        %value at ends of bad intervals
-                        %    v(i4) = median1;
-                        %end
+                    %% on garde ou pas les paires
+                    if job.choice_method.heart_method==0
+                        v = heart.pace(Ci,:);
+                        median1 = median(v);
+                        std1 = std(v);
+                        count = 0;
+                        if MinHeartRate < median1 && median1 < MaxHeartRate && ...
+                                std1 < 2*MaxHeartStdev
+                            %keep channel
+                            %count=count+1;
+                            k1 = [k1 Ci];
+                            %clean up aberrant values
+                            %for i4=1:length(v)
+                            %if v(i4) <= MinHeartRate || v(i4) >= MaxHeartRate
+                            %quick fix, better would be to take average
+                            %value at ends of bad intervals
+                            %    v(i4) = median1;
+                            %end
+                            %end
+                            heart.pace(Ci,:) = v;
+                        else
+                            heart.pace(Ci,:) = zeros(1,ns);
+                        end
                         
-                        %end
-                        heart.pace(Ci,:) = v;
-                    else
-                        heart.pace(Ci,:) = zeros(1,ns);
-                    end
-                    
-                    %%
-                    %Conditions for a good heart beat
-                    Cok_temp = sum(heart.pace);
-                    %                     count = 1;
-                    %%%%%%la valeur reste a fixer...automatiquement
-                    if(Cok_temp(Ci)>median(Cok_temp))%2.3*10^4)
-                        %                             Cok(count,1) = Ci;
-                        %                             count = count+1;
-                        heart.pace(Ci,:) = v;
-                    else
-                        heart.pace(Ci,:) = zeros(1,ns);
-                    end
-                    %NIRS.Cf.H.C.ok{f,1} = Cok';
-                    
-                end %end if any
-            end
+                    elseif  job.choice_method.heart_method==1
+                        Cok_temp = sum(heart.pace(Ci,:)); % on a le battement ou 0 si no battementm il faut juste voir si on a assez de battement d'ou la somme
+                        %%%%%%la valeur reste a fixer...automatiquement
+                        if(Cok_temp <2*10^4)%median(Cok_temp))%2.3*10^4) %Conditions for a good heart beat
+                            heart.pace(Ci,:) = zeros(1,ns);
+                        end
+                    end %end choice channels
+                end %end if any (boucle sur les wavelengths)
+            end % end channels Ci
             
-            
-            k2 = k1;
+% % % % % % % %             k2 = k1;
             %only valid if detection was done on first wavelength only
-            if detect_wavelength == 1
-                %complete to all wavelengths
-                wl = NIRS.Cf.dev.wl;
-                nc = NC/length(wl);
-                %channel indices for all wavelengths
-                for i3=1:length(wl)-1
-                    k2 = [k2 k2+nc];
-                end
-            end
+            %???
+% % % % % % % %             if detect_wavelength == 1
+% % % % % % % %                 %complete to all wavelengths
+% % % % % % % %                 wl = NIRS.Cf.dev.wl;
+% % % % % % % %                 nc = NC/length(wl);
+% % % % % % % %                 %channel indices for all wavelengths
+% % % % % % % %                 for i3=1:length(wl)-1
+% % % % % % % %                     k2 = [k2 k2+nc];
+% % % % % % % %                 end
+% % % % % % % %             end
             %remove only channels that were not detected in the first
             %session - to harmonize all the sessions
-            if f == 1
-                first_k1 = k1;
-                first_k2 = k2;
-            end
-            if remove_no_heartbeat
-                %shrink the data to keep only desired channels
-                d = d(first_k2,:);
-                heart.energie = heart.energie(first_k2,:);
-                heart.pace = heart.pace(first_k2,:);
-            end
+% % % % % % % %             if f == 1
+% % % % % % % %                 first_k1 = k1;
+% % % % % % % %                 first_k2 = k2;
+% % % % % % % %             end
+            
+            %???????? on est sur au4on ne conserve pqs au4une seule ligne
+            %du coup ??????????????
+% % % % % % % %             if remove_no_heartbeat
+% % % % % % % %                 %shrink the data to keep only desired channels
+% % % % % % % %                 d = d(first_k2,:);
+% % % % % % % %                 heart.energie = heart.energie(first_k2,:);
+% % % % % % % %                 heart.pace = heart.pace(first_k2,:);
+% % % % % % % %             end
             
             %output a heart rate per minute
             heart.pace = 60* heart.pace;
