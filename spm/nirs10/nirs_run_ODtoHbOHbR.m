@@ -10,8 +10,6 @@ for Idx=1:size(job.NIRSmat,1)
         %bl_m = job.Normalize_OD;% method to calculate baseline
         %threshold = job.threshold;%Threshold for cutting off small values of signal
         PVF = job.PVF;% Partial volume correction factor
-        %Note that age should have been specified earlier, when reading
-        %NIRS data for that subject
         age = NIRS.Dt.s.age;
         fs = NIRS.Cf.dev.fs;
         %use last step of preprocessing
