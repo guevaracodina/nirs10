@@ -98,7 +98,7 @@ for Idx=1:nSubj
                     end
 
                     %get t stat for each iteration
-                    r = 1; t = zeros(IN,sz_beta(2));
+                    r = 2; t = zeros(IN,sz_beta(2));
                     for i=1:IN
                         t(i,:) = squeeze(beta(i,r,:)) ./sqrt(squeeze(Bvar(i,r,:)));
                     end
@@ -139,7 +139,7 @@ for Idx=1:nSubj
             % %         end
 
                     %get t stat for each iteration
-                    r = 2; t = zeros(IN,sz_beta(2));
+                    r = 1; t = zeros(IN,sz_beta(2));
                     for i=1:IN
                         t(i,:) = squeeze(beta(i,r,:)) ./sqrt(squeeze(ResSS(i,:)'*Bcov(i,r,r)/trRV(i)));
                     end
@@ -156,8 +156,8 @@ for Idx=1:nSubj
                 alpha_bonf_TPn = alpha_unc/TPn;
 
                 %[TPb{Jidx,Idx} TPu{Jidx,Idx}] = count_TP_FP(IN,[1:2],t,alpha_bonf_TPn,alpha_unc,erdf,true,true); 
-                [TPb{Jidx,Idx} TPu{Jidx,Idx}] = count_TP_FP(IN,[4:5],...
-                    t,alpha_bonf_TPn,alpha_unc,erdf,true,true,true); 
+                [TPb{Jidx,Idx} TPu{Jidx,Idx}] = count_TP_FP(IN,[11:20],...
+                    t,alpha_bonf_TPn,alpha_unc,erdf,true,true,false); 
 
                 %Specificity = 1 - false positives
                 %Will be on all other channels than 7 and 8
@@ -165,8 +165,8 @@ for Idx=1:nSubj
                 %and true negatives
                 alpha_bonf_FPn = alpha_unc/FPn;
 
-                [FPb{Jidx,Idx} FPu{Jidx,Idx}] = count_TP_FP(IN,[1:3 6],...
-                    t,alpha_bonf_FPn,alpha_unc,erdf,false,true,true); 
+                [FPb{Jidx,Idx} FPu{Jidx,Idx}] = count_TP_FP(IN,[1:10],...
+                    t,alpha_bonf_FPn,alpha_unc,erdf,false,true,false); 
                 
                 %tFPb = FPb; tFPu = FPu; tTPb = TPb; tTPu = TPu; 
                 %FPb = FPb{Jidx,:}; tFPu = FPu{Jidx,:}; tTPb = TPb{Jidx,:}; tTPu = TPu{Jidx,:};                  
@@ -199,28 +199,40 @@ end %end for Idx
 
 %ROC plots
 figure;
+% linespec{1,1} = '.';
+% linespec{2,1} = '+';
+% linespec{3%,1} = 'o';
+% linespec{1,2} = '*';
+% linespec{2,2} = 'x';
+% linespec{3,2} = 's';
+% linespec{1,3} = 'd';
+% linespec{2,3} = '^';
+% linespec{3,3} = 'v';
+% linespec{1,4} = '<';
+% linespec{2,4} = '>';
+% linespec{3,4} = 'p';
+% linespec{1,5} = 'h';
+
+
 linespec{1,1} = '.';
 linespec{2,1} = '+';
 linespec{3,1} = 'o';
-linespec{1,2} = '*';
-linespec{2,2} = 'x';
-linespec{3,2} = 's';
-linespec{1,3} = 'd';
-linespec{2,3} = '^';
-linespec{3,3} = 'v';
-linespec{1,4} = '<';
-linespec{2,4} = '>';
-linespec{3,4} = 'p';
-linespec{1,5} = 'h';
+linespec{4,1} = '*';
+linespec{5,1} = 'x';
+linespec{6,1} = 's';
+linespec{7,1} = 'd';
+linespec{8,1} = '^';
+
 
 for Idx=1:nSubj    
-    for Jidx=1:nJob
+    for Jidx= 1:nJob
         plot(mean(FPb{Jidx,Idx}),mean(TPb{Jidx,Idx}),[linespec{Jidx,Idx} 'r'],...
              mean(FPu{Jidx,Idx}),mean(TPu{Jidx,Idx}),[linespec{Jidx,Idx} 'b']); hold on
     end   
 end
 hold off
-
+%max(reshape(cell2mat(TPu),10,[]))
+%br = squeeze(beta(:,2,11:20))./squeeze(beta(:,1,11:20));
 out.NIRSmat = job.NIRSmat;
 end
 
@@ -286,7 +298,7 @@ for i=1:IN
                 end
             end
         else
-            %two-sided test - for 
+            %two-sided test - for false positives
             if abs(t(i,j)) > th_z
                 if byIter
                     nB(k,i) = 1;
