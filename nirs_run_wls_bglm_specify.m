@@ -17,8 +17,8 @@ switch meth1
     case 1
         Opt.meth = 'WLS';
         Opt.Design.L0=0;                          % maximum scale for signal decomposition=J-L0
-        Opt.Design.J0=6;                          % minimum scale to model physiology
-        Opt.Design.threshold_drift=0.1;           % Threshold for correlation analysis
+        Opt.Design.J0=7;                          % minimum scale to model physiology
+        Opt.Design.threshold_drift=0.2;           % Threshold for correlation analysis
     case 2
         Opt.meth = 'BGLM';
         Opt.Design.fmax=0.15;                    % maximum frequency for cosinusoidal drifts

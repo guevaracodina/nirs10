@@ -130,7 +130,7 @@ display(sprintf('Total number of regressors (derivatives...) =%1.f',nReg))
 
 %------CORRELATION ANALYSIS:Perform correlation between protocol and wavelet
 %atoms
-performCorr=0;
+performCorr=1;
 if performCorr
     for iReg=1:nReg
         display(sprintf('\nCorrelation analysis started'))
