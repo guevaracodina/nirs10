@@ -3074,7 +3074,7 @@ model_estimate.tag    = 'model_estimate';
 model_estimate.values = {wls_bglm_estimate NIRS_SPM_HPF_LPF NIRS_SPM_estimate ...
             NIRS_SPM_estimate_batch NIRS_SPM_contrast NIRS_SPM_group ROCtest};
 model_estimate.help   = {'These modules estimate a GLM.'};
-
+ 
 %module 11
 model_display        = cfg_choice; %cfg_repeat; 
 model_display.name   = 'GLM Results Display';
