@@ -17,6 +17,7 @@ nirs10.readOnsets.addTestStimuli.testWavelength = 2;
 nirs10.readOnsets.addTestStimuli.testAmplitudeTarget.testAmplitude = 1;
 nirs10.readOnsets.addTestStimuli.testAmplitudeTarget.testSNR = -15;
 nirs10.readOnsets.addTestStimuli.testAmplitude2 = 50;
+%nirs10.readOnsets.addTestStimuli.testEP       = {1};
 %NoFrequentSpikes
 nirs10.readOnsets.addTestStimuli.testPType.testEP.NoFrequentSpikes.testExpSlowSpike1 = 20;
 nirs10.readOnsets.addTestStimuli.testPType.testEP.NoFrequentSpikes.testRescaleOn1 = 1;

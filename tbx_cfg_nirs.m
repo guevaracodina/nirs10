@@ -14,6 +14,44 @@ NIRSmat.ufilter = '^NIRS.mat$';
 NIRSmat.num     = [1 Inf];     % Number of inputs required 
 NIRSmat.help    = {'Select NIRS.mat for the subject(s).'}; % help text displayed
 
+DelPreviousData      = cfg_menu;
+DelPreviousData.tag  = 'DelPreviousData';
+DelPreviousData.name = 'Delete Previous data file';
+DelPreviousData.labels = {'True','False'};
+DelPreviousData.values = {1,0};
+DelPreviousData.val  = {1};
+DelPreviousData.help = {'Delete the previous data file.'}';
+    
+CreateNIRSCopy_false         = cfg_branch;
+CreateNIRSCopy_false.tag     = 'CreateNIRSCopy_false';
+CreateNIRSCopy_false.name    = 'Do not copy NIRS structure'; 
+CreateNIRSCopy_false.help    = {'Do not copy NIRS structure.'
+            'This will write over the previous NIRS.mat'}';
+
+NewNIRSdir         = cfg_entry;
+NewNIRSdir.name    = 'Directory for NIRS.mat';
+NewNIRSdir.tag     = 'NewNIRSdir';       
+NewNIRSdir.strtype = 's';
+NewNIRSdir.val{1}    = 'NewDir';
+NewNIRSdir.num     = [1 Inf];     
+NewNIRSdir.help    = {'Directory for NIRS.mat.'}'; 
+
+CreateNIRSCopy         = cfg_branch;
+CreateNIRSCopy.tag     = 'CreateNIRSCopy';
+CreateNIRSCopy.name    = 'Create new directory and copy NIRS structure'; 
+CreateNIRSCopy.val     = {NewNIRSdir};
+CreateNIRSCopy.help    = {'Create new directory and copy NIRS structure there.'}';
+        
+%Common to most modules: for creating a new directory and copying NIRS.mat
+NewDirCopyNIRS           = cfg_choice;
+NewDirCopyNIRS.name      = 'Create new directory and copy NIRS.mat';
+NewDirCopyNIRS.tag       = 'NewDirCopyNIRS';
+NewDirCopyNIRS.values    = {CreateNIRSCopy_false CreateNIRSCopy}; 
+NewDirCopyNIRS.val       = {CreateNIRSCopy_false}; 
+NewDirCopyNIRS.help      = {'Choose whether to overwrite the NIRS.mat structure'
+            'or to create a new directory'
+            'and copy the NIRS.mat structure there'}'; 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Configuration for BOXY   (boxy1)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -668,6 +706,7 @@ testEP.name      = 'Event Paradigm';
 testEP.tag       = 'testEP';
 testEP.values    = {NoFrequentSpikes FrequentSpikes};
 testEP.val       = {FrequentSpikes};
+%testEP.def     = @(val)nirs_get_defaults('readOnsets.addTestStimuli.testPType', val{:}); 
 testEP.help      = {'Event Paradigm'
     'Choose whether to have only one type of spikes,'
     'all following an exponential distribution, '
@@ -790,7 +829,7 @@ voltAddStim.val = {1};
 addTestStimuli      = cfg_exbranch;       
 addTestStimuli.name = 'Add Stimuli with HRFs for testing';             
 addTestStimuli.tag  = 'addTestStimuli'; 
-addTestStimuli.val  = {NIRSmat testStimulusName testStimuliNumber ...
+addTestStimuli.val  = {NIRSmat DelPreviousData NewDirCopyNIRS testStimulusName testStimuliNumber ...
                 testSessionNumber testWavelength testAmplitudeTarget ...
                 voltAddStim testAmplitude2 keepAllChannels testChannels testPType};   
 addTestStimuli.prog = @nirs_run_addTestStimuli;  
@@ -842,7 +881,7 @@ output_prefix.help    = {'You can choose to give a particular prefix to the ',..
 buildroi1      = cfg_exbranch;
 buildroi1.tag  = 'buildroi1';
 buildroi1.name = 'Set vertices and build ROI';
-buildroi1.val  = {image_in crop_image output_prefix};
+buildroi1.val  = {DelPreviousData NewDirCopyNIRS image_in crop_image output_prefix};
 buildroi1.prog = @nirs_run_buildroi;
 buildroi1.help = {'Define region of interest.'};
 
@@ -1025,7 +1064,7 @@ MCsegment1      = cfg_exbranch;
 MCsegment1.tag  = 'MCsegment1';
 MCsegment1.name = 'MC Segmentation';
 
-MCsegment1.val  = {NIRSmat_optional image_in output_autonaming ...
+MCsegment1.val  = {NIRSmat_optional DelPreviousData NewDirCopyNIRS image_in output_autonaming ...
     output_prefix skn skl csf grm wtm thresh_as head_shadow ...
     rebel_surrounding rebel_thresh_hs process_image};
 MCsegment1.prog = @nirs_run_MCsegment;
@@ -1093,7 +1132,7 @@ AR_wMNI.help    = {'Coordinates of Auricular Right.'};
 coreg1      = cfg_exbranch;       
 coreg1.name = 'NIRScoreg';             
 coreg1.tag  = 'coreg1'; 
-coreg1.val  = {NIRSmat anatT1 anatT1_template nasion_wMNI AL_wMNI AR_wMNI};    
+coreg1.val  = {NIRSmat DelPreviousData NewDirCopyNIRS anatT1 anatT1_template nasion_wMNI AL_wMNI AR_wMNI};    
 coreg1.prog = @nirs_run_coreg;  
 coreg1.vout = @nirs_cfg_vout_coreg; 
 coreg1.help = {'Automatic coregistration.'};
@@ -1239,7 +1278,7 @@ window_stdev.help    = {'Enter the length in seconds for the rolling windows.'};
 remove_chn_stdev      = cfg_exbranch;       
 remove_chn_stdev.name = 'Remove noisy channels (stdev)';             
 remove_chn_stdev.tag  = 'remove_chn_stdev'; 
-remove_chn_stdev.val  = {NIRSmat threshold_stdev window_stdev};   
+remove_chn_stdev.val  = {NIRSmat DelPreviousData NewDirCopyNIRS threshold_stdev window_stdev};   
 remove_chn_stdev.prog = @nirs_run_remove_chn_stdev;  
 remove_chn_stdev.vout = @nirs_cfg_vout_remove_chn_stdev;
 remove_chn_stdev.help = {['Preprocessing step: remove noisy channels ',...
@@ -1257,44 +1296,6 @@ end
 %4.1 Paces... Heart and Mayer -- Mayer not done yet
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-win_type = cfg_menu;
-win_type.tag  = 'win_type';
-win_type.name = 'Type of window for probes';
-win_type.labels = {'Hanning','Hamming','Rect'};
-win_type.values = {0,1,2};
-win_type.def  = @(val)nirs_get_defaults('preprocessNIRS.criugm_paces1.win_type', val{:});
-win_type.help = {'Help'};
-
-win_width         = cfg_entry;
-win_width.name    = 'Window width';
-win_width.tag     = 'win_width';       
-win_width.strtype = 'r';
-win_width.num     = [1 1];
-win_width.def  = @(val)nirs_get_defaults('preprocessNIRS.criugm_paces1.win_width', val{:});
-win_width.help    = {'Window width in SECONDS'};
-
-Nprobe         = cfg_entry;
-Nprobe.name    = 'Number of probes';
-Nprobe.tag     = 'Nprobe';       
-Nprobe.strtype = 'r';
-Nprobe.num     = [1 1];
-Nprobe.def  = @(val)nirs_get_defaults('preprocessNIRS.criugm_paces1.Nprobe', val{:});
-Nprobe.help    = {'Number of probes taken along the signal (power of 2)'};
-
-fft_size         = cfg_entry;
-fft_size.name    = 'FFT size';
-fft_size.tag     = 'fft_size';       
-fft_size.strtype = 'r';
-fft_size.num     = [1 1];
-fft_size.def  = @(val)nirs_get_defaults('preprocessNIRS.criugm_paces1.fft_size', val{:});
-fft_size.help    = {'FFT size for each probe'};
-
-STFT_param         = cfg_branch;
-STFT_param.tag     = 'STFT_param';
-STFT_param.name    = 'Parameters for heart pace search';
-STFT_param.val     = {win_type win_width Nprobe fft_size};
-STFT_param.help    = {'Short Term Fourier Transform Parameters'};
-
 %Remove channels without a clear heart beat
 remove_no_heartbeat      = cfg_menu;
 remove_no_heartbeat.tag  = 'remove_no_heartbeat';
@@ -1306,13 +1307,57 @@ remove_no_heartbeat.help = {['Remove channels without clear heart beat; ',...
         'Detection carried out only on wavelength most sensitive to heart beat. ',...
         'If no heart beat found at that wavelength, the other wavelengths are removed too.'] };
 
+%parameters for heart_resting
+win_type = cfg_menu;
+win_type.tag  = 'win_type';
+win_type.name = 'Type of window for probes';
+win_type.labels = {'Hanning','Hamming','Rect'};
+win_type.values = {0,1,2};
+win_type.def  = @(val)nirs_get_defaults(...
+    'preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.STFT_param.win_type', val{:});
+win_type.help = {'Only Hanning for now.'};
+
+win_width         = cfg_entry;
+win_width.name    = 'Window width';
+win_width.tag     = 'win_width';       
+win_width.strtype = 'r';
+win_width.num     = [1 1];
+win_width.def  = @(val)nirs_get_defaults(...
+    'preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.STFT_param.win_width', val{:});
+win_width.help    = {'Window width in SECONDS'};
+
+Nprobe         = cfg_entry;
+Nprobe.name    = 'Number of probes';
+Nprobe.tag     = 'Nprobe';       
+Nprobe.strtype = 'r';
+Nprobe.num     = [1 1];
+Nprobe.def  = @(val)nirs_get_defaults(...
+    'preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.STFT_param.Nprobe', val{:});
+Nprobe.help    = {'Number of probes taken along the signal (power of 2)'};
+
+fft_size         = cfg_entry;
+fft_size.name    = 'FFT size';
+fft_size.tag     = 'fft_size';       
+fft_size.strtype = 'r';
+fft_size.num     = [1 1];
+fft_size.def  = @(val)nirs_get_defaults(...
+    'preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.STFT_param.fft_size', val{:});
+fft_size.help    = {'FFT size for each probe'};
+
+STFT_param         = cfg_branch;
+STFT_param.tag     = 'STFT_param';
+STFT_param.name    = 'Parameters for heart pace search';
+STFT_param.val     = {win_type win_width Nprobe fft_size};
+STFT_param.help    = {'Short Term Fourier Transform Parameters'};
+
 %Detection wavelengths
 detect_wavelength         = cfg_entry; 
 detect_wavelength.name    = 'Detection wavelength number';
 detect_wavelength.tag     = 'detect_wavelength';       
 detect_wavelength.strtype = 'r';
 detect_wavelength.num     = [1 Inf];     
-detect_wavelength.def     = @(val)nirs_get_defaults('preprocessNIRS.criugm_paces1.detect_wavelength', val{:}); 
+detect_wavelength.def     = @(val)nirs_get_defaults(...
+    'preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.detect_wavelength', val{:}); 
 detect_wavelength.help    = {['Enter wavelength number(s) for detection of ',...
     'the heart rate. If no heart rate is detected, and the remove channels ',...
     'option is selected, channels for all wavelengths at this location will be removed. ',...
@@ -1324,7 +1369,8 @@ MinHeartRate.name    = 'Minimum Heart Rate for Detection';
 MinHeartRate.tag     = 'MinHeartRate';       
 MinHeartRate.strtype = 'r';
 MinHeartRate.num     = [1 1];     
-MinHeartRate.def     = @(val)nirs_get_defaults('preprocessNIRS.criugm_paces1.MinHeartRate', val{:}); 
+MinHeartRate.def     = @(val)nirs_get_defaults(...
+    'preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.MinHeartRate', val{:}); 
 MinHeartRate.help    = {['Enter minimum heart rate allowed for final detection in Hz.']};
 
 MaxHeartRate         = cfg_entry; 
@@ -1332,7 +1378,8 @@ MaxHeartRate.name    = 'Maximum Heart Rate for Detection';
 MaxHeartRate.tag     = 'MaxHeartRate';       
 MaxHeartRate.strtype = 'r';
 MaxHeartRate.num     = [1 1];     
-MaxHeartRate.def     = @(val)nirs_get_defaults('preprocessNIRS.criugm_paces1.MaxHeartRate', val{:}); 
+MaxHeartRate.def     = @(val)nirs_get_defaults(...
+    'preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.MaxHeartRate', val{:}); 
 MaxHeartRate.help    = {['Enter maximum heart rate allowed for final detection in Hz.']};
 
 InternalMinHeartRate         = cfg_entry; 
@@ -1340,7 +1387,8 @@ InternalMinHeartRate.name    = 'Internal Minimum Heart Rate for Detection';
 InternalMinHeartRate.tag     = 'InternalMinHeartRate';       
 InternalMinHeartRate.strtype = 'r';
 InternalMinHeartRate.num     = [1 1];     
-InternalMinHeartRate.def     = @(val)nirs_get_defaults('preprocessNIRS.criugm_paces1.InternalMinHeartRate', val{:}); 
+InternalMinHeartRate.def     = @(val)nirs_get_defaults(...
+    'preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.InternalMinHeartRate', val{:}); 
 InternalMinHeartRate.help    = {['Enter minimum heart rate allowed for detection in Hz, ',...
                         '"internal", i.e. for check over small data windows for FFT.']};
 
@@ -1349,7 +1397,8 @@ InternalMaxHeartRate.name    = 'Internal Maximum Heart Rate for Detection';
 InternalMaxHeartRate.tag     = 'InternalMaxHeartRate';       
 InternalMaxHeartRate.strtype = 'r';
 InternalMaxHeartRate.num     = [1 1];     
-InternalMaxHeartRate.def     = @(val)nirs_get_defaults('preprocessNIRS.criugm_paces1.InternalMaxHeartRate', val{:}); 
+InternalMaxHeartRate.def     = @(val)nirs_get_defaults(...
+    'preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.InternalMaxHeartRate', val{:}); 
 InternalMaxHeartRate.help    = {['Enter maximum heart rate allowed for detection in Hz, ',...
                         '"internal", i.e. for check over small data windows for FFT.']};
 
@@ -1358,19 +1407,148 @@ MaxHeartStdev.name    = 'Maximum Heart Rate Standard Deviation';
 MaxHeartStdev.tag     = 'MaxHeartStdev';       
 MaxHeartStdev.strtype = 'r';
 MaxHeartStdev.num     = [1 1];     
-MaxHeartStdev.def     = @(val)nirs_get_defaults('preprocessNIRS.criugm_paces1.MaxHeartStdev', val{:}); 
-MaxHeartStdev.help    = {['Enter maximum heart rate standard deviation allowed in Hz, channelwise.']};
-                    
+MaxHeartStdev.def     = @(val)nirs_get_defaults(...
+    'preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.MaxHeartStdev', val{:}); 
+MaxHeartStdev.help    = {'Enter maximum heart rate standard deviation allowed in beats per second'}';
+
+%copy all parameters with "2" for heart_exercise
+win_type2 = cfg_menu;
+win_type2.tag  = 'win_type2';
+win_type2.name = 'Type of window for probes';
+win_type2.labels = {'Hanning','Hamming','Rect'};
+win_type2.values = {0,1,2};
+win_type2.def  = @(val)nirs_get_defaults(...
+    'nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.STFT_param2.win_type2', val{:});
+win_type2.help = {'Only Hanning for now.'};
+
+win_width2         = cfg_entry;
+win_width2.name    = 'Window width';
+win_width2.tag     = 'win_width2';       
+win_width2.strtype = 'r';
+win_width2.num     = [1 1];
+win_width2.def  = @(val)nirs_get_defaults(...
+    'nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.STFT_param2.win_width2', val{:});
+win_width2.help    = {'Window width in SECONDS'};
+
+Nprobe2         = cfg_entry;
+Nprobe2.name    = 'Number of probes';
+Nprobe2.tag     = 'Nprobe2';       
+Nprobe2.strtype = 'r';
+Nprobe2.num     = [1 1];
+Nprobe2.def  = @(val)nirs_get_defaults(...
+    'nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.STFT_param2.Nprobe2', val{:});
+Nprobe2.help    = {'Number of probes taken along the signal (power of 2)'};
+
+fft_size2         = cfg_entry;
+fft_size2.name    = 'FFT size';
+fft_size2.tag     = 'fft_size2';       
+fft_size2.strtype = 'r';
+fft_size2.num     = [1 1];
+fft_size2.def  = @(val)nirs_get_defaults(...
+    'nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.STFT_param2.fft_size2', val{:});
+fft_size2.help    = {'FFT size for each probe'};
+
+STFT_param2         = cfg_branch;
+STFT_param2.tag     = 'STFT_param2';
+STFT_param2.name    = 'Parameters for heart pace search';
+STFT_param2.val     = {win_type2 win_width2 Nprobe2 fft_size2};
+STFT_param2.help    = {'Short Term Fourier Transform Parameters'};
+
+%Detection wavelengths
+detect_wavelength2         = cfg_entry; 
+detect_wavelength2.name    = 'Detection wavelength number';
+detect_wavelength2.tag     = 'detect_wavelength2';       
+detect_wavelength2.strtype = 'r';
+detect_wavelength2.num     = [1 Inf];     
+detect_wavelength2.def     = @(val)nirs_get_defaults(...
+    'nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.detect_wavelength2', val{:}); 
+detect_wavelength2.help    = {['Enter wavelength number(s) for detection of ',...
+    'the heart rate. If no heart rate is detected, and the remove channels ',...
+    'option is selected, channels for all wavelengths at this location will be removed. ',...
+    'For example, enter 1 if OD at 830 nm is the first wavelength; enter an array, ',...
+    'such as [1 2] if detection of heart rate at the first two wavelengths is required.']}; 
+
+MinHeartRate2         = cfg_entry; 
+MinHeartRate2.name    = 'Minimum Heart Rate for Detection';
+MinHeartRate2.tag     = 'MinHeartRate2';       
+MinHeartRate2.strtype = 'r';
+MinHeartRate2.num     = [1 1];     
+MinHeartRate2.def     = @(val)nirs_get_defaults(...
+    'nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.MinHeartRate2', val{:}); 
+MinHeartRate2.help    = {'Enter minimum heart rate allowed for final detection in Hz.'}';
+
+MaxHeartRate2         = cfg_entry; 
+MaxHeartRate2.name    = 'Maximum Heart Rate for Detection';
+MaxHeartRate2.tag     = 'MaxHeartRate2';       
+MaxHeartRate2.strtype = 'r';
+MaxHeartRate2.num     = [1 1];     
+MaxHeartRate2.def     = @(val)nirs_get_defaults(...
+    'nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.MaxHeartRate2', val{:}); 
+MaxHeartRate2.help    = {'Enter maximum heart rate allowed for final detection in Hz.'}';
+
+InternalMinHeartRate2         = cfg_entry; 
+InternalMinHeartRate2.name    = 'Internal Minimum Heart Rate for Detection';
+InternalMinHeartRate2.tag     = 'InternalMinHeartRate2';       
+InternalMinHeartRate2.strtype = 'r';
+InternalMinHeartRate2.num     = [1 1];     
+InternalMinHeartRate2.def     = @(val)nirs_get_defaults(...
+    'nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.InternalMinHeartRate2', val{:}); 
+InternalMinHeartRate2.help    = {'Enter minimum heart rate allowed for detection in Hz, '
+                        '"internal", i.e. for check over small data windows for FFT.'}';
+
+InternalMaxHeartRate2         = cfg_entry; 
+InternalMaxHeartRate2.name    = 'Internal Maximum Heart Rate for Detection';
+InternalMaxHeartRate2.tag     = 'InternalMaxHeartRate2';       
+InternalMaxHeartRate2.strtype = 'r';
+InternalMaxHeartRate2.num     = [1 1];     
+InternalMaxHeartRate2.def     = @(val)nirs_get_defaults(...
+    'nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.InternalMaxHeartRate2', val{:}); 
+InternalMaxHeartRate2.help    = {'Enter maximum heart rate allowed for detection in Hz, '
+                        '"internal", i.e. for check over small data windows for FFT.'}';
+
+MaxHeartStdev2         = cfg_entry; 
+MaxHeartStdev2.name    = 'Maximum Heart Rate Standard Deviation';
+MaxHeartStdev2.tag     = 'MaxHeartStdev2';       
+MaxHeartStdev2.strtype = 'r';
+MaxHeartStdev2.num     = [1 1];     
+MaxHeartStdev2.def     = @(val)nirs_get_defaults(...
+    'nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.MaxHeartStdev2', val{:}); 
+MaxHeartStdev2.help    = {'Enter maximum heart rate standard deviation allowed in beats per second'}';
+
+heart_resting         = cfg_branch;
+heart_resting.tag     = 'heart_resting';
+heart_resting.name    = 'Resting state parameters';
+heart_resting.val     = {STFT_param detect_wavelength MinHeartRate MaxHeartRate ...
+    InternalMinHeartRate InternalMaxHeartRate MaxHeartStdev}; 
+heart_resting.help    = {'Choose parameters for resting state heart rate detection'};
+
+heart_exercise         = cfg_branch;
+heart_exercise.tag     = 'heart_exercise';
+heart_exercise.name    = 'Parameters during exercise';
+heart_exercise.val     = {STFT_param detect_wavelength MinHeartRate MaxHeartRate ...
+    InternalMinHeartRate InternalMaxHeartRate MaxHeartStdev}; 
+heart_exercise.help    = {'Choose parameters for heart rate detection'
+                        'during aerobic exercise (such as VO2max test).'}';
+
+heart_rate_cfg           = cfg_choice;
+heart_rate_cfg.name      = 'Heart rate configuration';
+heart_rate_cfg.tag       = 'heart_rate_cfg';
+heart_rate_cfg.values    = {heart_resting heart_exercise};
+%heart_rate_cfg.def     =
+%@(val)nirs_get_defaults('preprocessNIRS.criugm_paces1', val{:}); 
+heart_rate_cfg.val       = {heart_resting}; 
+heart_rate_cfg.help      = {'Choose configuration of parameters.'
+                            'Resting-state or VO2max (aerobic exercise)'}'; 
+
 % Executable Branch
 criugm_paces1      = cfg_exbranch;       
 criugm_paces1.name = 'Heart rate utility';             
 criugm_paces1.tag  = 'criugm_paces1'; 
-criugm_paces1.val  = {NIRSmat STFT_param remove_no_heartbeat detect_wavelength MinHeartRate MaxHeartRate ...
-    InternalMinHeartRate InternalMaxHeartRate MaxHeartStdev};   
+criugm_paces1.val  = {NIRSmat DelPreviousData NewDirCopyNIRS heart_rate_cfg remove_no_heartbeat};   
 criugm_paces1.prog = @nirs_run_criugm_paces;  
 criugm_paces1.vout = @nirs_cfg_vout_criugm_paces;
 criugm_paces1.help = {['Preprocessing step: Extract heart rate and, if desired, ',...
-    'remove channels without a clear detectable heart rate.']};
+    'remove channels without a clear detectable heart rate.']}';
 
 %make NIRS.mat available as a dependency
 function vout = nirs_cfg_vout_criugm_paces(job)
@@ -1399,7 +1577,7 @@ sum_neg_threshold.help    = {['Enter the value of the threshold as ',...
 mark_negative      = cfg_exbranch;       
 mark_negative.name = 'Mark negative and interpolate';             
 mark_negative.tag  = 'mark_negative'; 
-mark_negative.val  = {NIRSmat sum_neg_threshold};   
+mark_negative.val  = {NIRSmat DelPreviousData NewDirCopyNIRS sum_neg_threshold};   
 mark_negative.prog = @nirs_run_mark_negative;  
 mark_negative.vout = @nirs_cfg_vout_mark_negative;
 mark_negative.help = {['Preprocessing step: mark negative data points as ',...
@@ -1461,7 +1639,7 @@ min_session_duration.help    = {'Enter the minimum length (for example 60 second
 mark_movement      = cfg_exbranch;       
 mark_movement.name = 'Mark movement';             
 mark_movement.tag  = 'mark_movement'; 
-mark_movement.val  = {NIRSmat mvt_window_length mvt_cutoff sum_mvt_threshold min_session_duration};   
+mark_movement.val  = {NIRSmat DelPreviousData NewDirCopyNIRS mvt_window_length mvt_cutoff sum_mvt_threshold min_session_duration};   
 mark_movement.prog = @nirs_run_mark_movement;  
 mark_movement.vout = @nirs_cfg_vout_mark_movement;
 mark_movement.help = {['Preprocessing step: mark movement jumps ',...
@@ -1533,8 +1711,8 @@ Analyzer_sf.help    = {'Apply a scaling factor on the amplitude of '
 normalize_baseline      = cfg_exbranch;       
 normalize_baseline.name = 'Normalize Baseline';             
 normalize_baseline.tag  = 'normalize_baseline'; 
-normalize_baseline.val  = {NIRSmat Normalize_OD add_or_mult ...
-        baseline_duration normalization_typeAnalyzer_sf};   
+normalize_baseline.val  = {NIRSmat DelPreviousData NewDirCopyNIRS Normalize_OD add_or_mult ...
+        baseline_duration normalization_type Analyzer_sf};   
 normalize_baseline.prog = @nirs_run_normalize_baseline;  
 normalize_baseline.vout = @nirs_cfg_vout_normalize_baseline;
 normalize_baseline.help = {'Normalize to baseline'}';
@@ -1564,13 +1742,13 @@ PVF.help    = {'Enter the partial volume factor values for each wavelength ',...
 % ---------------------------------------------------------------------
 % lpf Low-pass filter
 % ---------------------------------------------------------------------
-fwhm1      = cfg_entry;
-fwhm1.tag  = 'fwhm1';
-fwhm1.name = 'FWHM in seconds';
-fwhm1.val = {1.5};
-fwhm1.strtype = 'r';  
-fwhm1.num     = [1 1]; 
-fwhm1.help    = {'FWHM in seconds.'}; 
+fwhm2      = cfg_entry;
+fwhm2.tag  = 'fwhm2';
+fwhm2.name = 'FWHM in seconds';
+fwhm2.val = {1.5};
+fwhm2.strtype = 'r';  
+fwhm2.num     = [1 1]; 
+fwhm2.help    = {'FWHM in seconds.'}; 
 
 downsamplingFactor      = cfg_entry;
 downsamplingFactor.tag  = 'downsamplingFactor';
@@ -1594,7 +1772,7 @@ downsampleWhen.val    = {1};
 lpf_gauss2         = cfg_branch;
 lpf_gauss2.tag     = 'lpf_gauss2';
 lpf_gauss2.name    = 'Gaussian Filter';
-lpf_gauss2.val     = {fwhm1 downsamplingFactor downsampleWhen}; 
+lpf_gauss2.val     = {fwhm2 downsamplingFactor downsampleWhen}; 
 lpf_gauss2.help    = {'Specify properties of Gaussian filter'};
 
 lpf_none         = cfg_branch;
@@ -1615,7 +1793,7 @@ nirs_lpf2.help      = {'Choose low-pass filter.'};
 ODtoHbOHbR      = cfg_exbranch;       
 ODtoHbOHbR.name = 'Convert OD to HbO/HbR and wavelets';             
 ODtoHbOHbR.tag  = 'ODtoHbOHbR'; 
-ODtoHbOHbR.val  = {NIRSmat PVF nirs_lpf2}; 
+ODtoHbOHbR.val  = {NIRSmat DelPreviousData NewDirCopyNIRS PVF nirs_lpf2}; 
 ODtoHbOHbR.prog = @nirs_run_ODtoHbOHbR;  
 ODtoHbOHbR.vout = @nirs_cfg_vout_ODtoHbOHbR; 
 ODtoHbOHbR.help = {'Convert OD to HbO/HbR and wavelet detrending.'
@@ -1636,19 +1814,11 @@ end
 % hpf High-pass filter
 % ---------------------------------------------------------------------
 
-% hpf_wavelet_depth      = cfg_entry;
-% hpf_wavelet_depth.tag  = 'hpf_wavelet_depth';
-% hpf_wavelet_depth.name = 'Wavelet depth';
-% hpf_wavelet_depth.val = {9};
-% hpf_wavelet_depth.strtype = 'r';  
-% hpf_wavelet_depth.num     = [1 1]; 
-% %hpf_wavelet_depth.def = @(val)nirs_get_defaults('configMC1.scalpPpties_l2', val{:});
-% hpf_wavelet_depth.help    = {'Specify wavelet depth - approximately J0 - value is 9 in NIRS_SPM.'}; 
-
 hpf_wavelet_iter      = cfg_entry;
 hpf_wavelet_iter.tag  = 'hpf_wavelet_iter';
 hpf_wavelet_iter.name = 'Wavelet iterations';
 hpf_wavelet_iter.val = {4};
+%hpf_wavelet_iter.def    = @(val)nirs_get_defaults('hpf_wavelet_iter', val{:});
 hpf_wavelet_iter.strtype = 'r';  
 hpf_wavelet_iter.num     = [1 1]; 
 hpf_wavelet_iter.help    = {'Specify wavelet iterations - default is 4 in NIRS_SPM.'}; 
@@ -1663,6 +1833,7 @@ hpf_dct_cutoff      = cfg_entry;
 hpf_dct_cutoff.tag  = 'hpf_dct_cutoff';
 hpf_dct_cutoff.name = 'DCT cutoff in seconds';
 hpf_dct_cutoff.val  = {128};
+%hpf_dct_cutoff.def    = @(val)nirs_get_defaults('hpf_dct_cutoff', val{:});
 hpf_dct_cutoff.strtype = 'r';  
 hpf_dct_cutoff.num     = [1 1]; 
 hpf_dct_cutoff.help    = {'Specify DCT cutoff in seconds.'}; 
@@ -1684,7 +1855,8 @@ nirs_hpf.tag       = 'nirs_hpf';
 nirs_hpf.values    = {hpf_none
                       hpf_wavelet
                       hpf_dct}; 
-nirs_hpf.val       = {hpf_none}; 
+nirs_hpf.val       = {hpf_wavelet}; 
+%nirs_hpf.def    = @(val)nirs_get_defaults('nirs_hpf', val{:});
 nirs_hpf.help      = {'Choose high-pass filter.'}; 
 
 % ---------------------------------------------------------------------
@@ -1694,6 +1866,7 @@ fwhm1      = cfg_entry;
 fwhm1.tag  = 'fwhm1';
 fwhm1.name = 'FWHM in seconds';
 fwhm1.val = {1.5};
+%fwhm1.def    = @(val)nirs_get_defaults('fwhm1', val{:});
 fwhm1.strtype = 'r';  
 fwhm1.num     = [1 1]; 
 %fwhm1.def = @(val)nirs_get_defaults('configMC1.scalpPpties_l2', val{:});
@@ -1721,7 +1894,8 @@ nirs_lpf.tag       = 'nirs_lpf';
 nirs_lpf.values    = {lpf_none
                       lpf_gauss
                       lpf_hrf}; 
-nirs_lpf.val       = {lpf_none}; 
+nirs_lpf.val       = {lpf_gauss}; 
+%nirs_lpf.def    = @(val)nirs_get_defaults('nirs_lpf', val{:});
 nirs_lpf.help      = {'Choose low-pass filter.'}; 
 
 
@@ -1729,7 +1903,7 @@ nirs_lpf.help      = {'Choose low-pass filter.'};
 HPF_LPF      = cfg_exbranch;       
 HPF_LPF.name = 'Filters';             
 HPF_LPF.tag  = 'HPF_LPF'; 
-HPF_LPF.val  = {NIRSmat nirs_hpf nirs_lpf}; 
+HPF_LPF.val  = {NIRSmat DelPreviousData NewDirCopyNIRS nirs_hpf nirs_lpf}; 
 HPF_LPF.prog = @nirs_run_HPF_LPF;  
 HPF_LPF.vout = @nirs_cfg_vout_HPF_LPF; 
 HPF_LPF.help = {'Filters: currently only low pass, with or without ',...
@@ -2250,11 +2424,7 @@ units.values  = {
                     1
                     };
 units.val = {1};
-
-% units.values = {
-%                 'scans'
-%                 'secs'
-% }';
+%units.def = @(val)nirs_get_defaults('model_specify.units', val{:});
 
 time_res      = cfg_entry;
 time_res.tag  = 'time_res';
@@ -2262,7 +2432,7 @@ time_res.name = 'Time resolution';
 time_res.val = {1};
 time_res.strtype = 'r';  
 time_res.num     = [1 1]; 
-%time_res.def = @(val)nirs_get_defaults('configMC1.scalpPpties_l2', val{:});
+%time_res.def = @(val)nirs_get_defaults('model_specify.time_res', val{:});
 time_res.help    = {'Time resolution for onsets will be given by NIRS sampling rate divided by this factor  - value is 10 in NIRS_SPM.'}; 
 
 input_onsets         = cfg_files;  
@@ -2316,7 +2486,8 @@ nirs_noise.values  = {
                     0
                     1
                     };
-nirs_noise.val     = {0};     
+nirs_noise.val = {0};
+%nirs_noise.def = @(val)nirs_get_defaults('model_specify.nirs_noise', val{:});    
 
 % ---------------------------------------------------------------------
 % derivs Model derivatives
@@ -2331,7 +2502,8 @@ derivs.labels = {
                  'Time and Dispersion derivatives'
 }';
 derivs.values = {[0 0] [1 0] [1 1]};
-derivs.val    = {[0 0]};
+derivs.val = {[0 0]};
+%derivs.def = @(val)nirs_get_defaults('model_specify.derivs', val{:});
 
 % ---------------------------------------------------------------------
 % volt Model Interactions (Volterra)
@@ -2350,7 +2522,9 @@ volt.labels = {
                'Model Interactions'
 }';
 volt.values = {1 2};
-volt.val    = {1};
+volt.val = {2};
+%volt.def = @(val)nirs_get_defaults('model_specify.volt', val{:}); 
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % LIOM General Linear Model Specification
@@ -2366,12 +2540,20 @@ dir1.val{1}  = 'Stat';
 dir1.help    = {'Enter a subdirectory name where the NIRS_SPM.mat files '
         'containing the specified design matrix will be written.'}'; 
 
+LiomDeleteLarge      = cfg_menu;
+LiomDeleteLarge.tag  = 'LiomDeleteLarge';
+LiomDeleteLarge.name = 'Delete large files';
+LiomDeleteLarge.labels = {'Yes','No'};
+LiomDeleteLarge.values = {1,0};
+LiomDeleteLarge.def = @(val)nirs_get_defaults('model_specify.wls_bglm_specify.LiomDeleteLarge', val{:}); 
+LiomDeleteLarge.help = {'Delete large files (.nir and NIRS.mat) after each estimation.'};
+
 wls_or_bglm      = cfg_menu;
 wls_or_bglm.tag  = 'wls_or_bglm';
 wls_or_bglm.name = 'WLS, BGLM, NIRS_SPM';
 wls_or_bglm.labels = {'WLS','BGLM', 'NIRS_SPM'};
 wls_or_bglm.values = {1,2,3};
-wls_or_bglm.val = {1};
+wls_or_bglm.def = @(val)nirs_get_defaults('model_specify.wls_bglm_specify.wls_or_bglm', val{:}); 
 wls_or_bglm.help = {'Choose which GLM method to use:'
             'WLS: wavelet least square'
             'BGLM: Bayesian general linear model'
@@ -2382,7 +2564,7 @@ channel_pca.tag  = 'channel_pca';
 channel_pca.name = 'Spatial Principal Component Removal';
 channel_pca.labels = {'Yes','No'};
 channel_pca.values = {1,0};
-channel_pca.val = {0};
+channel_pca.def = @(val)nirs_get_defaults('model_specify.wls_bglm_specify.channel_pca', val{:}); 
 channel_pca.help = {'Choose whether to do a channel PCA removal: '
             'Principal component analysis and removing the largest eigenvalue.'}';
 
@@ -2391,7 +2573,7 @@ lpf_butter.tag  = 'lpf_butter';
 lpf_butter.name = 'Butterworth Low Pass Filter';
 lpf_butter.labels = {'Yes','No'};
 lpf_butter.values = {1,0};
-lpf_butter.val = {0};
+lpf_butter.def = @(val)nirs_get_defaults('model_specify.wls_bglm_specify.lpf_butter', val{:}); 
 lpf_butter.help = {'Choose whether to include a Butterworth Low Pass Filter.'
         'Parameters are: order 3, cutoff frequency: 1.5 s.'}';
 
@@ -2400,7 +2582,7 @@ hpf_butter.tag  = 'hpf_butter';
 hpf_butter.name = 'Butterworth High Pass Filter';
 hpf_butter.labels = {'Yes','No'};
 hpf_butter.values = {1,0};
-hpf_butter.val = {0};
+hpf_butter.def = @(val)nirs_get_defaults('model_specify.wls_bglm_specify.hpf_butter', val{:}); 
 hpf_butter.help = {'Choose whether to include a Butterworth High Pass Filter.'
         'Parameters are: order 3, cutoff frequency: 100 s.'}';
     
@@ -2409,7 +2591,8 @@ wls_bglm_specify      = cfg_exbranch;
 wls_bglm_specify.name = 'LIOM GLM Specification';            
 wls_bglm_specify.tag  = 'wls_bglm_specify'; 
 wls_bglm_specify.val  = {NIRSmat dir1 subj units time_res derivs ...
-    volt channel_pca hpf_butter nirs_hpf lpf_butter nirs_lpf nirs_noise wls_or_bglm};
+    volt channel_pca hpf_butter nirs_hpf lpf_butter nirs_lpf nirs_noise ...
+    wls_or_bglm LiomDeleteLarge};
 wls_bglm_specify.prog = @nirs_run_wls_bglm_specify;  
 wls_bglm_specify.vout = @nirs_cfg_vout_wls_bglm_specify; 
 wls_bglm_specify.help = {'Specify LIOM General Linear Model.'};

@@ -1,27 +1,67 @@
 function out = nirs_run_criugm_paces(job)
 prefix = 'r'; %heart "rate"
+DelPreviousData  = job.DelPreviousData;
+try 
+    NewNIRSdir = job.NewDirCopyNIRS.CreateNIRSCopy.NewNIRSdir;
+    NewDirCopyNIRS = 1;
+catch
+    NewDirCopyNIRS = 0;
+end
+
 %_______________________________________________________________________
 % Copyright (C) 2010 Laboratoire d'Imagerie Optique et Moleculaire
 % Clément Bonnéry
 % 2010-10
 
-%Parameters for the FFT
-% Short Term Fourier Transform :
-% windo = job.STFT_param.win_type;                   % Window Hanning
-windo = @hann; %Hamming not coded up?
-windo_width = job.STFT_param.win_width;            % width : 6 seconds
-n = job.STFT_param.Nprobe;                         % number of probes
-fft_size = job.STFT_param.fft_size;                % size of fft
-
 %Boolean to remove channels with no heartbeat from data files
 remove_no_heartbeat = job.remove_no_heartbeat;
-%Wavelength number(s) for detection of heart beat
-%detect_wavelength = job.detect_wavelength; %No longer used
-MinHeartRate = job.MinHeartRate;
-MaxHeartRate = job.MaxHeartRate;
-InternalMinHeartRate = job.InternalMinHeartRate;
-InternalMaxHeartRate = job.InternalMaxHeartRate;
-MaxHeartStdev = job.MaxHeartStdev;
+%Parameters for the FFT
+% Short Term Fourier Transform :
+
+try 
+    %resting state
+    % width : 6 seconds
+    switch job.heart_rate_cfg.heart_resting.STFT_param.win_type
+        case 0
+            windo = @hann; 
+        case 1
+            windo = @hamm; 
+        case 2
+            windo = @rect;           
+    end
+    windo_width = job.heart_rate_cfg.heart_resting.STFT_param.win_width;  
+    % number of probes
+    n = job.heart_rate_cfg.heart_resting.STFT_param.Nprobe;  
+    fft_size = job.heart_rate_cfg.heart_resting.STFT_param.fft_size;    
+    MinHeartRate = job.heart_rate_cfg.heart_resting.MinHeartRate;
+    MaxHeartRate = job.heart_rate_cfg.heart_resting.MaxHeartRate;
+    InternalMinHeartRate = job.heart_rate_cfg.heart_resting.InternalMinHeartRate;
+    InternalMaxHeartRate = job.heart_rate_cfg.heart_resting.InternalMaxHeartRate;
+    MaxHeartStdev = job.heart_rate_cfg.heart_resting.MaxHeartStdev;
+catch
+    %aerobic exercise
+    % width : 6 seconds
+    switch job.heart_rate_cfg.heart_exercise.STFT_param2.win_type2
+        case 0
+            windo = @hann; 
+        case 1
+            windo = @hamm; 
+        case 2
+            windo = @rect;           
+    end
+    windo_width = job.heart_rate_cfg.heart_exercise.STFT_param2.win_width2;  
+    % number of probes
+    n = job.heart_rate_cfg.heart_exercise.STFT_param2.Nprobe2;  
+    fft_size = job.heart_rate_cfg.heart_exercise.STFT_param2.fft_size2;    
+    MinHeartRate = job.heart_rate_cfg.heart_exercise.MinHeartRate2;
+    MaxHeartRate = job.heart_rate_cfg.heart_exercise.MaxHeartRate2;
+    InternalMinHeartRate = job.heart_rate_cfg.heart_exercise.InternalMinHeartRate2;
+    InternalMaxHeartRate = job.heart_rate_cfg.heart_exercise.InternalMaxHeartRate2;
+    MaxHeartStdev = job.heart_rate_cfg.heart_exercise.MaxHeartStdev2;
+
+end
+
+
 %to store output information for all subjects on heartrate
 heartpace_all = {};
 
@@ -200,7 +240,16 @@ for Idx=1:size(job.NIRSmat,1)
             %NIRS.Cf.H.C.ok{f,1} = Cok';
  
             [dir1,fil1,ext1] = fileparts(rDtp{f});
-            outfile = fullfile(dir1,[prefix fil1 ext1]);
+            if NewDirCopyNIRS
+                dir2 = [dir1 filesep NewNIRSdir];
+                if ~exist(dir2,'dir'), mkdir(dir2); end; 
+                outfile = fullfile(dir2,[prefix fil1 ext1]);
+            else
+                outfile = fullfile(dir1,[prefix fil1 ext1]);
+            end
+            if DelPreviousData
+                delete(rDtp{f,1});
+            end
             fwrite_NIR(outfile,d);
             %add outfile name to NIRS
             if f == 1
@@ -239,7 +288,11 @@ for Idx=1:size(job.NIRSmat,1)
             try NIRS.Cf.H.C.gp = NIRS.Cf.H.C.gp(first_k2); end
             try NIRS.Cf.H.C.ok = NIRS.Cf.H.C.ok(first_k2); end 
         end
-        save(job.NIRSmat{Idx,1},'NIRS'); 
+        if NewDirCopyNIRS
+            save(fullfile(dir2,'NIRS.mat'),'NIRS');            
+        else
+            save(job.NIRSmat{Idx,1},'NIRS'); 
+        end
         heartpace_all = [heartpace_all; heartpace];
     catch
         disp(['Could not analyze heart rate for subject' int2str(Idx)]);
