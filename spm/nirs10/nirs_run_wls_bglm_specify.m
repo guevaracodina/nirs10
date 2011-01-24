@@ -100,11 +100,15 @@ for Idx=1:size(job.NIRSmat,1)
         fs = NIRS.Cf.dev.fs;
         nsess = size(rDtp,1);
 
-        [dir1, ~, ~] = fileparts(rDtp{1,1});
+        [dir1, fil1, ext1] = fileparts(rDtp{1,1});
         %create directory for stats for this subject
         spm_dir = fullfile(dir1,job.dir1);
         if ~exist(spm_dir,'dir'), mkdir(spm_dir); end
-
+        %copy NIRS.mat and datafile to spm_dir, for storage only
+        if ~job.LiomDeleteLarge
+            copyfile(job.NIRSmat{Idx,1},fullfile(spm_dir,'NIRS.mat'));
+            copyfile(rDtp{1,1},fullfile(spm_dir,[fil1 ext1]));
+        end
         %Find onsets
         try
             SPM.Sess = NIRS.Dt.fir.Sess;

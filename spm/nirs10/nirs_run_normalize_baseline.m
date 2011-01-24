@@ -1,6 +1,13 @@
 function out = nirs_run_normalize_baseline(job)
 %filename prefix 
 prefix = 'b'; %for "baseline"
+DelPreviousData  = job.DelPreviousData;
+try 
+    NewNIRSdir = job.NewDirCopyNIRS.CreateNIRSCopy.NewNIRSdir;
+    NewDirCopyNIRS = 1;
+catch
+    NewDirCopyNIRS = 0;
+end
 bl_m = job.Normalize_OD;
 group_consecutive_markers = 0; %boolean
 add_or_mult = job.add_or_mult;
@@ -194,7 +201,16 @@ for Idx=1:size(job.NIRSmat,1)
             end
            
             [dir1,fil1,ext1] = fileparts(rDtp{f});
-            outfile = fullfile(dir1,[prefix fil1 ext1]);
+            if NewDirCopyNIRS
+                dir2 = [dir1 filesep NewNIRSdir];
+                if ~exist(dir2,'dir'), mkdir(dir2); end; 
+                outfile = fullfile(dir2,[prefix fil1 ext1]);
+            else
+                outfile = fullfile(dir1,[prefix fil1 ext1]);
+            end
+            if DelPreviousData
+                delete(rDtp{f,1});
+            end
             fwrite_NIR(outfile,d);
             %add outfile name to NIRS
             if f == 1
@@ -210,7 +226,11 @@ for Idx=1:size(job.NIRSmat,1)
             catch
             end
         end 
-        save(job.NIRSmat{Idx,1},'NIRS');   
+        if NewDirCopyNIRS
+            save(fullfile(dir2,'NIRS.mat'),'NIRS');            
+        else
+            save(job.NIRSmat{Idx,1},'NIRS'); 
+        end 
     catch
         disp(['Could not normalize to baseline for subject' int2str(Idx)]);
     end       

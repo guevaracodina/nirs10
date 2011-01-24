@@ -4,15 +4,27 @@ function nirs_criugm_paces_defaults
 %                    École Polytechnique de Montréal
 %______________________________________________________________________
 global nirs10
-
-nirs10.preprocessNIRS.criugm_paces1.win_type = 0;
-nirs10.preprocessNIRS.criugm_paces1.win_width = 20;
-nirs10.preprocessNIRS.criugm_paces1.Nprobe = 200;
-nirs10.preprocessNIRS.criugm_paces1.fft_size = 1024;
 nirs10.preprocessNIRS.criugm_paces1.remove_no_heartbeat = 1;
-nirs10.preprocessNIRS.criugm_paces1.detect_wavelength = 1;
-nirs10.preprocessNIRS.criugm_paces1.MinHeartRate = 0.5;
-nirs10.preprocessNIRS.criugm_paces1.MaxHeartRate = 2;
-nirs10.preprocessNIRS.criugm_paces1.InternalMinHeartRate = 0.5;
-nirs10.preprocessNIRS.criugm_paces1.InternalMaxHeartRate = 5; %or 3?
-nirs10.preprocessNIRS.criugm_paces1.MaxHeartStdev = 0.3;
+%nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg = {heart_resting};
+%configuration for resting state
+nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.STFT_param.win_type = 0;
+nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.STFT_param.win_width = 20;
+nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.STFT_param.Nprobe = 200;
+nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.STFT_param.fft_size = 1024;
+nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.detect_wavelength = 1;
+nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.MinHeartRate = 0.5;
+nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.MaxHeartRate = 2;
+nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.InternalMinHeartRate = 0.5;
+nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.InternalMaxHeartRate = 5; %or 3?
+nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.MaxHeartStdev = 0.3;
+%configuration for aerobic exercise
+nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.STFT_param2.win_type2 = 0;
+nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.STFT_param2.win_width2 = 20;
+nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.STFT_param2.Nprobe2 = 200;
+nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.STFT_param2.fft_size2 = 1024;
+nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.detect_wavelength2 = 1;
+nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.MinHeartRate2 = 0.5;
+nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.MaxHeartRate2 = 2;
+nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.InternalMinHeartRate2 = 0.5;
+nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.InternalMaxHeartRate2 = 5; %or 3?
+nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.MaxHeartStdev2 = 0.3;

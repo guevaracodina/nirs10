@@ -1,6 +1,14 @@
 function out = nirs_run_ODtoHbOHbR(job)
 %filename prefix
 prefix = 'h'; %for "hemoglobin" concentrations
+DelPreviousData  = job.DelPreviousData;
+try 
+    NewNIRSdir = job.NewDirCopyNIRS.CreateNIRSCopy.NewNIRSdir;
+    NewDirCopyNIRS = 1;
+catch
+    NewDirCopyNIRS = 0;
+end
+
 for Idx=1:size(job.NIRSmat,1)
     %Load NIRS.mat information
     try
@@ -136,8 +144,17 @@ for Idx=1:size(job.NIRSmat,1)
                 [NIRS c bpi bpd] = NIRS_SPM_filter(NIRS,K,c,DSon,...
                     df,bpi,bpd,markers_available);                   
             end
-
-            outfile = fullfile(dir1,[prefix fil1 ext1]);
+            [dir1,fil1,ext1] = fileparts(rDtp{f});
+            if NewDirCopyNIRS
+                dir2 = [dir1 filesep NewNIRSdir];
+                if ~exist(dir2,'dir'), mkdir(dir2); end; 
+                outfile = fullfile(dir2,[prefix fil1 ext1]);
+            else
+                outfile = fullfile(dir1,[prefix fil1 ext1]);
+            end
+            if DelPreviousData
+                delete(rDtp{f,1});
+            end
             fwrite_NIR(outfile,c);
             %add outfile name to NIRS
             if f == 1
@@ -157,7 +174,11 @@ for Idx=1:size(job.NIRSmat,1)
 %             disp('Could not convert optical densities to HbO/HbR');
 %         end
 %         
-        save(job.NIRSmat{Idx,1},'NIRS');
+        if NewDirCopyNIRS
+            save(fullfile(dir2,'NIRS.mat'),'NIRS');            
+        else
+            save(job.NIRSmat{Idx,1},'NIRS'); 
+        end
     catch
         disp(['Conversion of optical intensities to hemoglobin ',...
             'concentrations failed for subject ' int2str(Idx)]);
