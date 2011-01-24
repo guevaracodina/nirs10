@@ -121,6 +121,21 @@ Lambda.def     = @(val)nirs_get_defaults('readNIRS.boxy1.cf1.Lambda', val{:});
 Lambda.help    = {'Near Infrared laser wavelengths. Note order is critical and'
     'must correspond to recording order in raw data files.'}'; 
     
+%wavelengths sensitive to HbO - NOT USED - calculated in the code based on 
+%info stored in NIRS.Cf.dev.wl
+% LambdaHbO         = cfg_entry; %Lambda
+% LambdaHbO.name    = 'Wavelengths most sensitive to HbO';
+% LambdaHbO.tag     = 'LambdaHbO';       
+% LambdaHbO.strtype = 'r';
+% LambdaHbO.num     = [1 Inf];     
+% LambdaHbO.def     = @(val)nirs_get_defaults('readNIRS.boxy1.cf1.LambdaHbO', val{:}); 
+% LambdaHbO.help    = {'Enter a vector, with one entry for each wavelength,'
+%             'Indicating with a 1 if the wavelength is most sensitive to HbO'
+%             'and with a 0 if it is less sensitive. With more than 2 wavelengths,'
+%             'several wavelengths could be sensitive to HbO. This vector of '
+%             'Booleans will be used for detection of heart rate and Mayer waves,'
+%             'and for the configuration of Monte Carlo files.'}'; 
+
 %Input frequency
 input2         = cfg_entry; 
 input2.name    = 'Input frequency';
@@ -706,11 +721,40 @@ testAmplitude.tag     = 'testAmplitude';
 testAmplitude.strtype = 'r';
 testAmplitude.num     = [1 Inf];     
 testAmplitude.def     = @(val)nirs_get_defaults(...
-            'readOnsets.addTestStimuli.testAmplitude', val{:}); 
+            'readOnsets.addTestStimuli.testAmplitudeTarget.testAmplitude', val{:}); 
 testAmplitude.help    = {'Enter desired response amplitude as a percentage. '
     'This will be understood as a percentage of the median of the raw intensity '
     'signal. If several channels are tested, a vector of percentages can '
-    'be entered, that will be applied channelwise.'}';
+    'be entered, that will be applied channelwise.'
+    'effective SNR will be calculated for each channel and protocole.'}';
+
+testSNR         = cfg_entry; 
+testSNR.name    = 'Test SNR value';
+testSNR.tag     = 'testSNR';       
+testSNR.strtype = 'r';
+testSNR.num     = [1 Inf];     
+testSNR.def     = @(val)nirs_get_defaults(...
+            'readOnsets.addTestStimuli.testAmplitudeTarget.testSNR', val{:}); 
+testSNR.help    = {'Enter desired SNR in dB. '
+    'The amplitude to be applied to each channel will be calculated '
+    'Based on the formula SNR = 10 log10 (A * Ep/Eb),'
+    'Where A is the amplitude, Eb is the power of the baseline (the sum'
+    'of squares of amplitudes at each time point) and Ep is the power of'
+    'the protocole after convolution with the HRFs.'
+    'This option will result in a constant SNR value for each channel '
+    'and each protocole, but the amplitude will vary.'
+    'The calculated value for the amplitude will be stored.'}';
+
+testAmplitudeTarget        = cfg_choice;
+testAmplitudeTarget.name   = 'Target Amplitude or SNR';
+testAmplitudeTarget.tag    = 'testAmplitudeTarget';
+testAmplitudeTarget.values = {testAmplitude testSNR};
+%Do not know how to specify a default value by a call using .def for a 
+%cfg_choice object
+testAmplitudeTarget.val    = {testSNR};
+testAmplitudeTarget.help   = {'Choose whether target an amplitude level'
+                        'Or a signal-to-noise ratio (SNR).'}';
+
 
 testAmplitude2         = cfg_entry; 
 testAmplitude2.name    = '2nd Volterra response amplitude';
@@ -747,7 +791,7 @@ addTestStimuli      = cfg_exbranch;
 addTestStimuli.name = 'Add Stimuli with HRFs for testing';             
 addTestStimuli.tag  = 'addTestStimuli'; 
 addTestStimuli.val  = {NIRSmat testStimulusName testStimuliNumber ...
-                testSessionNumber testWavelength testAmplitude ...
+                testSessionNumber testWavelength testAmplitudeTarget ...
                 voltAddStim testAmplitude2 keepAllChannels testChannels testPType};   
 addTestStimuli.prog = @nirs_run_addTestStimuli;  
 addTestStimuli.vout = @nirs_cfg_vout_addTestStimuli; 
@@ -1454,6 +1498,27 @@ add_or_mult.def  = @(val)nirs_get_defaults('preprocessNIRS.normalize_baseline.ad
 add_or_mult.help = {'Select whether using additive (on concentrations for example)'
     'or multiplicative (on optical intensities) normalization.' }';
 
+baseline_duration         = cfg_entry; 
+baseline_duration.name    = 'Baseline duration'; % The displayed name
+baseline_duration.tag     = 'baseline_duration';       %file names
+baseline_duration.strtype = 'r';  
+baseline_duration.num     = [1 1];     % Number of inputs required 
+%baseline_duration.val{1}  = 100;
+baseline_duration.def     = @(val)nirs_get_defaults('preprocessNIRS.normalize_baseline.baseline_duration', val{:});
+baseline_duration.help    = {'Enter the baseline duration in seconds to use '
+                    'prior to stimuli - applies only '
+                    'to the normalization type by stimuli below.)'}'; 
+
+normalization_type      = cfg_menu;
+normalization_type.tag  = 'normalization_type';
+normalization_type.name = 'Normalization type';
+normalization_type.labels = {'Global', 'By bad point segments', 'By stimuli'};
+normalization_type.values = {1,2,3};
+normalization_type.def  = @(val)nirs_get_defaults('preprocessNIRS.normalize_baseline.normalization_type', val{:});
+normalization_type.help = {'Normalization type: global, by bad point segments, before stimuli.'
+    'When normalizing by stimuli, the code finds each stimulus instance '
+    'and uses the time window specified prior to the stimulus for normalization.'}'; 
+
 Analyzer_sf         = cfg_entry; 
 Analyzer_sf.name    = 'Scaling factor'; % The displayed name
 Analyzer_sf.tag     = 'Analyzer_sf';       %file names
@@ -1462,16 +1527,17 @@ Analyzer_sf.num     = [1 1];     % Number of inputs required
 %Analyzer_sf.val{1}  = 100;
 Analyzer_sf.def     = @(val)nirs_get_defaults('preprocessNIRS.normalize_baseline.Analyzer_sf', val{:});
 Analyzer_sf.help    = {'Apply a scaling factor on the amplitude of '
-                    'all channels (for easier visualization with Analyzer.)'}; 
+                    'all channels (for easier visualization with Analyzer.)'}'; 
                 
 % Executable Branch
 normalize_baseline      = cfg_exbranch;       
 normalize_baseline.name = 'Normalize Baseline';             
 normalize_baseline.tag  = 'normalize_baseline'; 
-normalize_baseline.val  = {NIRSmat Normalize_OD add_or_mult Analyzer_sf};   
+normalize_baseline.val  = {NIRSmat Normalize_OD add_or_mult ...
+        baseline_duration normalization_typeAnalyzer_sf};   
 normalize_baseline.prog = @nirs_run_normalize_baseline;  
 normalize_baseline.vout = @nirs_cfg_vout_normalize_baseline;
-normalize_baseline.help = {['Normalize to baseline']};
+normalize_baseline.help = {'Normalize to baseline'}';
 
 %make NIRS.mat available as a dependency
 function vout = nirs_cfg_vout_normalize_baseline(job)

@@ -202,7 +202,8 @@ for Idx_subj=1:N_subj
     NIRS.Cf.H.C.id = [1:size(oldNIRS.ml,1); oldNIRS.ml(:,1:2)'];
     NIRS.Cf.H.C.wl = oldNIRS.ml(:,4)';
     NIRS.Cf.H.C.gp = [oldNIRS.ChnDist; oldNIRS.ChnDist];
-    
+    %Boolean telling whether a wavelength is HbO-like (1) or HbR-like (0)
+    %NIRS.Cf.H.C.HbO = [ones(1,size(oldNIRS.ml,1)/2) zeros(1,size(oldNIRS.ml,1)/2)];
     %try generating onsets - only saving location for now
     try        
         NIRS.Dt.fir.rons = job.subj(1,Idx_subj).raw_onset_files;

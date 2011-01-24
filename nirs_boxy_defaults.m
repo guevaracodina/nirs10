@@ -12,6 +12,7 @@ nirs10.readNIRS.boxy1.config_path.T1_path = 'T1';
 nirs10.readNIRS.boxy1.config_path.output_path = 'dataSPM';
 nirs10.readNIRS.boxy1.cf1.save_bin1 = true;
 nirs10.readNIRS.boxy1.cf1.Lambda = [830 690]; %Wavelengths (must match the indexing order)
+%nirs10.readNIRS.boxy1.cf1.LambdaHbO = [1 0]; 
 nirs10.readNIRS.boxy1.cf1.freq = 19.5312;
 %maximum distance between source and detector to keep channel, in centimeters
 nirs10.readNIRS.boxy1.cf1.distmax = 6; 
