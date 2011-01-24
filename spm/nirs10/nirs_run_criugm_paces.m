@@ -16,7 +16,7 @@ fft_size = job.STFT_param.fft_size;                % size of fft
 %Boolean to remove channels with no heartbeat from data files
 remove_no_heartbeat = job.remove_no_heartbeat;
 %Wavelength number(s) for detection of heart beat
-detect_wavelength = job.detect_wavelength;
+%detect_wavelength = job.detect_wavelength; %No longer used
 MinHeartRate = job.MinHeartRate;
 MaxHeartRate = job.MaxHeartRate;
 InternalMinHeartRate = job.InternalMinHeartRate;
@@ -36,7 +36,20 @@ for Idx=1:size(job.NIRSmat,1)
         fs = NIRS.Cf.dev.fs;
         %NIRS total number of channels
         NC = NIRS.Cf.H.C.N;
-
+        wl = NIRS.Cf.dev.wl;
+        
+        HbO_like = [];
+        HbR_like = [];
+        for i=1:length(wl)
+            if wl(i) > 750 %in nanometer
+                %found a wavelength that is HbO-like
+                %Note code at present will work for only one HbO-like
+                %wavelength
+                HbO_like = [HbO_like i];
+            else
+                HbR_like = [HbR_like i];
+            end
+        end
         %use last step of preprocessing
         lst = length(NIRS.Dt.fir.pp);
         rDtp = NIRS.Dt.fir.pp(lst).p; % path for files to be processed
@@ -72,7 +85,7 @@ for Idx=1:size(job.NIRSmat,1)
             %Loop over channels
             for Ci=1:NC
                 %Only check channels corresponding to selected wavelength(s)
-                if any(NIRS.Cf.H.C.wl(Ci)== detect_wavelength)
+                if any(NIRS.Cf.H.C.wl(Ci)== HbO_like)
                     dCi = d(Ci,:);
 
                     %Selects pairs where physiology appears (from Script_ProcessDataAccelerometer)
@@ -128,15 +141,18 @@ for Idx=1:size(job.NIRSmat,1)
              
             k2 = k1;
             %only valid if detection was done on first wavelength only
-            if detect_wavelength == 1
+            %if detect_wavelength == 1
                 %complete to all wavelengths
-                wl = NIRS.Cf.dev.wl;
-                nc = NC/length(wl);
+            wl = NIRS.Cf.dev.wl;
+            nc = NC/length(wl);
                 %channel indices for all wavelengths
-                for i3=1:length(wl)-1
-                    k2 = [k2 k2+nc];
+            for i3=1:length(wl)-1
+                %include HbR_like channels
+                for i4=1:length(HbR_like)
+                    k2 = [k2 k2+nc*(-HbO_like+HbR_like(i4))];
                 end
             end
+            %end
             %remove only channels that were not detected in the first
             %session - to harmonize all the sessions
             if f == 1

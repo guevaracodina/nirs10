@@ -61,7 +61,14 @@ for Idx=1:size(job.NIRSmat,1)
         tn = job.testStimuliNumber;
         ts = job.testSessionNumber;
         tl = job.testWavelength;
-        ta = job.testAmplitude/100; 
+        try 
+            ta = job.testAmplitudeTarget.testAmplitude/100; 
+            AmpTargetMethod = 1;
+        catch
+            tSNR = job.testAmplitudeTarget.testSNR; 
+            AmpTargetMethod = 0;
+        end
+            
         try tb = job.testAmplitude2/100; catch; end
         tname = job.testStimulusName;
         volt = job.voltAddStim;
@@ -215,6 +222,21 @@ for Idx=1:size(job.NIRSmat,1)
         %convolve stimuli U with basis functions
         [X,Xn,Fc] = spm_Volterra(U,bf,V); 
         X = X(33:end,:);
+        
+        %calculate power of protocole
+        switch volt
+            case 1 
+                %this will not work if we have subsessions
+                %Assumes that first column is the canonical HRF
+                m1 = mean(X(:,1));
+                NIRS.Dt.fir.Ep = sum((X(:,1)-m1).^2)/size(X,1);
+            case 2
+                %Assumes first column is canonical HRF and second column
+                %is second Volterra kernel
+                m1 = mean(X(:,1)+tb*X(:,2));
+                %this assumes that tb is the same for each channel
+                NIRS.Dt.fir.Ep = sum((X(:,1)+tb*X(:,2)-m1).^2)/size(X,1);
+        end
         %sum contributions from each regressor with a weight of 1
         %X = sum(X,2);
         %X should be our regressors
@@ -224,14 +246,43 @@ for Idx=1:size(job.NIRSmat,1)
             %unpredictable
             %m = abs(median(dc(Cidx,:)));
             %Take standard deviation instead
-            m = std(dc(Cidx,:));
             
-            %amplitude
-            if length(ta) > 1 
-                a = (exp(ta(Cidx))-1)*m; %don't bother exponentiating a variation that 
+            %calculate power of baseline
+            m1 = mean(dc(Cidx,:));
+            NIRS.Dt.fir.Eb(Cidx) = sum((dc(Cidx,:)-m1).^2)/ns;
+            
+            
+            if AmpTargetMethod
+                %target amplitude
+                if length(ta) > 1
+                    a2 = ta(Cidx);
+                else
+                    a2 = ta;
+                end
+                
+                %Boolean - for testing
+                std_or_power = 0;
+                if std_or_power
+                    m = std(dc(Cidx,:)); 
+                    a = a2*m;
+                    NIRS.Dt.fir.SNR(Cidx) = 10*log10((a2*m)^2*NIRS.Dt.fir.Ep/NIRS.Dt.fir.Eb(Cidx));
+                else
+                    m = NIRS.Dt.fir.Eb(Cidx)/NIRS.Dt.fir.Ep;
+                    a = a2*m^(0.5);
+                    NIRS.Dt.fir.SNR(Cidx) = 10*log10(a2); 
+                end
+                                
+                                                           
+                NIRS.Dt.fir.a(Cidx) = a;
+                NIRS.Dt.fir.std_or_power = std_or_power;
             else
-                a = (exp(ta)-1)*m;
+                %target SNR
+                a = (10^(tSNR/10)*NIRS.Dt.fir.Eb(Cidx)/NIRS.Dt.fir.Ep)^(0.5);
+                NIRS.Dt.fir.SNR(Cidx) = tSNR;
+                NIRS.Dt.fir.a(Cidx) = a;
+                
             end
+                               
             %is only a few percent point-by-point on the stimuli
             switch volt
                 case 1                    
@@ -244,7 +295,7 @@ for Idx=1:size(job.NIRSmat,1)
                     end
                     a = [a b*a]; 
                     d(chn(Cidx),:) = dc(Cidx,:)+a*(X'); 
-            end
+            end               
         end %end for Cidx
         %[dir1 fil1 ext1] = fileparts(NIRS.Dt.fir.raw.p{ts,:});
         if ~AllChannels

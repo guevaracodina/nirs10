@@ -98,7 +98,7 @@ for Idx=1:nSubj
                     end
 
                     %get t stat for each iteration
-                    r = 2; t = zeros(IN,sz_beta(2));
+                    r = 1; t = zeros(IN,sz_beta(2));
                     for i=1:IN
                         t(i,:) = squeeze(beta(i,r,:)) ./sqrt(squeeze(Bvar(i,r,:)));
                     end
@@ -170,8 +170,8 @@ for Idx=1:nSubj
                 
                 %tFPb = FPb; tFPu = FPu; tTPb = TPb; tTPu = TPu; 
                 %FPb = FPb{Jidx,:}; tFPu = FPu{Jidx,:}; tTPb = TPb{Jidx,:}; tTPu = TPu{Jidx,:};                  
-                save(fullfile(dirROC,['ROC' testName int2str(Jidx) '.mat']),...
-                    'TPb','FPb','TPu','FPu');
+                %save(fullfile(dirROC,['ROC' testName int2str(Jidx) '.mat']),...
+                %    'TPb','FPb','TPu','FPu');
                 %FPb = tFPb; FPu = tFPu; TPb = tTPb; TPu = tTPu;
                 
                 %to display a design matrix:
@@ -222,7 +222,8 @@ linespec{5,1} = 'x';
 linespec{6,1} = 's';
 linespec{7,1} = 'd';
 linespec{8,1} = '^';
-
+linespec{9,1} = 'p';
+linespec{10,1} = 'h';
 
 for Idx=1:nSubj    
     for Jidx= 1:nJob

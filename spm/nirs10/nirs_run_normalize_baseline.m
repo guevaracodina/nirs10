@@ -34,7 +34,7 @@ for Idx=1:size(job.NIRSmat,1)
             catch
                 markers_available = 0;
             end
-            if markers_available
+            if markers_available && job.normalization_type == 2
                 %temporary for data
                 td = zeros(size(d));
                 %group consecutive markers, as an option
@@ -44,25 +44,6 @@ for Idx=1:size(job.NIRSmat,1)
                 for i=1:length(si)
                     try
                         e = d(:,si(i):ei(i));
-%                         switch i
-%                             case 1
-%                                 if bpi(1) == 1
-%                                     e = [];
-%                                 else
-%                                     %interval before first marker
-%                                     e=d(:,1:bpi(1)-1);
-%                                 end
-%                             case length(bpi)+1
-%                                 if size(d,2) == bpi(end)+bpd(end)+1
-%                                     e = [];
-%                                 else
-%                                     %interval after last marker
-%                                     e=d(:,bpi(end)+bpd(end)+1:end);
-%                                 end
-%                             otherwise
-%                                 %all other intervals
-%                                 e=d(:,bpi(i-1)+bpd(i-1)+1:bpi(i)-1);
-%                         end
                     catch
                         e = [];
                     end
@@ -86,74 +67,129 @@ for Idx=1:size(job.NIRSmat,1)
                     try
                         if ~isempty(e)
                             div_factor = div_factor*ones(1,size(e,2));
+
                             if add_or_mult
-                                td(:,si(i):ei(i)) = (100+(e-div_factor))*job.Analyzer_sf;
+                                %normalize median to 75 uM for HbO and 25 uM for HbR
+                                wl = NIRS.Cf.dev.wl;
+                                HbO_like = [];
+                                HbR_like = [];
+                                for i=1:length(wl)
+                                    if wl(i) > 750 %in nanometer
+                                        %found a wavelength that is HbO-like
+                                        %Note code at present will work for only one HbO-like
+                                        %wavelength
+                                        HbO_like = [HbO_like i];
+                                    else
+                                        HbR_like = [HbR_like i];
+                                    end
+                                end
+                                %HbO channels
+                                ch = find(NIRS.Cf.H.C.wl== HbO_like);
+                                td(:,si(i):ei(i)) = (75+(e(ch,:)-div_factor))*job.Analyzer_sf;
+                                %HbR channels
+                                ch = find(NIRS.Cf.H.C.wl== HbR_like);
+                                td(:,si(i):ei(i)) = (25+(e(ch,:)-div_factor))*job.Analyzer_sf;
                             else
                                 td(:,si(i):ei(i)) = e./div_factor*job.Analyzer_sf; 
-                            end
-                            
-%                             switch i
-%                                 case 1
-%                                     %interval before first marker
-%                                     if add_or_mult
-%                                         td(:,1:bpi(1)-1) = (100+(e-div_factor))*job.Analyzer_sf;
-%                                     else
-%                                         td(:,1:bpi(1)-1) = e./div_factor*job.Analyzer_sf;
-%                                     end
-%                                 case length(bpi)+1
-%                                     if add_or_mult
-%                                         %interval after last marker
-%                                         td(:,bpi(end)+bpd(end)+1:end) = (100+(e-div_factor))*job.Analyzer_sf;
-%                                     else
-%                                         td(:,bpi(end)+bpd(end)+1:end) = e./div_factor*job.Analyzer_sf;
-%                                     end
-%                                 otherwise
-%                                     if add_or_mult
-%                                     %all other intervals
-%                                         td(:,bpi(i-1)+bpd(i-1)+1:bpi(i)-1) = (100+(e-div_factor))*job.Analyzer_sf;
-%                                     else
-%                                         td(:,bpi(i-1)+bpd(i-1)+1:bpi(i)-1) = e./div_factor*job.Analyzer_sf;
-%                                     end
-%                             end
+                            end 
                         end
                     catch
                         %do nothing
                     end
-                    %interpolate linearly over bad intervals??? or do
-                    %nothing??
-                    
-                    
+                                        
                 end
                 %replace d - this sets intervals with movement to zero
                 d=td;
             else
-                %no markers available - then normalize whole series
-                bpi = [];
-                bpd = [];
-                
-                try
-                    %Normalization factor
-                    switch bl_m
-                        case 0 %0: Median;
-                            div_factor = median(d,2);
-                        case 1 %1: Initial value
-                            div_factor = d(:,1);
-                        case 2 %mean
-                            div_factor = mean(d,2);
-                        otherwise %take median
-                            div_factor = median(d,2);
+                if job.normalization_type == 3
+                    %Normalize using window prior to stimuli 
+                    baseline_duration = round(job.baseline_duration*fs);
+                    %take first stimulus - could generalize to loop over all
+                    %stimuli
+                    onsets = NIRS.Dt.fir.Sess(f).U(1).ons;
+                    %loop over onsets
+                    for i1=1:length(onsets)
+                        %find window to normalize over
+                        %end of window
+                        wine = round(onsets(i1)*fs);
+                        if baseline_duration < wine - 1
+                            %start of baseline
+                            wins = wine - baseline_duration;
+                        else
+                            wins = 1;
+                        end
+                        win = wins:wine;
+                        try
+                            %Normalization factor
+                            switch bl_m
+                                case 0 %0: Median;
+                                    div_factor = median(d(:,win),2);
+                                case 1 %1: Initial value - not too sensible - better last value
+                                    div_factor = d(:,win(end));
+                                case 2 %mean
+                                    div_factor = mean(d(:,win),2);
+                                otherwise %take median
+                                    div_factor = median(d(:,win),2);
+                            end
+                        catch
+                            div_factor = 1;
+                        end
+                        %Normalize to the next stimulus only
+                        if i1 < length(onsets)
+                            wine2 = round(onsets(i1+1)*fs)-1;                           
+                        else
+                            wine2 = size(d,2);                           
+                        end
+                        win2 = wins:wine2;
+                        div_factor = div_factor * ones(1,length(win2));
                     end
-                catch
-                    div_factor = 1;
-                end
-                div_factor = div_factor * ones(1,size(d,2));
-                %normalize
-                if add_or_mult
-                    %normalize median to 100 uM
-                    
-                    d = (100+(d-div_factor))*job.Analyzer_sf; 
                 else
-                    d = d./div_factor*job.Analyzer_sf; 
+                    %global normalization either requested or because
+                    %no markers available - then normalize whole series
+                    bpi = [];
+                    bpd = [];
+
+                    try
+                        %Normalization factor
+                        switch bl_m
+                            case 0 %0: Median;
+                                div_factor = median(d,2);
+                            case 1 %1: Initial value
+                                div_factor = d(:,1);
+                            case 2 %mean
+                                div_factor = mean(d,2);
+                            otherwise %take median
+                                div_factor = median(d,2);
+                        end
+                    catch
+                        div_factor = 1;
+                    end
+                    div_factor = div_factor * ones(1,size(d,2));
+                    %normalize
+                    if add_or_mult
+                        %normalize median to 75 uM for HbO and 25 uM for HbR
+                        wl = NIRS.Cf.dev.wl;
+                        HbO_like = [];
+                        HbR_like = [];
+                        for i=1:length(wl)
+                            if wl(i) > 750 %in nanometer
+                                %found a wavelength that is HbO-like
+                                %Note code at present will work for only one HbO-like
+                                %wavelength
+                                HbO_like = [HbO_like i];
+                            else
+                                HbR_like = [HbR_like i];
+                            end
+                        end
+                        %HbO channels
+                        ch = find(NIRS.Cf.H.C.wl== HbO_like);
+                        d(ch,:) = (75+(d(ch,:)-div_factor))*job.Analyzer_sf;
+                        %HbR channels
+                        ch = find(NIRS.Cf.H.C.wl== HbR_like);
+                        d(ch,:) = (25+(d(ch,:)-div_factor))*job.Analyzer_sf; 
+                    else
+                        d = d./div_factor*job.Analyzer_sf; 
+                    end
                 end
             end
            
