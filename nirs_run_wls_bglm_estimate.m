@@ -154,7 +154,7 @@ for Idx=1:size(job.NIRSmat,1)
                             nbeta = size(SPM.xX.X,2);
                             nbetaS = (nbeta-nsess)/nsess;
                             %last entry is the constant regressor
-                            beta = [(s-1)*nbetaS+1:nbetaS nbeta-nsess+s];
+                            beta = [(s-1)*nbetaS+1:s*nbetaS nbeta-nsess+s];
 
                             if markers_available
                                 svec = SPM.Sess(s).row(si(iSubSess):ei(iSubSess)); 
@@ -226,7 +226,10 @@ for Idx=1:size(job.NIRSmat,1)
                                 %tstat
                                 tSPM.xX.t=tSPM.xX.beta./sqrt(tSPM.xX.Bvar);
                             case 'NIRS_SPM'
-
+                                for r=1:size(tSPM.xX.beta,1)
+                                    tSPM.xX.t(r,:) = tSPM.xX.beta(r,:)./...
+                                        sqrt(tSPM.xX.ResSS(:)'*tSPM.xX.Bcov(r,r)/tSPM.xX.trRV);
+                                end
                         end
 
                         %Add piece of SPM to the whole SPM                    
@@ -234,7 +237,13 @@ for Idx=1:size(job.NIRSmat,1)
                         SPM.xXn{iSPM} = tSPM.xX;
                     end %end for 1:nSubSess
                 end 
-            
+                try
+                    K = SPM.xX.K;
+                    K = rmfield(K, 'X');
+                    K = rmfield(K, 'KL');
+                    SPM.xX.K = K;
+                    %clear K;
+                end
                 switch SPM.xX.opt.meth
                     case {'BGLM', 'WLS'}
                         SPM.beta      = 0; 

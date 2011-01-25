@@ -2545,7 +2545,8 @@ LiomDeleteLarge.tag  = 'LiomDeleteLarge';
 LiomDeleteLarge.name = 'Delete large files';
 LiomDeleteLarge.labels = {'Yes','No'};
 LiomDeleteLarge.values = {1,0};
-LiomDeleteLarge.def = @(val)nirs_get_defaults('model_specify.wls_bglm_specify.LiomDeleteLarge', val{:}); 
+LiomDeleteLarge.def = @(val)nirs_get_defaults(...
+    'model_specify.wls_bglm_specify.LiomDeleteLarge', val{:}); 
 LiomDeleteLarge.help = {'Delete large files (.nir and NIRS.mat) after each estimation.'};
 
 wls_or_bglm      = cfg_menu;
@@ -2558,6 +2559,24 @@ wls_or_bglm.help = {'Choose which GLM method to use:'
             'WLS: wavelet least square'
             'BGLM: Bayesian general linear model'
             'NIRS_SPM: Ye et al methods, with either precoloring or prewhitening.'}';
+
+GLM_include_cardiac    = cfg_menu;
+GLM_include_cardiac.name   = 'Include cardiac regressor';
+GLM_include_cardiac.tag    = 'GLM_include_cardiac';
+GLM_include_cardiac.labels = {'Yes','No'};
+GLM_include_cardiac.values = {1,0};
+GLM_include_cardiac.def    = @(val)nirs_get_defaults(...
+    'model_specify.wls_bglm_specify.GLM_include_cardiac', val{:});
+GLM_include_cardiac.help   = {'Include cardiac regressor if available.'};
+
+GLM_include_Mayer    = cfg_menu;
+GLM_include_Mayer.name   = 'Include Mayer wave regressor';
+GLM_include_Mayer.tag    = 'GLM_include_Mayer';
+GLM_include_Mayer.labels = {'Yes','No'};
+GLM_include_Mayer.values = {1,0};
+GLM_include_Mayer.def    = @(val)nirs_get_defaults(...
+    'model_specify.wls_bglm_specify.GLM_include_Mayer', val{:});
+GLM_include_Mayer.help   = {'Include Mayer wave regressor if available.'};
 
 channel_pca      = cfg_menu;
 channel_pca.tag  = 'channel_pca';
@@ -2591,7 +2610,8 @@ wls_bglm_specify      = cfg_exbranch;
 wls_bglm_specify.name = 'LIOM GLM Specification';            
 wls_bglm_specify.tag  = 'wls_bglm_specify'; 
 wls_bglm_specify.val  = {NIRSmat dir1 subj units time_res derivs ...
-    volt channel_pca hpf_butter nirs_hpf lpf_butter nirs_lpf nirs_noise ...
+    volt GLM_include_cardiac GLM_include_Mayer ...
+    channel_pca hpf_butter nirs_hpf lpf_butter nirs_lpf nirs_noise ...
     wls_or_bglm LiomDeleteLarge};
 wls_bglm_specify.prog = @nirs_run_wls_bglm_specify;  
 wls_bglm_specify.vout = @nirs_cfg_vout_wls_bglm_specify; 
@@ -2859,7 +2879,7 @@ vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% ROC - Receiver Operating Curve Module - Sensitivity and specificity test
+% Analyze GLMs - loop over subjects and jobs, to plot simple t contrasts
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 ROCLoopJob         = cfg_files;  
@@ -2869,6 +2889,27 @@ ROCLoopJob.ufilter = '.mat';
 ROCLoopJob.num     = [1 Inf];    
 ROCLoopJob.help    = {'Select .mat-format previously specified '
                         'and saved job(s) to loop over.'}'; 
+
+% Executable Branch
+AnalyzeGLM      = cfg_exbranch;       
+AnalyzeGLM.name = 'Analyze GLMs';            
+AnalyzeGLM.tag  = 'AnalyzeGLM';
+AnalyzeGLM.val  = {NIRSmat ROCLoopJob}; 
+AnalyzeGLM.prog = @nirs_run_AnalyzeGLM;  
+AnalyzeGLM.vout = @nirs_cfg_vout_AnalyzeGLM; 
+AnalyzeGLM.help = {'This module performs a large loop over GLMs'
+            'from different jobs and subjects.'}';
+
+function vout = nirs_cfg_vout_AnalyzeGLM(job)
+vout = cfg_dep;                     
+vout.sname      = 'NIRS.mat';       
+vout.src_output = substruct('.','NIRSmat'); 
+vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ROC - Receiver Operating Curve Module - Sensitivity and specificity test
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 ROCDeleteLarge      = cfg_menu;
 ROCDeleteLarge.tag  = 'ROCDeleteLarge';
@@ -3255,7 +3296,8 @@ model_estimate        = cfg_choice; %cfg_repeat;
 model_estimate.name   = 'GLM Estimation';
 model_estimate.tag    = 'model_estimate';
 model_estimate.values = {wls_bglm_estimate NIRS_SPM_HPF_LPF NIRS_SPM_estimate ...
-            NIRS_SPM_estimate_batch NIRS_SPM_contrast NIRS_SPM_group ROCtest};
+            NIRS_SPM_estimate_batch NIRS_SPM_contrast NIRS_SPM_group ...
+            AnalyzeGLM ROCtest};
 model_estimate.help   = {'These modules estimate a GLM.'};
  
 %module 11

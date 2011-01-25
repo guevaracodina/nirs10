@@ -73,7 +73,7 @@ try
 catch
     try 
         job.nirs_lpf.lpf_hrf;
-        LPF = ['hrf'];
+        LPF = 'hrf';
     catch
         try
             job.nirs_lpf.lpf_none;
@@ -107,7 +107,9 @@ for Idx=1:size(job.NIRSmat,1)
         %copy NIRS.mat and datafile to spm_dir, for storage only
         if ~job.LiomDeleteLarge
             copyfile(job.NIRSmat{Idx,1},fullfile(spm_dir,'NIRS.mat'));
-            copyfile(rDtp{1,1},fullfile(spm_dir,[fil1 ext1]));
+            for f=1:nsess
+                copyfile(rDtp{f},fullfile(spm_dir,[fil1 ext1]));
+            end
         end
         %Find onsets
         try
@@ -189,16 +191,25 @@ for Idx=1:size(job.NIRSmat,1)
 
         %quick fix for now
         C = [];
-        Cname = {};
+        Cname = {};        
         for f=1:nsess
             try 
-                %heart rate regressor
-                C = NIRS.Dt.fir.Sess(f).fR{1};
-                Cname = {'H'};
+                if job.GLM_include_cardiac
+                    %heart rate regressor
+                    C = NIRS.Dt.fir.Sess(f).fR{1};
+                    Cname = {'H'};
+                end
+                if job.GLM_include_Mayer
+                    %Mayer wave regressor
+                    C = [C NIRS.Dt.fir.Sess(f).mR{1}];
+                    Cname = [Cname {'M'}];
+                end
             catch
                 try 
-                    C = NIRS.Dt.fir.Sess(f).cR{1};
-                    Cname = {'H'};
+                    if job.GLM_include_cardiac
+                        C = NIRS.Dt.fir.Sess(f).cR{1};
+                        Cname = {'H'};
+                    end
                 catch
                 end
             end

@@ -99,12 +99,4 @@ SPM.xX.erdf = trRV^2/trRVRV;
 SPM.xX.Bcov = (SPM.xX.pKX * S);
 SPM.xX.Bcov = SPM.xX.Bcov * SPM.xX.Bcov';
 %SPM.nirs.step = 'estimation';
-
-try
-    K = SPM.xX.K;
-    K = rmfield(K, 'X');
-    K = rmfield(K, 'KL');
-    SPM.xX.K = K;
-    %clear K;
-end
 end
