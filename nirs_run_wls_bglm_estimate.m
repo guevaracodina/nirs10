@@ -129,7 +129,7 @@ for Idx=1:size(job.NIRSmat,1)
 
                         %LPF
                         if SPM.xX.LPFbutter                
-                            cutoff=0.666; %Hz, or 1.5s
+                            cutoff=SPM.xX.lpf_butter_freq; %0.666; %Hz, or 1.5s
                             FilterOrder=3;
                             Wn=cutoff*2/fs;                           % normalised cutoff frequency
                             [fb,fa]=butter(FilterOrder,Wn);            % buterworth filter
@@ -138,7 +138,7 @@ for Idx=1:size(job.NIRSmat,1)
 
                         %HPF
                         if SPM.xX.HPFbutter
-                            cutoff=0.01; %Hz, or 100s 
+                            cutoff=SPM.xX.hpf_butter_freq; %Hz, or 100s 
                             FilterOrder=3;
                             Wn=cutoff*2/fs;
                             [fb,fa]=butter(FilterOrder,Wn,'high');

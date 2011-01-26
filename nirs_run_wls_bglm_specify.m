@@ -3,7 +3,6 @@ function out = nirs_run_wls_bglm_specify(job)
 
 %to generate display of design matrix
 flag_window = 1;
-method_cor = job.nirs_noise;
 NIRS.multi_reg = job.subj.multi_reg;
 %group_sessions = job.group_sessions;
 %NIRS.onset_files = job.subj.input_onsets;
@@ -12,18 +11,35 @@ NIRS.multi_reg = job.subj.multi_reg;
 %at the preprocessing stage, but maintained for convenience
 
 %Specify WLS or BGLM parameters
-meth1=job.wls_or_bglm;
+meth0=job.wls_or_bglm;
+try 
+    meth0.NIRS_SPM;
+    meth1 = 'NIRS_SPM';
+catch
+    try
+        meth0.WLS;
+        meth1 = 'WLS';
+    catch
+        try
+            meth0.BGLM;
+            meth1 = 'BGLM';
+        catch
+            disp('Unrecognized method');
+        end
+    end
+end
+
 switch meth1
     case 1
         Opt.meth = 'WLS';
-        Opt.Design.L0=0;                          % maximum scale for signal decomposition=J-L0
-        Opt.Design.J0=7;                          % minimum scale to model physiology
-        Opt.Design.threshold_drift=0.2;           % Threshold for correlation analysis
+        Opt.Design.L0=job.wls_or_bglm.WLS.WLS_L0; % maximum scale for signal decomposition=J-L0
+        Opt.Design.J0=wls_or_bglm.WLS.WLS_J0;     % minimum scale to model physiology
+        Opt.Design.threshold_drift=wls_or_bglm.WLS.WLS_threshold_drift; % Threshold for correlation analysis
     case 2
         Opt.meth = 'BGLM';
-        Opt.Design.fmax=0.15;                    % maximum frequency for cosinusoidal drifts
-        Opt.Design.degre=2;                      % maximum degree for polynomial drifts
-        Opt.Design.threshold_drift=0.1;          % Threshold for correlation analysis
+        Opt.Design.fmax=job.wls_or_bglm.BGLM.BGLM_fmax;   % maximum frequency for cosinusoidal drifts
+        Opt.Design.degre=job.wls_or_bglm.BGLM.BGLM_degre; % maximum degree for polynomial drifts
+        Opt.Design.threshold_drift=job.wls_or_bglm.BGLM.BGLM_threshold_drift; % Threshold for correlation analysis
     case 3
         Opt.meth = 'NIRS_SPM';       
     otherwise
@@ -38,52 +54,59 @@ end
 
 %HPF
 try
-    HPFbutter = job.hpf_butter;
+    hpf_butter_freq = job.hpf_butter.hpf_butter_On.hpf_butter_freq;
+    HPFbutter = 1;
 catch
     HPFbutter = 0; %no high pass filter
+    hpf_butter_freq = 0;
 end
 
 %LPF
 try    
-    LPFbutter = job.lpf_butter; 
+    lpf_butter_freq = job.lpf_butter.lpf_butter_On.lpf_butter_freq; 
+    LPFbutter = 1;
 catch
     LPFbutter = 0; %no low pass filter
+    lpf_butter_freq = 0;
 end
 
 %HPF
-try
-    HPF = ['DCT, ' int2str(job.nirs_hpf.hpf_dct.hpf_dct_cutoff)];
-catch
-    try job.nirs_hpf.hpf_wavelet;
-        HPF = ['wavelet,' int2str(job.nirs_hpf.hpf_wavelet.hpf_wavelet_iter)];
-        %wavelet_depth = job.nirs_hpf.hpf_wavelet.hpf_wavelet_depth;
+if strcmp(meth1,'NIRS_SPM')
+    try
+        HPF = ['DCT, ' int2str(job.wls_or_bglm.NIRS_SPM.nirs_hpf.hpf_dct.hpf_dct_cutoff)];
     catch
-        try job.nirs_hpf.hpf_none;
-            HPF = 'none';
+        try job.wls_or_bglm.NIRS_SPM.nirs_hpf.hpf_wavelet;
+            HPF = ['wavelet,' int2str(job.wls_or_bglm.NIRS_SPM.nirs_hpf.hpf_wavelet.hpf_wavelet_iter)];
+            %wavelet_depth = job.nirs_hpf.hpf_wavelet.hpf_wavelet_depth;
         catch
-            disp('Unrecognized high pass filter');
+            try job.wls_or_bglm.NIRS_SPM.nirs_hpf.hpf_none;
+                HPF = 'none';
+            catch
+                disp('Unrecognized high pass filter');
+            end
         end
     end
 end
 
 %LPF
-try    
-    FWHM = job.nirs_lpf.lpf_gauss.fwhm1;
-    LPF = 'gaussian'; 
-catch
-    try 
-        job.nirs_lpf.lpf_hrf;
-        LPF = 'hrf';
+if strcmp(meth1,'NIRS_SPM')
+    try    
+        FWHM = job.wls_or_bglm.NIRS_SPM.nirs_lpf.lpf_gauss.fwhm1;
+        LPF = 'gaussian'; 
     catch
-        try
-            job.nirs_lpf.lpf_none;
-            LPF = 'none';
+        try 
+            job.wls_or_bglm.NIRS_SPM.nirs_lpf.lpf_hrf;
+            LPF = 'hrf';
         catch
-            disp('Unrecognized low pass filter');
+            try
+                job.wls_or_bglm.NIRS_SPM.nirs_lpf.lpf_none;
+                LPF = 'none';
+            catch
+                disp('Unrecognized low pass filter');
+            end
         end
     end
 end
-
 %Loop over all subjects
 for Idx=1:size(job.NIRSmat,1)
     %Load NIRS.mat information
@@ -429,9 +452,10 @@ for Idx=1:size(job.NIRSmat,1)
         
         %Butterworth high pass filter
         SPM.xX.HPFbutter = HPFbutter;
-        
+        SPM.xX.hpf_butter_freq = hpf_butter_freq;
         %Butterworth low pass filter
         SPM.xX.LPFbutter = LPFbutter;
+        SPM.xX.lpf_butter_freq = lpf_butter_freq;
         
         %Add model specification
         try SPM.xX.opt = Opt; catch; end
@@ -491,6 +515,7 @@ for Idx=1:size(job.NIRSmat,1)
 % % %         SPM.xX.K = spm_filter_HPF_LPF_WMDL(K); %???Indexing
             
         % related spm m-file : spm_fmri_spm_ui.m
+        method_cor = job.wls_or_bglm.NIRS_SPM.nirs_noise;
         if method_cor == 0
             cVi = 'none';
         elseif method_cor == 1
