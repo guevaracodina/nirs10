@@ -2476,8 +2476,7 @@ subj.help    = {};
 nirs_noise         = cfg_menu;
 nirs_noise.tag     = 'nirs_noise';
 nirs_noise.name    = 'Noise method';
-nirs_noise.help    = {'Choose method for noise treatment.'
-            'This applies only to the NIRS_SPM methods, not to WLS or BGLM.'}';
+nirs_noise.help    = {'Choose method for noise treatment.'}';
 nirs_noise.labels  = {
                     'precoloring'
                     'prewhitening'
@@ -2486,8 +2485,9 @@ nirs_noise.values  = {
                     0
                     1
                     };
-nirs_noise.val = {0};
-%nirs_noise.def = @(val)nirs_get_defaults('model_specify.nirs_noise', val{:});    
+%nirs_noise.val = {0};
+nirs_noise.def = @(val)nirs_get_defaults(...
+    'model_specify.wls_bglm_specify.wls_or_bglm.NIRS_SPM.nirs_noise', val{:});    
 
 % ---------------------------------------------------------------------
 % derivs Model derivatives
@@ -2549,17 +2549,91 @@ LiomDeleteLarge.def = @(val)nirs_get_defaults(...
     'model_specify.wls_bglm_specify.LiomDeleteLarge', val{:}); 
 LiomDeleteLarge.help = {'Delete large files (.nir and NIRS.mat) after each estimation.'};
 
-wls_or_bglm      = cfg_menu;
+WLS_J0         = cfg_entry; 
+WLS_J0.name    = 'Wavelet depth J0';
+WLS_J0.tag     = 'WLS_J0';       
+WLS_J0.strtype = 'r';
+WLS_J0.num     = [1 1];     
+WLS_J0.def     = @(val)nirs_get_defaults(...
+    'model_specify.wls_bglm_specify.wls_or_bglm.WLS.WLS_J0', val{:}); 
+WLS_J0.help    = {'Enter wavelet depth J0.'};
+
+WLS_L0         = cfg_entry; 
+WLS_L0.name    = 'Wavelet depth L0';
+WLS_L0.tag     = 'WLS_L0';       
+WLS_L0.strtype = 'r';
+WLS_L0.num     = [1 1];     
+WLS_L0.def     = @(val)nirs_get_defaults(...
+    'model_specify.wls_bglm_specify.wls_or_bglm.WLS.WLS_L0', val{:}); 
+WLS_L0.help    = {'Enter wavelet depth L0.'};
+
+WLS_threshold_drift         = cfg_entry; 
+WLS_threshold_drift.name    = 'Wavelet correlation threshold for drifts';
+WLS_threshold_drift.tag     = 'WLS_threshold_drift';       
+WLS_threshold_drift.strtype = 'r';
+WLS_threshold_drift.num     = [1 1];     
+WLS_threshold_drift.def     = @(val)nirs_get_defaults(...
+    'model_specify.wls_bglm_specify.wls_or_bglm.WLS.WLS_threshold_drift', val{:}); 
+WLS_threshold_drift.help    = {'Enter wavelet correlation threshold for drifts.'};
+
+WLS         = cfg_branch;
+WLS.tag     = 'WLS';
+WLS.name    = 'Wavelet least-squares';
+WLS.val     = {WLS_J0 WLS_threshold_drift WLS_L0}; 
+WLS.help    = {'Specify options for wavelet least-squares method.'};
+
+BGLM_fmax         = cfg_entry; 
+BGLM_fmax.name    = 'Maximum frequency for drifts';
+BGLM_fmax.tag     = 'BGLM_fmax';       
+BGLM_fmax.strtype = 'r';
+BGLM_fmax.num     = [1 1];     
+BGLM_fmax.def     = @(val)nirs_get_defaults(...
+    'model_specify.wls_bglm_specify.wls_or_bglm.BGLM.BGLM_fmax', val{:}); 
+BGLM_fmax.help    = {'Enter maximum frequency for drifts in Hz.'};
+
+BGLM_degre         = cfg_entry; 
+BGLM_degre.name    = 'Polynomial degree for drifts';
+BGLM_degre.tag     = 'BGLM_degre';       
+BGLM_degre.strtype = 'r';
+BGLM_degre.num     = [1 1];     
+BGLM_degre.def     = @(val)nirs_get_defaults(...
+    'model_specify.wls_bglm_specify.wls_or_bglm.BGLM.BGLM_degre', val{:}); 
+BGLM_degre.help    = {'Enter polynomial degree for drifts.'};
+
+BGLM_threshold_drift         = cfg_entry; 
+BGLM_threshold_drift.name    = 'Threshold for drifts';
+BGLM_threshold_drift.tag     = 'BGLM_threshold_drift';       
+BGLM_threshold_drift.strtype = 'r';
+BGLM_threshold_drift.num     = [1 1];     
+BGLM_threshold_drift.def     = @(val)nirs_get_defaults(...
+    'model_specify.wls_bglm_specify.wls_or_bglm.BGLM.BGLM_threshold_drift', val{:}); 
+BGLM_threshold_drift.help    = {'Enter correlation threshold for drifts.'};
+
+BGLM         = cfg_branch;
+BGLM.tag     = 'BGLM';
+BGLM.name    = 'Bayesian GLM';
+BGLM.val     = {BGLM_fmax BGLM_degre BGLM_threshold_drift}; 
+BGLM.help    = {'Specify options for Bayesian GLM method.'};
+
+NIRS_SPM         = cfg_branch;
+NIRS_SPM.tag     = 'NIRS_SPM';
+NIRS_SPM.name    = 'NIRS_SPM MDL';
+NIRS_SPM.val     = {nirs_noise nirs_hpf nirs_lpf}; 
+NIRS_SPM.help    = {'Specify options for NIRS_SPM minimum description length(MDL).'};
+
+wls_or_bglm      = cfg_choice;
 wls_or_bglm.tag  = 'wls_or_bglm';
 wls_or_bglm.name = 'WLS, BGLM, NIRS_SPM';
-wls_or_bglm.labels = {'WLS','BGLM', 'NIRS_SPM'};
-wls_or_bglm.values = {1,2,3};
-wls_or_bglm.def = @(val)nirs_get_defaults('model_specify.wls_bglm_specify.wls_or_bglm', val{:}); 
+%wls_or_bglm.labels = {'WLS','BGLM', 'NIRS_SPM'};
+%wls_or_bglm.values = {1,2,3};
+wls_or_bglm.values = {WLS,BGLM,NIRS_SPM};
+wls_or_bglm.val  = {NIRS_SPM};
+%wls_or_bglm.def = @(val)nirs_get_defaults('model_specify.wls_bglm_specify.wls_or_bglm', val{:}); 
 wls_or_bglm.help = {'Choose which GLM method to use:'
             'WLS: wavelet least square'
             'BGLM: Bayesian general linear model'
-            'NIRS_SPM: Ye et al methods, with either precoloring or prewhitening.'}';
-
+            'NIRS_SPM: Ye et al methods (MDL), with either precoloring or prewhitening.'}';
+    
 GLM_include_cardiac    = cfg_menu;
 GLM_include_cardiac.name   = 'Include cardiac regressor';
 GLM_include_cardiac.tag    = 'GLM_include_cardiac';
@@ -2587,23 +2661,67 @@ channel_pca.def = @(val)nirs_get_defaults('model_specify.wls_bglm_specify.channe
 channel_pca.help = {'Choose whether to do a channel PCA removal: '
             'Principal component analysis and removing the largest eigenvalue.'}';
 
-lpf_butter      = cfg_menu;
+lpf_butter_freq         = cfg_entry; 
+lpf_butter_freq.name    = 'Cutoff frequency for LPF';
+lpf_butter_freq.tag     = 'lpf_butter_freq';       
+lpf_butter_freq.strtype = 'r';
+lpf_butter_freq.num     = [1 1];     
+lpf_butter_freq.def     = @(val)nirs_get_defaults(...
+    'model_specify.wls_bglm_specify.lpf_butter.lpf_butter_On.lpf_butter_freq', val{:}); 
+lpf_butter_freq.help    = {'Enter cutoff frequency in Hz for Butterworth LPF.'};
+
+lpf_butter_On         = cfg_branch;
+lpf_butter_On.tag     = 'lpf_butter_On';
+lpf_butter_On.name    = 'Butterworth LP filter';
+lpf_butter_On.val     = {lpf_butter_freq}; 
+lpf_butter_On.help    = {'Butterworth low-pass filter.'};
+
+lpf_butter_Off         = cfg_branch;
+lpf_butter_Off.tag     = 'lpf_butter_Off';
+lpf_butter_Off.name    = 'LP filter off';
+lpf_butter_Off.val     = {}; 
+lpf_butter_Off.help    = {'Low pass filter turned off.'};
+
+lpf_butter      = cfg_choice;
 lpf_butter.tag  = 'lpf_butter';
 lpf_butter.name = 'Butterworth Low Pass Filter';
-lpf_butter.labels = {'Yes','No'};
-lpf_butter.values = {1,0};
-lpf_butter.def = @(val)nirs_get_defaults('model_specify.wls_bglm_specify.lpf_butter', val{:}); 
+%lpf_butter.labels = {'Yes','No'};
+lpf_butter.values = {lpf_butter_On lpf_butter_Off};
+lpf_butter.val = {lpf_butter_Off};
+%lpf_butter.def = @(val)nirs_get_defaults('model_specify.wls_bglm_specify.lpf_butter', val{:}); 
 lpf_butter.help = {'Choose whether to include a Butterworth Low Pass Filter.'
-        'Parameters are: order 3, cutoff frequency: 1.5 s.'}';
+        'Parameters are: order 3.'}';
 
-hpf_butter      = cfg_menu;
+hpf_butter_freq         = cfg_entry; 
+hpf_butter_freq.name    = 'Cutoff frequency for HPF';
+hpf_butter_freq.tag     = 'hpf_butter_freq';       
+hpf_butter_freq.strtype = 'r';
+hpf_butter_freq.num     = [1 1];     
+hpf_butter_freq.def     = @(val)nirs_get_defaults(...
+    'model_specify.wls_bglm_specify.hpf_butter.hpf_butter_On.hpf_butter_freq', val{:}); 
+hpf_butter_freq.help    = {'Enter cutoff frequency in Hz for Butterworth HPF.'};
+
+hpf_butter_On         = cfg_branch;
+hpf_butter_On.tag     = 'hpf_butter_On';
+hpf_butter_On.name    = 'Butterworth HP filter';
+hpf_butter_On.val     = {hpf_butter_freq}; 
+hpf_butter_On.help    = {'Butterworth high-pass filter.'};
+
+hpf_butter_Off         = cfg_branch;
+hpf_butter_Off.tag     = 'hpf_butter_Off';
+hpf_butter_Off.name    = 'HP filter off';
+hpf_butter_Off.val     = {}; 
+hpf_butter_Off.help    = {'High pass filter turned off.'};
+
+hpf_butter      = cfg_choice;
 hpf_butter.tag  = 'hpf_butter';
 hpf_butter.name = 'Butterworth High Pass Filter';
-hpf_butter.labels = {'Yes','No'};
-hpf_butter.values = {1,0};
-hpf_butter.def = @(val)nirs_get_defaults('model_specify.wls_bglm_specify.hpf_butter', val{:}); 
+%hpf_butter.labels = {'Yes','No'};
+hpf_butter.values = {hpf_butter_On hpf_butter_Off};
+hpf_butter.val = {hpf_butter_On};
+%hpf_butter.def = @(val)nirs_get_defaults('model_specify.wls_bglm_specify.hpf_butter', val{:}); 
 hpf_butter.help = {'Choose whether to include a Butterworth High Pass Filter.'
-        'Parameters are: order 3, cutoff frequency: 100 s.'}';
+        'Parameters are: order 3.'}';
     
 % Executable Branch
 wls_bglm_specify      = cfg_exbranch;       
@@ -2611,8 +2729,8 @@ wls_bglm_specify.name = 'LIOM GLM Specification';
 wls_bglm_specify.tag  = 'wls_bglm_specify'; 
 wls_bglm_specify.val  = {NIRSmat dir1 subj units time_res derivs ...
     volt GLM_include_cardiac GLM_include_Mayer ...
-    channel_pca hpf_butter nirs_hpf lpf_butter nirs_lpf nirs_noise ...
-    wls_or_bglm LiomDeleteLarge};
+    channel_pca hpf_butter lpf_butter...
+     wls_or_bglm LiomDeleteLarge}; 
 wls_bglm_specify.prog = @nirs_run_wls_bglm_specify;  
 wls_bglm_specify.vout = @nirs_cfg_vout_wls_bglm_specify; 
 wls_bglm_specify.help = {'Specify LIOM General Linear Model.'};
