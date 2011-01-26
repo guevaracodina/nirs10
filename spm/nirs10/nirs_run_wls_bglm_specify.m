@@ -14,15 +14,15 @@ NIRS.multi_reg = job.subj.multi_reg;
 meth0=job.wls_or_bglm;
 try 
     meth0.NIRS_SPM;
-    meth1 = 'NIRS_SPM';
+    meth1 = 3;
 catch
     try
         meth0.WLS;
-        meth1 = 'WLS';
+        meth1 = 1;
     catch
         try
             meth0.BGLM;
-            meth1 = 'BGLM';
+            meth1 = 2;
         catch
             disp('Unrecognized method');
         end
@@ -71,7 +71,7 @@ catch
 end
 
 %HPF
-if strcmp(meth1,'NIRS_SPM')
+if meth1 ==3 
     try
         HPF = ['DCT, ' int2str(job.wls_or_bglm.NIRS_SPM.nirs_hpf.hpf_dct.hpf_dct_cutoff)];
     catch
@@ -89,7 +89,7 @@ if strcmp(meth1,'NIRS_SPM')
 end
 
 %LPF
-if strcmp(meth1,'NIRS_SPM')
+if meth1 == 3
     try    
         FWHM = job.wls_or_bglm.NIRS_SPM.nirs_lpf.lpf_gauss.fwhm1;
         LPF = 'gaussian'; 

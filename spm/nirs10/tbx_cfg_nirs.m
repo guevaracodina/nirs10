@@ -744,13 +744,13 @@ testSessionNumber.help    = {'Enter NIRS data session number where stimuli are t
 
 %Test wavelength
 testWavelength         = cfg_entry; 
-testWavelength.name    = 'Test wavelength number';
+testWavelength.name    = 'Test wavelength number(s)';
 testWavelength.tag     = 'testWavelength';       
 testWavelength.strtype = 'r';
-testWavelength.num     = [1 1];     
+testWavelength.num     = [1 Inf];     
 testWavelength.def     = @(val)nirs_get_defaults(...
         'readOnsets.addTestStimuli.testWavelength', val{:}); 
-testWavelength.help    = {'Enter wavelength number of the data where the '
+testWavelength.help    = {'Enter wavelength number(s) of the data where the '
     'stimuli will be added. For example, enter 2 if OD at 690 nm is '
     'desired for the test and is the second wavelength.'}'; 
 
