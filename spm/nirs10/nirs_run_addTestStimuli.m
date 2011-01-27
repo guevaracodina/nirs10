@@ -103,10 +103,17 @@ for Idx=1:size(job.NIRSmat,1)
         end
         %Here could add loop over sessions - to be done?
         [dir1,fil1,ext1] = fileparts(NIRS.Dt.fir.pp(lst).p{ts,:});
-        d = fopen_NIR(fullfile(dir1,[fil1,ext1]),NC,ext1);            
+        d = fopen_NIR(fullfile(dir1,[fil1,ext1]),NC,ext1);   
+        if job.testDupChannels
+            %store a copy of the data
+            d_copy = d;  
+        end
         %channels of interest
-        chn = tc+(tl-1)*NC/length(NIRS.Cf.dev.wl);
-        
+        chn = [];
+        for i=1:length(tl)
+            chn = [chn tc+(tl(i)-1)*NC/length(NIRS.Cf.dev.wl)];
+        end
+                
         dc = d(chn,:); %we keep d, as we will write dc over d, and save
         ns = size(d,2);
         %frequency
@@ -280,7 +287,8 @@ for Idx=1:size(job.NIRSmat,1)
                 a = (10^(tSNR/10)*NIRS.Dt.fir.Eb(Cidx)/NIRS.Dt.fir.Ep)^(0.5);
                 NIRS.Dt.fir.SNR(Cidx) = tSNR;
                 NIRS.Dt.fir.a(Cidx) = a;
-                
+                m = std(dc(Cidx,:)); 
+                NIRS.Dt.fir.a2(Cidx) = a/m; 
             end
                                
             %is only a few percent point-by-point on the stimuli
@@ -302,6 +310,14 @@ for Idx=1:size(job.NIRSmat,1)
             %channels to keep 
             chnk = [tk tk+(1:length(NIRS.Cf.dev.wl)-1)*NC/length(NIRS.Cf.dev.wl)];
             d = d(chnk,:);
+        end
+        if job.testDupChannels
+            if ~AllChannels
+                %add a copy of the channels kept, but without adding stimuli
+                d = [d; d_copy(chnk,:)];
+            else
+                d = [d; d_copy];
+            end
         end
     
         %save
@@ -330,13 +346,31 @@ for Idx=1:size(job.NIRSmat,1)
             
         end
         NIRS.Dt.fir.NtotSpk = count;
-        if ~AllChannels
-            NIRS.Cf.H.C.N = length(chnk);
-            try NIRS.Cf.H.C.n = NIRS.Cf.H.C.n(chnk); end
-            try NIRS.Cf.H.C.id = NIRS.Cf.H.C.id(:,chnk); end
-            try NIRS.Cf.H.C.wl = NIRS.Cf.H.C.wl(chnk); end 
-            try NIRS.Cf.H.C.gp = NIRS.Cf.H.C.gp(chnk); end
-            try NIRS.Cf.H.C.ok = NIRS.Cf.H.C.ok(chnk); end 
+        if job.testDupChannels
+            if ~AllChannels
+                NIRS.Cf.H.C.N = 2*length(chnk);
+                try NIRS.Cf.H.C.n = [NIRS.Cf.H.C.n(chnk) NIRS.Cf.H.C.n(chnk)]; end
+                try NIRS.Cf.H.C.id = [NIRS.Cf.H.C.id(:,chnk) NIRS.Cf.H.C.id(:,chnk)]; end
+                try NIRS.Cf.H.C.wl = [NIRS.Cf.H.C.wl(chnk) NIRS.Cf.H.C.wl(chnk)]; end 
+                try NIRS.Cf.H.C.gp = [NIRS.Cf.H.C.gp(chnk); NIRS.Cf.H.C.gp(chnk)]; end
+                try NIRS.Cf.H.C.ok = [NIRS.Cf.H.C.ok(chnk) NIRS.Cf.H.C.ok(chnk)]; end             
+            else
+                NIRS.Cf.H.C.N = 2*NIRS.Cf.H.C.N;
+                try NIRS.Cf.H.C.n = [NIRS.Cf.H.C.n NIRS.Cf.H.C.n]; end
+                try NIRS.Cf.H.C.id = [NIRS.Cf.H.C.id NIRS.Cf.H.C.id]; end
+                try NIRS.Cf.H.C.wl = [NIRS.Cf.H.C.wl NIRS.Cf.H.C.wl]; end 
+                try NIRS.Cf.H.C.gp = [NIRS.Cf.H.C.gp; NIRS.Cf.H.C.gp]; end
+                try NIRS.Cf.H.C.ok = [NIRS.Cf.H.C.ok NIRS.Cf.H.C.ok]; end             
+            end
+        else
+            if ~AllChannels
+                NIRS.Cf.H.C.N = length(chnk);
+                try NIRS.Cf.H.C.n = NIRS.Cf.H.C.n(chnk); end
+                try NIRS.Cf.H.C.id = NIRS.Cf.H.C.id(:,chnk); end
+                try NIRS.Cf.H.C.wl = NIRS.Cf.H.C.wl(chnk); end 
+                try NIRS.Cf.H.C.gp = NIRS.Cf.H.C.gp(chnk); end
+                try NIRS.Cf.H.C.ok = NIRS.Cf.H.C.ok(chnk); end 
+            end
         end
         NIRSmat = fullfile(testp,'NIRS.mat');
         save(NIRSmat,'NIRS');

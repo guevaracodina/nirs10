@@ -29,3 +29,4 @@ nirs10.readOnsets.addTestStimuli.testPType.testEP.FrequentSpikes.testAvgNumSlowS
 nirs10.readOnsets.addTestStimuli.testPType.testEP.FrequentSpikes.testAvgNumFastSpikes_perGroup = 5;
 nirs10.readOnsets.addTestStimuli.testPType.testEP.FrequentSpikes.testRescaleOn2 = 2;
 nirs10.readOnsets.addTestStimuli.testPType.testEP.FrequentSpikes.testSeed2 = 0;
+nirs10.readOnsets.addTestStimuli.testDupChannels = 1;

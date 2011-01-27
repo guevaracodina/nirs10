@@ -3,7 +3,7 @@ function out = nirs_run_ROCtest(job)
 dir_dataSPM = 'dataSPM';
 %dir_stat = 'StatV';
 IN = job.ROCiternum;
-run_GLM = 0;
+run_GLM = 1;
 run_ROC = 1;
 nSubj = size(job.NIRSmat,1);
 nJob = size(job.ROCLoopJob,1);
@@ -141,10 +141,12 @@ for Idx=1:nSubj
                     %get t stat for each iteration
                     r = 1; t = zeros(IN,sz_beta(2));
                     for i=1:IN
-                        t(i,:) = squeeze(beta(i,r,:)) ./sqrt(squeeze(ResSS(i,:)'*Bcov(i,r,r)/trRV(i)));
+                        t(i,:) = squeeze(beta(i,r,:)) ./sqrt(squeeze(ResSS(i,:)'*Bcov(i,r,r)/trRV(i)));                        
                     end
                 end
-                
+                T{Jidx,Idx}.t = t;
+                T{Jidx,Idx}.b = beta;
+                %T{Jidx,Idx}.v = 
                 %Add bonferroni and choice of t-stat value.
                 alpha_unc = 0.05; %uncorrected threshold
 
@@ -152,20 +154,20 @@ for Idx=1:nSubj
                 %Sensitivity = true positives
                 %Will be on channels 7 and 8
                 NcTP = 2; %Number of true positive channels
-                TPn = IN; %NcTP*IN; %Number of data points for true positives and false negatives
+                TPn = IN*20; %NcTP*IN; %Number of data points for true positives and false negatives
                 alpha_bonf_TPn = alpha_unc/TPn;
 
                 %[TPb{Jidx,Idx} TPu{Jidx,Idx}] = count_TP_FP(IN,[1:2],t,alpha_bonf_TPn,alpha_unc,erdf,true,true); 
-                [TPb{Jidx,Idx} TPu{Jidx,Idx}] = count_TP_FP(IN,[11:20],...
+                [TPb{Jidx,Idx} TPu{Jidx,Idx}] = count_TP_FP(IN,[1:20],...
                     t,alpha_bonf_TPn,alpha_unc,erdf,true,true,false); 
 
                 %Specificity = 1 - false positives
                 %Will be on all other channels than 7 and 8
-                FPn = IN; %(sz_beta(2)-NcTP)*IN; %Number of data points for false positives 
+                FPn = IN*20; %(sz_beta(2)-NcTP)*IN; %Number of data points for false positives 
                 %and true negatives
                 alpha_bonf_FPn = alpha_unc/FPn;
 
-                [FPb{Jidx,Idx} FPu{Jidx,Idx}] = count_TP_FP(IN,[1:10],...
+                [FPb{Jidx,Idx} FPu{Jidx,Idx}] = count_TP_FP(IN,[21:40],...
                     t,alpha_bonf_FPn,alpha_unc,erdf,false,true,false); 
                 
                 %tFPb = FPb; tFPu = FPu; tTPb = TPb; tTPu = TPu; 

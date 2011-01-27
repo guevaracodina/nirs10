@@ -187,7 +187,8 @@ for Idx=1:size(job.NIRSmat,1)
                                 tSPM.Sess.C.C = [tSPM.Sess.C.C D];
 
                                 [Betas,Thetas,Sigma2,Modelisation] = ...
-                                    glm(time,Y,tSPM.xX.X(:,1:end-1),tSPM.Sess.C.C); %exclude constant in X
+                                    glm(time,Y,tSPM.xX.X(:,1),[tSPM.xX.X(:,2:end-1) tSPM.Sess.C.C]);
+                                    %glm(time,Y,tSPM.xX.X(:,1:end-1),tSPM.Sess.C.C); %exclude constant in X
                             case 'WLS' 
                                 %remove constant regressor - assume it is the last entry 
                                 if size(tSPM.xX.X,2) > 1

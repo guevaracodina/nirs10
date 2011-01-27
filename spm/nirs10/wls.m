@@ -31,22 +31,22 @@ nCond=size(X,2);
 %factor=round(1/(dtStim*fs));
 
 
-display ('initialisation')
+%display ('initialisation')
 %-------GET WAVELET FILTER
 f = MakeONFilter('Daubechies',10);                                         % 5 vanishing moment:degree 4
-display('we use a daubechie filter with 5 vanishing moment \n')
+%display('we use a daubechie filter with 5 vanishing moment \n')
 
 %------For decomposition
 J = floor(log2(nTimePts));
 
 
 L0=Opt.L0;
-display(sprintf('scale max of decomposition J-L0= %g',J-L0))                    % Maximun scale of decomposition
+%display(sprintf('scale max of decomposition J-L0= %g',J-L0))                    % Maximun scale of decomposition
 N=2^J; 
 %PP - get size larger (or smaller, is enough) than the initial data size
 %N=2*N; 
 % Total number of wavelet coefficients ( after decompition)
-display(sprintf('nb total de coeff= %g',N))
+%display(sprintf('nb total de coeff= %g',N))
 % J-LO= effective scale of reconstruction ( low frequency are not considered)
 
 %%%%%%%%INTERPOLATE TO MAKE DATA LENGTH A POWER OF 2 %%%%%%%%%%%%%%%%%%
@@ -67,10 +67,10 @@ J0=Opt.J0;
 frequence_pseudo_max=(2^-J0)*fs;
 n0 = (2^(-J0+1))*N ;                                                            % nb of drift coeff to estimate (J...J0)
 degre_of_freedom=N-n0-nCond;
-display(sprintf('minimum scale  pour les drifts J0=%g',J0))
-display(sprintf('Which corresponds to a pseudo frequency %g',frequence_pseudo_max))
-display(sprintf('To model nuisances there are %g coefficients to estimate',n0))
-display(sprintf('Degre of freedom= %g',degre_of_freedom))
+%display(sprintf('minimum scale  pour les drifts J0=%g',J0))
+%display(sprintf('Which corresponds to a pseudo frequency %g',frequence_pseudo_max))
+%display(sprintf('To model nuisances there are %g coefficients to estimate',n0))
+%display(sprintf('Degre of freedom= %g',degre_of_freedom))
 
 
 
@@ -123,8 +123,8 @@ display(sprintf('Degre of freedom= %g',degre_of_freedom))
 % % end
 
 nReg=size(X,2);
-display(sprintf('Number of experimental conditions =%1.f',nCond))
-display(sprintf('Total number of regressors (derivatives...) =%1.f',nReg))
+%display(sprintf('Number of experimental conditions =%1.f',nCond))
+%display(sprintf('Total number of regressors (derivatives...) =%1.f',nReg))
 
 
 
@@ -133,7 +133,7 @@ display(sprintf('Total number of regressors (derivatives...) =%1.f',nReg))
 performCorr=1;
 if performCorr
     for iReg=1:nReg
-        display(sprintf('\nCorrelation analysis started'))
+        %display(sprintf('\nCorrelation analysis started'))
         tic;
         corr_stim(iReg,:) = atom_correlation(f,X(:,iReg)',L0,N);           % corr_stim: dim nCond by N
         toc
@@ -163,9 +163,9 @@ correlated_drifts=correlated_drifts(correlated_drifts <= n0);
 
 
 %-----ANALYSIS
-display (sprintf('\nAnalysis starts'))
+%display (sprintf('\nAnalysis starts'))
 for iPairs=1:nPairs
-    display(sprintf('Pair number %g',iPairs))
+    %display(sprintf('Pair number %g',iPairs))
     
     [betas,varBetas,sExp,yDrift]=weighted_estimate(X',conc_resized(:,iPairs)...
                                                     ,L0,J0,J,N,...

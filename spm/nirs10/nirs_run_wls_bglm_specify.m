@@ -33,8 +33,8 @@ switch meth1
     case 1
         Opt.meth = 'WLS';
         Opt.Design.L0=job.wls_or_bglm.WLS.WLS_L0; % maximum scale for signal decomposition=J-L0
-        Opt.Design.J0=wls_or_bglm.WLS.WLS_J0;     % minimum scale to model physiology
-        Opt.Design.threshold_drift=wls_or_bglm.WLS.WLS_threshold_drift; % Threshold for correlation analysis
+        Opt.Design.J0=job.wls_or_bglm.WLS.WLS_J0;     % minimum scale to model physiology
+        Opt.Design.threshold_drift=job.wls_or_bglm.WLS.WLS_threshold_drift; % Threshold for correlation analysis
     case 2
         Opt.meth = 'BGLM';
         Opt.Design.fmax=job.wls_or_bglm.BGLM.BGLM_fmax;   % maximum frequency for cosinusoidal drifts
@@ -461,37 +461,39 @@ for Idx=1:size(job.NIRSmat,1)
         try SPM.xX.opt = Opt; catch; end
                 
         %%% updated for wavelet-MDL detrending 2009-03-19
-        str = 'Detrending?';
-        if isempty(strfind(HPF, 'wavelet')) == 0 % wavelet-MDL
-            index_NT = find(HPF == ',');
-            if isempty(index_NT) == 1
-                NT = 4;
-            else
-                NT = str2num(HPF(index_NT+1:end));
+        if meth1 == 3
+            str = 'Detrending?';
+            if isempty(strfind(HPF, 'wavelet')) == 0 % wavelet-MDL
+                index_NT = find(HPF == ',');
+                if isempty(index_NT) == 1
+                    NT = 4;
+                else
+                    NT = str2num(HPF(index_NT+1:end));
+                end
+                SPM.xX.K.HParam.type = 'Wavelet-MDL';
+                SPM.xX.K.HParam.M = NT;
+                %SPM.xX.K.HParam.wavelet_depth = wavelet_depth; %PP
+            elseif isempty(strfind(HPF, 'DCT')) == 0 % DCT
+                index_cutoff = find(HPF == ',');
+                if isempty(index_cutoff) == 1
+                    cutoff = 128;
+                else
+                    cutoff = str2num(HPF(index_cutoff+1:end));
+                end
+                SPM.xX.K.HParam.type = 'DCT';
+                SPM.xX.K.HParam.M = cutoff;
+            elseif isempty(strfind(HPF, 'none')) == 0 %no filter
+                SPM.xX.K.HParam.type = 'none';          
             end
-            SPM.xX.K.HParam.type = 'Wavelet-MDL';
-            SPM.xX.K.HParam.M = NT;
-            %SPM.xX.K.HParam.wavelet_depth = wavelet_depth; %PP
-        elseif isempty(strfind(HPF, 'DCT')) == 0 % DCT
-            index_cutoff = find(HPF == ',');
-            if isempty(index_cutoff) == 1
-                cutoff = 128;
-            else
-                cutoff = str2num(HPF(index_cutoff+1:end));
-            end
-            SPM.xX.K.HParam.type = 'DCT';
-            SPM.xX.K.HParam.M = cutoff;
-        elseif isempty(strfind(HPF, 'none')) == 0 %no filter
-            SPM.xX.K.HParam.type = 'none';          
-        end
 
-        if isempty(strfind(LPF, 'hrf')) == 0 % hrf smoothing
-            SPM.xX.K.LParam.type = 'hrf';
-        elseif isempty(strfind(LPF, 'gaussian')) == 0 % Gaussian smoothing
-            SPM.xX.K.LParam.FWHM = FWHM;
-            SPM.xX.K.LParam.type = 'Gaussian';
-        else
-            SPM.xX.K.LParam.type = 'none';
+            if isempty(strfind(LPF, 'hrf')) == 0 % hrf smoothing
+                SPM.xX.K.LParam.type = 'hrf';
+            elseif isempty(strfind(LPF, 'gaussian')) == 0 % Gaussian smoothing
+                SPM.xX.K.LParam.FWHM = FWHM;
+                SPM.xX.K.LParam.type = 'Gaussian';
+            else
+                SPM.xX.K.LParam.type = 'none';
+            end
         end
         %This is a longer calculation, that can potentially enlarge
         %considerably the SPM.mat structure, hence it is better left to the
@@ -515,7 +517,11 @@ for Idx=1:size(job.NIRSmat,1)
 % % %         SPM.xX.K = spm_filter_HPF_LPF_WMDL(K); %???Indexing
             
         % related spm m-file : spm_fmri_spm_ui.m
-        method_cor = job.wls_or_bglm.NIRS_SPM.nirs_noise;
+        if meth1 == 3
+            method_cor = job.wls_or_bglm.NIRS_SPM.nirs_noise;
+        else
+            method_cor = 0;
+        end
         if method_cor == 0
             cVi = 'none';
         elseif method_cor == 1
@@ -539,6 +545,7 @@ for Idx=1:size(job.NIRSmat,1)
             end
         end
         SPM.xVi.form = cVi;
+        
         SPM.xsDes = struct('Basis_functions', SPM.xBF.name, 'Sampling_period_sec', num2str(SPM.xY.RT), 'Total_number_of_samples', num2str(SPM.nscan));
         if flag_window == 1
             spm_DesRep('DesMtx',SPM.xX,[],SPM.xsDes)
