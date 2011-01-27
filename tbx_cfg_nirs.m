@@ -304,21 +304,12 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Configuration for IUGM (Techen CW5 [UNF] or CW6 [LESCA])
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-LESCA   = cfg_menu;
-LESCA.tag  = 'LESCA';
-LESCA.name = 'Analysing for LESCA';
-LESCA.labels = {'Yes','No'};
-LESCA.values = {1,0};
-LESCA.def  = @(val)nirs_get_defaults('readNIRS.criugm1.LESCA', val{:});
-LESCA.help = {'Help'};
-
 age1         = cfg_entry;
 age1.name    = 'Subject age';
-age1.tag     = 'age1';       
+age1.tag     = 'age1';
 age1.strtype = 'r';
 age1.num     = [1 1];
-age1.def     = @(val)nirs_get_defaults('nirs10.readNIRS.criugm1.generic.subj.age1', val{:}); 
+age1.def     = @(val)nirs_get_defaults('nirs10.readNIRS.criugm1.generic.subj.age1', val{:});
 age1.help    = {'Age of the subject. Used later for OD to HbO/HbR conversion.'};
 
 text_brainsight         = cfg_files;
@@ -327,6 +318,7 @@ text_brainsight.name    = 'Text file from Brainsight';
 text_brainsight.filter  = '.txt';
 text_brainsight.ufilter = '.*';
 text_brainsight.num     = [0 1];
+text_brainsight.val{1}  = {''};
 text_brainsight.help    = {'Select the text file from Brainsight.'};
 
 helmet         = cfg_branch;
@@ -335,11 +327,11 @@ helmet.name    = 'Helmet';
 helmet.val     = {text_brainsight};
 helmet.help    = {'Helmet'};
 
-nirs_file         = cfg_files; 
+nirs_file         = cfg_files;
 nirs_file.name    = '''^.nirs'' file'; % The displayed name
 nirs_file.tag     = 'nirs_file';       %file names
-nirs_file.filter  = 'nirs';   
-nirs_file.num     = [1 Inf];     % Number of inputs required 
+nirs_file.filter  = 'nirs';
+nirs_file.num     = [1 Inf];     % Number of inputs required
 nirs_file.help    = {'Select???.'}; % help text displayed
 
 CWsystem      = cfg_menu;
@@ -382,7 +374,7 @@ subj_path.num     = [1 1];
 subj         = cfg_branch;
 subj.tag     = 'subj';
 subj.name    = 'Subject';
-subj.val     = {age1 helmet gen_acquisition baseline_method subj_path};
+subj.val     = {age1 subj_path helmet gen_acquisition baseline_method};
 subj.help    = {'Subject'};
 
 generic         = cfg_repeat;
@@ -397,18 +389,18 @@ generic.num     = [1 Inf];
 criugm1      = cfg_exbranch;
 criugm1.name = 'Read and format CRIUGM data';
 criugm1.tag  = 'criugm1';
-criugm1.val  = {LESCA generic};
+criugm1.val  = {generic};%LESCA 
 criugm1.prog = @nirs_run_criugm;
 criugm1.vout = @nirs_cfg_vout_criugm;
 criugm1.help = {'Help'};
 
 %make NIRS.mat available as a dependency
-function vout = nirs_cfg_vout_criugm(job)
-vout = cfg_dep;                     % The dependency object
-vout.sname      = 'NIRS.mat';       
-vout.src_output = substruct('.','NIRSmat'); 
-vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
-end
+    function vout = nirs_cfg_vout_criugm(job)
+        vout = cfg_dep;                     % The dependency object
+        vout.sname      = 'NIRS.mat';
+        vout.src_output = substruct('.','NIRSmat');
+        vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
+    end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Configuration for LOT   (lot1)
@@ -1538,8 +1530,8 @@ heart_resting.help    = {'Choose parameters for resting state heart rate detecti
 heart_exercise         = cfg_branch;
 heart_exercise.tag     = 'heart_exercise';
 heart_exercise.name    = 'Parameters during exercise';
-heart_exercise.val     = {STFT_param detect_wavelength MinHeartRate MaxHeartRate ...
-    InternalMinHeartRate InternalMaxHeartRate MaxHeartStdev}; 
+heart_exercise.val     = {STFT_param}; %detect_wavelength MinHeartRate MaxHeartRate ...
+%     InternalMinHeartRate InternalMaxHeartRate MaxHeartStdev}; 
 heart_exercise.help    = {'Choose parameters for heart rate detection'
                         'during aerobic exercise (such as VO2max test).'}';
 
@@ -3351,17 +3343,17 @@ heart_pace.help = {'If Yes some processings will be changed.'};
 runVOIRE1      = cfg_exbranch;
 runVOIRE1.name = 'Run VOIRE analysis';
 runVOIRE1.tag  = 'runVOIRE1';
-runVOIRE1.val  = {NIRSmat heart_pace};
+runVOIRE1.val  = {NIRSmat heart_pace criugm_paces1};
 runVOIRE1.prog = @nirs_run_runVOIRE;
 runVOIRE1.vout = @nirs_cfg_vout_runVOIRE;
 runVOIRE1.help = {'.'};
 
-function vout = nirs_cfg_vout_runVOIRE(job)
-vout = cfg_dep;
-vout.sname      = 'NIRS.mat';       
-vout.src_output = substruct('.','NIRSmat'); 
-vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
-end
+    function vout = nirs_cfg_vout_runVOIRE(job)
+        vout = cfg_dep;
+        vout.sname      = 'NIRS.mat';
+        vout.src_output = substruct('.','NIRSmat');
+        vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
+    end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Configuration main modules  
