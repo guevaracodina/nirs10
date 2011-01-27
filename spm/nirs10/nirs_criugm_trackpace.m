@@ -8,6 +8,7 @@ fft_slab = varargin{1};
 fft_freq_step = varargin{2};
 MinRate = varargin{3};
 MaxRate = varargin{4};
+
 %     if size(varargin,2)==4, energie = varargin{4};
 %     elseif size(varargin,2)>4
 %         energie = varargin{4};

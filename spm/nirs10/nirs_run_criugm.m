@@ -22,14 +22,14 @@ for is=1:sN
     NIRS.Dt.fir.stax.p{1} = staxp;
     save(fullfile(sDtp, 'NIRS.mat'),'NIRS');
     
-    if job.LESCA==0 %if LESCA==1 then done for each nirs_file
+    if ~strcmp(staxp,'')%if job.LESCA==0 %if LESCA==1 then done for each nirs_file
         % One helmet for all the selected acquisitions
         jobH.subj.sDtp = sDtp;
         jobH.subj.helmet.staxp = staxp;
         outH = nirs_criugm_getHelmet(jobH);% from Brainsight
 
         fig=findall(0,'name','Get positions from Brainsight (clbon)');
-        waitfor(fig,'BeingDeleted','On');
+        waitfor(fig,'BeingDeleted','On');       
     end
     
     NIRS = [];
@@ -47,7 +47,7 @@ for is=1:sN
         NIRS.Dt.fir.pp(1).pre = 'readCriugm';
         NIRS.Dt.fir.pp(1).job = job;
         
-        if job.LESCA==1
+        if strcmp(staxp,'')%job.LESCA==1
             % sources
             NIRS.Cf.H.S.N = f.SD.nSrcs;
             for i = 1:f.SD.nSrcs
@@ -55,7 +55,7 @@ for is=1:sN
             end
             NIRS.Cf.H.S.n = n;
         end
-        %save(fullfile(sDtp,'NIRS.mat'),'NIRS');
+        save(fullfile(sDtp,'NIRS.mat'),'NIRS');
         
         % CW system (1 for all aquisitions)
         CWsystem = job.subj(1,is).acquisition.CWsystem;
@@ -64,15 +64,13 @@ for is=1:sN
             %%%% attention la matrice NIRS est prevue pour ne prendre qu'une
             %%%% seule valeur pour les longueurs d'onde et pour la
             %%%% frequence ce qui signifie une seule machine pour toutes
-            %%%% les exp2riences....
+            %%%% les expériences lancées dans un même job....
             job1.nirs_file = f;
             job1.sDtp = sDtp;
             out = nirs_criugm_readtechenCW6(job1);
         end
         clear f
     end
-    
-    save(fullfile(sDtp,'NIRS.mat'),'NIRS');
     outNIRSmat = [outNIRSmat; fullfile(sDtp,'NIRS.mat')];
 end
 out.NIRSmat = outNIRSmat;
