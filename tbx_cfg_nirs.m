@@ -529,6 +529,19 @@ end
 % Tests: add stimuli and corresponding HRFs to raw NIRS signals   
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+testDupChannels         = cfg_menu;
+testDupChannels.tag     = 'testDupChannels';
+testDupChannels.name    = 'Duplicate number of channels';
+testDupChannels.help    = {'For each specified channel, add stimuli.'
+        'and also add a copy of that channel, without stimuli.'}';
+testDupChannels.labels = {
+               'True'
+               'False'
+                }';
+testDupChannels.values = {1, 0};
+testDupChannels.def     = @(val)nirs_get_defaults(...
+    'readOnsets.addTestStimuli.testDupChannels', val{:}); 
+
 testStimulusName         = cfg_entry;
 testStimulusName.name    = 'Name of the stimulus';
 testStimulusName.tag     = 'testStimulusName';
@@ -831,7 +844,7 @@ addTestStimuli.name = 'Add Stimuli with HRFs for testing';
 addTestStimuli.tag  = 'addTestStimuli'; 
 addTestStimuli.val  = {NIRSmat DelPreviousData NewDirCopyNIRS testStimulusName testStimuliNumber ...
                 testSessionNumber testWavelength testAmplitudeTarget ...
-                voltAddStim testAmplitude2 keepAllChannels testChannels testPType};   
+                voltAddStim testAmplitude2 keepAllChannels testChannels testDupChannels testPType};   
 addTestStimuli.prog = @nirs_run_addTestStimuli;  
 addTestStimuli.vout = @nirs_cfg_vout_addTestStimuli; 
 addTestStimuli.help = {'Module to add stimuli convoluted with HRFs for'

@@ -30,7 +30,7 @@ nCond=size(response,1);
 n0 = 2^(-J0+1)*N;
 
 %--------------------OLS pour la 1re iteration--------------------------
-display('iteration 1: OLS')
+%display('iteration 1: OLS')
 %--Wavelet Transform of paradigm
 for iCond=1:nCond
 Wx(iCond,:)=FWT_PO(response(iCond,:),L0,f);                                     % Wx: nCond by N ( nb wavelet coeff )
@@ -109,7 +109,7 @@ residual = Wy - temp2' - Wx*betas';                                             
 
 
 %--------------------Iteration 2:Weigthed Least square
-display('iteration 2 WLS')
+%display('iteration 2 WLS')
 %Generate L matrix
 L = adapt_wavedec(residual,J);                                                  % 1 by scale_max+2 ici 1 by J+2 utilisé in loglike.m et detcoef.m (voir matlab help)
 
@@ -281,7 +281,7 @@ temp2(1:n0) = temp;	%[1..n0coeff 0 0 0 0 0] 1 by N
 betas(1,:) = XI(end-(nCond-1):end);
 
 end
-display ('Estimation finished')
+%display ('Estimation finished')
 
 
 
