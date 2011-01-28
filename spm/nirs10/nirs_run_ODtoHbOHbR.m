@@ -69,12 +69,13 @@ for Idx=1:size(job.NIRSmat,1)
 
         for iwl =1:size(wl,2)
             [raw,col] = find(wl(iwl)==table);
-            DPF(iwl,1) = a(raw,col)+b(raw,col)*age^c(raw,col);
+              DPF(iwl,1) = a(raw,col)+b(raw,col)*age^c(raw,col);
         end
 
         EPF = zeros(1,NC); %EPF = L * PPF = L * DPF/PVF at each wavelength
         for Ci = 1:NC
-            EPF(1,Ci) = Cgp(Ci,1)*DPF(Cwl(1,Ci),1)./PVF(1,Cwl(1,Ci)); %PP??? why not ./???
+            EPF(1,Ci) = Cgp(1,Ci)*DPF(Cwl(1,Ci),1)./PVF(Cwl(1,Ci),1);
+%             EPF(1,Ci) = Cgp(Ci,1)*DPF(Cwl(1,Ci),1)./PVF(1,Cwl(1,Ci)); %PP??? why not ./???
         end
 
         inv_exs = pinv(exs(:,1:2));
