@@ -137,7 +137,7 @@ for Idx=1:size(job.NIRSmat,1)
                         %slab
                         fft_slab = abs(fft(slab,fft_size));
                         fft_freq_step = fs/fft_size;
-                        % for plotting purpose: fft_freq_scale = (1:fft_size)*fft_freq_step;
+                        % for plotting purpose: fft_freq_scale = (1:fft_size)*fft_freq_step;figure;plot(fft_freq_scale,fft_slab)
                         
                         %analyse if spectrum contains peak showing there is a regularity in
                         %the signal
