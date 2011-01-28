@@ -250,7 +250,11 @@ for Idx=1:size(job.NIRSmat,1)
             if DelPreviousData % est ce qu;on devrait pas le supprimer dans la matrice aussi ????
                 delete(rDtp{f,1});
             end
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % tant qu'on y met pas autre chose que d, a mon avis, pas grand
+            % interet
             fwrite_NIR(outfile,d);
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %add outfile name to NIRS
             if f == 1
                 NIRS.Dt.fir.pp(lst+1).pre = 'heart_rate';
