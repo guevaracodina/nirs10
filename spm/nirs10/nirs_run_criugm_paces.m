@@ -105,14 +105,15 @@ for Idx=1:size(job.NIRSmat,1)
             % Heart Rate
             % Frequency of Mayer Waves not calculated: to be done
             
-            %CAREFUL, pace and energie have been transposed
+            %CAREFUL, pace and nrgy have been transposed
+            heart.from = rDtp{f};
             heart.pace = zeros(NC,ns);
-            heart.energie = zeros(NC,ns);
+            heart.nrgy = zeros(NC,ns);
             %const1 is the window size in data points? appproximately ns/n.
             const1 = 1/(n-1)*(ns-windo_width*fs);
             
             % mayer_pace = zeros(floor(slab_width/2)+length(d),NC);
-            % mayer_energie = zeros(floor(slab_width/2)+length(d),NC);
+            % mayer_nrgy = zeros(floor(slab_width/2)+length(d),NC);
             
             % on repere la qualite de chaque paire en regardant si on a les battements
             % physiologiques :
@@ -142,10 +143,10 @@ for Idx=1:size(job.NIRSmat,1)
                         %the signal
                         outbeattest = nirs_criugm_trackpace(fft_slab,fft_freq_step,InternalMinHeartRate,InternalMaxHeartRate);
                         
-                        heart.energie(Ci,Ni:Ni+slab_width) = outbeattest.heart.energie;
+                        heart.nrgy(Ci,Ni:Ni+slab_width) = outbeattest.heart.nrgy;
                         heart.pace(Ci,Ni:Ni+slab_width) = outbeattest.heart.pace;
                         
-                        %         mayer_energie(Ni:Ni+slab_width,Ci) = outbeattest.mayer.energie;
+                        %         mayer_nrgy(Ni:Ni+slab_width,Ci) = outbeattest.mayer.nrgy;
                         %         mayer_pace(Ni:Ni+slab_width,Ci) = outbeattest.mayer.pace;
                     end
                     
@@ -179,7 +180,7 @@ for Idx=1:size(job.NIRSmat,1)
                         %%%%%%la valeur reste a fixer...automatiquement
                         if(test_C<2*10^4)%median(Cok_temp))%2.3*10^4) %Conditions for a good heart beat
                             heart.pace(Ci,:) = zeros(1,ns);
-                            heart.energie(Ci,:) = zeros(1,ns);
+                            heart.nrgy(Ci,:) = zeros(1,ns);
                         else
                             k1 = [k1 Ci];
                         end
@@ -211,26 +212,27 @@ for Idx=1:size(job.NIRSmat,1)
             if remove_no_heartbeat
                 %shrink the data to keep only desired channels
                 d = d(first_k2,:);
-                heart.energie = heart.energie(first_k2,:);
+                heart.nrgy = heart.nrgy(first_k2,:);
                 heart.pace = heart.pace(first_k2,:);
             end
             
             %output a heart rate per minute
             heart.pace = 60* heart.pace;
             %last entry is zero - replace by previous entry
-            %???????????????????????????????????????
+            % cb: pk  ?? moi j'ai pas ce probleme. Peut etre a regler au
+            % niveau anterieur...
             heart.pace(:,end) = heart.pace(:,end-1);
             
             % % % % % %             est ce qu'on en a vraiment besoin puisqu'on
             % conserve tout dans heart ??????
                         %needs to be generalized to more than one session
-                        outheartfile = fullfile(NIRS.Dt.s.p,'heart_pace.mat');
-                        save(outheartfile,'heart');
+%                         outheartfile = fullfile(NIRS.Dt.s.p,'heart_pace.mat');
+%                         save(outheartfile,'heart');
             
             % on calcule les decours temporels de ces bonnes paires et on enleve les
             % artefacts de mouvements...(voir si on peut pas trier a plus
-            % haur niveau sur le rapport de l'energie du battement par rapport
-            % a l'energie totale dans le signal)
+            % haur niveau sur le rapport de l'nrgy du battement par rapport
+            % a l'nrgy totale dans le signal)
             
             %median1 = median(heart.pace);
             %std1 = std(heart.pace);
@@ -259,7 +261,12 @@ for Idx=1:size(job.NIRSmat,1)
             bpd = [];
             NIRS.Dt.fir.pp(lst+1).bpi{f,1} = bpi; %bad point indices
             NIRS.Dt.fir.pp(lst+1).bpd{f,1} = bpd; %bad point durations
-            NIRS.Dt.fir.ht{f,1} = outheartfile;
+            NIRS.Dt.fir.ht{f,1} = heart;          %heart pace and energy
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % cb:utile pour la methode dans le cas de tests sans
+            % exercices...
+            % cb: est ce que c'est definitif ? si oui, il faut le
+            % rentrer dans la matrice NIRS
             %Take median heart rate on the better channels
             if remove_no_heartbeat
                 cR = median(heart.pace(size(heart.pace,1)/2,:),1)'; %cR, fR are column vectors
@@ -275,7 +282,8 @@ for Idx=1:size(job.NIRSmat,1)
                 NIRS.Dt.fir.Sess(f).cdCor = corr(diff(fR),diff(cR));
             catch
             end
-            heartpace  = [heartpace; outheartfile];
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%             heartpace  = [heartpace; outheartfile]; %cb: vide, est ce qu'on supprime ???
         end
         if remove_no_heartbeat
             %update the NIRS structure
@@ -291,7 +299,7 @@ for Idx=1:size(job.NIRSmat,1)
         else
             save(job.NIRSmat{Idx,1},'NIRS');
         end
-        heartpace_all = [heartpace_all; heartpace];
+        heartpace_all = [heartpace_all; heartpace]; %cb: vide, est ce qu'on supprime ???
     catch
         disp(['Could not analyze heart rate for subject' int2str(Idx)]);
     end

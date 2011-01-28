@@ -9,14 +9,14 @@ fft_freq_step = varargin{2};
 MinRate = varargin{3};
 MaxRate = varargin{4};
 
-%     if size(varargin,2)==4, energie = varargin{4};
+%     if size(varargin,2)==4, nrgy = varargin{4};
 %     elseif size(varargin,2)>4
-%         energie = varargin{4};
+%         nrgy = varargin{4};
 %         heart_possiblepace = varargin{5};
 %     end
 % end
 
-%eventuellement : energie des ondes de Mayer
+%eventuellement : nrgy des ondes de Mayer
 %--- detection de la pointe associee aux ondes de Mayer :
 % Détection de maximum :
 % Mayer Waves
@@ -30,19 +30,19 @@ MaxRate = varargin{4};
 %
 % if ~isempty(mayer_possiblepace)
 %     [mayer_amp mayer_pace] = max(fft_slab(mayer_possiblepace));
-%     energie_mayer = sum(energie(mayer_possiblepace(mayer_pace)-6:mayer_possiblepace(mayer_pace)+6));
+%     nrgy_mayer = sum(nrgy(mayer_possiblepace(mayer_pace)-6:mayer_possiblepace(mayer_pace)+6));
 %     outbeattest.mayer.pace = mayer_possiblepace(mayer_pace)*fft_freq_step;
-%     outbeattest.mayer.energie = energie_mayer;
+%     outbeattest.mayer.nrgy = nrgy_mayer;
 % else
 %     outbeattest.mayer.pace = 0;
-%     outbeattest.mayer.energie =0;
+%     outbeattest.mayer.nrgy =0;
 % end
 
 
 % mayer_possiblepace=zeros(0);
 heart_possiblepace=zeros(0);
 
-energie = fft_slab.^2;
+nrgy = fft_slab.^2;
 
 c_heart=1;
 for i=floor(MinRate/fft_freq_step):floor(MaxRate/fft_freq_step)% on cherche entre 0.8 et 3Hz - but was at 5Hz???
@@ -66,19 +66,19 @@ if ~isempty(heart_possiblepace)
     while fft_slab(i_lo)>fft_slab(i_lo-1) && i_lo>=0
         i_lo = i_lo-1;
     end
-    % test sur l'energie :
-    energie_heart = sum(energie(i_lo:i_up));
-    if energie_heart> coeff*sum(energie(floor(MinRate/fft_freq_step):floor(MinRate/fft_freq_step)));
+    % test sur l'nrgy :
+    nrgy_heart = sum(nrgy(i_lo:i_up));
+    if nrgy_heart> coeff*sum(nrgy(floor(MinRate/fft_freq_step):floor(MinRate/fft_freq_step)));
         outbeattest.heart.pace = heart_possiblepace(heart_pace)*fft_freq_step;
-        outbeattest.heart.energie = energie_heart;
+        outbeattest.heart.nrgy = nrgy_heart;
 
     else
         outbeattest.heart.pace = 0;
-        outbeattest.heart.energie =0;
+        outbeattest.heart.nrgy =0;
     end
 else
     outbeattest.heart.pace = 0;
-    outbeattest.heart.energie =0;
+    outbeattest.heart.nrgy =0;
 end
     
 out = outbeattest;
@@ -91,14 +91,14 @@ out = outbeattest;
 % else
 %     fft_slab = varargin{2};
 %     fft_freq_step = varargin{3};
-%     if size(varargin,2)==4, energie = varargin{4};
+%     if size(varargin,2)==4, nrgy = varargin{4};
 %     elseif size(varargin,2)>4
-%         energie = varargin{4};
+%         nrgy = varargin{4};
 %         heart_possiblepace = varargin{5};
 %     end
 % end
 %
-% %eventuellement : energie des ondes de Mayer
+% %eventuellement : nrgy des ondes de Mayer
 % %--- detection de la pointe associee aux ondes de Mayer :
 % %% Détection de maximum :
 % % Mayer Waves
@@ -112,12 +112,12 @@ out = outbeattest;
 % %
 % % if ~isempty(mayer_possiblepace)
 % %     [mayer_amp mayer_pace] = max(fft_slab(mayer_possiblepace));
-% %     energie_mayer = sum(energie(mayer_possiblepace(mayer_pace)-6:mayer_possiblepace(mayer_pace)+6));
+% %     nrgy_mayer = sum(nrgy(mayer_possiblepace(mayer_pace)-6:mayer_possiblepace(mayer_pace)+6));
 % %     outbeattest.mayer.pace = mayer_possiblepace(mayer_pace)*fft_freq_step;
-% %     outbeattest.mayer.energie = energie_mayer;
+% %     outbeattest.mayer.nrgy = nrgy_mayer;
 % % else
 % %     outbeattest.mayer.pace = 0;
-% %     outbeattest.mayer.energie =0;
+% %     outbeattest.mayer.nrgy =0;
 % % end
 %
 %
@@ -126,8 +126,8 @@ out = outbeattest;
 %         mayer_possiblepace=zeros(0);
 %         heart_possiblepace=zeros(0);
 %
-%         energie = fft_slab.^2;
-%         CRiugm_trackpace('track_max',fft_slab,fft_freq_step,energie);
+%         nrgy = fft_slab.^2;
+%         CRiugm_trackpace('track_max',fft_slab,fft_freq_step,nrgy);
 %
 %     case 'track_max'
 %         c_heart=1;
@@ -137,7 +137,7 @@ out = outbeattest;
 %                 c_heart = c_heart+1;
 %             end
 %         end
-%         CRiugm_trackpace('comp_nrg',fft_slab,fft_freq_step,energie,heart_possiblepace);
+%         CRiugm_trackpace('comp_nrg',fft_slab,fft_freq_step,nrgy,heart_possiblepace);
 %
 %     case 'comp_nrg'
 %         coeff =0.4;
@@ -153,18 +153,18 @@ out = outbeattest;
 %             while fft_slab(i_lo)>fft_slab(i_lo-1)
 %                 i_lo = i_lo-1;
 %             end
-%             % test sur l'energie :
-%             energie_heart = sum(energie(heart_possiblepace(heart_pace)-i_lo:heart_possiblepace(heart_pace)+i_up));
-%             if energie_heart> coeff*sum(energie);
+%             % test sur l'nrgy :
+%             nrgy_heart = sum(nrgy(heart_possiblepace(heart_pace)-i_lo:heart_possiblepace(heart_pace)+i_up));
+%             if nrgy_heart> coeff*sum(nrgy);
 %                 outbeattest.heart.pace = heart_possiblepace(heart_pace)*fft_freq_step;
-%                 outbeattest.heart.energie = energie_heart;
+%                 outbeattest.heart.nrgy = nrgy_heart;
 %                 CRiugm_trackpace('save',outbeattest);
 %             else
-%                 CRiugm_trackpace('track_max',fft_slab,fft_freq_step,energie);
+%                 CRiugm_trackpace('track_max',fft_slab,fft_freq_step,nrgy);
 %             end
 %         else
 %             outbeattest.heart.pace = 0;
-%             outbeattest.heart.energie =0;
+%             outbeattest.heart.nrgy =0;
 %         end
 % end
 % out = 1;

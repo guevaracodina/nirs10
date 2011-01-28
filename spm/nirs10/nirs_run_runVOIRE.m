@@ -14,10 +14,7 @@ function out = nirs_run_runVOIRE(job)
 prefix = 'h';
 
 if job.heart_pace==1
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     outHP = nirs_run_criugm_paces(job.criugm_paces1);
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    hp_fs = outHP.heartpace;
 end
 
 load(job.NIRSmat{:});
@@ -28,13 +25,13 @@ jobHb.Normalize_OD = 0;
 jobHb.subject_age = NIRS.Dt.s.age;
 jobHb.PVF = [50;50];
 jobHb.threshold = 0.1;
+jobHb.DelPreviousData = job.criugm_paces1.DelPreviousData;
 nirs_lpf2.lpf_gauss2.fwhm1 =1.5;
 nirs_lpf2.lpf_gauss2.downsamplingFactor =1;
 nirs_lpf2.lpf_gauss2.downsampleWhen = 1;
 jobHb.nirs_lpf2 = nirs_lpf2;
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 outHb = nirs_run_ODtoHbOHbR(jobHb);
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 clear NIRS;
 load(job.NIRSmat{:});
@@ -57,83 +54,86 @@ try
         %>> on cherche une paire qui est fiable (critere : elle n'a pas de grands sauts...)
         %--- on cherche le fichier du rythme qui correspond au fichier de
         %donnees
-        wo =strfind(hp_fs,fil1(3:end));
-        i=1;
-        while isempty(wo{i,1})
-            i =i+1;
-        end
-        load(hp_fs{i,1});
-        hp = heart.pace;
-        %--- on charge le rythme cardiaque et on cherche une paire fiable
-        %(une evolution sans coupure)
-        nc = size(hp,1);
-        ci=1;
-        cref=0;
-        err =[];
-        while ci<nc && cref==0
-            if sum(hp(ci,:)~= zeros(1,size(hp,2)))>100 && cref==0
-                for t=1:size(hp,2)-1
-                    if hp(ci,t+1)>hp(ci,t)+5 || hp(ci,t+1)<hp(ci,t)-5% && t<size(hp,2)-1;
-                        err = [err,1];
+        try
+            fi=1;
+            while isempty(strfind(NIRS.Dt.fir.ht{fi,1}.from,fil1(3:end)))
+                fi =fi+1;
+            end
+            hp = NIRS.Dt.fir.ht{fi,1}.pace;
+            %--- on charge le rythme cardiaque et on cherche une paire fiable
+            %(une evolution sans coupure)
+            nc = size(hp,1);
+            ci=1;
+            cref=0;
+            err =[];
+            while ci<nc && cref==0
+                if sum(hp(ci,:)~= zeros(1,size(hp,2)))>100 && cref==0
+                    for t=1:size(hp,2)-1
+                        if hp(ci,t+1)>hp(ci,t)+5 || hp(ci,t+1)<hp(ci,t)-5% && t<size(hp,2)-1;
+                            err = [err,1];
+                        end
                     end
+                    if size(err,2)<10
+                        cref=ci;
+                    end
+                    
                 end
-                if size(err,2)<10
-                    cref=ci;
+                ci = ci+1;
+                err =[];
+            end
+            
+            if cref==0
+                disp([rDtp{f} ' : no heart pace in any channel !'])
+            else
+                %--- on compare les autres paires et on ne somme que les moments
+                %des paires qui ont un rythme cardiaque qui correspond a la paire
+                %de reference
+                
+                %tableau de bouleens qui contient tous les instants a sommer
+                cok_t = zeros(size(hp));
+                for ci =1:nc
+                    for t=1:size(hp,2)
+                        if hp(ci,t)< hp(cref,t)+5 && hp(ci,t)> hp(cref,t)-5
+                            cok_t(ci,t) =1;
+                        end
+                    end
                 end
                 
-            end
-            ci = ci+1;
-            err =[];
-        end
-        
-        if cref==0
-            disp('aucun rythme dans aucune paire!!!!!!')
-        else
-            %--- on compare les autres paires et on ne somme que les moments
-            %des paires qui ont un rythme cardiaque qui correspond a la paire
-            %de reference
-            
-            %tableau de bouleens qui contient tous les instants a sommer
-            cok_t = zeros(size(hp));
-            for ci =1:nc
-                for t=1:size(hp,2)
-                    if hp(ci,t)< hp(cref,t)+5 && hp(ci,t)> hp(cref,t)-5
-                        cok_t(ci,t) =1;
-                    end
+                Cid = NIRS.Cf.H.C.id;
+                COx = zeros(size(c,1)/2,size(c,2));
+                %             test avec _cok : voir si en n'ajoutant que les parties de
+                %             signal qui sont bonnes
+                %             COx_Cok = zeros(size(c,1)/2,size(c,2));
+                %             Cok_t = [cok_t;cok_t];
+                %             c_Cok = c.*Cok_t;
+                for iC = 1:size(Cid,2)/2
+                    COx(iC,:) = c(iC,:)./(c(iC,:)+c(iC+size(c,1)/2,:));
+                    %                 COx_Cok(iC,:) = c_Cok(iC,:)./(c_Cok(iC,:)+c_Cok(iC+size(c,1)/2,:));
                 end
+                COx(isnan(COx))=0;
+                %             COx_Cok(isnan(COx_Cok))=0;
+                %             for i=1:size(COx_Cok,1)
+                %                 COx_wCok(i,:) = COx_Cok(i,:)/norm(COx_Cok(i,:));
+                %             end
+                %             COx_wCok(isnan(COx_wCok))=0;
+                
+                %test 2 : on ne conserve que les paires valables tout au long
+                test = sum(cok_t,2);
+                count=0;
+                COxsum = zeros(1,size(hp,2));
+                for i=1:size(test,1)/2
+                    %             if test(i,1)>size(hp,2)-1000
+                    COxsum = COxsum +COx(i,:);
+                    count = count+1;
+                    %             end
+                end
+                COxsum = COxsum/count;
+                
+                save(fullfile(NIRS.Dt.s.p,['Cox' fil1 '.mat']),'COx');
             end
-                        
-            Cid = NIRS.Cf.H.C.id;
-            COx = zeros(size(c,1)/2,size(c,2));
-%             test avec _cok : voir si en n'ajoutant que les parties de
-%             signal qui sont bonnes
-%             COx_Cok = zeros(size(c,1)/2,size(c,2));
-%             Cok_t = [cok_t;cok_t];
-%             c_Cok = c.*Cok_t;
-            for iC = 1:size(Cid,2)/2
-                COx(iC,:) = c(iC,:)./(c(iC,:)+c(iC+size(c,1)/2,:));
-%                 COx_Cok(iC,:) = c_Cok(iC,:)./(c_Cok(iC,:)+c_Cok(iC+size(c,1)/2,:));
-            end
-            COx(isnan(COx))=0;
-%             COx_Cok(isnan(COx_Cok))=0;
-%             for i=1:size(COx_Cok,1)
-%                 COx_wCok(i,:) = COx_Cok(i,:)/norm(COx_Cok(i,:));
-%             end
-%             COx_wCok(isnan(COx_wCok))=0;
-
-            %test 2 : on ne conserve que les paires valables tout au long
-            test = sum(cok_t,2);
-            count=0;
-            COxsum = zeros(1,size(hp,2));
-            for i=1:size(test,1)
-%             if test(i,1)>size(hp,2)-1000
-                COxsum = COxsum +COx(i,:);
-                count = count+1;
-%             end
-            end
-            COxsum = COxsum/count;
-            
-            save(fullfile(NIRS.Dt.s.p,['Cox' fil1 '.mat']),'COx');
+        catch exception
+            error(msg);
+            disp([rDtp{f} ' : heart regressor has not been calculated']);
         end
     end
     
