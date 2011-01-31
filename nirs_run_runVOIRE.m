@@ -45,17 +45,21 @@ try
         [~,fil1,~] = fileparts(rDtp{f});
         
         % pour chaque fichier, on cree les onsets
+        %- on a deux conditions
+        %---denomination
+        %---inhibition et switch
+        
+        names = {'Baseline';'Denomination';'Baseline';'Inhibition & Switching';'Baseline';'Denomination';'Baseline';'Inhibition & Switching';'Baseline'};
         %Ignore parametric modulations - cf spm_run_fmri_design.m
-%         P.name = 'none';
-%         P.h    = 0;
-% 
-%             for kk = 1:size(names, 2)
-%                 SPM.Sess(f).U(kk).name = names(kk);
-%                 SPM.Sess(f).U(kk).ons = onsets{kk};
-%                 SPM.Sess(f).U(kk).dur = durations{kk};
-%                 SPM.Sess(f).U(kk).P = P;
-%             end
-%         end
+        P.name = 'none';
+        P.h    = 0;
+
+            for kk = 1:size(names, 2)
+                SPM.Sess(f).U(kk).name = names(kk);
+                SPM.Sess(f).U(kk).ons = onsets{kk};
+                SPM.Sess(f).U(kk).dur = durations{kk};
+                SPM.Sess(f).U(kk).P = P;
+            end
         
         % Attention deux pb
         %-- on a parfois une mauvaise detection des rythmes cardiaques et
