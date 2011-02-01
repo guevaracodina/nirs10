@@ -154,7 +154,7 @@ for Idx=1:size(job.NIRSmat,1)
                             nbeta = size(SPM.xX.X,2);
                             nbetaS = (nbeta-nsess)/nsess;
                             %last entry is the constant regressor
-                            beta = [(s-1)*nbetaS+1:s*nbetaS nbeta-nsess+s];
+                                beta = [(s-1)*nbetaS+1:s*nbetaS nbeta-nsess+s];
 
                             if markers_available
                                 svec = SPM.Sess(s).row(si(iSubSess):ei(iSubSess)); 
@@ -167,6 +167,7 @@ for Idx=1:size(job.NIRSmat,1)
                                             'RT', SPM.xY.RT,...
                                             'LParam', SPM.xX.K.LParam);
                             tSPM.xX.K = spm_filter_HPF_LPF_WMDL(K);
+                            
                             tSPM.xX.X = SPM.xX.X(svec,beta);
                             tSPM.xX.K.row = 1:length(svec);
                         catch

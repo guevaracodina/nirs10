@@ -139,7 +139,11 @@ for Idx=1:size(job.NIRSmat,1)
             %than two wavelengths to begin
             c = inv_exs2 * d;
 
-            if isnan(c(:)), disp(['Some elements are NaN for file ' int2str(f)]); end
+            if sum(isnan(c(:)))
+                 disp(['Some elements are NaN for file ' int2str(f)]);
+                 c(:,end) =c(:,end-1);
+                 disp('Last column corrected');
+            end
 
             if LPFon && (DS_When == 3)
                 [NIRS c bpi bpd] = NIRS_SPM_filter(NIRS,K,c,DSon,...
@@ -156,6 +160,8 @@ for Idx=1:size(job.NIRSmat,1)
             if DelPreviousData
                 delete(rDtp{f,1});
             end
+            
+            
             fwrite_NIR(outfile,c);
             %add outfile name to NIRS
             if f == 1
