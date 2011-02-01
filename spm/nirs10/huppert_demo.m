@@ -4,7 +4,7 @@
 % (in review to ???)
 
 % Ted Huppert
-% integrqted in nirs10 by clement
+% integrated in nirs10 by clement
 
 load huppert_reml_demo.mat
 %File contains:
