@@ -63,14 +63,14 @@ try
         P.name = 'none';
         P.h    = 0;
         
-        for kk = 1:size(names, 2)
-            SPM.Sess(f).U(kk).name = names(kk);
-            SPM.Sess(f).U(kk).ons = onsets{kk};
-            SPM.Sess(f).U(kk).dur = durations{kk};
-            SPM.Sess(f).U(kk).P = P;
-        end
-        
-        save(fullfile(NIRS.Dt.s.p,'SPM'),'SPM');
+%         for kk = 1:size(names, 2)
+%             SPM.Sess(f).U(kk).name = names(kk);
+%             SPM.Sess(f).U(kk).ons = onsets{kk};
+%             SPM.Sess(f).U(kk).dur = durations{kk};
+%             SPM.Sess(f).U(kk).P = P;
+%         end
+%         
+%         save(fullfile(NIRS.Dt.s.p,'SPM'),'SPM');
         
         
         U = [];
@@ -83,9 +83,9 @@ try
             U(kk).P = P;
         end
         NIRS.Dt.fir.Sess(f).U = U;
-        NIRS.Dt.fir.Sess(f).vR = {vR};
-        NIRS.Dt.fir.Sess(f).fR = {fR};
-        save(job.NIRSmat{Idx,1},'NIRS');
+        %NIRS.Dt.fir.Sess(f).vR = {vR};
+        %NIRS.Dt.fir.Sess(f).fR = {fR};
+        save(job.NIRSmat{1},'NIRS');
         
         % Attention deux pb
         %-- on a parfois une mauvaise detection des rythmes cardiaques et
