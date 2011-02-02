@@ -1,4 +1,4 @@
-function [SPM] = precoloring_batch(varargin)
+function [SPM] = precoloring_batch_legacy(varargin)
 % NIRS_SPM: this function is used for estimation of GLM parameters.
 SPM = varargin{1};
 Y = varargin{2};
@@ -15,20 +15,20 @@ switch SPM.xX.K.HParam.type
     case 'Wavelet-MDL'
         tmp_K = SPM.xX.K;
         tmp_K.HParam.type = '';
-        SPM.xX.xKXs = spm_sp('Set', spm_filter_HPF_LPF_WMDL(tmp_K, SPM.xX.X)); % KX
+        SPM.xX.xKXs = spm_sp('Set', spm_filter_HPF_LPF_WMDL_legacy(tmp_K, SPM.xX.X)); % KX
         SPM.xX.K.X = SPM.xX.X;
         clear tmp_K;
     case 'DCT'
-        SPM.xX.xKXs = spm_sp('Set', spm_filter_HPF_LPF_WMDL(SPM.xX.K, SPM.xX.X)); % KX
+        SPM.xX.xKXs = spm_sp('Set', spm_filter_HPF_LPF_WMDL_legacy(SPM.xX.K, SPM.xX.X)); % KX
     case 'none'
-        SPM.xX.xKXs = spm_sp('Set', spm_filter_HPF_LPF_WMDL(SPM.xX.K, SPM.xX.X)); % KX ?
+        SPM.xX.xKXs = spm_sp('Set', spm_filter_HPF_LPF_WMDL_legacy(SPM.xX.K, SPM.xX.X)); % KX ?
 end
 
 SPM.xX.xKXs.X = full(SPM.xX.xKXs.X);
 SPM.xX.pKX = spm_sp('x-', SPM.xX.xKXs); % projector
 
 %filtering of the data
-KY = spm_filter_HPF_LPF_WMDL(SPM.xX.K, Y);
+KY = spm_filter_HPF_LPF_WMDL_legacy(SPM.xX.K, Y);
 %For testing
 %figure; nn = 8; plot(Y(:,nn)); hold on; plot(KY(:,nn),'r'); hold off
 
@@ -37,8 +37,8 @@ KY = spm_filter_HPF_LPF_WMDL(SPM.xX.K, Y);
 SPM.xX.beta = SPM.xX.pKX * KY; % beta : least square estimate
 res = spm_sp('r', SPM.xX.xKXs, KY); % Residuals 
 SPM.xX.ResSS = sum(res.^2); % Residual SSQ
-%data no longer required
 SPM.KY = KY;
+%data no longer required
 clear KY Y res
 
 %more filtering operations
