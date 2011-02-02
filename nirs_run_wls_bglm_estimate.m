@@ -206,8 +206,9 @@ for Idx=1:size(job.NIRSmat,1)
 
                             case 'NIRS_SPM'
                                  if precolor
-                                     if loop_over_J0
-                                        tSPM = precoloring_batch(tSPM,Y,J0vec(J0));
+                                     legacy_code_for_testing = 0;
+                                     if legacy_code_for_testing
+                                        tSPM = precoloring_batch_legacy(tSPM,Y);
                                      else
                                         tSPM = precoloring_batch(tSPM,Y); 
                                      end

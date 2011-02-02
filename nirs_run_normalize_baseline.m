@@ -28,6 +28,26 @@ for Idx=1:size(job.NIRSmat,1)
         for f=1:size(rDtp,1)
             d = fopen_NIR(rDtp{f,1},NC);
             
+            legacy_option_to_remove_negative_values = 1;
+            if legacy_option_to_remove_negative_values
+                threshold = 0.1;
+                %Some values of the optical intensity d may be negative
+                %Compute the minimum of d for each channel
+                mind = min(d,[],2);
+                for i1=1:size(mind,1)
+                    if mind(i1) > threshold 
+                        mind(i1) = 0;
+                    else 
+                        if mind(i1) > -threshold
+                             mind(i1) = -threshold;
+                        end
+                    end
+                end
+                %Subtract twice this minimum value for regularization - in
+                %anticipation of taking the log later
+                d = d - 2 *  mind * ones(1,size(d,2));
+            end
+            
             try 
                 bpi = NIRS.Dt.fir.pp(lst).bpi{f,1}; %bad point indices
                 bpd = NIRS.Dt.fir.pp(lst).bpd{f,1}; %bad point durations
@@ -91,10 +111,10 @@ for Idx=1:size(job.NIRSmat,1)
                                     end
                                 end
                                 %HbO channels
-                                ch = find(NIRS.Cf.H.C.wl== HbO_like);
+                                ch = NIRS.Cf.H.C.wl== HbO_like;
                                 td(:,si(i):ei(i)) = (75+(e(ch,:)-div_factor))*job.Analyzer_sf;
                                 %HbR channels
-                                ch = find(NIRS.Cf.H.C.wl== HbR_like);
+                                ch = NIRS.Cf.H.C.wl== HbR_like;
                                 td(:,si(i):ei(i)) = (25+(e(ch,:)-div_factor))*job.Analyzer_sf;
                             else
                                 td(:,si(i):ei(i)) = e./div_factor*job.Analyzer_sf; 

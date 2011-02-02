@@ -24,7 +24,9 @@ for Idx=1:size(job.NIRSmat,1)
         NC = NIRS.Cf.H.C.N;
         fs = NIRS.Cf.dev.fs;
         wl = NIRS.Cf.dev.wl;
-        
+        nc = NC/length(wl);
+        gc = ones(nc,size(rDtp,1));
+        %first loop over all sessions to find all bad channels
         for f=1:size(rDtp,1)
             d = fopen_NIR(rDtp{f,1},NC);
             ns = size(d,2);
@@ -41,24 +43,41 @@ for Idx=1:size(job.NIRSmat,1)
             %channelwise median of standard deviations
             med1 = median(stdev./med2,2);
             %identify good channels gc
-            nc = NC/length(wl);
-            gc = ones(nc,1);
-            k1 = [];
+        
+            %k1 = [];
             for i2=1:nc
                 for i3=1:length(wl)
                     if med1(i2+(i3-1)*nc)> threshold_stdev
-                        gc(i2) = 0; %bad channel
+                        gc(i2,f) = 0; %bad channel
                     end
                 end
-                if gc(i2)
-                    k1 = [k1 i2]; %indices for first wavelength
-                end
+                %if gc(i2)
+                %    k1 = [k1 i2]; %indices for first wavelength
+                %end
             end
-            k2 = k1;
+            %k2 = k1;
             %channel indices for all wavelengths
-            for i3=1:length(wl)-1
-                k2 = [k2 k2+nc];
+            %for i3=1:length(wl)-1
+            %    k2 = [k2 k2+nc];
+            %end
+        end
+        k1 = [];
+        gc = sum(gc,2);
+        for i4=1:nc
+            if gc(i4) == size(rDtp,1)
+                %this is a good channel
+                k1 = [k1 i4];
             end
+        end
+        k2 = k1;
+        %channel indices for all wavelengths
+        for i3=1:length(wl)-1
+            k2 = [k2 k1+i3*nc];
+        end
+        %Now write the data session by session
+        for f=1:size(rDtp,1)
+            d = fopen_NIR(rDtp{f,1},NC);
+            %ns = size(d,2);
             %Note that 
             %find(1-gc)
             %gives the channels removed
@@ -66,14 +85,7 @@ for Idx=1:size(job.NIRSmat,1)
             %length(find(1-gc))
             %is the number of channels that were removed
             d = d(k2,:);
-            %update NIRS matrix
-            NIRS.Cf.H.C.N = length(k2);
-            try NIRS.Cf.H.C.n = NIRS.Cf.H.C.n(k2); end
-            try NIRS.Cf.H.C.id = NIRS.Cf.H.C.id(:,k2); end
-            try NIRS.Cf.H.C.wl = NIRS.Cf.H.C.wl(k2); end 
-            try NIRS.Cf.H.C.gp = NIRS.Cf.H.C.gp(k2); end
-            try NIRS.Cf.H.C.ok = NIRS.Cf.H.C.ok(k2); end 
-                        
+            
             [dir1,fil1,ext1] = fileparts(rDtp{f});
             if NewDirCopyNIRS
                 dir2 = [dir1 filesep NewNIRSdir];
@@ -93,7 +105,15 @@ for Idx=1:size(job.NIRSmat,1)
             end
             NIRS.Dt.fir.pp(lst+1).p{f,1} = outfile;
             NIRS.Dt.fir.pp(lst+1).kept{f,1} = k2; %kept channels
-        end 
+        end
+        %update NIRS matrix
+        NIRS.Cf.H.C.N = length(k2);
+        try NIRS.Cf.H.C.n = NIRS.Cf.H.C.n(k2); end
+        try NIRS.Cf.H.C.id = NIRS.Cf.H.C.id(:,k2); end
+        try NIRS.Cf.H.C.wl = NIRS.Cf.H.C.wl(k2); end 
+        try NIRS.Cf.H.C.gp = NIRS.Cf.H.C.gp(k2); end
+        try NIRS.Cf.H.C.ok = NIRS.Cf.H.C.ok(k2); end 
+                                
         %keep copy of original NIRS structure
         [dir1 fil1 ext1] =fileparts(job.NIRSmat{Idx,1});
         %the old file will be dNIRS.mat

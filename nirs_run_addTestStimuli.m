@@ -289,6 +289,7 @@ for Idx=1:size(job.NIRSmat,1)
                 NIRS.Dt.fir.a(Cidx) = a;
                 m = std(dc(Cidx,:)); 
                 NIRS.Dt.fir.a2(Cidx) = a/m; 
+                NIRS.Dt.fir.a3(Cidx) = a/median(dc(Cidx,:)); 
             end
                                
             %is only a few percent point-by-point on the stimuli

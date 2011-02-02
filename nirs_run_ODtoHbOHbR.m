@@ -139,10 +139,9 @@ for Idx=1:size(job.NIRSmat,1)
             %than two wavelengths to begin
             c = inv_exs2 * d;
 
-            if sum(isnan(c(:)))
-                 disp(['Some elements are NaN for file ' int2str(f)]);
-                 c(:,end) =c(:,end-1);
-                 disp('Last column corrected');
+            if isnan(c(:)) 
+                disp(['Some elements are NaN for file ' int2str(f)]);
+                NIRS.WARNING = 'Some NaN elements in data - GLMs will fail!';
             end
 
             if LPFon && (DS_When == 3)
