@@ -20,10 +20,10 @@ for Idx=1:size(job.NIRSmat,1)
         %use last step of preprocessing
         lst = length(NIRS.Dt.fir.pp);
         rDtp = NIRS.Dt.fir.pp(lst).p; % path for files to be processed
-        Cgp = NIRS.Cf.H.C.gp;
-        Cwl = NIRS.Cf.H.C.wl;
+        Cgp = NIRS.Cf.H.C.gp;% CB: a quoi ca sert ??
+        Cwl = NIRS.Cf.H.C.wl;% CB: a quoi ca sert ??
         NC = NIRS.Cf.H.C.N;
-        wl = NIRS.Cf.dev.wl;
+        wl = NIRS.Cf.dev.wl;% CB: a quoi ca sert ??
         
         %LPF
         try
