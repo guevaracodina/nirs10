@@ -49,7 +49,7 @@ try
         %---denomination
         %---inhibition et switch
         
-        names = {'Baseline','Denomination','Inhibition & Switching'};
+        names = {'Baseline','Denomination','Inhib_Switch'};
         
         onsets{1}= [0 2 4 6 8]*60;
         onsets{2}= [1 5]*60;

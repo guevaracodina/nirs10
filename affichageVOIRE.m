@@ -129,3 +129,25 @@ try
 catch
     disp('erreur');
 end
+
+%% GLM
+figure;
+subplot(4,1,1);stem(SPM.xXn{1,1}.t(1,:));title(['Sujet ' subj ' - stroop - 1,1' 'Baseline']);
+subplot(4,1,2);stem(SPM.xXn{1,1}.t(2,:));title('Denomination');
+subplot(4,1,3);stem(SPM.xXn{1,1}.t(3,:));title('Inhib_switch');
+subplot(4,1,4);stem(SPM.xXn{1,1}.t(4,:));title('Constante');
+figure;
+subplot(4,1,1);stem(SPM.xXn{1,2}.t(1,:));title(['Sujet ' subj ' - stroop - 1,1' 'Baseline']);
+subplot(4,1,2);stem(SPM.xXn{1,2}.t(2,:));title('Denomination');
+subplot(4,1,3);stem(SPM.xXn{1,2}.t(3,:));title('Inhib_switch');
+subplot(4,1,4);stem(SPM.xXn{1,2}.t(4,:));title('Constante');
+figure;
+subplot(4,1,1);stem(SPM.xXn{1,3}.t(1,:));title(['Sujet ' subj ' - stroop - 1,1' 'Baseline']);
+subplot(4,1,2);stem(SPM.xXn{1,3}.t(2,:));title('Denomination');
+subplot(4,1,3);stem(SPM.xXn{1,3}.t(3,:));title('Inhib_switch');
+subplot(4,1,4);stem(SPM.xXn{1,3}.t(4,:));title('Constante');
+figure;
+subplot(4,1,1);stem(SPM.xXn{1,4}.t(1,:));title(['Sujet ' subj ' - stroop - 1,1' 'Baseline']);
+subplot(4,1,2);stem(SPM.xXn{1,4}.t(2,:));title('Denomination');
+subplot(4,1,3);stem(SPM.xXn{1,4}.t(3,:));title('Inhib_switch');
+subplot(4,1,4);stem(SPM.xXn{1,4}.t(4,:));title('Constante');
