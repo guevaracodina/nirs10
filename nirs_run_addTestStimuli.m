@@ -118,11 +118,60 @@ for Idx=1:size(job.NIRSmat,1)
         ns = size(d,2);
         %frequency
         fs = NIRS.Cf.dev.fs; 
-        %fill SPM's xBF structure from spm_get_bf
-        xBF.dt = 1/fs; % - time bin length {seconds}
+        
+             
+        
+        %now repeat with more time precision to calculate bf
+        xBF.T = 10;
+        xBF.dt = 1/(fs*xBF.T); % - time bin length {seconds}
         xBF.name = 'hrf'; %description of basis functions specified            
         xBF = spm_get_bf(xBF);
         bf  = xBF.bf;
+        %factor to normalize bf to 1
+        calculate_bf_norm = 1;
+        if calculate_bf_norm 
+            %fill SPM's xBF structure from spm_get_bf %fill SPM's U structure from spm_get_ons
+            SPM = [];
+            %SPM's session
+            s = 1;
+            SPM.nscan(s) = ns;
+            SPM.xBF = xBF;
+            SPM.xBF.T = xBF.T; %get more precision on onsets position      
+            SPM.xBF.T0 = 1; %shouldn't need it - no offset
+            SPM.xBF.UNITS = 'secs';
+            SPM.xBF.Volterra = volt;
+            SPM.xY.RT = 1/fs; %xBF.dt;
+
+            U.name = {'one'};
+            U.dt = xBF.dt;
+            U.ons = 1;
+            U.dur = 0;
+            U.P.name = 'none'; 
+            U.P.h    = 0;
+            SPM.Sess(s).U = U;
+
+            %copied code from spm_get_ons(SPM,s):
+            % create stimulus functions (32 bin offset)
+            %======================================================================
+            U = spm_get_ons(SPM,s);
+            V = SPM.xBF.Volterra;
+            %convolve stimuli U with basis functions
+            [X,Xn,Fc] = spm_Volterra(U,bf,V); 
+            try
+                X = X((0:(ns - 1))*SPM.xBF.T + SPM.xBF.T0 + 32,:);
+            end
+
+            % and orthogonalise (within trial type)
+            %--------------------------------------
+            for i = 1:length(Fc)
+                X(:,Fc(i).i) = spm_orth(X(:,Fc(i).i));
+            end 
+            bf_norm = 1/max(X(:,1));
+        end
+        
+        
+        
+
         if tp 
             %Block paradigm type
             %interval length
@@ -143,12 +192,12 @@ for Idx=1:size(job.NIRSmat,1)
             count = 0; %total spikes
             tlen = 0; %cumulative time in arbitrary units
             ds = []; %spike positions in arbitrary units
-            flen = ns*xBF.dt; %length of file in seconds
+            flen = ns/fs; %length of file in seconds
             if tp2
                 %Two types of spikes               
                 fcount = 0; %frequent spikes
                 %while not all desired spikes have been generated
-                while count < tn-1 %subtract one from tn because will add one
+                while count < tn %subtract one from tn because will add one
                     %infrequent spike at the end
                     %alternate between infrequent and frequent spikes
                     p1 = poissrnd(tssg);
@@ -168,7 +217,7 @@ for Idx=1:size(job.NIRSmat,1)
                     for i1=1:p2
                         e2 = unifrnd(tfs(1),tfs(2));
                         tlen = tlen + e2;
-                        if count > tn, break; end
+                        if count > tn-1, break; end
                         if tlen > flen, break; end
                         ds = [ds tlen];
                         count = count + 1;
@@ -180,12 +229,12 @@ for Idx=1:size(job.NIRSmat,1)
                 end %end while               
             else
                 %One type of spikes
-                while count < tn-1
+                while count < tn
                     e1 = exprnd(tss);
                     tlen = tlen + e1;
                     ds = [ds tlen];                 
                     count = count + 1;
-                    if tlen > flen, break; end
+                    if ~tsc && tlen > flen, break; end
                 end               
             end
             %add a final interval after the last spike from the slow
@@ -194,26 +243,28 @@ for Idx=1:size(job.NIRSmat,1)
             tlen = tlen + e1;
             if tsc 
                 %rescale to fit size of file and convert to seconds
-                as = ds*size(d,2)*xBF.dt/tlen;
+                as = ds*size(d,2)/(tlen*fs);
             else
                 %ds is already in seconds
                 as = ds;
             end
         end
+        if tsc && (count > tn || count < tn)
+            disp('problem with number of spikes');
+        end
         
-        
-        %fill SPM's U structure from spm_get_ons
+        %fill SPM's xBF structure from spm_get_bf %fill SPM's U structure from spm_get_ons
         SPM = [];
         %SPM's session
         s = 1;
         SPM.nscan(s) = ns;
         SPM.xBF = xBF;
-        SPM.xBF.T = 1;
-        %SPM.xBF.T0 = 1; %shouldn't need it
+        SPM.xBF.T = xBF.T; %get more precision on onsets position      
+        SPM.xBF.T0 = 1; %shouldn't need it - no offset
         SPM.xBF.UNITS = 'secs';
         SPM.xBF.Volterra = volt;
-        SPM.xY.RT = xBF.dt;
-
+        SPM.xY.RT = 1/fs; %xBF.dt;
+      
         U.name = {tname};
         U.dt = xBF.dt;
         U.ons = as;
@@ -221,6 +272,7 @@ for Idx=1:size(job.NIRSmat,1)
         U.P.name = 'none'; 
         U.P.h    = 0;
         SPM.Sess(s).U = U;
+        
         %copied code from spm_get_ons(SPM,s):
         % create stimulus functions (32 bin offset)
         %======================================================================
@@ -228,9 +280,19 @@ for Idx=1:size(job.NIRSmat,1)
         V = SPM.xBF.Volterra;
         %convolve stimuli U with basis functions
         [X,Xn,Fc] = spm_Volterra(U,bf,V); 
-        X = X(33:end,:);
+        try
+            X = X((0:(ns - 1))*SPM.xBF.T + SPM.xBF.T0 + 32,:);
+        end
+
+        % and orthogonalise (within trial type)
+        %--------------------------------------
+        for i = 1:length(Fc)
+            X(:,Fc(i).i) = spm_orth(X(:,Fc(i).i));
+        end
+
+        %X = X(33:end,:);
         
-        %calculate power of protocole
+        %calculate power of protocol
         switch volt
             case 1 
                 %this will not work if we have subsessions
@@ -255,9 +317,35 @@ for Idx=1:size(job.NIRSmat,1)
             %Take standard deviation instead
             
             %calculate power of baseline
-            m1 = mean(dc(Cidx,:));
-            NIRS.Dt.fir.Eb(Cidx) = sum((dc(Cidx,:)-m1).^2)/ns;
             
+            %filter raw data to calculate power between two frequencies
+            filter_data = 1;
+            NIRS.Dt.fir.filter_data = filter_data;
+            if filter_data
+                %LPF
+                %if SPM.xX.LPFbutter                
+                cutoff=0.0667; %SPM.xX.lpf_butter_freq; %0.666; %Hz, or 1.5s
+                FilterOrder=3;
+                Wn=cutoff*2/fs;                           % normalised cutoff frequency
+                [fb,fa]=butter(FilterOrder,Wn);            % buterworth filter
+                tdc=filtfilt(fb,fa,dc(Cidx,:));
+                %end
+
+                %HPF
+                %if SPM.xX.HPFbutter
+                cutoff=0.01; %SPM.xX.hpf_butter_freq; %Hz, or 100s 
+                FilterOrder=3;
+                Wn=cutoff*2/fs;
+                [fb,fa]=butter(FilterOrder,Wn,'high');
+                tdc=filtfilt(fb,fa,tdc);
+                %end
+                m1 = mean(tdc);
+                NIRS.Dt.fir.Eb(Cidx) = sum((tdc-m1).^2)/ns;
+            else
+                tdc = dc(Cidx,:);
+                m1 = mean(dc(Cidx,:));
+                NIRS.Dt.fir.Eb(Cidx) = sum((dc(Cidx,:)-m1).^2)/ns;
+            end
             
             if AmpTargetMethod
                 %target amplitude
@@ -268,19 +356,26 @@ for Idx=1:size(job.NIRSmat,1)
                 end
                 
                 %Boolean - for testing
-                std_or_power = 0;
+                std_or_power = 1;
                 if std_or_power
-                    m = std(dc(Cidx,:)); 
-                    a = a2*m;
-                    NIRS.Dt.fir.SNR(Cidx) = 10*log10((a2*m)^2*NIRS.Dt.fir.Ep/NIRS.Dt.fir.Eb(Cidx));
+                    if filter_data
+                        m = std(tdc);                       
+                        a = a2*m*bf_norm; %
+                    else
+                        m = std(dc(Cidx,:)); 
+                        a = a2*m*bf_norm;
+                    end 
+                    NIRS.Dt.fir.SNR(Cidx) = 10*log10(a^2*NIRS.Dt.fir.Ep/NIRS.Dt.fir.Eb(Cidx));                        
                 else
                     m = NIRS.Dt.fir.Eb(Cidx)/NIRS.Dt.fir.Ep;
-                    a = a2*m^(0.5);
+                    a = a2*m^(0.5)*bf_norm;
                     NIRS.Dt.fir.SNR(Cidx) = 10*log10(a2); 
                 end
-                                
-                                                           
                 NIRS.Dt.fir.a(Cidx) = a;
+                NIRS.Dt.fir.a2(Cidx) = a2; %/m; 
+                NIRS.Dt.fir.a3(Cidx) = a/median(tdc); 
+                
+                %NIRS.Dt.fir.a(Cidx) = a;
                 NIRS.Dt.fir.std_or_power = std_or_power;
             else
                 %target SNR
@@ -291,7 +386,8 @@ for Idx=1:size(job.NIRSmat,1)
                 NIRS.Dt.fir.a2(Cidx) = a/m; 
                 NIRS.Dt.fir.a3(Cidx) = a/median(dc(Cidx,:)); 
             end
-                               
+            try NIRS.Dt.fir.AmpTargetMethod = AmpTargetMethod; end
+            
             %is only a few percent point-by-point on the stimuli
             switch volt
                 case 1                    
@@ -302,6 +398,7 @@ for Idx=1:size(job.NIRSmat,1)
                     else
                         b = tb;
                     end
+                    NIRS.Dt.fir.b = b;
                     a = [a b*a]; 
                     d(chn(Cidx),:) = dc(Cidx,:)+a*(X'); 
             end               
