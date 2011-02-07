@@ -233,6 +233,7 @@ for Idx=1:size(job.NIRSmat,1)
                                     tSPM.xX.t(r,:) = tSPM.xX.beta(r,:)./...
                                         sqrt(tSPM.xX.ResSS(:)'*tSPM.xX.Bcov(r,r)/tSPM.xX.trRV);
                                 end
+                                %b2 =SPM.xXn{1}.beta(1,:)./sqrt(SPM.xXn{1}.ResSS/SPM.xXn{1}.trRV);
                         end
 
                         %Add piece of SPM to the whole SPM                    
