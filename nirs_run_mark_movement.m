@@ -58,7 +58,7 @@ for Idx=1:size(job.NIRSmat,1)
                 u = sum(pvb,2)./size(pvb,2);
                 %threshold to remove bad channels as fraction of time they are
                 %noisy
-                thresh = 0.2;
+                thresh = job.mvt_ch_thresh/100; %0.2;
                 %indices of bad channels
                 bc = zeros(NC,1);
                 bc(u>=thresh)=1; 

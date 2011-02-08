@@ -11,3 +11,4 @@ nirs10.preprocessNIRS.mark_movement.mvt_cutoff = 10; %as a percentage of
 nirs10.preprocessNIRS.mark_movement.sum_mvt_threshold = 10; %written as a
 %percentage, i.e. = 10 means 10% or 0.1.
 nirs10.preprocessNIRS.mark_movement.min_session_duration = 60; %in seconds
+nirs10.preprocessNIRS.mark_movement.mvt_ch_thresh = 20; %percentage
