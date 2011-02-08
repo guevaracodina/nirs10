@@ -31,14 +31,13 @@ for Idx=1:nsubj
         V.fname = job.image_in{Idx,:};
     end
     
-    try
-        [dir1, ~, ~] = fileparts(V.fname);
-        tmpf = spm_select('List',dir1,'_segmented_');
-        if ~isempty(tmpf)
-            NIRS.Cs.mcs.seg = tmpf(1,:);
-        end
+    
+    [dir1, ~, ~] = fileparts(V.fname);
+    tmpf = spm_select('List',dir1,'_segmented_');
+    if ~isempty(tmpf)
+        NIRS.Cs.mcs.seg = tmpf(1,:);       
         %MC Segmentation already done, skipping
-    catch
+    else
         %Obtain tissue segmentation with SPM's New Segment, if not already done
         nirs_spm_NewSegment(V.fname);
         try

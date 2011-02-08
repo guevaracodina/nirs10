@@ -12,7 +12,7 @@ image_in = job.image_in;
 V = spm_vol(image_in{:});
 Y = spm_read_vols(V);
 
-NIRSmat = job.NIRSmat;
+NIRSmat = job.NIRSmatSingle;
 load(NIRSmat{:});
 
 if isfield(NIRS.Cf.H.P.r.m.mm,'p')

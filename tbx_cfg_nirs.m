@@ -444,7 +444,7 @@ freq_NIRS1.tag  = 'freq_NIRS1';
 freq_NIRS1.name = 'Frequency of NIRS data for GLM';
 freq_NIRS1.val{1} = []; %{1.9531}; %{19.5312};
 freq_NIRS1.strtype = 'r';  
-freq_NIRS1.num     = [0 1]; 
+freq_NIRS1.num     = [0 Inf]; 
 freq_NIRS1.help    = {'Specify frequency of NIRS data (optional).'}; 
 
 dp_NIRS1      = cfg_entry;
@@ -452,7 +452,7 @@ dp_NIRS1.tag  = 'dp_NIRS1';
 dp_NIRS1.name = 'Number of data points in NIRS data for GLM';
 dp_NIRS1.val{1} = []; %{1758}; 
 dp_NIRS1.strtype = 'r';  
-dp_NIRS1.num     = [0 1]; 
+dp_NIRS1.num     = [0 Inf]; 
 dp_NIRS1.help    = {'Specify number of data time points in NIRS data for the GLM (optional).'}; 
 
 NIRSmat_optional         = cfg_files; %Select NIRS.mat for this subject 
@@ -1134,10 +1134,21 @@ AR_wMNI.num     = [1 3];
 AR_wMNI.def     = @(val)nirs_get_defaults('coregNIRS.coreg1.AR_wMNI', val{:}); 
 AR_wMNI.help    = {'Coordinates of Auricular Right.'}; 
 
+GenDataTopo = cfg_menu;
+GenDataTopo.tag    = 'GenDataTopo';
+GenDataTopo.name   = 'Generate topo data.';
+GenDataTopo.labels = {'Yes','No'};
+GenDataTopo.values = {1,0};
+GenDataTopo.def    = @(val)nirs_get_defaults('coregNIRS.coreg1.GenDataTopo', val{:});
+GenDataTopo.help   = {'Generate rend data (NIRS_SPM) for topographic '
+            'reconstruction - stored in a separate file: TopoData.mat'}';
+
+
 coreg1      = cfg_exbranch;       
 coreg1.name = 'NIRScoreg';             
 coreg1.tag  = 'coreg1'; 
-coreg1.val  = {NIRSmat DelPreviousData NewDirCopyNIRS anatT1 anatT1_template nasion_wMNI AL_wMNI AR_wMNI};    
+coreg1.val  = {NIRSmat DelPreviousData NewDirCopyNIRS anatT1 ...
+    anatT1_template nasion_wMNI AL_wMNI AR_wMNI GenDataTopo};    
 coreg1.prog = @nirs_run_coreg;  
 coreg1.vout = @nirs_cfg_vout_coreg; 
 coreg1.help = {'Automatic coregistration.'};
@@ -1185,6 +1196,7 @@ NormParams.ufilter = '_sn.*';
 NormParams.num     = [1 1];     % Number of inputs required 
 NormParams.help    = {'Select normalization parameters for this subject.'}; 
 
+
 Coreg_standalone         = cfg_branch;
 Coreg_standalone.tag     = 'Coreg_standalone';
 Coreg_standalone.name    = 'Standalone coregistration';
@@ -1210,7 +1222,7 @@ Vsegmented.help    = {'Select native (not normalized) anatomical image for this 
 coreg_manual1      = cfg_exbranch;      
 coreg_manual1.name = 'Manual NIRScoreg';            
 coreg_manual1.tag  = 'coreg_manual1';
-coreg_manual1.val  = {Coreg_choice Vsegmented}; 
+coreg_manual1.val  = {Coreg_choice Vsegmented }; 
 coreg_manual1.prog = @nirs_run_coreg_manual;  
 coreg_manual1.vout = @nirs_cfg_vout_coreg_manual; 
 coreg_manual1.help = {'Manual coregistration.'};
@@ -1796,13 +1808,12 @@ nirs_lpf2.help      = {'Choose low-pass filter.'};
 
 % Executable Branch
 ODtoHbOHbR      = cfg_exbranch;       
-ODtoHbOHbR.name = 'Convert OD to HbO/HbR and wavelets';             
+ODtoHbOHbR.name = 'Convert OD to HbO/HbR ';             
 ODtoHbOHbR.tag  = 'ODtoHbOHbR'; 
 ODtoHbOHbR.val  = {NIRSmat DelPreviousData NewDirCopyNIRS PVF nirs_lpf2}; 
 ODtoHbOHbR.prog = @nirs_run_ODtoHbOHbR;  
 ODtoHbOHbR.vout = @nirs_cfg_vout_ODtoHbOHbR; 
-ODtoHbOHbR.help = {'Convert OD to HbO/HbR and wavelet detrending.'
-            'with NIRS_SPM routine.'}';
+ODtoHbOHbR.help = {'Convert OD to HbO/HbR.'}';
 
 function vout = nirs_cfg_vout_ODtoHbOHbR(job)
 vout = cfg_dep;                     
@@ -2972,6 +2983,33 @@ vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Liom Contrast calculations - based on tube formula and code by NIRS_SPM
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+liom_contrast_struct         = cfg_repeat;
+liom_contrast_struct.tag     = 'liom_contrast_struct';
+liom_contrast_struct.name    = 'Contrasts';
+liom_contrast_struct.help    = {'Specify contrasts'};
+liom_contrast_struct.values  = {contrast_data};
+liom_contrast_struct.num     = [0 Inf];
+
+% Executable Branch
+liom_contrast      = cfg_exbranch;      
+liom_contrast.name = 'Liom Contrast Calculations';            
+liom_contrast.tag  = 'liom_contrast';
+liom_contrast.val  = {NIRSmat view liom_contrast_struct}; 
+liom_contrast.prog = @nirs_run_liom_contrast;  
+liom_contrast.vout = @nirs_cfg_vout_liom_contrast; 
+liom_contrast.help = {'Liom Contrast Calculations.'};
+
+function vout = nirs_cfg_vout_liom_contrast(job)
+vout = cfg_dep;                     
+vout.sname      = 'NIRS.mat';       
+vout.src_output = substruct('.','NIRSmat'); 
+vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NIRS_SPM Group Level Model Estimation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -3419,7 +3457,7 @@ model_estimate        = cfg_choice; %cfg_repeat;
 model_estimate.name   = 'GLM Estimation';
 model_estimate.tag    = 'model_estimate';
 model_estimate.values = {wls_bglm_estimate NIRS_SPM_HPF_LPF NIRS_SPM_estimate ...
-            NIRS_SPM_estimate_batch NIRS_SPM_contrast NIRS_SPM_group ...
+            NIRS_SPM_estimate_batch NIRS_SPM_contrast liom_contrast NIRS_SPM_group ...
             AnalyzeGLM ROCtest};
 model_estimate.help   = {'These modules estimate a GLM.'};
  
