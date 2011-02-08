@@ -1,6 +1,10 @@
 function out = nirs_run_normalize_baseline(job)
 %filename prefix 
 prefix = 'b'; %for "baseline"
+%To remove negative values - such channels are probably too noisy to be
+%useful anyway - but a better method should be found
+legacy_option_to_remove_negative_values = 1;
+
 DelPreviousData  = job.DelPreviousData;
 try 
     NewNIRSdir = job.NewDirCopyNIRS.CreateNIRSCopy.NewNIRSdir;
@@ -27,9 +31,8 @@ for Idx=1:size(job.NIRSmat,1)
         
         for f=1:size(rDtp,1)
             d = fopen_NIR(rDtp{f,1},NC);
-            
-            legacy_option_to_remove_negative_values = 1;
-            if legacy_option_to_remove_negative_values
+                    
+            if legacy_option_to_remove_negative_values                
                 threshold = 0.1;
                 %Some values of the optical intensity d may be negative
                 %Compute the minimum of d for each channel
@@ -38,14 +41,15 @@ for Idx=1:size(job.NIRSmat,1)
                     if mind(i1) > threshold 
                         mind(i1) = 0;
                     else 
-                        if mind(i1) > -threshold
-                             mind(i1) = -threshold;
+                        NIRS.CAUTION = 'legacy_option_to_remove_negative_values';
+                        if mind(i1) < threshold
+                             mind(i1) = -mind(i1)+threshold;                            
                         end
                     end
                 end
                 %Subtract twice this minimum value for regularization - in
                 %anticipation of taking the log later
-                d = d - 2 *  mind * ones(1,size(d,2));
+                d = d + mind * ones(1,size(d,2));
             end
             
             try 
@@ -112,10 +116,10 @@ for Idx=1:size(job.NIRSmat,1)
                                 end
                                 %HbO channels
                                 ch = NIRS.Cf.H.C.wl== HbO_like;
-                                td(:,si(i):ei(i)) = (75+(e(ch,:)-div_factor))*job.Analyzer_sf;
+                                td(:,si(i):ei(i)) = (75+(e(ch,:)-div_factor(ch,:)))*job.Analyzer_sf;
                                 %HbR channels
                                 ch = NIRS.Cf.H.C.wl== HbR_like;
-                                td(:,si(i):ei(i)) = (25+(e(ch,:)-div_factor))*job.Analyzer_sf;
+                                td(:,si(i):ei(i)) = (25+(e(ch,:)-div_factor(ch,:)))*job.Analyzer_sf;
                             else
                                 td(:,si(i):ei(i)) = e./div_factor*job.Analyzer_sf; 
                             end 
@@ -210,10 +214,10 @@ for Idx=1:size(job.NIRSmat,1)
                         end
                         %HbO channels
                         ch = find(NIRS.Cf.H.C.wl== HbO_like);
-                        d(ch,:) = (75+(d(ch,:)-div_factor))*job.Analyzer_sf;
+                        d(ch,:) = (75+(d(ch,:)-div_factor(ch,:)))*job.Analyzer_sf;
                         %HbR channels
                         ch = find(NIRS.Cf.H.C.wl== HbR_like);
-                        d(ch,:) = (25+(d(ch,:)-div_factor))*job.Analyzer_sf; 
+                        d(ch,:) = (25+(d(ch,:)-div_factor(ch,:)))*job.Analyzer_sf; 
                     else
                         d = d./div_factor*job.Analyzer_sf; 
                     end

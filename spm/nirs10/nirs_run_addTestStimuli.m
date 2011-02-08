@@ -218,7 +218,7 @@ for Idx=1:size(job.NIRSmat,1)
                         e2 = unifrnd(tfs(1),tfs(2));
                         tlen = tlen + e2;
                         if count > tn-1, break; end
-                        if tlen > flen, break; end
+                        if ~tsc && tlen > flen, break; end
                         ds = [ds tlen];
                         count = count + 1;
                         fcount = fcount + 1;                        
@@ -450,14 +450,14 @@ for Idx=1:size(job.NIRSmat,1)
                 try NIRS.Cf.H.C.n = [NIRS.Cf.H.C.n(chnk) NIRS.Cf.H.C.n(chnk)]; end
                 try NIRS.Cf.H.C.id = [NIRS.Cf.H.C.id(:,chnk) NIRS.Cf.H.C.id(:,chnk)]; end
                 try NIRS.Cf.H.C.wl = [NIRS.Cf.H.C.wl(chnk) NIRS.Cf.H.C.wl(chnk)]; end 
-                try NIRS.Cf.H.C.gp = [NIRS.Cf.H.C.gp(chnk); NIRS.Cf.H.C.gp(chnk)]; end
+                try NIRS.Cf.H.C.gp = [NIRS.Cf.H.C.gp(chnk) NIRS.Cf.H.C.gp(chnk)]; end
                 try NIRS.Cf.H.C.ok = [NIRS.Cf.H.C.ok(chnk) NIRS.Cf.H.C.ok(chnk)]; end             
             else
                 NIRS.Cf.H.C.N = 2*NIRS.Cf.H.C.N;
                 try NIRS.Cf.H.C.n = [NIRS.Cf.H.C.n NIRS.Cf.H.C.n]; end
                 try NIRS.Cf.H.C.id = [NIRS.Cf.H.C.id NIRS.Cf.H.C.id]; end
                 try NIRS.Cf.H.C.wl = [NIRS.Cf.H.C.wl NIRS.Cf.H.C.wl]; end 
-                try NIRS.Cf.H.C.gp = [NIRS.Cf.H.C.gp; NIRS.Cf.H.C.gp]; end
+                try NIRS.Cf.H.C.gp = [NIRS.Cf.H.C.gp NIRS.Cf.H.C.gp]; end
                 try NIRS.Cf.H.C.ok = [NIRS.Cf.H.C.ok NIRS.Cf.H.C.ok]; end             
             end
         else

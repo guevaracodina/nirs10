@@ -12,7 +12,7 @@ Pp_rmm = NIRS.Cf.H.P.r.m.mm.p;
 Pp_c1_rmm = NIRS.Cf.H.P.r.m.mm.c1.p;
 NP = NIRS.Cf.H.P.N;
 
-Pd_rmm = (Pp_rmm - Pp_c1_rmm)/norm(Pp_rmm - Pp_c1_rmm);% pointing outside of the head
+Pd_rmm = -(Pp_rmm - Pp_c1_rmm)/norm(Pp_rmm - Pp_c1_rmm);% pointing outside of the head
 Pfp_rmm = Pp_c1_rmm;
 
 % method inspired from article: Qianqian Fang and David A. Boas, "Monte

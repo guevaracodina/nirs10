@@ -266,6 +266,7 @@ for Idx=1:size(job.NIRSmat,1)
             NIRS.Dt.fir.pp(lst+1).bpi{f,1} = bpi; %bad point indices
             NIRS.Dt.fir.pp(lst+1).bpd{f,1} = bpd; %bad point durations
             NIRS.Dt.fir.ht{f,1} = heart;          %heart pace and energy
+            
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % cb:utile pour la methode dans le cas de tests sans
             % exercices...
@@ -295,9 +296,10 @@ for Idx=1:size(job.NIRSmat,1)
             try NIRS.Cf.H.C.n = NIRS.Cf.H.C.n(first_k2); end
             try NIRS.Cf.H.C.id = NIRS.Cf.H.C.id(:,first_k2); end
             try NIRS.Cf.H.C.wl = NIRS.Cf.H.C.wl(first_k2); end
-            try NIRS.Cf.H.C.gp = NIRS.Cf.H.C.gp(first_k2); end
-            try NIRS.Cf.H.C.ok = first_k2; end
+            try NIRS.Cf.H.C.gp = NIRS.Cf.H.C.gp(first_k2); end            
         end
+        try NIRS.Cf.H.C.ok = first_k2; end %gives good channels whether they
+        %were removed or not
         if NewDirCopyNIRS
             save(fullfile(dir2,'NIRS.mat'),'NIRS');
         else

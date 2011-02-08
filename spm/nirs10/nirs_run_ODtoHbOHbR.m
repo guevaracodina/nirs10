@@ -74,7 +74,7 @@ for Idx=1:size(job.NIRSmat,1)
         
         EPF = zeros(1,NC); %EPF = L * PPF = L * DPF/PVF at each wavelength
         for Ci = 1:NC
-            EPF(1,Ci) = Cgp(1,Ci)*DPF(Cwl(1,Ci),1)./PVF(Cwl(1,Ci),1);
+            EPF(1,Ci) = Cgp(1,Ci)*DPF(Cwl(1,Ci),1)./PVF(1,Cwl(1,Ci));
             %             EPF(1,Ci) = Cgp(Ci,1)*DPF(Cwl(1,Ci),1)./PVF(1,Cwl(1,Ci)); %PP??? why not ./???
         end
         
@@ -154,6 +154,7 @@ for Idx=1:size(job.NIRSmat,1)
                     if iC==size(c,1)
                         disp(['Some elements are NaN for file ' int2str(f)]);
                         disp('NaNs corrected');
+                        NIRS.WARNING = 'Some NaN elements were corrected';
                     end
                 catch
                     %CB: puisqu'on corrige est ce qu'on garde le WARNING ????

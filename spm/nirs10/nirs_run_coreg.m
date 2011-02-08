@@ -151,6 +151,124 @@ for Idx=1:size(job.NIRSmat,1)
         %Save MNI coordinates of optodes on cortex (c1)
         NIRS.Cf.H.P.r.m.mm.c1.p = Pp_c1_rmm; 
         NIRS.Cf.H.P.void = Pvoid; 
+        
+        %
+        if job.GenDataTopo
+            [dir1,fil1,ext1] = fileparts(NIRS.Dt.ana.T1);
+            fwT1 = fullfile(dir1,['w' fil1 ext1]);
+            NIRS.Dt.ana.fwT1 = fwT1;
+            try
+                %V0 = spm_vol(NIRS.Dt.ana.T1);
+                V = spm_vol(fwT1);
+                wT1_info.mat = V.mat;%[-1.5 0 0 79; 0 1.5 0 -113; 0 0 1.5 -51; 0 0 0 1]; %V.mat;
+                wT1_info.dim = V.dim;% [105,126,91]; %V.dim;
+                %let's use positions of optodes on cortex
+                %loop over channel ids
+                ch_MNI_vx = [];
+                %number of sources
+                Ns = NIRS.Cf.H.S.N;
+                for i=1:(size(NIRS.Cf.H.C.id,2)/2)
+                    %indices of source and detector
+                    Si = NIRS.Cf.H.C.id(2,i);
+                    Di = NIRS.Cf.H.C.id(3,i)+Ns;
+                    pos = V.mat\(Q*[(Pp_c1_rmm(:,Si)+Pp_c1_rmm(:,Di))/2;1]);
+                    
+                    ch_MNI_vx = [ch_MNI_vx pos];
+                end        
+                [rend, rendered_MNI] = render_MNI_coordinates(ch_MNI_vx, wT1_info);
+                for kk = 1:6
+                    rendered_MNI{kk}.ren = rend{kk}.ren;
+                end
+                rend_file = fullfile(pth,'TopoData.mat');
+                save(rend_file, 'rendered_MNI');
+                NIRS.Dt.ana.rend = rend_file;
+                
+                %Viewer from NIRS_SPM
+                viewer_ON = 1;
+                if viewer_ON 
+                    %rendered_MNI = varargin{1};
+                    Nch = size(rendered_MNI{1}.rchn,1);
+                    figure;
+                    load Split
+                    kk = 4; % dorsal view
+                    %brain = rend{kk}.ren;
+                    brain = rendered_MNI{kk}.ren;
+                    brain = brain.* 0.5;
+                    sbar = linspace(0, 1, 128);
+                    sbrain = ((-sbar(1) + sbar(64))/(0.5)).* brain + sbar(1);
+                    sbrain(1,1) = 1;
+                    %axes(handles.axes_brain);
+
+                    rchn = rendered_MNI{kk}.rchn;
+                    cchn = rendered_MNI{kk}.cchn;
+                    for jj = 1:Nch
+                        if rchn(jj) ~= -1 && cchn(jj) ~= -1 %% updated 2009-02-25
+                            if rchn(jj) < 6 || cchn(jj) < 6
+                                sbrain(rchn(jj), cchn(jj)) = 0.9; % 0.67
+                            else
+                                sbrain(rchn(jj)-5:rchn(jj)+5, cchn(jj)-5:cchn(jj)+5) = 0.9;
+                            end
+                        end
+                    end
+                    imagesc(sbrain);
+                    colormap(split);
+                    axis image;
+                    axis off;
+
+                    for jj = 1:Nch
+                        if rchn(jj) ~= -1 && cchn(jj) ~= -1 %% updated 2009-02-25
+                            text(cchn(jj)-5, rchn(jj), num2str(jj), 'color', 'r');
+                        end
+                    end
+
+% %                     Nch = size(rendered_MNI{1}.rchn,1)/2;
+% %                     load Split
+% %                     figure;
+% %                     for kk = 1:6
+% %                         figure;
+% %                         brain = rend{kk}.ren;
+% %                         %brain = rendered_MNI{kk}.ren;
+% %                         brain = brain.* 0.5;
+% %                         sbar = linspace(0, 1, 128);
+% %                         sbrain = ((-sbar(1) + sbar(64))/(0.5)).* brain + sbar(1);
+% %                         sbrain(1,1) = 1;
+% % %                         switch kk
+% % %                             case 1
+% % %                                 axes(handles.axes_ventral_view);
+% % %                             case 2
+% % %                                 axes(handles.axes_dorsal_view);
+% % %                             case 3
+% % %                                 axes(handles.axes_lateral_view_right);
+% % %                             case 4
+% % %                                 axes(handles.axes_lateral_view_left);
+% % %                             case 5
+% % %                                 axes(handles.axes_frontal_view);
+% % %                             case 6
+% % %                                 axes(handles.axes_occipital_view);
+% % %                         end
+% %                         imagesc(sbrain);
+% %                         for jj = 1:Nch
+% %                             rchn = rendered_MNI{kk}.rchn(jj);
+% %                             cchn = rendered_MNI{kk}.cchn(jj);        
+% %                             if rchn ~= -1 && cchn ~= -1 %% updated 2009-02-25
+% %                                 if rchn < 6 || cchn < 6
+% %                                     sbrain(rchn, cchn) = 0.67;
+% %                                 else                
+% %                                     sbrain(rchn-5:rchn+5, cchn-5:cchn+5) = 0.67;
+% %                                     text(cchn, rchn, num2str(jj), 'color', 'r');           
+% %                                 end
+% %                             end
+% %                         end
+% %                         imagesc(sbrain);
+% %                         colormap(split);
+% %                         axis image
+% %                         axis off
+% %                     end
+                 end
+            catch
+                disp('Could not create TopoData.mat file');
+            end
+        end
         save(job.NIRSmat{Idx},'NIRS');
     catch
         disp(['Coregistration failed for subject' int2str(Idx)]);
