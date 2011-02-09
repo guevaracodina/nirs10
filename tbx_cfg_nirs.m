@@ -2794,18 +2794,6 @@ end
 % NIRS_SPM General Linear Model Specification - NEW version - for batch
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-
-% group_sessions         = cfg_menu;
-% group_sessions.tag     = 'group_sessions';
-% group_sessions.name    = 'Group sessions';
-% group_sessions.help    = {'Group sessions or treat separately.'}';
-% group_sessions.labels = {
-%                'Group sessions'
-%                'Treat sessions separately'}';
-% group_sessions.values = {1 2};
-% group_sessions.val    = {1};
-
 % Executable Branch
 NIRS_SPM_specify_batch      = cfg_exbranch;       
 NIRS_SPM_specify_batch.name = 'NIRS_SPM GLM Specification (NEW, for batch)';           
@@ -3004,11 +2992,29 @@ liom_contrast_struct.help    = {'Specify contrasts'};
 liom_contrast_struct.values  = {contrast_data};
 liom_contrast_struct.num     = [0 Inf];
 
+contrast_p_value         = cfg_entry; 
+contrast_p_value.name    = 'Contrast uncorrected p_value';
+contrast_p_value.tag     = 'contrast_p_value';       
+contrast_p_value.strtype = 'r';
+contrast_p_value.num     = [1 1];
+contrast_p_value.val     = 0.05;
+contrast_p_value.help    = {'Contrast uncorrected p_value'}; 
+
+contrast_figures      = cfg_menu;
+contrast_figures.tag  = 'contrast_figures';
+contrast_figures.name = 'Generate figures';
+contrast_figures.labels = {'No','Both .fig and .tiff','Only .fig','Only .tiff'};
+contrast_figures.values = {0,1,2,3};
+contrast_figures.val = {0};
+contrast_figures.help = {'Generate contrast figures. '
+    'Note .fig colorbar is incorrect - it is not saved properly by Matlab.'
+    'Use .tiff to view colorbar for t-stat.'}';
+
 % Executable Branch
 liom_contrast      = cfg_exbranch;      
 liom_contrast.name = 'Liom Contrast Calculations';            
 liom_contrast.tag  = 'liom_contrast';
-liom_contrast.val  = {NIRSmat view liom_contrast_struct}; 
+liom_contrast.val  = {NIRSmat view liom_contrast_struct contrast_p_value contrast_figures}; 
 liom_contrast.prog = @nirs_run_liom_contrast;  
 liom_contrast.vout = @nirs_cfg_vout_liom_contrast; 
 liom_contrast.help = {'Liom Contrast Calculations.'};
@@ -3044,6 +3050,40 @@ NIRS_SPM_group.vout = @nirs_cfg_vout_NIRS_SPM_group;
 NIRS_SPM_group.help = {'NIRS_SPM Group level model estimation.'};
 
 function vout = nirs_cfg_vout_NIRS_SPM_group(job)
+vout = cfg_dep;                     
+vout.sname      = 'NIRS.mat';       
+vout.src_output = substruct('.','NIRSmat'); 
+vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Liom Group Level Model Estimation
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+FFX_or_RFX = cfg_menu;
+FFX_or_RFX.tag  = 'FFX_or_RFX';
+FFX_or_RFX.name = 'Fixed or random effects';
+FFX_or_RFX.labels = {'FFX','RFX'};
+FFX_or_RFX.values = {0,1};
+FFX_or_RFX.val = {0};
+FFX_or_RFX.help = {'Use fixed effects (FFX) for group of sessions (intra-subject) '
+    'Use random effects (RFX) for group of subjects (inter-subject)'
+    'FFX amounts to setting the between session variance to zero.'
+    'Several subjects can be specified for FFX; they will each be treated separately.'
+    'RFX assumes there is only one session per subject.'
+    'RFX can also be used for one subject with multiple sessions, '
+    'to take into account the variance between sessions.'}';
+
+% Executable Branch
+liom_group      = cfg_exbranch;       
+liom_group.name = 'Liom Group Model Estimation';             
+liom_group.tag  = 'liom_group'; 
+liom_group.val  = {NIRSmat contrast_figures contrast_p_value}; 
+liom_group.prog = @nirs_run_liom_group;  
+liom_group.vout = @nirs_cfg_vout_liom_group; 
+liom_group.help = {'Liom Group level model estimation.'};
+
+function vout = nirs_cfg_vout_liom_group(job)
 vout = cfg_dep;                     
 vout.sname      = 'NIRS.mat';       
 vout.src_output = substruct('.','NIRSmat'); 
@@ -3469,7 +3509,7 @@ model_estimate.name   = 'GLM Estimation';
 model_estimate.tag    = 'model_estimate';
 model_estimate.values = {wls_bglm_estimate NIRS_SPM_HPF_LPF NIRS_SPM_estimate ...
             NIRS_SPM_estimate_batch NIRS_SPM_contrast liom_contrast NIRS_SPM_group ...
-            AnalyzeGLM ROCtest};
+            liom_group AnalyzeGLM ROCtest};
 model_estimate.help   = {'These modules estimate a GLM.'};
  
 %module 11

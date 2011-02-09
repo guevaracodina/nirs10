@@ -31,7 +31,8 @@ else
         %yet there are no relevant significant voxels -- how
         %could that be? (in the problematic case, there was
         %only one such voxel)
-        y_tick = linspace(sbar(65), sbar(128), 5)';
+        y_tick = linspace(sbar(65), sbar(128), 6)';
+        set(hc,'yticklabel',sprintf('%.2f |',get(hc,'ytick')'));
         set(hc, 'YTick', y_tick);
         set(hc, 'FontSize', 8);
         catch
