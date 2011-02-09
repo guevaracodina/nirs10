@@ -1,6 +1,6 @@
-path = 'D:\Users\Clément\Projets_CRIUGM\Donnees\VOIRE\';
-subj = '11';
-subju ='011';
+path = 'D:\Users\Clément\Projets_CRIUGM\Donnees\VOIRE\03\Stat';
+subj = '03';
+subju ='03';
 
 figure
 
@@ -137,17 +137,17 @@ subplot(4,1,2);stem(SPM.xXn{1,1}.t(2,:));title('Denomination');
 subplot(4,1,3);stem(SPM.xXn{1,1}.t(3,:));title('Inhib_switch');
 subplot(4,1,4);stem(SPM.xXn{1,1}.t(4,:));title('Constante');
 figure;
-subplot(4,1,1);stem(SPM.xXn{1,2}.t(1,:));title(['Sujet ' subj ' - stroop - 1,1' 'Baseline']);
+subplot(4,1,1);stem(SPM.xXn{1,2}.t(1,:));title(['Sujet ' subj ' - stroop - 1,2' 'Baseline']);
 subplot(4,1,2);stem(SPM.xXn{1,2}.t(2,:));title('Denomination');
 subplot(4,1,3);stem(SPM.xXn{1,2}.t(3,:));title('Inhib_switch');
 subplot(4,1,4);stem(SPM.xXn{1,2}.t(4,:));title('Constante');
 figure;
-subplot(4,1,1);stem(SPM.xXn{1,3}.t(1,:));title(['Sujet ' subj ' - stroop - 1,1' 'Baseline']);
+subplot(4,1,1);stem(SPM.xXn{1,3}.t(1,:));title(['Sujet ' subj ' - stroop - 1,3' 'Baseline']);
 subplot(4,1,2);stem(SPM.xXn{1,3}.t(2,:));title('Denomination');
 subplot(4,1,3);stem(SPM.xXn{1,3}.t(3,:));title('Inhib_switch');
 subplot(4,1,4);stem(SPM.xXn{1,3}.t(4,:));title('Constante');
 figure;
-subplot(4,1,1);stem(SPM.xXn{1,4}.t(1,:));title(['Sujet ' subj ' - stroop - 1,1' 'Baseline']);
+subplot(4,1,1);stem(SPM.xXn{1,4}.t(1,:));title(['Sujet ' subj ' - stroop - 1,4' 'Baseline']);
 subplot(4,1,2);stem(SPM.xXn{1,4}.t(2,:));title('Denomination');
 subplot(4,1,3);stem(SPM.xXn{1,4}.t(3,:));title('Inhib_switch');
 subplot(4,1,4);stem(SPM.xXn{1,4}.t(4,:));title('Constante');
