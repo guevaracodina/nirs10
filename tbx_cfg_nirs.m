@@ -2997,7 +2997,7 @@ contrast_p_value.name    = 'Contrast uncorrected p_value';
 contrast_p_value.tag     = 'contrast_p_value';       
 contrast_p_value.strtype = 'r';
 contrast_p_value.num     = [1 1];
-contrast_p_value.val     = 0.05;
+contrast_p_value.val     = {0.05};
 contrast_p_value.help    = {'Contrast uncorrected p_value'}; 
 
 contrast_figures      = cfg_menu;
@@ -3064,8 +3064,8 @@ FFX_or_RFX = cfg_menu;
 FFX_or_RFX.tag  = 'FFX_or_RFX';
 FFX_or_RFX.name = 'Fixed or random effects';
 FFX_or_RFX.labels = {'FFX','RFX'};
-FFX_or_RFX.values = {0,1};
-FFX_or_RFX.val = {0};
+FFX_or_RFX.values = {1,0};
+FFX_or_RFX.val = {1};
 FFX_or_RFX.help = {'Use fixed effects (FFX) for group of sessions (intra-subject) '
     'Use random effects (RFX) for group of subjects (inter-subject)'
     'FFX amounts to setting the between session variance to zero.'
@@ -3078,7 +3078,7 @@ FFX_or_RFX.help = {'Use fixed effects (FFX) for group of sessions (intra-subject
 liom_group      = cfg_exbranch;       
 liom_group.name = 'Liom Group Model Estimation';             
 liom_group.tag  = 'liom_group'; 
-liom_group.val  = {NIRSmat contrast_figures contrast_p_value}; 
+liom_group.val  = {NIRSmat FFX_or_RFX contrast_figures contrast_p_value}; 
 liom_group.prog = @nirs_run_liom_group;  
 liom_group.vout = @nirs_cfg_vout_liom_group; 
 liom_group.help = {'Liom Group level model estimation.'};
