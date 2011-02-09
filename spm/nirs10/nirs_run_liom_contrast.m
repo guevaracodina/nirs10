@@ -175,9 +175,9 @@ for Idx=1:size(job.NIRSmat,1)
                     interpolated_maps(xCon,sum_kappa,c_interp_beta,c_cov_interp_beta,...
                         s1,s2,brain,spec_hemi,f1,dir1,erdf,p_value,'HbO',gen_fig,gen_tiff);
                 end
-                TOPO.v{side_hemi}.s{f1}.HbO.sum_kappa = sum_kappa;
-                TOPO.v{side_hemi}.s{f1}.HbO.c_interp_beta = c_interp_beta;
-                TOPO.v{side_hemi}.s{f1}.HbO.c_cov_interp_beta = c_cov_interp_beta;
+                TOPO.v{side_hemi}.s{f1}.hb{1}.sum_kappa = sum_kappa;
+                TOPO.v{side_hemi}.s{f1}.hb{1}.c_interp_beta = c_interp_beta;
+                TOPO.v{side_hemi}.s{f1}.hb{1}.c_cov_interp_beta = c_cov_interp_beta;
                 
                 %HbR
                 [cov_beta_r B Bx By rmask cmask] = interpolation_kernel(...
@@ -190,9 +190,9 @@ for Idx=1:size(job.NIRSmat,1)
                     interpolated_maps(xCon,sum_kappa,c_interp_beta,c_cov_interp_beta,...
                         s1,s2,brain,spec_hemi,f1,dir1,erdf,p_value,'HbR',gen_fig,gen_tiff);
                 end
-                TOPO.v{side_hemi}.s{f1}.HbR.sum_kappa = sum_kappa;
-                TOPO.v{side_hemi}.s{f1}.HbR.c_interp_beta = c_interp_beta;
-                TOPO.v{side_hemi}.s{f1}.HbR.c_cov_interp_beta = c_cov_interp_beta;              
+                TOPO.v{side_hemi}.s{f1}.hb{2}.sum_kappa = sum_kappa;
+                TOPO.v{side_hemi}.s{f1}.hb{2}.c_interp_beta = c_interp_beta;
+                TOPO.v{side_hemi}.s{f1}.hb{2}.c_cov_interp_beta = c_cov_interp_beta;              
   
            end %end for f1
            TOPO.v{side_hemi}.s1 = s1; %sizes of topographic projection
@@ -206,7 +206,7 @@ for Idx=1:size(job.NIRSmat,1)
         disp(['Could not create contrasts for subject' int2str(Idx)]);
     end
     NIRS.TOPO = ftopo;
-    save(job.NIRSmat{Idx,1});
+    save(job.NIRSmat{Idx,1},'NIRS');
 end
 out.NIRSmat = job.NIRSmat;
 end
@@ -224,11 +224,6 @@ cov_beta_r = U*(S.^(0.5))*V';
 B = zeros(s1, s2, nch);
 Bx = zeros(s1, s2, nch);
 By = zeros(s1, s2, nch);
-%masks
-%rmask{1} = [];
-%cmask{1} = [];
-
-disp('Extracting interpolation kernels...');
 for kk = 1:nch
     %a grid for channel positions?
     grid_eye = griddata(cchn, rchn, (mtx_eye(:,kk))', x, y, 'cubic');

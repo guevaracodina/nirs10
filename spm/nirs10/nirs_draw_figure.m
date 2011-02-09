@@ -31,6 +31,11 @@ switch fign
         index_z = index_z(end);
         th_z = z_value(index_z);  
         index_over = find(T_map > th_z);
+    case 4
+        %group 
+        str_cor = 'group';
+        th_z = spm_invTcdf(1-p_value, erdf);
+        index_over = find(T_map > th_z);
 end
 
 if ~isempty(index_over) 
@@ -43,7 +48,7 @@ if ~isempty(index_over)
     write_fig = 1;
 end
 if write_fig
-    fh1 = figure('Name',[str_cor '_' contrast_info],'NumberTitle','off');
+    fh1 = figure('Name',[str_cor '_' contrast_info],'NumberTitle','off','Visible','Off');
     title([str_cor ' ' contrast_info_for_fig]);
     imagesc(T_brain_over); 
     colormap(split)
