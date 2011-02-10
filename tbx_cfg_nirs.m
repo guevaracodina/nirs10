@@ -304,6 +304,14 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Configuration for IUGM (Techen CW5 [UNF] or CW6 [LESCA])
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+protocol = cfg_files;
+protocol.tag     = 'protocol';
+protocol.name    = 'Study protocol';
+protocol.filter  = '.mat';
+protocol.num     = [0 1];
+protocol.val{1}  = {''};
+protocol.help    = {'Select the protocol matrix if any.'};
+
 age1         = cfg_entry;
 age1.name    = 'Subject age';
 age1.tag     = 'age1';
