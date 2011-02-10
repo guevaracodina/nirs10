@@ -146,6 +146,28 @@ for i=1:size(Cok,2)/2
 end
 som = som/(size(Cok,2)/2);
 subplot(4,1,4);plot(t,som);title('CLEMENT');
+%%
+p ='D:\Users\Clément\Projets_CRIUGM\Donnees\Said_etude1\clement';
+
+load(fullfile(p,'NIRS.mat'));
+figure;
+load(fullfile(p,'hbrCB60.nirs'),'-mat');
+Cok = NIRS.Cf.H.C.ok;
+t = (1:size(d,1))*0.04;
+som=zeros(size(d,1),1);
+for i=1:size(Cok,2)/2
+    som = som+d(:,Cok(1,i));
+end
+som = som/(size(Cok,2)/2);
+plot(t,som,'r');hold on;
+
+som=zeros(size(d,1),1);
+for i=1:size(Cok,2)/2
+    som = som+d(:,Cok(1,i)-size(Cok,2)/2);
+end
+som = som/(size(Cok,2)/2);
+plot(t,som);
+
 
 %%
 p ='D:\Users\Clément\Projets_CRIUGM\Donnees\Said_etude1\gb';
@@ -371,6 +393,28 @@ for i=1:size(Cok,2)/2
 end
 som = som/(size(Cok,2)/2);
 subplot(4,1,4);plot(t,som);title('MICHELE');
+%%
+p ='D:\Users\Clément\Projets_CRIUGM\Donnees\Said_etude1\michele';
+
+load(fullfile(p,'NIRS.mat'));
+figure;
+load(fullfile(p,'hbrMichele60.nirs'),'-mat');
+Cok = NIRS.Cf.H.C.ok;
+t = (1:size(d,1))*0.04;
+som=zeros(size(d,1),1);
+for i=1:size(Cok,2)/2
+    som = som+d(:,Cok(1,i));
+end
+som = som/(size(Cok,2)/2);
+plot(t,som,'r');hold on;
+
+som=zeros(size(d,1),1);
+for i=1:size(Cok,2)/2
+    som = som+d(:,Cok(1,i)-size(Cok,2)/2);
+end
+som = som/(size(Cok,2)/2);
+plot(t,som);
+
 
 %%
 p ='D:\Users\Clément\Projets_CRIUGM\Donnees\Said_etude1\nathalie';
