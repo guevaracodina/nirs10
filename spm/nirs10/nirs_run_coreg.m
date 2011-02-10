@@ -4,36 +4,25 @@ function out = nirs_run_coreg(job)
 %                    École Polytechnique de Montréal
 %______________________________________________________________________
 
-%Usage: using previously created NIRS.mat containing information of 
+%Usage: using previously created NIRS.mat containing information of
 %optode and fiducial positions in one system of coordinates, this function
-%will 1) normalize an anatomical image to an atlas (the T1.nii in SPM 
-%templates) that includes the fiducials (nasion, auricular left and right), 
-%2) apply the inverse normalization transform on the atlas fiducials, 
+%will 1) normalize an anatomical image to an atlas (the T1.nii in SPM
+%templates) that includes the fiducials (nasion, auricular left and right),
+%2) apply the inverse normalization transform on the atlas fiducials,
 %3) find a rotation that matches the subject fiducials to the atlas
-%4) output an updated NIRS.mat that contains the transformations and 
+%4) output an updated NIRS.mat that contains the transformations and
 %the transformed coordinates
 
 for Idx=1:size(job.NIRSmat,1)
-
+    
     %Load NIRS.mat information
     try
         NIRS = [];
         load(job.NIRSmat{Idx,1});
         
-        %%%%%%%%%% avec le if, je teste si on a utilise un template ou si
-        %%%%%%%%%% on a une vraie image anatomique, on pourra changer pour
-        %%%%%%%%%% le rendre mieux mais j'ai fait ca pour modifier le moins
-        %%%%%%%%%% possible ton code
-        [~,staxn] = fileparts(NIRS.Dt.fir.stax.p{1});
-        if strcmp(staxn,'Brainsight(c)')
-            %on charge simplement les bonnes donnees
-            [DirSPM,~,~] = fileparts(which('nirs10')); 
-            load(fullfile(DirSPM,'nirs10_templates','Hcoregistered.mat'));
-            NIRS.Cf.H = Hcoregistered;
-        else
         %Allow user-specified image of subject to overwrite previous
         %anatomical image in NIRS.mat; unlikely to ever happen
-        if isempty(job.anatT1{1,1})        
+        if isempty(job.anatT1{1,1})
             try
                 NIRS.Dt.ana.T1;
             catch
@@ -43,13 +32,13 @@ for Idx=1:size(job.NIRSmat,1)
             %Store T1 file location
             NIRS.Dt.ana.T1 = job.anatT1{1,1};
         end
-        try 
+        try
             tmpf = job.anatT1_template{1,1};
             if spm_existfile(tmpf)
                 NIRS.Dt.ana.tT1 = tmpf;
             else
-                [DirSPM,~,~] = fileparts(which('spm')); 
-                NIRS.Dt.ana.tT1 = fullfile(DirSPM,'templates','T1.nii');  
+                [DirSPM,~,~] = fileparts(which('spm'));
+                NIRS.Dt.ana.tT1 = fullfile(DirSPM,'templates','T1.nii');
             end
         end
         %Various options that we don't make available to the user in the GUI
@@ -66,31 +55,31 @@ for Idx=1:size(job.NIRSmat,1)
         matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.reg = 1;
         matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.preserve = 0;
         matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.bb = [-78 -112 -50
-                                                                     78 76 85];
+            78 76 85];
         matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.vox = [2 2 2];
         matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.interp = 1;
         matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.wrap = [0 0 0];
         matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.prefix = 'w';
-
+        
         spm_jobman('run_nogui',matlabbatch);
-
+        
         %Recreate name of _sn.mat file just created by spm_normalise, and load it
         [pth,nam] = spm_fileparts(deblank(NIRS.Dt.ana.T1));
         sn_filename  = fullfile(pth,[nam,'_sn.mat']);
         NIRS.Dt.ana.wT1 = load(sn_filename);
-
+        
         %There are two physical objects: the MRI image, and the NIRS construct
         %for the MRI image, it can be normalized to a standard atlas (Talairach Tournoux) or not
         %for the MRI image, it can be in mm or in voxels
         %for the NIRS construct, it comes in a DGT system
         %In addition, we may want to project on the cortex or not
-        %Thus, upon alignment, quantities can be expressed 
+        %Thus, upon alignment, quantities can be expressed
         %   a) normalized or not
         %   b) in mm or voxels
         %   c) in MNI or DGT coordinates
         %   d) surface positions can be on cortex or on skin / helmet / head
         %For the MonteCarlo simulation, we want MNI in mm, not normalized, on skin
-
+        
         %Matrix Q maps unnormalized world coordinates to normalized world coordinates
         %Affine maps unnormalized voxelcoordinates to normalized voxel coordinates
         %Note that transformations always act on the right, on column vectors of
@@ -98,17 +87,17 @@ for Idx=1:size(job.NIRSmat,1)
         %Hence the need to transpose our matrices of coordinates in NIRS.mat
         %Below: label with temp_ all the transposed coordinates to avoid confusion
         Q = (NIRS.Dt.ana.wT1.VG.mat/NIRS.Dt.ana.wT1.Affine)/NIRS.Dt.ana.wT1.VF.mat;
-
+        
         NIRS.Cf.H.F.w.m.mm.p  = [job.nasion_wMNI' job.AL_wMNI' job.AR_wMNI'];
         Fp_wmm = NIRS.Cf.H.F.w.m.mm.p;
         %call temp_... all the transposed positions
-        temp_Fp_wmm = [Fp_wmm; [1 1 1]]; 
+        temp_Fp_wmm = [Fp_wmm; [1 1 1]];
         temp_Fp_rmm = Q\temp_Fp_wmm;
         NIRS.Cf.H.F.r.m.mm.p = temp_Fp_rmm(1:3,:);
-
-        y = NIRS.Cf.H.F.r.m.mm.p; 
+        
+        y = NIRS.Cf.H.F.r.m.mm.p;
         x = NIRS.Cf.H.F.r.o.mm.p;
-
+        
         [s R t] = abs_orientation(x,y); % y = s*R(x) + t
         estY = zeros(size(y));
         for Fi = 1:3
@@ -119,21 +108,21 @@ for Idx=1:size(job.NIRSmat,1)
         %double2str does not exist in my version of Matlab
         disp(['Error Value for subject ' int2str(Idx) ': ' num2str(errVal)]);
         NIRS.Dt.pro.errValofCoreg_mm2 = errVal;
-
-        try Sp_rom = NIRS.Cf.H.S.r.o.mm.p; end 
-        try Dp_rom = NIRS.Cf.H.D.r.o.mm.p; end 
+        
+        try Sp_rom = NIRS.Cf.H.S.r.o.mm.p; end
+        try Dp_rom = NIRS.Cf.H.D.r.o.mm.p; end
         try Qp_rom = NIRS.Cf.H.Q.r.o.mm.p; end
-        try 
+        try
             Pp_rom = [Sp_rom Dp_rom Qp_rom];
-        catch 
+        catch
             Pp_rom = [Sp_rom Dp_rom];
         end
         NP = size(Pp_rom,2);
         NIRS.Cf.H.P.N = NP;
-
+        
         Pp_rmm = zeros(size(Pp_rom));
         Pvoid = zeros(1,size(Pp_rom,2));
-
+        
         for Pi = 1:NP
             %check for Void sources (no data)
             if Pp_rom(1,Pi) == 0 && Pp_rom(2,Pi) == 0 && Pp_rom(3,Pi) == 0
@@ -142,29 +131,27 @@ for Idx=1:size(job.NIRSmat,1)
                 Pp_rmm(:,Pi) = s*R*Pp_rom(:,Pi) + t;
             end
         end;
-
+        
         %Save MNI coordinates of optodes
-        NIRS.Cf.H.P.r.m.mm.p = Pp_rmm; 
-
+        NIRS.Cf.H.P.r.m.mm.p = Pp_rmm;
+        
         %unnormalized -> normalized, for optodes
         Pp_wmm = Q * [Pp_rmm;ones(1,NP)];          %% unit : mm
         %projection on cortex - used to calculate normal directions of optodes to
         %head surface, for Monte Carlo simulation
         Pp_c1_wmm = projection_CS(Pp_wmm);
         Pp_c1_rmm = zeros(4,NP);
-        for Pi = 1:NP   
+        for Pi = 1:NP
             if ~Pvoid(1,Pi)
                 %inversion: normalized -> unnormalized
                 Pp_c1_rmm(:,Pi) = Q\Pp_c1_wmm(:,Pi);
             end
-        end; 
+        end;
         Pp_c1_rmm = Pp_c1_rmm(1:3,:);
-
-        %Save MNI coordinates of optodes on cortex (c1)
-        NIRS.Cf.H.P.r.m.mm.c1.p = Pp_c1_rmm; 
-        NIRS.Cf.H.P.void = Pvoid;
         
-    end
+        %Save MNI coordinates of optodes on cortex (c1)
+        NIRS.Cf.H.P.r.m.mm.c1.p = Pp_c1_rmm;
+        NIRS.Cf.H.P.void = Pvoid;
         
         %
         if job.GenDataTopo
@@ -188,7 +175,7 @@ for Idx=1:size(job.NIRSmat,1)
                     pos = V.mat\(Q*[(Pp_c1_rmm(:,Si)+Pp_c1_rmm(:,Di))/2;1]);
                     
                     ch_MNI_vx = [ch_MNI_vx pos]; %%%% la notation serait Cp_rmv
-                end        
+                end
                 [rend, rendered_MNI] = render_MNI_coordinates(ch_MNI_vx, wT1_info);%%%% la notation serait Cp_rmv
                 for kk = 1:6
                     rendered_MNI{kk}.ren = rend{kk}.ren;
@@ -199,7 +186,7 @@ for Idx=1:size(job.NIRSmat,1)
                 
                 %Viewer from NIRS_SPM
                 viewer_ON = 1;
-                if viewer_ON 
+                if viewer_ON
                     %rendered_MNI = varargin{1};
                     Nch = size(rendered_MNI{1}.rchn,1);
                     figure;
@@ -212,7 +199,7 @@ for Idx=1:size(job.NIRSmat,1)
                     sbrain = ((-sbar(1) + sbar(64))/(0.5)).* brain + sbar(1);
                     sbrain(1,1) = 1;
                     %axes(handles.axes_brain);
-
+                    
                     rchn = rendered_MNI{kk}.rchn;
                     cchn = rendered_MNI{kk}.cchn;
                     for jj = 1:Nch
@@ -228,57 +215,57 @@ for Idx=1:size(job.NIRSmat,1)
                     colormap(split);
                     axis image;
                     axis off;
-
+                    
                     for jj = 1:Nch
                         if rchn(jj) ~= -1 && cchn(jj) ~= -1 %% updated 2009-02-25
                             text(cchn(jj)-5, rchn(jj), num2str(jj), 'color', 'r');
                         end
                     end
-
-% %                     Nch = size(rendered_MNI{1}.rchn,1)/2;
-% %                     load Split
-% %                     figure;
-% %                     for kk = 1:6
-% %                         figure;
-% %                         brain = rend{kk}.ren;
-% %                         %brain = rendered_MNI{kk}.ren;
-% %                         brain = brain.* 0.5;
-% %                         sbar = linspace(0, 1, 128);
-% %                         sbrain = ((-sbar(1) + sbar(64))/(0.5)).* brain + sbar(1);
-% %                         sbrain(1,1) = 1;
-% % %                         switch kk
-% % %                             case 1
-% % %                                 axes(handles.axes_ventral_view);
-% % %                             case 2
-% % %                                 axes(handles.axes_dorsal_view);
-% % %                             case 3
-% % %                                 axes(handles.axes_lateral_view_right);
-% % %                             case 4
-% % %                                 axes(handles.axes_lateral_view_left);
-% % %                             case 5
-% % %                                 axes(handles.axes_frontal_view);
-% % %                             case 6
-% % %                                 axes(handles.axes_occipital_view);
-% % %                         end
-% %                         imagesc(sbrain);
-% %                         for jj = 1:Nch
-% %                             rchn = rendered_MNI{kk}.rchn(jj);
-% %                             cchn = rendered_MNI{kk}.cchn(jj);        
-% %                             if rchn ~= -1 && cchn ~= -1 %% updated 2009-02-25
-% %                                 if rchn < 6 || cchn < 6
-% %                                     sbrain(rchn, cchn) = 0.67;
-% %                                 else                
-% %                                     sbrain(rchn-5:rchn+5, cchn-5:cchn+5) = 0.67;
-% %                                     text(cchn, rchn, num2str(jj), 'color', 'r');           
-% %                                 end
-% %                             end
-% %                         end
-% %                         imagesc(sbrain);
-% %                         colormap(split);
-% %                         axis image
-% %                         axis off
-% %                     end
-                 end
+                    
+                    % %                     Nch = size(rendered_MNI{1}.rchn,1)/2;
+                    % %                     load Split
+                    % %                     figure;
+                    % %                     for kk = 1:6
+                    % %                         figure;
+                    % %                         brain = rend{kk}.ren;
+                    % %                         %brain = rendered_MNI{kk}.ren;
+                    % %                         brain = brain.* 0.5;
+                    % %                         sbar = linspace(0, 1, 128);
+                    % %                         sbrain = ((-sbar(1) + sbar(64))/(0.5)).* brain + sbar(1);
+                    % %                         sbrain(1,1) = 1;
+                    % % %                         switch kk
+                    % % %                             case 1
+                    % % %                                 axes(handles.axes_ventral_view);
+                    % % %                             case 2
+                    % % %                                 axes(handles.axes_dorsal_view);
+                    % % %                             case 3
+                    % % %                                 axes(handles.axes_lateral_view_right);
+                    % % %                             case 4
+                    % % %                                 axes(handles.axes_lateral_view_left);
+                    % % %                             case 5
+                    % % %                                 axes(handles.axes_frontal_view);
+                    % % %                             case 6
+                    % % %                                 axes(handles.axes_occipital_view);
+                    % % %                         end
+                    % %                         imagesc(sbrain);
+                    % %                         for jj = 1:Nch
+                    % %                             rchn = rendered_MNI{kk}.rchn(jj);
+                    % %                             cchn = rendered_MNI{kk}.cchn(jj);
+                    % %                             if rchn ~= -1 && cchn ~= -1 %% updated 2009-02-25
+                    % %                                 if rchn < 6 || cchn < 6
+                    % %                                     sbrain(rchn, cchn) = 0.67;
+                    % %                                 else
+                    % %                                     sbrain(rchn-5:rchn+5, cchn-5:cchn+5) = 0.67;
+                    % %                                     text(cchn, rchn, num2str(jj), 'color', 'r');
+                    % %                                 end
+                    % %                             end
+                    % %                         end
+                    % %                         imagesc(sbrain);
+                    % %                         colormap(split);
+                    % %                         axis image
+                    % %                         axis off
+                    % %                     end
+                end
             catch
                 disp('Could not create TopoData.mat file');
             end
