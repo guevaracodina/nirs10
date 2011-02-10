@@ -19,6 +19,18 @@ for Idx=1:size(job.NIRSmat,1)
     try
         NIRS = [];
         load(job.NIRSmat{Idx,1});
+        
+        %%%%%%%%%% avec le if, je teste si on a utilise un template ou si
+        %%%%%%%%%% on a une vraie image anatomique, on pourra changer pour
+        %%%%%%%%%% le rendre mieux mais j'ai fait ca pour modifier le moins
+        %%%%%%%%%% possible ton code
+        [~,staxn] = fileparts(NIRS.Dt.fir.stax.p{1});
+        if strcmp(staxn,'Brainsight(c)')
+            %on charge simplement les bonnes donnees
+            [DirSPM,~,~] = fileparts(which('nirs10')); 
+            load(fullfile(DirSPM,'nirs10_templates','Hcoregistered.mat'));
+            NIRS.Cf.H = Hcoregistered;
+        else
         %Allow user-specified image of subject to overwrite previous
         %anatomical image in NIRS.mat; unlikely to ever happen
         if isempty(job.anatT1{1,1})        
@@ -150,7 +162,9 @@ for Idx=1:size(job.NIRSmat,1)
 
         %Save MNI coordinates of optodes on cortex (c1)
         NIRS.Cf.H.P.r.m.mm.c1.p = Pp_c1_rmm; 
-        NIRS.Cf.H.P.void = Pvoid; 
+        NIRS.Cf.H.P.void = Pvoid;
+        
+    end
         
         %
         if job.GenDataTopo
@@ -164,7 +178,7 @@ for Idx=1:size(job.NIRSmat,1)
                 wT1_info.dim = V.dim;% [105,126,91]; %V.dim;
                 %let's use positions of optodes on cortex
                 %loop over channel ids
-                ch_MNI_vx = [];
+                ch_MNI_vx = []; %%%% la notation serait Cp_rmv
                 %number of sources
                 Ns = NIRS.Cf.H.S.N;
                 for i=1:(size(NIRS.Cf.H.C.id,2)/2)
@@ -173,9 +187,9 @@ for Idx=1:size(job.NIRSmat,1)
                     Di = NIRS.Cf.H.C.id(3,i)+Ns;
                     pos = V.mat\(Q*[(Pp_c1_rmm(:,Si)+Pp_c1_rmm(:,Di))/2;1]);
                     
-                    ch_MNI_vx = [ch_MNI_vx pos];
+                    ch_MNI_vx = [ch_MNI_vx pos]; %%%% la notation serait Cp_rmv
                 end        
-                [rend, rendered_MNI] = render_MNI_coordinates(ch_MNI_vx, wT1_info);
+                [rend, rendered_MNI] = render_MNI_coordinates(ch_MNI_vx, wT1_info);%%%% la notation serait Cp_rmv
                 for kk = 1:6
                     rendered_MNI{kk}.ren = rend{kk}.ren;
                 end
