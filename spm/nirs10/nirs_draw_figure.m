@@ -33,7 +33,7 @@ switch fign
         index_over = find(T_map > th_z);
     case 4
         %group 
-        str_cor = 'group';
+        str_cor = 'Group';
         th_z = spm_invTcdf(1-p_value, erdf);
         index_over = find(T_map > th_z);
 end
@@ -48,7 +48,7 @@ if ~isempty(index_over)
     write_fig = 1;
 end
 if write_fig
-    fh1 = figure('Name',[str_cor '_' contrast_info],'NumberTitle','off','Visible','Off');
+    fh1 = figure('Visible','off','Name',[str_cor '_' contrast_info],'NumberTitle','off');
     title([str_cor ' ' contrast_info_for_fig]);
     imagesc(T_brain_over); 
     colormap(split)
@@ -65,10 +65,12 @@ if write_fig
         saveas(fh1,filen1,'fig');
     end
     if gen_tiff
-        try movegui(fh1); end
-        [cdata1,~] = getframe(fh1);    
         filen2 = fullfile(pathn,['T_ ' str_cor '_' contrast_info '.tiff']);
-        imwrite(cdata1,filen2);
+        print(fh1, '-dtiffn', filen2);
+%         try movegui(fh1); end
+%         [cdata1,~] = getframe(fh1);    
+%         filen2 = fullfile(pathn,['T_ ' str_cor '_' contrast_info '.tiff']);
+%         imwrite(cdata1,filen2);
     end
     try close(fh1); end
 end

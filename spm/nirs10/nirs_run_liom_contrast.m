@@ -325,8 +325,8 @@ for Ic=1:nCon
     T_map(index_mask) = squeeze(c_interp_beta(Ic,index_mask))./ ...
         sqrt(squeeze(c_cov_interp_beta(Ic,index_mask)));
     %names
-    contrast_info = [spec_hemi '_' hb '_S' int2str(f1) '_Pos' xCon(Ic).n];
-    contrast_info_for_fig = [spec_hemi ' ' hb '_S' int2str(f1) ' Pos' xCon(Ic).n];
+    contrast_info = [num2str(p_value) '_' spec_hemi '_' hb '_S' int2str(f1) '_Pos' xCon(Ic).n];
+    contrast_info_for_fig = [num2str(p_value) ' ' spec_hemi ' ' hb '_S' int2str(f1) ' Pos' xCon(Ic).n];
     
     load Split
     %no threshold
@@ -341,8 +341,8 @@ for Ic=1:nCon
     
     %repeat for negative contrasts
     T_map = - T_map;
-    contrast_info = [spec_hemi '_' hb '_S' int2str(f1) '_Neg' xCon(Ic).n];
-    contrast_info_for_fig = [spec_hemi ' ' hb '_S' int2str(f1) ' Neg' xCon(Ic).n];
+    contrast_info = [num2str(p_value) '_' spec_hemi '_' hb '_S' int2str(f1) '_Neg' xCon(Ic).n];
+    contrast_info_for_fig = [num2str(p_value) ' ' spec_hemi ' ' hb '_S' int2str(f1) ' Neg' xCon(Ic).n];
 
     %no threshold
     nirs_draw_figure(1,brain,T_map,contrast_info,...
