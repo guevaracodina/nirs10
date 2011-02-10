@@ -143,8 +143,16 @@ for Idx=1:size(job.NIRSmat,1)
                             Wn=cutoff*2/fs;
                             [fb,fa]=butter(FilterOrder,Wn,'high');
                             Y=filtfilt(fb,fa,Y);
-                         end
-
+                        end
+                        
+                        %Last step before the GLM, adding HbO to HbR to get
+                        %HbT - perhaps this should be done after the
+                        %wavelets?
+                        tmp_ch = 1:(NC/2); %all HbOchannels
+                        Y1 = Y(:,tmp_ch);
+                        Y2 = Y(:,tmp_ch+NC/2);
+                        Y = [Y1 Y2 Y1+Y2];
+                            
                         %carefully extract SPM info 
                         tSPM = [];
                         tSPM.Sess = SPM.Sess(s);                

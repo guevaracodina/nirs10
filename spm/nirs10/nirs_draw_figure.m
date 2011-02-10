@@ -69,7 +69,10 @@ if write_fig
     end
     if gen_tiff
         filen2 = fullfile(pathn,['T_ ' str_cor '_' contrast_info '.tiff']);
-        print(fh1, '-dtiffn', filen2);
+        %lower resolution - comppressed
+        print(fh1, '-dtiff', filen2);
+        %full resolution, 10x larger, no compression:
+        %print(fh1, '-dtiffn', filen2);
 %         try movegui(fh1); end
 %         [cdata1,~] = getframe(fh1);    
 %         filen2 = fullfile(pathn,['T_ ' str_cor '_' contrast_info '.tiff']);
