@@ -44,48 +44,48 @@ try
         c = fopen_NIR(rDtp{f});
         [~,fil1,~] = fileparts(rDtp{f});
         
-        % pour chaque fichier, on cree les onsets
-        %- on a deux conditions
-        %---denomination
-        %---inhibition et switch
-        
-        names = {'Baseline','Denomination','Inhib_Switch'};
-        
-        onsets{1}= [0 2 4 6 8]*60;
-        onsets{2}= [1 5]*60;
-        onsets{3}= [3 7]*60;
-        
-        durations{1}= [1 1 1 1 1]*60;
-        durations{2}= [1 1]*60;
-        durations{3}= [1 1]*60;
-        save(fullfile(NIRS.Dt.s.p,'myonsets.mat'),'names','onsets','durations');
-        %Ignore parametric modulations - cf spm_run_fmri_design.m
-        P.name = 'none';
-        P.h    = 0;
-        
-%         for kk = 1:size(names, 2)
-%             SPM.Sess(f).U(kk).name = names(kk);
-%             SPM.Sess(f).U(kk).ons = onsets{kk};
-%             SPM.Sess(f).U(kk).dur = durations{kk};
-%             SPM.Sess(f).U(kk).P = P;
-%         end
-%         
-%         save(fullfile(NIRS.Dt.s.p,'SPM'),'SPM');
-        
-        
-        U = [];
-        P.name = 'none';
-        P.h    = 0;
-        for kk=1:length(names)
-            U(kk).name = names(kk);
-            U(kk).ons = onsets{kk};
-            U(kk).dur = durations{kk};
-            U(kk).P = P;
-        end
-        NIRS.Dt.fir.Sess(f).U = U;
-        %NIRS.Dt.fir.Sess(f).vR = {vR};
-        %NIRS.Dt.fir.Sess(f).fR = {fR};
-        save(job.NIRSmat{1},'NIRS');
+% % %         % pour chaque fichier, on cree les onsets
+% % %         %- on a deux conditions
+% % %         %---denomination
+% % %         %---inhibition et switch
+% % %         
+% % %         names = {'Baseline','Denomination','Inhib_Switch'};
+% % %         
+% % %         onsets{1}= [0 2 4 6 8]*60;
+% % %         onsets{2}= [1 5]*60;
+% % %         onsets{3}= [3 7]*60;
+% % %         
+% % %         durations{1}= [1 1 1 1 1]*60;
+% % %         durations{2}= [1 1]*60;
+% % %         durations{3}= [1 1]*60;
+% % %         save(fullfile(NIRS.Dt.s.p,'myonsets.mat'),'names','onsets','durations');
+% % %         %Ignore parametric modulations - cf spm_run_fmri_design.m
+% % %         P.name = 'none';
+% % %         P.h    = 0;
+% % %         
+% % % %         for kk = 1:size(names, 2)
+% % % %             SPM.Sess(f).U(kk).name = names(kk);
+% % % %             SPM.Sess(f).U(kk).ons = onsets{kk};
+% % % %             SPM.Sess(f).U(kk).dur = durations{kk};
+% % % %             SPM.Sess(f).U(kk).P = P;
+% % % %         end
+% % % %         
+% % % %         save(fullfile(NIRS.Dt.s.p,'SPM'),'SPM');
+% % %         
+% % %         
+% % %         U = [];
+% % %         P.name = 'none';
+% % %         P.h    = 0;
+% % %         for kk=1:length(names)
+% % %             U(kk).name = names(kk);
+% % %             U(kk).ons = onsets{kk};
+% % %             U(kk).dur = durations{kk};
+% % %             U(kk).P = P;
+% % %         end
+% % %         NIRS.Dt.fir.Sess(f).U = U;
+% % %         %NIRS.Dt.fir.Sess(f).vR = {vR};
+% % %         %NIRS.Dt.fir.Sess(f).fR = {fR};
+% % %         save(job.NIRSmat{1},'NIRS');
         
         % Attention deux pb
         %-- on a parfois une mauvaise detection des rythmes cardiaques et
@@ -172,7 +172,7 @@ try
                 end
                 COxsum = COxsum/count;
                 
-                save(fullfile(NIRS.Dt.s.p,['Cox' fil1 '.mat']),'COx');
+%                 save(fullfile(NIRS.Dt.s.p,['Cox' fil1 '.mat']),'COx');
             end
         catch exception
             error(msg);
