@@ -31,12 +31,32 @@ for is=1:sN
         NIRS.Dt.fir.stax.p{1} = staxp;
     end
     
+    % Protocol
+    
+    % Topo Data
+    [~,staxn] = fileparts(NIRS.Dt.fir.stax.p{1});
+    if strcmp(staxn,'Brainsight(c)')
+        dir_nt = 'D:\Users\Clément\Projets_CRIUGM\nirs10_templates';
+        % coordinates
+        load(fullfile(dir_nt,'Hcoregistered.mat'));
+        NIRS.Cf.H = Hcoregistered;
+        % TopoData
+        load(fullfile(dir_nt,'TopoData.mat'));
+        NIRS.Dt.ana.rend = fullfile(dir_nt,'TopoData.mat');
+        save(fullfile(NIRS.Dt.s.p,'TopoData.mat'),'rendered_MNI');
+        disp('Inutile de faire la coregistration !');
+        helmetdone =1;
+    end
+    
     save(fullfile(sDtp, 'NIRS.mat'),'NIRS');
     NIRS =[];
     
-    jobH.subj.sDtp = sDtp;
-    jobH.subj.helmet.staxp = staxp;
-    outH = nirs_criugm_getHelmet(jobH);% get helmet configuration (S,D,P,Q) from Brainsight
+    if ~helmetdone
+        jobH.subj.sDtp = sDtp;
+        jobH.subj.helmet.staxp = staxp;
+        outH = nirs_criugm_getHelmet(jobH);% get helmet configuration (S,D,P,Q) from Brainsight
+    end
+
     
     fig=findall(0,'name','Get positions from Brainsight (clbon)');
     waitfor(fig,'BeingDeleted','On');
@@ -55,6 +75,7 @@ for is=1:sN
         
         save(fullfile(sDtp, 'NIRS.mat'),'NIRS');
         
+        % test sur la machine utilisee
         job1.nirs_file = f;
         job1.sDtp = sDtp;
         out = nirs_criugm_readtechenCW6(job1);% get C configuration from nirs files
