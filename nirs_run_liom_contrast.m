@@ -50,155 +50,159 @@ for Idx=1:size(job.NIRSmat,1)
         try load(ftopo); end
         %Big loop over views 
         for v1=1:size(views_to_run,2)
-            brain_view = views_to_run(v1);
-            switch brain_view
-                case 1 % 'ventral'
-                    spec_hemi = 'ventral';
-                    side_hemi = 1;
-                case 2 % 'dorsal'
-                    spec_hemi = 'dorsal';
-                    side_hemi = 2;
-                case 3 %'right_lateral'
-                    spec_hemi = 'right';
-                    side_hemi = 3;
-                case 4 %'left_lateral'
-                    spec_hemi = 'left';
-                    side_hemi = 4;
-                case 5 %'frontal'
-                    spec_hemi = 'frontal';
-                    side_hemi = 5;
-                case 6 %'occipital'
-                    spec_hemi = 'occipital';
-                    side_hemi = 6;
-            end
-            % channel information
-            rchn = rendered_MNI{side_hemi}.rchn;
-            cchn = rendered_MNI{side_hemi}.cchn;
-            %rendering surface
-            brain = rendered_MNI{side_hemi}.ren;
-            brain = brain * 0.5;
-            s1 = size(brain, 1);
-            s2 = size(brain, 2);
-            %find channels which are visible from this projection view
-            index_ch = find(rchn ~= -1);
-            %nch = length(index_ch);
-            rchn = rchn(index_ch);
-            cchn = cchn(index_ch);
-            %number of regressors
-            nr = size(SPM.xXn{1}.X,2);
-            clear contrast contrast_name
-            %negative contrasts can be treated later as to avoid a
-            %duplication of long calculations
-            if automated_contrasts
-                %1st Volterra kernel
-                contrast{1} = [1 zeros(1,nr-1)];
-                contrast_name{1} = '1';
-                %contrast{2} = [-1 zeros(1,nr-1)];
-                %contrast_name{2} = 'n1'; 
-                %2nd Volterra kernel
-                if SPM.job.volt > 1
-                    if nr > 4
-                        %assume 2 stimuli - only take the first one
-                        contrast{2} = [0 0 1 zeros(1,nr-3)];
-                        contrast_name{2} = '2';
-                    else
-                        %assume only 1 stimulus
-                        contrast{2} = [0 1 zeros(1,nr-2)];
-                        contrast_name{2} = '2';
+            try
+                brain_view = views_to_run(v1);
+                switch brain_view
+                    case 1 % 'ventral'
+                        spec_hemi = 'ventral';
+                        side_hemi = 1;
+                    case 2 % 'dorsal'
+                        spec_hemi = 'dorsal';
+                        side_hemi = 2;
+                    case 3 %'right_lateral'
+                        spec_hemi = 'right';
+                        side_hemi = 3;
+                    case 4 %'left_lateral'
+                        spec_hemi = 'left';
+                        side_hemi = 4;
+                    case 5 %'frontal'
+                        spec_hemi = 'frontal';
+                        side_hemi = 5;
+                    case 6 %'occipital'
+                        spec_hemi = 'occipital';
+                        side_hemi = 6;
+                end
+                % channel information
+                rchn = rendered_MNI{side_hemi}.rchn;
+                cchn = rendered_MNI{side_hemi}.cchn;
+                %rendering surface
+                brain = rendered_MNI{side_hemi}.ren;
+                brain = brain * 0.5;
+                s1 = size(brain, 1);
+                s2 = size(brain, 2);
+                %find channels which are visible from this projection view
+                index_ch = find(rchn ~= -1);
+                %nch = length(index_ch);
+                rchn = rchn(index_ch);
+                cchn = cchn(index_ch);
+                %number of regressors
+                nr = size(SPM.xXn{1}.X,2);
+                clear contrast contrast_name
+                %negative contrasts can be treated later as to avoid a
+                %duplication of long calculations
+                if automated_contrasts
+                    %1st Volterra kernel
+                    contrast{1} = [1 zeros(1,nr-1)];
+                    contrast_name{1} = '1';
+                    %contrast{2} = [-1 zeros(1,nr-1)];
+                    %contrast_name{2} = 'n1'; 
+                    %2nd Volterra kernel
+                    if SPM.job.volt > 1
+                        if nr > 4
+                            %assume 2 stimuli - only take the first one
+                            contrast{2} = [0 0 1 zeros(1,nr-3)];
+                            contrast_name{2} = '2';
+                        else
+                            %assume only 1 stimulus
+                            contrast{2} = [0 1 zeros(1,nr-2)];
+                            contrast_name{2} = '2';
+                        end
                     end
-                end
-            else
-                %user specified contrast specification
-                %simple T contrasts
-                for ic1=1:size(contrast_data,2)
-                    tmp_c = contrast_data(ic1).contrast_c;
-                    %pad with zeros
-                    contrast{ic1} = [tmp_c zeros(1,nr-size(tmp_c,2))];
-                    contrast_name{ic1} = contrast_data(ic1).contrast_name;
-                end
-            end 
-            %store contrasts into xCon
-            if iscell(contrast) == 1
-                % for more than one contrast
-                for kk = 1:length(contrast)
-                    tmp_c = contrast{kk};
-                    %store contrasts into xCon
-                    xCon(kk).c = tmp_c(:);
-                    xCon(kk).n = contrast_name{kk};
-                end
-            else
-                xCon(1).c = contrast(:);
-            end
-                
-            %loop over sessions        
-            for f1=1:length(SPM.xXn)
-                %split into HbO and HbR interpolations 
-                wl = NIRS.Cf.dev.wl;
-                %for NIRS acquisition with 2 wavelengths only
-                if wl(1) > 750
-                    %first wavelength is "HbO-like"
-                    ch_HbO = index_ch;
-                    ch_HbR = NC/2 + index_ch;
                 else
-                    ch_HbR = index_ch;
-                    ch_HbO = NC/2 + index_ch; 
+                    %user specified contrast specification
+                    %simple T contrasts
+                    for ic1=1:size(contrast_data,2)
+                        tmp_c = contrast_data(ic1).contrast_c;
+                        %pad with zeros
+                        contrast{ic1} = [tmp_c zeros(1,nr-size(tmp_c,2))];
+                        contrast_name{ic1} = contrast_data(ic1).contrast_name;
+                    end
+                end 
+                %store contrasts into xCon
+                if iscell(contrast) == 1
+                    % for more than one contrast
+                    for kk = 1:length(contrast)
+                        tmp_c = contrast{kk};
+                        %store contrasts into xCon
+                        xCon(kk).c = tmp_c(:);
+                        xCon(kk).n = contrast_name{kk};
+                    end
+                else
+                    xCon(1).c = contrast(:);
                 end
-                try
-                    %for NIRS_SPM method
-                    var = SPM.xXn{f1}.ResSS./SPM.xXn{f1}.trRV; 
-                    %covariance of beta estimates
-                    corr_beta = SPM.xXn{f1}.Bcov;
-                catch
-                    %for WLS and BGLM methods
-                    corr_beta = SPM.xXn{f1}.Bvar;
-                    %will not work as we don't have var = ResSS/trRV
-                end
-                %GLM estimates - which beta though???
-                
-                beta_tmp = SPM.xXn{f1}.beta(:, ch_HbO);
-                beta_HbO = beta_tmp(:); %taken as one vector
-                beta_tmp = SPM.xXn{f1}.beta(:, ch_HbR);
-                beta_HbR = beta_tmp(:); %taken as one vector
-                mtx_var_HbO = diag(var(ch_HbO));
-                mtx_var_HbR = diag(var(ch_HbR));
-                erdf = SPM.xXn{f1}.erdf;
-                %HbO
-                %Note that var(ch_HbO) depends on HbO vs HbR
-                
-                [cov_beta_r B Bx By rmask cmask] = interpolation_kernel(...
-                    corr_beta,length(ch_HbO),mtx_var_HbO,s1,s2,rchn,cchn);
-                
-                [sum_kappa c_interp_beta c_cov_interp_beta] = ...
-                    loop_contrasts(xCon,beta_HbO,corr_beta,cov_beta_r,...
-                    mtx_var_HbO,B,Bx,By,rmask,cmask,s1,s2);
-                if gen_fig || gen_tiff
-                    interpolated_maps(xCon,sum_kappa,c_interp_beta,c_cov_interp_beta,...
-                        s1,s2,brain,spec_hemi,f1,dir1,erdf,p_value,'HbO',gen_fig,gen_tiff);
-                end
-                TOPO.v{side_hemi}.s{f1}.hb{1}.sum_kappa = sum_kappa;
-                TOPO.v{side_hemi}.s{f1}.hb{1}.c_interp_beta = c_interp_beta;
-                TOPO.v{side_hemi}.s{f1}.hb{1}.c_cov_interp_beta = c_cov_interp_beta;
-                
-                %HbR
-                [cov_beta_r B Bx By rmask cmask] = interpolation_kernel(...
-                    corr_beta,length(ch_HbR),mtx_var_HbR,s1,s2,rchn,cchn);              
 
-                [sum_kappa c_interp_beta c_cov_interp_beta] = ...
-                    loop_contrasts(xCon,beta_HbR,corr_beta,cov_beta_r,...
-                    mtx_var_HbR,B,Bx,By,rmask,cmask,s1,s2);
-                if gen_fig || gen_tiff
-                    interpolated_maps(xCon,sum_kappa,c_interp_beta,c_cov_interp_beta,...
-                        s1,s2,brain,spec_hemi,f1,dir1,erdf,p_value,'HbR',gen_fig,gen_tiff);
-                end
-                TOPO.v{side_hemi}.s{f1}.hb{2}.sum_kappa = sum_kappa;
-                TOPO.v{side_hemi}.s{f1}.hb{2}.c_interp_beta = c_interp_beta;
-                TOPO.v{side_hemi}.s{f1}.hb{2}.c_cov_interp_beta = c_cov_interp_beta;              
-  
-           end %end for f1
-           TOPO.v{side_hemi}.s1 = s1; %sizes of topographic projection
-           TOPO.v{side_hemi}.s2 = s2;
-           TOPO.v{side_hemi}.view = spec_hemi; %%% view of the brain
-           %TOPO.v{side_hemi}.side_hemi = side_hemi;
+                %loop over sessions        
+                for f1=1:length(SPM.xXn)
+                    %split into HbO and HbR interpolations 
+                    wl = NIRS.Cf.dev.wl;
+                    %for NIRS acquisition with 2 wavelengths only
+                    if wl(1) > 750
+                        %first wavelength is "HbO-like"
+                        ch_HbO = index_ch;
+                        ch_HbR = NC/2 + index_ch;
+                    else
+                        ch_HbR = index_ch;
+                        ch_HbO = NC/2 + index_ch; 
+                    end
+                    try
+                        %for NIRS_SPM method
+                        var = SPM.xXn{f1}.ResSS./SPM.xXn{f1}.trRV; 
+                        %covariance of beta estimates
+                        corr_beta = SPM.xXn{f1}.Bcov;
+                    catch
+                        %for WLS and BGLM methods
+                        corr_beta = SPM.xXn{f1}.Bvar;
+                        %will not work as we don't have var = ResSS/trRV
+                    end
+                    %GLM estimates - which beta though???
+
+                    beta_tmp = SPM.xXn{f1}.beta(:, ch_HbO);
+                    beta_HbO = beta_tmp(:); %taken as one vector
+                    beta_tmp = SPM.xXn{f1}.beta(:, ch_HbR);
+                    beta_HbR = beta_tmp(:); %taken as one vector
+                    mtx_var_HbO = diag(var(ch_HbO));
+                    mtx_var_HbR = diag(var(ch_HbR));
+                    erdf = SPM.xXn{f1}.erdf;
+                    %HbO
+                    %Note that var(ch_HbO) depends on HbO vs HbR
+
+                    [cov_beta_r B Bx By rmask cmask] = interpolation_kernel(...
+                        corr_beta,length(ch_HbO),mtx_var_HbO,s1,s2,rchn,cchn);
+
+                    [sum_kappa c_interp_beta c_cov_interp_beta] = ...
+                        loop_contrasts(xCon,beta_HbO,corr_beta,cov_beta_r,...
+                        mtx_var_HbO,B,Bx,By,rmask,cmask,s1,s2);
+                    if gen_fig || gen_tiff
+                        interpolated_maps(xCon,sum_kappa,c_interp_beta,c_cov_interp_beta,...
+                            s1,s2,brain,spec_hemi,f1,dir1,erdf,p_value,'HbO',gen_fig,gen_tiff);
+                    end
+                    TOPO.v{side_hemi}.s{f1}.hb{1}.sum_kappa = sum_kappa;
+                    TOPO.v{side_hemi}.s{f1}.hb{1}.c_interp_beta = c_interp_beta;
+                    TOPO.v{side_hemi}.s{f1}.hb{1}.c_cov_interp_beta = c_cov_interp_beta;
+
+                    %HbR
+                    [cov_beta_r B Bx By rmask cmask] = interpolation_kernel(...
+                        corr_beta,length(ch_HbR),mtx_var_HbR,s1,s2,rchn,cchn);              
+
+                    [sum_kappa c_interp_beta c_cov_interp_beta] = ...
+                        loop_contrasts(xCon,beta_HbR,corr_beta,cov_beta_r,...
+                        mtx_var_HbR,B,Bx,By,rmask,cmask,s1,s2);
+                    if gen_fig || gen_tiff
+                        interpolated_maps(xCon,sum_kappa,c_interp_beta,c_cov_interp_beta,...
+                            s1,s2,brain,spec_hemi,f1,dir1,erdf,p_value,'HbR',gen_fig,gen_tiff);
+                    end
+                    TOPO.v{side_hemi}.s{f1}.hb{2}.sum_kappa = sum_kappa;
+                    TOPO.v{side_hemi}.s{f1}.hb{2}.c_interp_beta = c_interp_beta;
+                    TOPO.v{side_hemi}.s{f1}.hb{2}.c_cov_interp_beta = c_cov_interp_beta;              
+
+                end %end for f1
+                TOPO.v{side_hemi}.s1 = s1; %sizes of topographic projection
+                TOPO.v{side_hemi}.s2 = s2;
+                TOPO.v{side_hemi}.view = spec_hemi; %%% view of the brain
+                %TOPO.v{side_hemi}.side_hemi = side_hemi;
+            catch
+                disp(['Could not create contrasts for view ' spec_hemi ' for subject ' int2str(Idx)]);
+            end
         end %end for v1
         TOPO.xCon = xCon; %would not work if new contrasts are later added        
         save(ftopo,'TOPO');

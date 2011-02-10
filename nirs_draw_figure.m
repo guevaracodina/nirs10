@@ -41,6 +41,9 @@ end
 if ~isempty(index_over) 
     min_T = min(T_map(index_over));
     max_T = max(T_map(index_over));
+    if min_T == max_T %for example if only one data point in index_over
+        min_T = min_T - 0.0001;
+    end
     smin_T = max_T - ((max_T - min_T)./63) * 127;
     sbar = linspace(smin_T, max_T, 128);
     T_brain_over = ((-sbar(1) + sbar(64))/(0.5)).*brain + sbar(1);
