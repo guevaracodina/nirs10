@@ -145,6 +145,9 @@ for Idx=1:size(job.NIRSmat,1)
                         ch_HbO = NC/2 + index_ch; 
                     end
                     try
+                        ch_HbT = NC+index_ch;
+                    end
+                    try
                         %for NIRS_SPM method
                         var = SPM.xXn{f1}.ResSS./SPM.xXn{f1}.trRV; 
                         %covariance of beta estimates
@@ -162,6 +165,11 @@ for Idx=1:size(job.NIRSmat,1)
                     beta_HbR = beta_tmp(:); %taken as one vector
                     mtx_var_HbO = diag(var(ch_HbO));
                     mtx_var_HbR = diag(var(ch_HbR));
+                    try 
+                        beta_tmp = SPM.xXn{f1}.beta(:, ch_HbT);
+                        beta_HbT = beta_tmp(:); %taken as one vector
+                        mtx_var_HbT = diag(var(ch_HbT)); 
+                    end
                     erdf = SPM.xXn{f1}.erdf;
                     %HbO
                     %Note that var(ch_HbO) depends on HbO vs HbR
@@ -195,6 +203,22 @@ for Idx=1:size(job.NIRSmat,1)
                     TOPO.v{side_hemi}.s{f1}.hb{2}.c_interp_beta = c_interp_beta;
                     TOPO.v{side_hemi}.s{f1}.hb{2}.c_cov_interp_beta = c_cov_interp_beta;              
 
+                    try
+                        %HbT
+                        [cov_beta_r B Bx By rmask cmask] = interpolation_kernel(...
+                            corr_beta,length(ch_HbT),mtx_var_HbT,s1,s2,rchn,cchn);              
+
+                        [sum_kappa c_interp_beta c_cov_interp_beta] = ...
+                            loop_contrasts(xCon,beta_HbT,corr_beta,cov_beta_r,...
+                            mtx_var_HbT,B,Bx,By,rmask,cmask,s1,s2);
+                        if gen_fig || gen_tiff
+                            interpolated_maps(xCon,sum_kappa,c_interp_beta,c_cov_interp_beta,...
+                                s1,s2,brain,spec_hemi,f1,dir1,erdf,p_value,'HbT',gen_fig,gen_tiff);
+                        end
+                        TOPO.v{side_hemi}.s{f1}.hb{3}.sum_kappa = sum_kappa;
+                        TOPO.v{side_hemi}.s{f1}.hb{3}.c_interp_beta = c_interp_beta;
+                        TOPO.v{side_hemi}.s{f1}.hb{3}.c_cov_interp_beta = c_cov_interp_beta;   
+                    end
                 end %end for f1
                 TOPO.v{side_hemi}.s1 = s1; %sizes of topographic projection
                 TOPO.v{side_hemi}.s2 = s2;

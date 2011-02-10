@@ -95,7 +95,7 @@ if FFX || size(job.NIRSmat,1)==1
                     load Split
                     if ns > 1
                         %Loop over chromophores
-                        for h1=1:2 %exclude HbT for now
+                        for h1=1:3 %including HbT
                             hb = get_chromophore(h1);
                             for c1=1:length(xCon)   
                                 %fill in cbeta and ccov_beta                            
