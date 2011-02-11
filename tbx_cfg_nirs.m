@@ -304,13 +304,21 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Configuration for IUGM (Techen CW5 [UNF] or CW6 [LESCA])
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-protocol = cfg_files;
-protocol.tag     = 'protocol';
-protocol.name    = 'Study protocol';
-protocol.filter  = '.mat';
-protocol.num     = [0 1];
-protocol.val{1}  = {''};
-protocol.help    = {'Select the protocol matrix if any.'};
+protocol        = cfg_files;
+protocol.tag    = 'protocol';
+protocol.name   = 'Study protocol';
+protocol.filter = '.mat';
+protocol.num    = [0 1];
+protocol.val{1} = {''};
+protocol.help   = {'Select the protocol matrix if any.'};
+
+TopoData        = cfg_files;
+TopoData.tag    = 'TopoData';
+TopoData.name   = 'TopoData';
+TopoData.filter = '.mat';
+TopoData.num    = [0 1];
+TopoData.val{1} = {''};
+TopoData.help   = {'Select TopoData if you want to run GLM. You can choose either the template or the one corresponding to your subject if it has already been calculated'};
 
 age1         = cfg_entry;
 age1.name    = 'Subject age';
@@ -383,7 +391,7 @@ subj_path.num     = [1 1];
 subj         = cfg_branch;
 subj.tag     = 'subj';
 subj.name    = 'Subject';
-subj.val     = {age1 subj_path nirs_files text_brainsight CWsystem baseline_method};
+subj.val     = {age1 subj_path anatT1 text_brainsight TopoData nirs_files CWsystem baseline_method};
 subj.help    = {'Subject'};
 
 generic         = cfg_repeat;
@@ -398,7 +406,7 @@ generic.num     = [1 Inf];
 criugm1      = cfg_exbranch;
 criugm1.name = 'Read and format CRIUGM data';
 criugm1.tag  = 'criugm1';
-criugm1.val  = {generic};
+criugm1.val  = {protocol generic};
 criugm1.prog = @nirs_run_criugm;
 criugm1.vout = @nirs_cfg_vout_criugm;
 criugm1.help = {'Help'};
