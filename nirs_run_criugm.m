@@ -26,7 +26,7 @@ for is=1:sN
     % Protocol
     if ~isempty(job.protocol{:})
         for iU=1:UN
-            NIRS.Dt.ana.rend{iU,1} = job.protocol{:};
+            NIRS.Dt.fir.Sess{iU,1} = job.protocol{:};
         end
     end
     
