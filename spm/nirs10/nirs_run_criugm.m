@@ -7,6 +7,10 @@ function out = nirs_run_criugm(job)
 % 2010-11-05
 
 outNIRSmat ={};
+
+% template directory
+dir_nt = 'D:\Users\Clément\Projets_CRIUGM\nirs10_templates';
+
 %Big loop over all subjects
 sN = size(job.subj,2);
 for is=1:sN
@@ -17,29 +21,36 @@ for is=1:sN
     NIRS = [];
     NIRS.Dt.s.age = age;
     NIRS.Dt.s.p = sDtp;
-    
-    % Helmet
-    staxp = job.subj(1,is).text_brainsight{:};
-    if strcmp(staxp,'') % no Brainsight text file selected
-        NIRS.Dt.fir.stax.n = 'Template LIOM';
-        % template :
-        [DirSPM,~,~] = fileparts(which('nirs10')); 
-        staxp = fullfile(DirSPM,'nirs10_templates','Brainsight(c).txt');
-        NIRS.Dt.fir.stax.p{1} = staxp;
-    else
-        NIRS.Dt.fir.stax.n = 'Brainsight(c)';
-        NIRS.Dt.fir.stax.p{1} = staxp;
-    end
+    UN = size(job.subj(1,is).nirs_files,1);
     
     % Protocol
+    if ~isempty(job.protocol{:})
+        for iU=1:UN
+            NIRS.Dt.ana.rend{iU,1} = job.protocol{:};
+        end
+    end
     
-    % Topo Data
-    [~,staxn] = fileparts(NIRS.Dt.fir.stax.p{1});
-    if strcmp(staxn,'Brainsight(c)')
-        dir_nt = 'D:\Users\Clément\Projets_CRIUGM\nirs10_templates';
+    % Anatomical image
+    if ~isempty(job.subj(1,is).anatT1{:})
+        NIRS.Dt.ana.T1 = job.subj(1,is).anatT1{:};
+    end
+    
+    % Helmet
+    if ~isempty(job.subj(1,is).text_brainsight{:})
+        NIRS.Dt.fir.stax.n = 'Brainsight(c)';
+        NIRS.Dt.fir.stax.p{1} = staxp;
+    else
+        NIRS.Dt.fir.stax.n = 'Template LIOM'; % template
+        [DirSPM,~,~] = fileparts(which('nirs10'));
+        staxp = fullfile(DirSPM,'nirs10_templates','Brainsight(c).txt');
+        NIRS.Dt.fir.stax.p{1} = staxp;
         % coordinates
         load(fullfile(dir_nt,'Hcoregistered.mat'));
         NIRS.Cf.H = Hcoregistered;
+    end
+    
+    % Topo Data
+    if ~isempty(job.subj(1,is).TopoData{:})
         % TopoData
         load(fullfile(dir_nt,'TopoData.mat'));
         NIRS.Dt.ana.rend = fullfile(dir_nt,'TopoData.mat');
@@ -56,14 +67,11 @@ for is=1:sN
         jobH.subj.helmet.staxp = staxp;
         outH = nirs_criugm_getHelmet(jobH);% get helmet configuration (S,D,P,Q) from Brainsight
     end
-
-    
     fig=findall(0,'name','Get positions from Brainsight (clbon)');
     waitfor(fig,'BeingDeleted','On');
     
     load(fullfile(sDtp, 'NIRS.mat'));
     %Loop over all sessions
-    UN = size(job.subj(1,is).nirs_files,1);
     for iU=1:UN
         fp = job.subj(1,is).nirs_files(iU,1);
         f = load(fp{:},'-mat');
@@ -78,7 +86,7 @@ for is=1:sN
         % test sur la machine utilisee
         job1.nirs_file = f;
         job1.sDtp = sDtp;
-        out = nirs_criugm_readtechenCW6(job1);% get C configuration from nirs files
+        out = nirs_criugm_readtechen(job1);% get C configuration from nirs files
         clear f
     end
     outNIRSmat = [outNIRSmat; fullfile(sDtp,'NIRS.mat')];
