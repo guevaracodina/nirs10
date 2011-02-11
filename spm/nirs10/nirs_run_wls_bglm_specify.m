@@ -145,7 +145,7 @@ for Idx=1:size(job.NIRSmat,1)
                 for f=1:nsess
                     %load onset file
                     clear names onsets durations
-                    load(job.subj{Idx,1}.input_onsets{f});
+                    load(job.subj(Idx,1).input_onsets{f});
                     for kk = 1:size(names, 2)
                         SPM.Sess(f).U(kk).name = names(kk);
                         SPM.Sess(f).U(kk).ons = onsets{kk};
