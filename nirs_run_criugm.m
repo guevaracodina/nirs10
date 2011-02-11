@@ -50,13 +50,15 @@ for is=1:sN
     end
     
     % Topo Data
-    if ~isempty(job.subj(1,is).TopoData{:})
+    if isempty(job.subj(1,is).TopoData{:})
         % TopoData
         load(fullfile(dir_nt,'TopoData.mat'));
         NIRS.Dt.ana.rend = fullfile(dir_nt,'TopoData.mat');
         save(fullfile(NIRS.Dt.s.p,'TopoData.mat'),'rendered_MNI');
         disp('Inutile de faire la coregistration !');
         helmetdone =1;
+    else
+        helmetdone=0;
     end
     
     save(fullfile(sDtp, 'NIRS.mat'),'NIRS');
@@ -84,6 +86,7 @@ for is=1:sN
         save(fullfile(sDtp, 'NIRS.mat'),'NIRS');
         
         % test sur la machine utilisee
+        job1.system = job.subj(1,is).CWsystem;
         job1.nirs_file = f;
         job1.sDtp = sDtp;
         out = nirs_criugm_readtechen(job1);% get C configuration from nirs files

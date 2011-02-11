@@ -152,12 +152,9 @@ for Idx=1:size(job.NIRSmat,1)
                     tNaNo = tNaN(tNaN~=0);
                     c(iC, tNaNo)=c(iC, tNaNo-1);
                     if iC==size(c,1)
-                        disp(['Some elements are NaN for file ' int2str(f)]);
-                        disp('NaNs corrected');
                         NIRS.WARNING = 'Some NaN elements were corrected';
                     end
                 catch
-                    %CB: puisqu'on corrige est ce qu'on garde le WARNING ????
                     NIRS.WARNING = 'Some NaN elements in data - GLMs will fail!';
                 end
             end
