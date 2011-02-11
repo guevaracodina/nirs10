@@ -350,13 +350,13 @@ nirs_files.filter  = 'nirs';
 nirs_files.num     = [1 Inf];     % Number of inputs required
 nirs_files.help    = {'Select all the sessions sharing the same device and helmet.'}; % help text displayed
 
-CWsystem      = cfg_menu;
-CWsystem.tag  = 'CWsystem';
-CWsystem.name = 'CW system used';
-CWsystem.labels = {'CW5','CW6'};
-CWsystem.values = {5,6};
-CWsystem.def  = @(val)nirs_get_defaults('readNIRS.criugm1.CWsystem', val{:});
-CWsystem.help = {'Help'};
+% CWsystem      = cfg_menu;
+% CWsystem.tag  = 'CWsystem';
+% CWsystem.name = 'CW system used';
+% CWsystem.labels = {'CW5','CW6'};
+% CWsystem.values = {5,6};
+% CWsystem.def  = @(val)nirs_get_defaults('readNIRS.criugm1.CWsystem', val{:});
+% CWsystem.help = {'Help'};
 
 % dataset      = cfg_branch;
 % dataset.tag  = 'dataset';
@@ -391,7 +391,7 @@ subj_path.num     = [1 1];
 subj         = cfg_branch;
 subj.tag     = 'subj';
 subj.name    = 'Subject';
-subj.val     = {age1 subj_path anatT1 text_brainsight TopoData nirs_files CWsystem baseline_method};
+subj.val     = {age1 subj_path anatT1 text_brainsight TopoData nirs_files baseline_method};% CWsystem
 subj.help    = {'Subject'};
 
 generic         = cfg_repeat;
