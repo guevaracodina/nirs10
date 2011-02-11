@@ -91,7 +91,7 @@ for Idx=1:size(job.NIRSmat,1)
             else
                 %vector of bad points common to lp*NC channels; as a column
                 bp = zeros(size(d,2),1);
-                s = sum(pvb(first_K2,:),1);
+                s = sum(pvb(first_k2,:),1);
                 bp(s>=floor(MTh*length(first_k2))) = 1;
                 %indices of bad points
                 bpi = find(bp);            
@@ -163,8 +163,10 @@ for Idx=1:size(job.NIRSmat,1)
                     %no more sessions
                 else
                     si = [si bpi(end)+bpd(end)+1];
-                    ei = [si size(d,2)];
+                    ei = [ei size(d,2)];
                 end
+                %session durations:
+                %sd = (ei-si)/fs;
             else
                 si = 1;
                 ei = size(d,2);
@@ -201,7 +203,9 @@ for Idx=1:size(job.NIRSmat,1)
         try NIRS.Cf.H.C.ok = first_k2; end 
         
         if NewDirCopyNIRS
-            save(fullfile(dir2,'NIRS.mat'),'NIRS');            
+            newNIRSlocation = fullfile(dir2,'NIRS.mat');
+            save(newNIRSlocation,'NIRS');
+            job.NIRSmat{Idx,1} = newNIRSlocation;          
         else
             save(job.NIRSmat{Idx,1},'NIRS'); 
         end

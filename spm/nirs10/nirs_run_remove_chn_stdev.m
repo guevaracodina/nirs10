@@ -26,6 +26,7 @@ for Idx=1:size(job.NIRSmat,1)
         wl = NIRS.Cf.dev.wl;
         nc = NC/length(wl);
         gc = ones(nc,size(rDtp,1));
+        npt = floor(fs * win);
         %first loop over all sessions to find all bad channels
         for f=1:size(rDtp,1)
             d = fopen_NIR(rDtp{f,1},NC);
@@ -37,11 +38,23 @@ for Idx=1:size(job.NIRSmat,1)
             for i1=1:nwin
                 %standard deviation channelwise over 
                 %non overlapping windows
-                stdev(:,i1) = std(d(:,i1:i1+floor(fs * win)),0,2);
-                med2(:,i1) = median(d(:,i1:i1+floor(fs * win)),2);
+                if i1==nwin
+                    lpt = min((i1*npt),size(d,2));
+                else
+                    lpt = i1*npt;
+                end
+                %stdev(:,i1) = std(d(:,((i1-1)*npt+1):lpt),0,2);
+                d1 = d(:,((i1-1)*npt+1):lpt);
+                md2 =  mean(d1,2)*ones(1,size(d1,2));
+                stdev(:,i1) = std(d1./md2,0,2);
+                %med2(:,i1) = abs(median(d(:,i1:i1+floor(fs * win)),2));
+                %mean2(:,i1) = abs(mean(d(:,i1:i1+floor(fs * win)),2));
             end %end for i1
+            
             %channelwise median of standard deviations
-            med1 = median(stdev./med2,2);
+            %med1 = median(stdev./med2,2);
+            med1 = median(stdev,2);
+            %mean1 = mean(stdev./mean2,2);
             %identify good channels gc
         
             %k1 = [];
@@ -119,7 +132,9 @@ for Idx=1:size(job.NIRSmat,1)
         %the old file will be dNIRS.mat
         %out1 = fullfile(dir1,[prefix fil1 ext1]);
         if NewDirCopyNIRS
-            save(fullfile(dir2,'NIRS.mat'),'NIRS');            
+            newNIRSlocation = fullfile(dir2,'NIRS.mat');
+            save(newNIRSlocation,'NIRS');
+            job.NIRSmat{Idx,1} = newNIRSlocation;          
         else
             save(job.NIRSmat{Idx,1},'NIRS'); 
         end

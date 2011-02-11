@@ -251,7 +251,9 @@ for Idx=1:size(job.NIRSmat,1)
             end
         end 
         if NewDirCopyNIRS
-            save(fullfile(dir2,'NIRS.mat'),'NIRS');            
+            newNIRSlocation = fullfile(dir2,'NIRS.mat');
+            save(newNIRSlocation,'NIRS');
+            job.NIRSmat{Idx,1} = newNIRSlocation;    
         else
             save(job.NIRSmat{Idx,1},'NIRS'); 
         end 

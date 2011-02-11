@@ -142,13 +142,14 @@ for Idx=1:size(job.NIRSmat,1)
         end
         
         if NewDirCopyNIRS
-            save(fullfile(dir2,'NIRS.mat'),'NIRS');            
+            newNIRSlocation = fullfile(dir2,'NIRS.mat');
+            save(newNIRSlocation,'NIRS');
+            job.NIRSmat{Idx,1} = newNIRSlocation;           
         else
             save(job.NIRSmat{Idx,1},'NIRS'); 
         end
     catch
-        disp(['Conversion of optical intensities to hemoglobin ',...
-            'concentrations failed for subject ' int2str(Idx)]);
+        disp(['Filters failed for subject ' int2str(Idx)]);
     end
     
 end

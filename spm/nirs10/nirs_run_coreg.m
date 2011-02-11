@@ -189,38 +189,39 @@ for Idx=1:size(job.NIRSmat,1)
                 if viewer_ON
                     %rendered_MNI = varargin{1};
                     Nch = size(rendered_MNI{1}.rchn,1);
-                    figure;
                     load Split
-                    kk = 4; % dorsal view
-                    %brain = rend{kk}.ren;
-                    brain = rendered_MNI{kk}.ren;
-                    brain = brain.* 0.5;
-                    sbar = linspace(0, 1, 128);
-                    sbrain = ((-sbar(1) + sbar(64))/(0.5)).* brain + sbar(1);
-                    sbrain(1,1) = 1;
-                    %axes(handles.axes_brain);
+                    for kk=2:6
+                        figure;
+                        %kk = 4; % dorsal view
+                        %brain = rend{kk}.ren;
+                        brain = rendered_MNI{kk}.ren;
+                        brain = brain.* 0.5;
+                        sbar = linspace(0, 1, 128);
+                        sbrain = ((-sbar(1) + sbar(64))/(0.5)).* brain + sbar(1);
+                        sbrain(1,1) = 1;
+                        rchn = rendered_MNI{kk}.rchn;
+                        cchn = rendered_MNI{kk}.cchn;
+                        for jj = 1:Nch
+                            if rchn(jj) ~= -1 && cchn(jj) ~= -1 %% updated 2009-02-25
+                                if rchn(jj) < 6 || cchn(jj) < 6
+                                    sbrain(rchn(jj), cchn(jj)) = 0.9; % 0.67
+                                else
+                                    sbrain(rchn(jj)-5:rchn(jj)+5, cchn(jj)-5:cchn(jj)+5) = 0.9;
+                                end
+                            end
+                        end
+                        imagesc(sbrain);
+                        colormap(split);
+                        axis image;
+                        axis off;
                     
-                    rchn = rendered_MNI{kk}.rchn;
-                    cchn = rendered_MNI{kk}.cchn;
-                    for jj = 1:Nch
-                        if rchn(jj) ~= -1 && cchn(jj) ~= -1 %% updated 2009-02-25
-                            if rchn(jj) < 6 || cchn(jj) < 6
-                                sbrain(rchn(jj), cchn(jj)) = 0.9; % 0.67
-                            else
-                                sbrain(rchn(jj)-5:rchn(jj)+5, cchn(jj)-5:cchn(jj)+5) = 0.9;
+                        for jj = 1:Nch
+                            if rchn(jj) ~= -1 && cchn(jj) ~= -1 %% updated 2009-02-25
+                                text(cchn(jj)-5, rchn(jj), num2str(jj), 'color', 'r');
                             end
                         end
                     end
-                    imagesc(sbrain);
-                    colormap(split);
-                    axis image;
-                    axis off;
-                    
-                    for jj = 1:Nch
-                        if rchn(jj) ~= -1 && cchn(jj) ~= -1 %% updated 2009-02-25
-                            text(cchn(jj)-5, rchn(jj), num2str(jj), 'color', 'r');
-                        end
-                    end
+                 end
                     
                     % %                     Nch = size(rendered_MNI{1}.rchn,1)/2;
                     % %                     load Split
