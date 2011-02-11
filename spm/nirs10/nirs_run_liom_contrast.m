@@ -10,7 +10,7 @@ function out = nirs_run_liom_contrast(job)
 %views_to_run = [4 3]; %[4 3];
 views_to_run = job.view;
 contrast_data = job.contrast_data;
-automated_contrasts = 1;
+
 %Options
 try
     p_value = job.contrast_p_value;
@@ -31,6 +31,11 @@ switch job.contrast_figures
     case 3
         gen_fig = 0;
         gen_tiff = 1;
+end
+if ~isempty(contrast_data)
+    automated_contrasts = 0;
+else
+    automated_contrasts = 1;
 end
 %Loop over all subjects
 for Idx=1:size(job.NIRSmat,1)
