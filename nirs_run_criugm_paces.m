@@ -33,11 +33,11 @@ try
     % number of probes
     n = job.heart_rate_cfg.heart_resting.STFT_param.Nprobe;
     fft_size = job.heart_rate_cfg.heart_resting.STFT_param.fft_size;
-    MinHeartRate = job.heart_rate_cfg.heart_resting.MinHeartRate;
-    MaxHeartRate = job.heart_rate_cfg.heart_resting.MaxHeartRate;
-    InternalMinHeartRate = job.heart_rate_cfg.heart_resting.InternalMinHeartRate;
-    InternalMaxHeartRate = job.heart_rate_cfg.heart_resting.InternalMaxHeartRate;
-    MaxHeartStdev = job.heart_rate_cfg.heart_resting.MaxHeartStdev;
+    MinHeartRate = job.heart_rate_cfg.heart_resting.MinHeartRate/60;
+    MaxHeartRate = job.heart_rate_cfg.heart_resting.MaxHeartRate/60;
+    InternalMinHeartRate = job.heart_rate_cfg.heart_resting.InternalMinHeartRate/60;
+    InternalMaxHeartRate = job.heart_rate_cfg.heart_resting.InternalMaxHeartRate/60;
+    MaxHeartStdev = job.heart_rate_cfg.heart_resting.MaxHeartStdev/60;
     ex =0;
 catch
     %aerobic exercise
@@ -301,11 +301,13 @@ for Idx=1:size(job.NIRSmat,1)
         try NIRS.Cf.H.C.ok = first_k2; end %gives good channels whether they
         %were removed or not
         if NewDirCopyNIRS
-            save(fullfile(dir2,'NIRS.mat'),'NIRS');
+            newNIRSlocation = fullfile(dir2,'NIRS.mat');
+            save(newNIRSlocation,'NIRS');
+            job.NIRSmat{Idx,1} = newNIRSlocation;
         else
             save(job.NIRSmat{Idx,1},'NIRS');
         end
-        heartpace_all = [heartpace_all; heartpace]; %cb: vide, est ce qu'on supprime ???
+        %heartpace_all = [heartpace_all; heartpace]; %cb: vide, est ce qu'on supprime ???
     catch
         disp(['Could not analyze heart rate for subject' int2str(Idx)]);
     end

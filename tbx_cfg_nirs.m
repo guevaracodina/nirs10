@@ -19,7 +19,7 @@ DelPreviousData.tag  = 'DelPreviousData';
 DelPreviousData.name = 'Delete Previous data file';
 DelPreviousData.labels = {'True','False'};
 DelPreviousData.values = {1,0};
-DelPreviousData.val  = {1};
+DelPreviousData.val  = {0};
 DelPreviousData.help = {'Delete the previous data file.'}';
     
 CreateNIRSCopy_false         = cfg_branch;
@@ -1377,19 +1377,19 @@ STFT_param.val     = {win_type win_width Nprobe fft_size};
 STFT_param.help    = {'Short Term Fourier Transform Parameters'};
 
 %Detection wavelengths
-detect_wavelength         = cfg_entry; 
-detect_wavelength.name    = 'Detection wavelength number';
-detect_wavelength.tag     = 'detect_wavelength';       
-detect_wavelength.strtype = 'r';
-detect_wavelength.num     = [1 Inf];     
-detect_wavelength.def     = @(val)nirs_get_defaults(...
-    'preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.detect_wavelength', val{:}); 
-detect_wavelength.help    = {['Enter wavelength number(s) for detection of ',...
-    'the heart rate. If no heart rate is detected, and the remove channels ',...
-    'option is selected, channels for all wavelengths at this location will be removed. ',...
-    'For example, enter 1 if OD at 830 nm is the first wavelength; enter an array, ',...
-    'such as [1 2] if detection of heart rate at the first two wavelengths is required.']}; 
-
+% detect_wavelength         = cfg_entry; 
+% detect_wavelength.name    = 'Detection wavelength number';
+% detect_wavelength.tag     = 'detect_wavelength';       
+% detect_wavelength.strtype = 'r';
+% detect_wavelength.num     = [1 Inf];     
+% detect_wavelength.def     = @(val)nirs_get_defaults(...
+%     'preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.detect_wavelength', val{:}); 
+% detect_wavelength.help    = {['Enter wavelength number(s) for detection of ',...
+%     'the heart rate. If no heart rate is detected, and the remove channels ',...
+%     'option is selected, channels for all wavelengths at this location will be removed. ',...
+%     'For example, enter 1 if OD at 830 nm is the first wavelength; enter an array, ',...
+%     'such as [1 2] if detection of heart rate at the first two wavelengths is required.']}; 
+% 
 MinHeartRate         = cfg_entry; 
 MinHeartRate.name    = 'Minimum Heart Rate for Detection';
 MinHeartRate.tag     = 'MinHeartRate';       
@@ -1397,7 +1397,7 @@ MinHeartRate.strtype = 'r';
 MinHeartRate.num     = [1 1];     
 MinHeartRate.def     = @(val)nirs_get_defaults(...
     'preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.MinHeartRate', val{:}); 
-MinHeartRate.help    = {['Enter minimum heart rate allowed for final detection in Hz.']};
+MinHeartRate.help    = {['Enter minimum heart rate allowed for final detection in beats per minute.']};
 
 MaxHeartRate         = cfg_entry; 
 MaxHeartRate.name    = 'Maximum Heart Rate for Detection';
@@ -1406,7 +1406,7 @@ MaxHeartRate.strtype = 'r';
 MaxHeartRate.num     = [1 1];     
 MaxHeartRate.def     = @(val)nirs_get_defaults(...
     'preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.MaxHeartRate', val{:}); 
-MaxHeartRate.help    = {['Enter maximum heart rate allowed for final detection in Hz.']};
+MaxHeartRate.help    = {['Enter maximum heart rate allowed for final detection in beats per minute.']};
 
 InternalMinHeartRate         = cfg_entry; 
 InternalMinHeartRate.name    = 'Internal Minimum Heart Rate for Detection';
@@ -1415,7 +1415,7 @@ InternalMinHeartRate.strtype = 'r';
 InternalMinHeartRate.num     = [1 1];     
 InternalMinHeartRate.def     = @(val)nirs_get_defaults(...
     'preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.InternalMinHeartRate', val{:}); 
-InternalMinHeartRate.help    = {['Enter minimum heart rate allowed for detection in Hz, ',...
+InternalMinHeartRate.help    = {['Enter minimum heart rate allowed for detection in beats per minute, ',...
                         '"internal", i.e. for check over small data windows for FFT.']};
 
 InternalMaxHeartRate         = cfg_entry; 
@@ -1425,7 +1425,7 @@ InternalMaxHeartRate.strtype = 'r';
 InternalMaxHeartRate.num     = [1 1];     
 InternalMaxHeartRate.def     = @(val)nirs_get_defaults(...
     'preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.InternalMaxHeartRate', val{:}); 
-InternalMaxHeartRate.help    = {['Enter maximum heart rate allowed for detection in Hz, ',...
+InternalMaxHeartRate.help    = {['Enter maximum heart rate allowed for detection in beats per minute, ',...
                         '"internal", i.e. for check over small data windows for FFT.']};
 
 MaxHeartStdev         = cfg_entry; 
@@ -1435,7 +1435,7 @@ MaxHeartStdev.strtype = 'r';
 MaxHeartStdev.num     = [1 1];     
 MaxHeartStdev.def     = @(val)nirs_get_defaults(...
     'preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.MaxHeartStdev', val{:}); 
-MaxHeartStdev.help    = {'Enter maximum heart rate standard deviation allowed in beats per second'}';
+MaxHeartStdev.help    = {'Enter maximum heart rate standard deviation allowed in beats per minute.'}';
 
 %copy all parameters with "2" for heart_exercise
 win_type2 = cfg_menu;
@@ -1481,70 +1481,70 @@ STFT_param2.val     = {win_type2 win_width2 Nprobe2 fft_size2};
 STFT_param2.help    = {'Short Term Fourier Transform Parameters'};
 
 %Detection wavelengths
-detect_wavelength2         = cfg_entry; 
-detect_wavelength2.name    = 'Detection wavelength number';
-detect_wavelength2.tag     = 'detect_wavelength2';       
-detect_wavelength2.strtype = 'r';
-detect_wavelength2.num     = [1 Inf];     
-detect_wavelength2.def     = @(val)nirs_get_defaults(...
-    'nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.detect_wavelength2', val{:}); 
-detect_wavelength2.help    = {['Enter wavelength number(s) for detection of ',...
-    'the heart rate. If no heart rate is detected, and the remove channels ',...
-    'option is selected, channels for all wavelengths at this location will be removed. ',...
-    'For example, enter 1 if OD at 830 nm is the first wavelength; enter an array, ',...
-    'such as [1 2] if detection of heart rate at the first two wavelengths is required.']}; 
+% detect_wavelength2         = cfg_entry; 
+% detect_wavelength2.name    = 'Detection wavelength number';
+% detect_wavelength2.tag     = 'detect_wavelength2';       
+% detect_wavelength2.strtype = 'r';
+% detect_wavelength2.num     = [1 Inf];     
+% detect_wavelength2.def     = @(val)nirs_get_defaults(...
+%     'nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.detect_wavelength2', val{:}); 
+% detect_wavelength2.help    = {['Enter wavelength number(s) for detection of ',...
+%     'the heart rate. If no heart rate is detected, and the remove channels ',...
+%     'option is selected, channels for all wavelengths at this location will be removed. ',...
+%     'For example, enter 1 if OD at 830 nm is the first wavelength; enter an array, ',...
+%     'such as [1 2] if detection of heart rate at the first two wavelengths is required.']}; 
 
-MinHeartRate2         = cfg_entry; 
-MinHeartRate2.name    = 'Minimum Heart Rate for Detection';
-MinHeartRate2.tag     = 'MinHeartRate2';       
-MinHeartRate2.strtype = 'r';
-MinHeartRate2.num     = [1 1];     
-MinHeartRate2.def     = @(val)nirs_get_defaults(...
-    'nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.MinHeartRate2', val{:}); 
-MinHeartRate2.help    = {'Enter minimum heart rate allowed for final detection in Hz.'}';
-
-MaxHeartRate2         = cfg_entry; 
-MaxHeartRate2.name    = 'Maximum Heart Rate for Detection';
-MaxHeartRate2.tag     = 'MaxHeartRate2';       
-MaxHeartRate2.strtype = 'r';
-MaxHeartRate2.num     = [1 1];     
-MaxHeartRate2.def     = @(val)nirs_get_defaults(...
-    'nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.MaxHeartRate2', val{:}); 
-MaxHeartRate2.help    = {'Enter maximum heart rate allowed for final detection in Hz.'}';
-
-InternalMinHeartRate2         = cfg_entry; 
-InternalMinHeartRate2.name    = 'Internal Minimum Heart Rate for Detection';
-InternalMinHeartRate2.tag     = 'InternalMinHeartRate2';       
-InternalMinHeartRate2.strtype = 'r';
-InternalMinHeartRate2.num     = [1 1];     
-InternalMinHeartRate2.def     = @(val)nirs_get_defaults(...
-    'nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.InternalMinHeartRate2', val{:}); 
-InternalMinHeartRate2.help    = {'Enter minimum heart rate allowed for detection in Hz, '
-                        '"internal", i.e. for check over small data windows for FFT.'}';
-
-InternalMaxHeartRate2         = cfg_entry; 
-InternalMaxHeartRate2.name    = 'Internal Maximum Heart Rate for Detection';
-InternalMaxHeartRate2.tag     = 'InternalMaxHeartRate2';       
-InternalMaxHeartRate2.strtype = 'r';
-InternalMaxHeartRate2.num     = [1 1];     
-InternalMaxHeartRate2.def     = @(val)nirs_get_defaults(...
-    'nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.InternalMaxHeartRate2', val{:}); 
-InternalMaxHeartRate2.help    = {'Enter maximum heart rate allowed for detection in Hz, '
-                        '"internal", i.e. for check over small data windows for FFT.'}';
-
-MaxHeartStdev2         = cfg_entry; 
-MaxHeartStdev2.name    = 'Maximum Heart Rate Standard Deviation';
-MaxHeartStdev2.tag     = 'MaxHeartStdev2';       
-MaxHeartStdev2.strtype = 'r';
-MaxHeartStdev2.num     = [1 1];     
-MaxHeartStdev2.def     = @(val)nirs_get_defaults(...
-    'nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.MaxHeartStdev2', val{:}); 
-MaxHeartStdev2.help    = {'Enter maximum heart rate standard deviation allowed in beats per second'}';
+% MinHeartRate2         = cfg_entry; 
+% MinHeartRate2.name    = 'Minimum Heart Rate for Detection';
+% MinHeartRate2.tag     = 'MinHeartRate2';       
+% MinHeartRate2.strtype = 'r';
+% MinHeartRate2.num     = [1 1];     
+% MinHeartRate2.def     = @(val)nirs_get_defaults(...
+%     'nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.MinHeartRate2', val{:}); 
+% MinHeartRate2.help    = {'Enter minimum heart rate allowed for final detection in Hz.'}';
+% 
+% MaxHeartRate2         = cfg_entry; 
+% MaxHeartRate2.name    = 'Maximum Heart Rate for Detection';
+% MaxHeartRate2.tag     = 'MaxHeartRate2';       
+% MaxHeartRate2.strtype = 'r';
+% MaxHeartRate2.num     = [1 1];     
+% MaxHeartRate2.def     = @(val)nirs_get_defaults(...
+%     'nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.MaxHeartRate2', val{:}); 
+% MaxHeartRate2.help    = {'Enter maximum heart rate allowed for final detection in Hz.'}';
+% 
+% InternalMinHeartRate2         = cfg_entry; 
+% InternalMinHeartRate2.name    = 'Internal Minimum Heart Rate for Detection';
+% InternalMinHeartRate2.tag     = 'InternalMinHeartRate2';       
+% InternalMinHeartRate2.strtype = 'r';
+% InternalMinHeartRate2.num     = [1 1];     
+% InternalMinHeartRate2.def     = @(val)nirs_get_defaults(...
+%     'nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.InternalMinHeartRate2', val{:}); 
+% InternalMinHeartRate2.help    = {'Enter minimum heart rate allowed for detection in Hz, '
+%                         '"internal", i.e. for check over small data windows for FFT.'}';
+% 
+% InternalMaxHeartRate2         = cfg_entry; 
+% InternalMaxHeartRate2.name    = 'Internal Maximum Heart Rate for Detection';
+% InternalMaxHeartRate2.tag     = 'InternalMaxHeartRate2';       
+% InternalMaxHeartRate2.strtype = 'r';
+% InternalMaxHeartRate2.num     = [1 1];     
+% InternalMaxHeartRate2.def     = @(val)nirs_get_defaults(...
+%     'nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.InternalMaxHeartRate2', val{:}); 
+% InternalMaxHeartRate2.help    = {'Enter maximum heart rate allowed for detection in Hz, '
+%                         '"internal", i.e. for check over small data windows for FFT.'}';
+% 
+% MaxHeartStdev2         = cfg_entry; 
+% MaxHeartStdev2.name    = 'Maximum Heart Rate Standard Deviation';
+% MaxHeartStdev2.tag     = 'MaxHeartStdev2';       
+% MaxHeartStdev2.strtype = 'r';
+% MaxHeartStdev2.num     = [1 1];     
+% MaxHeartStdev2.def     = @(val)nirs_get_defaults(...
+%     'nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.MaxHeartStdev2', val{:}); 
+% MaxHeartStdev2.help    = {'Enter maximum heart rate standard deviation allowed in beats per second'}';
 
 heart_resting         = cfg_branch;
 heart_resting.tag     = 'heart_resting';
 heart_resting.name    = 'Resting state parameters';
-heart_resting.val     = {STFT_param detect_wavelength MinHeartRate MaxHeartRate ...
+heart_resting.val     = {STFT_param MinHeartRate MaxHeartRate ...
     InternalMinHeartRate InternalMaxHeartRate MaxHeartStdev}; 
 heart_resting.help    = {'Choose parameters for resting state heart rate detection'};
 
@@ -3492,8 +3492,8 @@ coregNIRS.help   = {'These modules perform coregistration ',...
 preprocessNIRS        = cfg_choice; 
 preprocessNIRS.name   = 'Preprocess NIRS data';
 preprocessNIRS.tag    = 'preprocessNIRS';
-preprocessNIRS.values = {remove_chn_stdev criugm_paces1 mark_negative ...
-         mark_movement normalize_baseline ODtoHbOHbR HPF_LPF generate_vhdr_vmrk}; 
+preprocessNIRS.values = {remove_chn_stdev criugm_paces1  ...
+         mark_movement normalize_baseline ODtoHbOHbR generate_vhdr_vmrk}; %mark_negative HPF_LPF
 preprocessNIRS.help   = {'These modules preprocess NIRS data: '
     'heart rate check, '
     'downsampling, removal of bad channels, filters.'}';
@@ -3509,16 +3509,17 @@ model_reconstruct.help   = {'3D Reconstruction of NIRS data.'};
 model_specify        = cfg_choice; %cfg_repeat;
 model_specify.name   = 'GLM Specification';
 model_specify.tag    = 'model_specify';
-model_specify.values = {wls_bglm_specify NIRS_SPM_specify NIRS_SPM_specify_batch};
+model_specify.values = {wls_bglm_specify}; %NIRS_SPM_specify NIRS_SPM_specify_batch
 model_specify.help   = {'These modules specify a GLM.'};
 
 %module 10
 model_estimate        = cfg_choice; %cfg_repeat; 
 model_estimate.name   = 'GLM Estimation';
 model_estimate.tag    = 'model_estimate';
-model_estimate.values = {wls_bglm_estimate NIRS_SPM_HPF_LPF NIRS_SPM_estimate ...
-            NIRS_SPM_estimate_batch NIRS_SPM_contrast liom_contrast NIRS_SPM_group ...
-            liom_group AnalyzeGLM ROCtest};
+model_estimate.values = {wls_bglm_estimate liom_contrast  ...
+            liom_group AnalyzeGLM ROCtest}; 
+        %NIRS_SPM_HPF_LPF NIRS_SPM_estimate NIRS_SPM_estimate_batch
+        %NIRS_SPM_contrast NIRS_SPM_group
 model_estimate.help   = {'These modules estimate a GLM.'};
  
 %module 11

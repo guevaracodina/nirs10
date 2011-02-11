@@ -11,12 +11,12 @@ nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.STFT_param.win_
 nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.STFT_param.win_width = 20;
 nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.STFT_param.Nprobe = 200;
 nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.STFT_param.fft_size = 1024;
-nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.detect_wavelength = 1;
-nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.MinHeartRate = 0.5;
-nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.MaxHeartRate = 2;
-nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.InternalMinHeartRate = 0.5;
-nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.InternalMaxHeartRate = 5; %or 3?
-nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.MaxHeartStdev = 0.3;
+%nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.detect_wavelength = 1;
+nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.MinHeartRate = 45;
+nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.MaxHeartRate = 120;
+nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.InternalMinHeartRate = 45;
+nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.InternalMaxHeartRate = 120; %or 3?
+nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.MaxHeartStdev = 10;
 %configuration for aerobic exercise
 nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.STFT_param2.win_type2 = 0;
 nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_exercise.STFT_param2.win_width2 = 20;

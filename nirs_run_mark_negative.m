@@ -98,7 +98,9 @@ for Idx=1:size(job.NIRSmat,1)
             NIRS.Dt.fir.pp(lst+1).bpd{f,1} = bpd; %bad point durations
         end  
         if NewDirCopyNIRS
-            save(fullfile(dir2,'NIRS.mat'),'NIRS');            
+            newNIRSlocation = fullfile(dir2,'NIRS.mat');
+            save(newNIRSlocation,'NIRS');
+            job.NIRSmat{Idx,1} = newNIRSlocation;           
         else
             save(job.NIRSmat{Idx,1},'NIRS'); 
         end

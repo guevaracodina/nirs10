@@ -128,12 +128,12 @@ for Idx=1:size(job.NIRSmat,1)
         spm_dir = fullfile(dir1,job.dir1);
         if ~exist(spm_dir,'dir'), mkdir(spm_dir); end
         %copy NIRS.mat and datafile to spm_dir, for storage only
-        if ~job.LiomDeleteLarge
-            copyfile(job.NIRSmat{Idx,1},fullfile(spm_dir,'NIRS.mat'));
-            for f=1:nsess
-                copyfile(rDtp{f},fullfile(spm_dir,[fil1 ext1]));
-            end
-        end
+%         if ~job.LiomDeleteLarge
+%             copyfile(job.NIRSmat{Idx,1},fullfile(spm_dir,'NIRS.mat'));
+%             for f=1:nsess
+%                 copyfile(rDtp{f},fullfile(spm_dir,[fil1 ext1]));
+%             end
+%         end
         %Find onsets
         try
             SPM.Sess = NIRS.Dt.fir.Sess;
@@ -573,7 +573,10 @@ for Idx=1:size(job.NIRSmat,1)
     catch
         disp(['Could not specify GLM for subject' int2str(Idx)]);
     end
-    %NIRS is now modified - it includes a link to the GLM    
-    save(job.NIRSmat{Idx,1},'NIRS');    
+    %NIRS is now modified - it includes a link to the GLM   
+    newNIRSlocation = fullfile(spm_dir,'NIRS.mat');
+    save(newNIRSlocation,'NIRS');
+    job.NIRSmat{Idx,1} = newNIRSlocation;
+    %save(job.NIRSmat{Idx,1},'NIRS');    
 end
 out.NIRSmat = job.NIRSmat;
