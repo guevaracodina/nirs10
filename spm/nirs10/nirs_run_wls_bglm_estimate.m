@@ -133,7 +133,7 @@ for Idx=1:size(job.NIRSmat,1)
                             FilterOrder=3;
                             Wn=cutoff*2/fs;                           % normalised cutoff frequency
                             [fb,fa]=butter(FilterOrder,Wn);            % buterworth filter
-                            Y=filtfilt(fb,fa,Y);
+                            Y=filtfilt(fb,fa,Y);                            
                         end
 
                         %HPF
@@ -143,16 +143,22 @@ for Idx=1:size(job.NIRSmat,1)
                             Wn=cutoff*2/fs;
                             [fb,fa]=butter(FilterOrder,Wn,'high');
                             Y=filtfilt(fb,fa,Y);
+                            %need to filter the design matrix too,
+                            %otherwise, the estimates will be significantly
+                            %biased 
+                            
+                            %This is done later
                         end
                         
                         %Last step before the GLM, adding HbO to HbR to get
                         %HbT - perhaps this should be done after the
                         %wavelets?
-                        tmp_ch = 1:(NC/2); %all HbOchannels
-                        Y1 = Y(:,tmp_ch);
-                        Y2 = Y(:,tmp_ch+NC/2);
-                        Y = [Y1 Y2 Y1+Y2];
-                            
+                        if SPM.GenerateHbT
+                            tmp_ch = 1:(NC/2); %all HbOchannels
+                            Y1 = Y(:,tmp_ch);
+                            Y2 = Y(:,tmp_ch+NC/2);
+                            Y = [Y1 Y2 Y1+Y2];
+                        end    
                         %carefully extract SPM info 
                         tSPM = [];
                         tSPM.Sess = SPM.Sess(s);                
@@ -183,7 +189,17 @@ for Idx=1:size(job.NIRSmat,1)
                             %matrix?
                         end
 
-
+                        if SPM.xX.HPFbutter
+                            %filter the design matrix
+                            cutoff=SPM.xX.hpf_butter_freq; %Hz, or 100s 
+                            FilterOrder=3;
+                            Wn=cutoff*2/fs;
+                            [fb,fa]=butter(FilterOrder,Wn,'high');
+                            %exclude the constant
+                            tX=filtfilt(fb,fa,tSPM.xX.X(:,1:end-1));
+                            %add back the constant
+                            tSPM.xX.X = [tX tSPM.xX.X(:,end)];
+                        end
                         switch SPM.xX.opt.meth
                             case 'BGLM'
                                 nScan = size(Y,1);

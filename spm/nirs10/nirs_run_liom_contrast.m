@@ -362,9 +362,9 @@ for Ic=1:nCon
     contrast_info_for_fig = [num2str(p_value) ' ' spec_hemi ' ' hb '_S' int2str(f1) ' Pos' xCon(Ic).n];
     
     load Split
-    %no threshold
-    nirs_draw_figure(1,brain,T_map,contrast_info,...
-        contrast_info_for_fig,split,pathn,erdf,sum_kappa(Ic),p_value,gen_fig,gen_tiff);
+%     %no threshold
+%     nirs_draw_figure(1,brain,T_map,contrast_info,...
+%         contrast_info_for_fig,split,pathn,erdf,sum_kappa(Ic),p_value,gen_fig,gen_tiff);
     %uncorrected
     nirs_draw_figure(2,brain,T_map,contrast_info,...
         contrast_info_for_fig,split,pathn,erdf,sum_kappa(Ic),p_value,gen_fig,gen_tiff);      
@@ -377,9 +377,9 @@ for Ic=1:nCon
     contrast_info = [num2str(p_value) '_' spec_hemi '_' hb '_S' int2str(f1) '_Neg' xCon(Ic).n];
     contrast_info_for_fig = [num2str(p_value) ' ' spec_hemi ' ' hb '_S' int2str(f1) ' Neg' xCon(Ic).n];
 
-    %no threshold
-    nirs_draw_figure(1,brain,T_map,contrast_info,...
-        contrast_info_for_fig,split,pathn,erdf,sum_kappa(Ic),p_value,gen_fig,gen_tiff);
+%     %no threshold
+%     nirs_draw_figure(1,brain,T_map,contrast_info,...
+%         contrast_info_for_fig,split,pathn,erdf,sum_kappa(Ic),p_value,gen_fig,gen_tiff);
     %uncorrected
     nirs_draw_figure(2,brain,T_map,contrast_info,...
         contrast_info_for_fig,split,pathn,erdf,sum_kappa(Ic),p_value,gen_fig,gen_tiff);      

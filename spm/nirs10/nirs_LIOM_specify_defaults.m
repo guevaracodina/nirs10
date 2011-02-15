@@ -24,3 +24,5 @@ nirs10.model_specify.wls_bglm_specify.wls_or_bglm.WLS.WLS_L0 = 0;
 nirs10.model_specify.wls_bglm_specify.wls_or_bglm.BGLM.BGLM_fmax = 0.15;
 nirs10.model_specify.wls_bglm_specify.wls_or_bglm.BGLM.BGLM_degre = 2;
 nirs10.model_specify.wls_bglm_specify.wls_or_bglm.BGLM.BGLM_threshold_drift = 0.1;
+nirs10.model_specify.wls_bglm_specify.GenerateHbT = 1;
+nirs10.model_specify.wls_bglm_specify.flag_window = 0;

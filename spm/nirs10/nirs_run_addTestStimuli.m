@@ -103,7 +103,7 @@ for Idx=1:size(job.NIRSmat,1)
         end
         %Here could add loop over sessions - to be done?
         [dir1,fil1,ext1] = fileparts(NIRS.Dt.fir.pp(lst).p{ts,:});
-        d = fopen_NIR(fullfile(dir1,[fil1,ext1]),NC,ext1);   
+        d = fopen_NIR(fullfile(dir1,[fil1,ext1]),NC,ext1);  
         if job.testDupChannels
             %store a copy of the data
             d_copy = d;  
@@ -286,29 +286,47 @@ for Idx=1:size(job.NIRSmat,1)
 
         % and orthogonalise (within trial type)
         %--------------------------------------
-        for i = 1:length(Fc)
+        for i = 1:length(Fc) %This does not orthogonalize the Volterras
             X(:,Fc(i).i) = spm_orth(X(:,Fc(i).i));
         end
 
         %X = X(33:end,:);
         
-        %calculate power of protocol
-        switch volt
-            case 1 
-                %this will not work if we have subsessions
-                %Assumes that first column is the canonical HRF
-                m1 = mean(X(:,1));
-                NIRS.Dt.fir.Ep = sum((X(:,1)-m1).^2)/size(X,1);
-            case 2
-                %Assumes first column is canonical HRF and second column
-                %is second Volterra kernel
-                m1 = mean(X(:,1)+tb*X(:,2));
-                %this assumes that tb is the same for each channel
-                NIRS.Dt.fir.Ep = sum((X(:,1)+tb*X(:,2)-m1).^2)/size(X,1);
+        filter_X = 1;
+        NIRS.Dt.fir.filter_X = filter_X;
+        if filter_X
+            %LPF
+            cutoff=0.0667; 
+            FilterOrder=3;
+            Wn=cutoff*2/fs;                           
+            [fb,fa]=butter(FilterOrder,Wn);  
+            switch volt 
+                case 1
+                    fX1=filtfilt(fb,fa,X(:,1));
+                case 2
+                    fX1=filtfilt(fb,fa,X(:,1)+tb*X(:,2)); 
+            end
+            %HPF
+            cutoff=0.01; 
+            FilterOrder=3;
+            Wn=cutoff*2/fs;
+            [fb,fa]=butter(FilterOrder,Wn,'high');
+            fX1 = filtfilt(fb,fa,fX1);
+        else
+            switch volt
+                case 1
+                    fX1 = X(:,1);
+                case 2
+                    fX1 = X(:,1)+tb*X(:,2); 
+            end
         end
-        %sum contributions from each regressor with a weight of 1
-        %X = sum(X,2);
-        %X should be our regressors
+            
+        %calculate power of protocol        
+        %this will not work if we have subsessions
+        %Assumes that first column is the canonical HRF
+        m1 = mean(fX1);
+        NIRS.Dt.fir.Ep = sum((fX1-m1).^2)/ns; %length(fX1);
+          
         %rescale X by channel:
         for Cidx=1:length(chn)
             %take absolute value of median, or sign of response is
@@ -323,22 +341,17 @@ for Idx=1:size(job.NIRSmat,1)
             NIRS.Dt.fir.filter_data = filter_data;
             if filter_data
                 %LPF
-                %if SPM.xX.LPFbutter                
                 cutoff=0.0667; %SPM.xX.lpf_butter_freq; %0.666; %Hz, or 1.5s
                 FilterOrder=3;
                 Wn=cutoff*2/fs;                           % normalised cutoff frequency
                 [fb,fa]=butter(FilterOrder,Wn);            % buterworth filter
                 tdc=filtfilt(fb,fa,dc(Cidx,:));
-                %end
-
                 %HPF
-                %if SPM.xX.HPFbutter
                 cutoff=0.01; %SPM.xX.hpf_butter_freq; %Hz, or 100s 
                 FilterOrder=3;
                 Wn=cutoff*2/fs;
                 [fb,fa]=butter(FilterOrder,Wn,'high');
                 tdc=filtfilt(fb,fa,tdc);
-                %end
                 m1 = mean(tdc);
                 NIRS.Dt.fir.Eb(Cidx) = sum((tdc-m1).^2)/ns;
             else
@@ -359,7 +372,8 @@ for Idx=1:size(job.NIRSmat,1)
                 std_or_power = 1;
                 if std_or_power
                     if filter_data
-                        m = std(tdc);                       
+                        m = std(tdc);  
+                        %a = a2*m/std(fX1);
                         a = a2*m*bf_norm; %
                     else
                         m = std(dc(Cidx,:)); 
@@ -374,7 +388,7 @@ for Idx=1:size(job.NIRSmat,1)
                 NIRS.Dt.fir.a(Cidx) = a;
                 NIRS.Dt.fir.a2(Cidx) = a2; %/m; 
                 NIRS.Dt.fir.a3(Cidx) = a/median(tdc); 
-                
+                NIRS.Dt.fir.a4(Cidx) = a2*m/std(fX1);
                 %NIRS.Dt.fir.a(Cidx) = a;
                 NIRS.Dt.fir.std_or_power = std_or_power;
             else
@@ -389,6 +403,8 @@ for Idx=1:size(job.NIRSmat,1)
             try NIRS.Dt.fir.AmpTargetMethod = AmpTargetMethod; end
             
             %is only a few percent point-by-point on the stimuli
+            %a = 100; for a test...
+            %dc(Cidx,:) = zeros(size(dc(Cidx,:)));
             switch volt
                 case 1                    
                     d(chn(Cidx),:) = dc(Cidx,:)+X'*a; 
