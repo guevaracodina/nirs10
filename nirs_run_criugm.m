@@ -25,8 +25,19 @@ for is=1:sN
     
     % Protocol
     if ~isempty(job.protocol{:})
+        
+        %Ignore parametric modulations - cf spm_run_fmri_design.m
+        P.name = 'none';
+        P.h    = 0;
+        
         for iU=1:UN
-            NIRS.Dt.fir.Sess{iU,1} = job.protocol{:};
+            load(job.protocol{:});
+            for kk = 1:size(names, 2)
+                NIRS.Dt.fir.Sess(iU).U(kk).name = names(kk);
+                NIRS.Dt.fir.Sess(iU).U(kk).ons = onsets{kk};
+                NIRS.Dt.fir.Sess(iU).U(kk).dur = durations{kk};
+                NIRS.Dt.fir.Sess(iU).U(kk).P = P;
+            end
         end
     end
     
