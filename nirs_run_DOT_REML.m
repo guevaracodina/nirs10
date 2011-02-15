@@ -29,7 +29,7 @@ if(size(X,1)<size(X,2))
         Qp2{idx}=S*V'*Qp{idx}*V*S';
     end
     Beta_prior=S*V'*Beta_prior;
-    [lambda,Beta,Stats]=DOT_REML(Y,U,Beta_prior,Qn,Qp2,maxIter);
+    [lambda,Beta,Stats]=nirs_run_DOT_REML(Y,U,Beta_prior,Qn,Qp2,maxIter);
 
     %lambda is right, but the Stats are not directly related to the ones we want.  So we
     %recompute. 

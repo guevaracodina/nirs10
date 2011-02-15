@@ -3095,6 +3095,13 @@ end
 % Liom Group Level Model Estimation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+session_number         = cfg_entry; 
+session_number.name    = 'Session number';
+session_number.tag     = 'session_number';       
+session_number.strtype = 'r';
+session_number.num     = [1 1];     
+session_number.help    = {'Enter the number of the session you want to analyse. Only one session can be analysed at a time.'}; 
+
 FFX_or_RFX = cfg_menu;
 FFX_or_RFX.tag  = 'FFX_or_RFX';
 FFX_or_RFX.name = 'Fixed or random effects';
@@ -3113,7 +3120,7 @@ FFX_or_RFX.help = {'Use fixed effects (FFX) for group of sessions (intra-subject
 liom_group      = cfg_exbranch;       
 liom_group.name = 'Liom Group Model Estimation';             
 liom_group.tag  = 'liom_group'; 
-liom_group.val  = {NIRSmat FFX_or_RFX contrast_figures contrast_p_value}; 
+liom_group.val  = {NIRSmat FFX_or_RFX session_number contrast_figures contrast_p_value}; 
 liom_group.prog = @nirs_run_liom_group;  
 liom_group.vout = @nirs_cfg_vout_liom_group; 
 liom_group.help = {'Liom Group level model estimation.'};

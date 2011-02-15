@@ -1,6 +1,7 @@
 function out = nirs_run_liom_group(job)
 %Run simple group level analysis as a one sample t-test
 FFX = job.FFX_or_RFX;
+session_n = job.session_number;
 p_value = job.contrast_p_value;
 %Booleans to choose which figures to write to disk, if any
 switch job.contrast_figures
@@ -250,9 +251,9 @@ else
                         %Loop over subjects
                         for f1=1:ns 
                             %assume only one session
-                            tmp = squeeze(big_TOPO{f1}.v{v1}.s{1}.hb{h1}.c_interp_beta(c1,:,:));
+                            tmp = squeeze(big_TOPO{f1}.v{v1}.s{session_n}.hb{h1}.c_interp_beta(c1,:,:));
                             cbeta(f1,:) = tmp(:);
-                            tmp = squeeze(big_TOPO{f1}.v{v1}.s{1}.hb{h1}.c_cov_interp_beta(c1,:,:));
+                            tmp = squeeze(big_TOPO{f1}.v{v1}.s{session_n}.hb{h1}.c_cov_interp_beta(c1,:,:));
                             ccov_beta(f1,:) = tmp(:);
                         end
                         %Positive contrasts
@@ -274,7 +275,7 @@ else
 
                         %Negative contrasts
                         for f1=1:ns
-                            tmp = -squeeze(big_TOPO{f1}.v{v1}.s{1}.hb{h1}.c_interp_beta(c1,:,:));
+                            tmp = -squeeze(big_TOPO{f1}.v{v1}.s{session_n}.hb{h1}.c_interp_beta(c1,:,:));
                             cbeta(f1,:,:) = tmp(:);
                         end
 
