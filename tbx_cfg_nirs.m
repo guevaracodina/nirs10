@@ -2593,6 +2593,24 @@ LiomDeleteLarge.def = @(val)nirs_get_defaults(...
     'model_specify.wls_bglm_specify.LiomDeleteLarge', val{:}); 
 LiomDeleteLarge.help = {'Delete large files (.nir and NIRS.mat) after each estimation.'};
 
+GenerateHbT      = cfg_menu;
+GenerateHbT.tag  = 'GenerateHbT';
+GenerateHbT.name = 'Generate HbT';
+GenerateHbT.labels = {'Yes','No'};
+GenerateHbT.values = {1,0};
+GenerateHbT.def = @(val)nirs_get_defaults(...
+    'model_specify.wls_bglm_specify.GenerateHbT', val{:}); 
+GenerateHbT.help = {'Generate HbT.'};
+
+flag_window      = cfg_menu;
+flag_window.tag  = 'flag_window';
+flag_window.name = 'Show Design Matrix';
+flag_window.labels = {'Yes','No'};
+flag_window.values = {1,0};
+flag_window.def = @(val)nirs_get_defaults(...
+    'model_specify.wls_bglm_specify.flag_window', val{:}); 
+flag_window.help = {'Show design matrix.'};
+
 WLS_J0         = cfg_entry; 
 WLS_J0.name    = 'Wavelet depth J0';
 WLS_J0.tag     = 'WLS_J0';       
@@ -2772,7 +2790,7 @@ wls_bglm_specify      = cfg_exbranch;
 wls_bglm_specify.name = 'LIOM GLM Specification';            
 wls_bglm_specify.tag  = 'wls_bglm_specify'; 
 wls_bglm_specify.val  = {NIRSmat dir1 subj units time_res derivs ...
-    volt GLM_include_cardiac GLM_include_Mayer ...
+    volt GLM_include_cardiac GLM_include_Mayer GenerateHbT flag_window ...
     channel_pca hpf_butter lpf_butter...
      wls_or_bglm LiomDeleteLarge}; 
 wls_bglm_specify.prog = @nirs_run_wls_bglm_specify;  

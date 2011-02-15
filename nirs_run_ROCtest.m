@@ -4,7 +4,7 @@ dir_dataSPM = 'dataSPM';
 %dir_stat = 'StatV';
 IN = job.ROCiternum;
 run_GLM = 1;
-run_ROC = 1;
+run_ROC = 0;
 nSubj = size(job.NIRSmat,1);
 nJob = size(job.ROCLoopJob,1);
 
@@ -86,16 +86,34 @@ for Idx=1:nSubj
                     %ROC
                     sz_beta = size(SPM.beta);
                     sz_Bvar = size(SPM.xX.Bvar);
+                    try
+                        if SPM.GenerateHbT
+                            sz_beta(2) = 40; %quick fix for bug due to
+                            %introducing HbT
+                            sz_ResSS(2) = 40; %quick fix for bug due to introducing HbT
+                        end
+                    end
                     beta   = zeros(IN,sz_beta(1),sz_beta(2));
                     Bvar   = zeros(IN,sz_Bvar(1),sz_Bvar(2));
                     RE = zeros(IN,sz_beta(1),sz_beta(2)/2);
+                    SNR = zeros(IN,sz_beta(2)/2);
                     for ROCiter=1:IN
                         testFullName = [testName int2str(ROCiter)];
                         dir_spm = [dir1 filesep testFullName filesep dir_stat];
                         SPM = [];
                         load(fullfile(dir_spm,'SPM.mat'));
-                        beta(ROCiter,:,:)   = SPM.beta;
-                        Bvar(ROCiter,:,:)   = full(SPM.xX.Bvar);
+                        try
+                            if SPM.GenerateHbT
+                                beta(ROCiter,:,:)   = SPM.beta(:,1:40); %quick fix for bug due to introducing HbT
+                                Bvar(ROCiter,:,:)   = full(SPM.xX.Bvar(:,1:40)); %quick fix for bug due to introducing HbT
+                            else
+                                beta(ROCiter,:,:)   = SPM.beta; %(:,1:40); %quick fix for bug due to introducing HbT
+                                Bvar(ROCiter,:,:)   = full(SPM.xX.Bvar) ; %(:,1:40)); %quick fix for bug due to introducing HbT
+                            end
+                        catch
+                            beta(ROCiter,:,:)   = SPM.beta; %(:,1:40); %quick fix for bug due to introducing HbT
+                            Bvar(ROCiter,:,:)   = full(SPM.xX.Bvar) ; %(:,1:40)); %quick fix for bug due to introducing HbT
+                        end
                         NIRS = [];
                         load(fullfile(dir_spm,'NIRS.mat'));
                         %1st Volterra kernel
@@ -104,6 +122,7 @@ for Idx=1:nSubj
                         try
                             RE(ROCiter,2,:) = SPM.beta(2,1:(sz_beta(2)/2))./ (NIRS.Dt.fir.b*NIRS.Dt.fir.a) -1;
                         end
+                        SNR(ROCiter,:) = NIRS.Dt.fir.SNR;
                     end
 
                     %get t stat for each iteration
@@ -121,8 +140,16 @@ for Idx=1:nSubj
                 catch
                     %ROC
                     sz_beta = size(SPM.beta);
+                    
                     sz_Bcov = size(SPM.xX.Bcov);
                     sz_ResSS = size(SPM.ResSS);
+                    try
+                        if SPM.GenerateHbT
+                            sz_beta(2) = 40; %quick fix for bug due to
+                            %introducing HbT
+                            sz_ResSS(2) = 40; %quick fix for bug due to introducing HbT
+                        end
+                    end
                     beta   = zeros(IN,sz_beta(1),sz_beta(2));
                     Bcov   = zeros(IN,sz_Bcov(1),sz_Bcov(1));
                     ResSS  = zeros(IN,sz_ResSS(2));
@@ -130,30 +157,43 @@ for Idx=1:nSubj
                     trRVRV = zeros(IN,1);
                     erdf   = zeros(IN,1);
                     RE = zeros(IN,sz_beta(1),sz_beta(2)/2);
+                    SNR = zeros(IN,sz_beta(2)/2);
                     for ROCiter=1:IN
                         testFullName = [testName int2str(ROCiter)];
                         dir_spm = [dir1 filesep testFullName filesep dir_stat];
                         SPM = [];
                         load(fullfile(dir_spm,'SPM.mat'));
                         %spm_DesRep('DesRepUI',SPM);
-                        beta(ROCiter,:,:)   = SPM.beta;
                         Bcov(ROCiter,:,:)   = SPM.xX.Bcov;
-                        ResSS(ROCiter,:)  = SPM.ResSS;
+                        try
+                            if SPM.GenerateHbT
+                                beta(ROCiter,:,:)   = SPM.beta(:,1:40); %quick fix for bug due to introducing HbT
+                                ResSS(ROCiter,:)  = SPM.ResSS(1,1:40); %quick fix for bug due to introducing HbT
+                            else
+                                beta(ROCiter,:,:)   = SPM.beta; %(:,1:40); %quick fix for bug due to introducing HbT
+                                ResSS(ROCiter,:)  = SPM.ResSS; %(1,1:40); %quick fix for bug due to introducing HbT
+                            end
+                        catch
+                            beta(ROCiter,:,:)   = SPM.beta; %(:,1:40); %quick fix for bug due to introducing HbT
+                            ResSS(ROCiter,:)  = SPM.ResSS; %(1,1:40); %quick fix for bug due to introducing HbT
+                        end
+                        
                         trRV(ROCiter)   = SPM.xX.trRV;
                         trRVRV(ROCiter) = SPM.xX.trRVRV;
                         erdf(ROCiter)   = trRV(ROCiter)^2/trRVRV(ROCiter);
                         NIRS = [];
                         load(fullfile(dir_spm,'NIRS.mat'));
                         %1st Volterra kernel
-                        RE(ROCiter,1,:) = SPM.beta(1,1:(sz_beta(2)/2))./ NIRS.Dt.fir.a -1;
+                        RE(ROCiter,1,:) = SPM.beta(1,1:(sz_beta(2)/2))./ NIRS.Dt.fir.a; % -1;
                         %2nd Volterra kernel
                         try
-                            RE(ROCiter,2,:) = SPM.beta(2,1:(sz_beta(2)/2))./ (NIRS.Dt.fir.b*NIRS.Dt.fir.a) -1;
+                            RE(ROCiter,2,:) = SPM.beta(2,1:(sz_beta(2)/2))./ (NIRS.Dt.fir.b*NIRS.Dt.fir.a);% -1;
                             %for 3rd component, calculate the ratio of 2nd
                             %to 1st Volterra estimated amplitudes, less simulated 
                             RE(ROCiter,3,:) = SPM.beta(2,1:(sz_beta(2)/2))./ ...
-                                SPM.beta(1,1:(sz_beta(2)/2)) - NIRS.Dt.fir.b;
-                        end                        
+                                SPM.beta(1,1:(sz_beta(2)/2));%  - NIRS.Dt.fir.b;
+                        end  
+                        SNR(ROCiter,:) = NIRS.Dt.fir.SNR;
                     end
 
                     %get t stat for each iteration
@@ -169,10 +209,15 @@ for Idx=1:nSubj
                 T{Jidx,Idx}.t = t;
                 T{Jidx,Idx}.b = beta;
                 T{Jidx,Idx}.RE = RE;
+                T{Jidx,Idx}.SNR = SNR;
+                T{Jidx,Idx}.a2 = NIRS.Dt.fir.a2;
                 t1 = squeeze(T{Jidx,Idx}.t(:,1,:));
                 t2 = squeeze(T{Jidx,Idx}.t(:,2,:));
                 %Add bonferroni and choice of t-stat value.
                 alpha_unc = 0.05; %uncorrected threshold
+                
+                %options for the plots
+                byIter = false;
                 
                 generate_ROC_curves = 1;
                 if generate_ROC_curves
@@ -185,33 +230,127 @@ for Idx=1:nSubj
                     TPu2{Jidx,Idx} = [];
                     FPb2{Jidx,Idx} = [];
                     FPu2{Jidx,Idx} = [];
-                    for exp_alpha_unc = 1:25
+                    %for 25th and 75th percentiles
+                    TPu1u{Jidx,Idx} = [];
+                    %FPu1u{Jidx,Idx} = [];
+                    TPu1l{Jidx,Idx} = [];
+                    %FPu1l{Jidx,Idx} = [];
+                    TPu2u{Jidx,Idx} = [];
+                    %FPu2u{Jidx,Idx} = [];
+                    TPu2l{Jidx,Idx} = [];
+                    %FPu2l{Jidx,Idx} = [];
+                    %for HbO and HbR separately
+                    TPu1O{Jidx,Idx} = [];
+                    TPu1R{Jidx,Idx} = [];
+                    TPu2O{Jidx,Idx} = [];
+                    TPu2R{Jidx,Idx} = [];
+                    FPu1O{Jidx,Idx} = [];
+                    FPu1R{Jidx,Idx} = [];
+                    FPu2O{Jidx,Idx} = [];
+                    FPu2R{Jidx,Idx} = [];
+                    TPu1Ou{Jidx,Idx} = [];
+                    TPu1Ol{Jidx,Idx} = [];
+                    TPu2Ou{Jidx,Idx} = [];
+                    TPu2Ol{Jidx,Idx} = [];
+                    TPu1Ru{Jidx,Idx} = [];
+                    TPu1Rl{Jidx,Idx} = [];
+                    TPu2Ru{Jidx,Idx} = [];
+                    TPu2Rl{Jidx,Idx} = [];
+                    
+                    for exp_alpha_unc = [8:11 13:2:19 22 25] % [2:10 12:2:20 25]
                         alpha_unc = 10.^(-exp_alpha_unc/5);
                         %1st Volterra
                         TPn = 20; %NcTP*IN; %Number of data points for true positives and false negatives
                         alpha_bonf_TPn = alpha_unc/TPn;
                         [u v] = count_TP_FP(IN,[1:20],...
-                            t1,alpha_bonf_TPn,alpha_unc,erdf,true,true,false); 
-                        TPb1{Jidx,Idx} = [TPb1{Jidx,Idx} mean(u)];
-                        TPu1{Jidx,Idx} = [TPu1{Jidx,Idx} mean(v)];
+                            t1,alpha_bonf_TPn,alpha_unc,erdf,true,true,byIter); 
+                        TPb1{Jidx,Idx} = [TPb1{Jidx,Idx} median(u)];
+                        TPu1{Jidx,Idx} = [TPu1{Jidx,Idx} median(v)];
+                        
+                        TPu1u{Jidx,Idx} = [TPu1u{Jidx,Idx} prctile(v,75)-median(v)];
+                        TPu1l{Jidx,Idx} = [TPu1l{Jidx,Idx} median(v)-prctile(v,25)];
                         %2nd Volterra
                         [u v] = count_TP_FP(IN,[1:20],...
-                            t2,alpha_bonf_TPn,alpha_unc,erdf,true,false,false); 
-                        TPb2{Jidx,Idx} = [TPb2{Jidx,Idx} mean(u)];
-                        TPu2{Jidx,Idx} = [TPu2{Jidx,Idx} mean(v)];
+                            t2,alpha_bonf_TPn,alpha_unc,erdf,true,false,byIter); 
+                        TPb2{Jidx,Idx} = [TPb2{Jidx,Idx} median(u)];
+                        TPu2{Jidx,Idx} = [TPu2{Jidx,Idx} median(v)];
+                        
+                        TPu2u{Jidx,Idx} = [TPu2u{Jidx,Idx} prctile(v,75)-median(v)];
+                        TPu2l{Jidx,Idx} = [TPu2l{Jidx,Idx} median(v)-prctile(v,25)];
+                        
                         %False Positive
                         %1st Volterra
                         FPn = 20;
                         alpha_bonf_FPn = alpha_unc/FPn;
                         [u v ] = count_TP_FP(IN,[21:40],...
-                            t1,alpha_bonf_FPn,alpha_unc,erdf,false,false,false); 
-                        FPb1{Jidx,Idx} = [FPb1{Jidx,Idx} mean(u)];
-                        FPu1{Jidx,Idx} = [FPu1{Jidx,Idx} mean(v)];
+                            t1,alpha_bonf_FPn,alpha_unc,erdf,false,false,byIter); 
+                        FPb1{Jidx,Idx} = [FPb1{Jidx,Idx} median(u)];
+                        FPu1{Jidx,Idx} = [FPu1{Jidx,Idx} median(v)];
+                        
+                        %FPb1s{Jidx,Idx} = [FPb1s{Jidx,Idx} std(u)];
+                        %FPu1s{Jidx,Idx} = [FPu1s{Jidx,Idx} std(v)];
+                        
                         %2nd Volterra
                         [u v ] = count_TP_FP(IN,[21:40],...
-                            t2,alpha_bonf_FPn,alpha_unc,erdf,false,false,false); 
-                        FPb2{Jidx,Idx} = [FPb2{Jidx,Idx} mean(u)];
-                        FPu2{Jidx,Idx} = [FPu2{Jidx,Idx} mean(v)];
+                            t2,alpha_bonf_FPn,alpha_unc,erdf,false,false,byIter); 
+                        FPb2{Jidx,Idx} = [FPb2{Jidx,Idx} median(u)];
+                        FPu2{Jidx,Idx} = [FPu2{Jidx,Idx} median(v)];
+                        
+                        %FPb2s{Jidx,Idx} = [FPb2s{Jidx,Idx} std(u)];
+                        %FPu2s{Jidx,Idx} = [FPu2s{Jidx,Idx} std(v)];
+                        
+                        %For HbO and HbR separately
+                        %1st Volterra
+                        TPn = 10; %NcTP*IN; %Number of data points for true positives and false negatives
+                        alpha_bonf_TPn = alpha_unc/TPn;
+                        %HbO
+                        [u v] = count_TP_FP(IN,[1:10],...
+                            t1,alpha_bonf_TPn,alpha_unc,erdf,true,true,byIter); 
+                        TPu1O{Jidx,Idx} = [TPu1O{Jidx,Idx} median(v)];                        
+                        TPu1Ou{Jidx,Idx} = [TPu1Ou{Jidx,Idx} prctile(v,75)-median(v)];
+                        TPu1Ol{Jidx,Idx} = [TPu1Ol{Jidx,Idx} median(v)-prctile(v,25)];
+                        %2nd Volterra
+                        [u v] = count_TP_FP(IN,[1:10],...
+                            t2,alpha_bonf_TPn,alpha_unc,erdf,true,false,byIter); 
+                        TPu2O{Jidx,Idx} = [TPu2O{Jidx,Idx} median(v)];
+                        
+                        TPu2Ou{Jidx,Idx} = [TPu2Ou{Jidx,Idx} prctile(v,75)-median(v)];
+                        TPu2Ol{Jidx,Idx} = [TPu2Ol{Jidx,Idx} median(v)-prctile(v,25)];
+                        %False Positive
+                        %1st Volterra
+                        FPn = 10;
+                        alpha_bonf_FPn = alpha_unc/FPn;
+                        [u v] = count_TP_FP(IN,[21:30],...
+                            t1,alpha_bonf_FPn,alpha_unc,erdf,false,false,byIter); 
+                        FPu1O{Jidx,Idx} = [FPu1O{Jidx,Idx} median(v)];
+                        %2nd Volterra
+                        [u v ] = count_TP_FP(IN,[21:30],...
+                            t2,alpha_bonf_FPn,alpha_unc,erdf,false,false,byIter); 
+                        FPu2O{Jidx,Idx} = [FPu2O{Jidx,Idx} median(v)];
+                        %HbR
+                        [u v] = count_TP_FP(IN,[11:20],...
+                            t1,alpha_bonf_TPn,alpha_unc,erdf,true,true,byIter); 
+                        TPu1R{Jidx,Idx} = [TPu1R{Jidx,Idx} median(v)];                        
+                        TPu1Ru{Jidx,Idx} = [TPu1Ru{Jidx,Idx} prctile(v,75)-median(v)];
+                        TPu1Rl{Jidx,Idx} = [TPu1Rl{Jidx,Idx} median(v)-prctile(v,25)];
+                        %2nd Volterra
+                        [u v] = count_TP_FP(IN,[11:20],...
+                            t2,alpha_bonf_TPn,alpha_unc,erdf,true,false,byIter); 
+                        TPu2R{Jidx,Idx} = [TPu2R{Jidx,Idx} median(v)];
+                        
+                        TPu2Ru{Jidx,Idx} = [TPu2Ru{Jidx,Idx} prctile(v,75)-median(v)];
+                        TPu2Rl{Jidx,Idx} = [TPu2Rl{Jidx,Idx} median(v)-prctile(v,25)];
+                        %False Positive
+                        %1st Volterra
+                        FPn = 10;
+                        alpha_bonf_FPn = alpha_unc/FPn;
+                        [u v] = count_TP_FP(IN,[31:40],...
+                            t1,alpha_bonf_FPn,alpha_unc,erdf,false,false,byIter); 
+                        FPu1R{Jidx,Idx} = [FPu1R{Jidx,Idx} median(v)];
+                        %2nd Volterra
+                        [u v ] = count_TP_FP(IN,[31:40],...
+                            t2,alpha_bonf_FPn,alpha_unc,erdf,false,false,byIter); 
+                        FPu2R{Jidx,Idx} = [FPu2R{Jidx,Idx} median(v)];
                     end
                 else
                     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -223,10 +362,10 @@ for Idx=1:nSubj
                     %[TPb{Jidx,Idx} TPu{Jidx,Idx}] = count_TP_FP(IN,[1:2],t,alpha_bonf_TPn,alpha_unc,erdf,true,true); 
                     %1st Volterra
                     [TPb1{Jidx,Idx} TPu1{Jidx,Idx}] = count_TP_FP(IN,[1:20],...
-                        t1,alpha_bonf_TPn,alpha_unc,erdf,true,true,false); 
+                        t1,alpha_bonf_TPn,alpha_unc,erdf,true,true,byIter); 
                     %2nd Volterra
                     [TPb2{Jidx,Idx} TPu2{Jidx,Idx}] = count_TP_FP(IN,[1:20],...
-                        t2,alpha_bonf_TPn,alpha_unc,erdf,true,true,false); 
+                        t2,alpha_bonf_TPn,alpha_unc,erdf,true,true,byIter); 
                     
                     %Specificity = 1 - false positives
                     FPn = 20; %(sz_beta(2)-NcTP)*IN; %Number of data points for false positives 
@@ -234,10 +373,10 @@ for Idx=1:nSubj
                     alpha_bonf_FPn = alpha_unc/FPn;
                     %1st Volterra
                     [FPb1{Jidx,Idx} FPu1{Jidx,Idx}] = count_TP_FP(IN,[21:40],...
-                        t1,alpha_bonf_FPn,alpha_unc,erdf,false,true,false); 
+                        t1,alpha_bonf_FPn,alpha_unc,erdf,false,true,byIter); 
                     %2nd Volterra
                     [FPb2{Jidx,Idx} FPu2{Jidx,Idx}] = count_TP_FP(IN,[21:40],...
-                        t2,alpha_bonf_FPn,alpha_unc,erdf,false,true,false); 
+                        t2,alpha_bonf_FPn,alpha_unc,erdf,false,true,byIter); 
 
                     %tFPb = FPb; tFPu = FPu; tTPb = TPb; tTPu = TPu; 
                     %FPb = FPb{Jidx,:}; tFPu = FPu{Jidx,:}; tTPb = TPb{Jidx,:}; tTPu = TPu{Jidx,:};                  
@@ -296,6 +435,35 @@ linespec{7,1} = 'd';
 linespec{8,1} = '*';
 linespec{9,1} = 'x';
 linespec{10,1} = 'h';
+
+linespec{1,1} = '-b';
+linespec{2,1} = '--r';
+linespec{3,1} = ':k';
+linespec{4,1} = '-.g';
+linespec{5,1} = '-k';
+linespec{6,1} = '--g';
+linespec{7,1} = ':r';
+linespec{8,1} = '-.b';
+
+linespec{1,1} = '-';
+linespec{2,1} = '--';
+linespec{3,1} = ':';
+linespec{4,1} = '-.';
+linespec{5,1} = '-';
+linespec{6,1} = '--';
+linespec{7,1} = ':';
+linespec{8,1} = '-.';
+
+% % set(gcf,'PaperUnits','centimeters')
+% % %This sets the units of the current figure (gcf = get current figure) on paper to centimeters.
+% % xSize = 9; ySize = 7;
+% % %These are my size variables, width of 8 and a height of 12, will be used a lot later.
+% % xLeft = (21-xSize)/2; yTop = (30-ySize)/2;
+% % %Additional coordinates to center the figure on A4-paper
+% % set(gcf,'PaperPosition',[xLeft yTop xSize ySize])
+% % %This command sets the position and size of the figure on the paper to the desired values.
+% % set(gcf,'Position',[X Y xSize*50 ySize*50])
+
 if generate_ROC_curves
     %1st Volterra
     figure;
@@ -315,6 +483,24 @@ if generate_ROC_curves
         end   
     end
     hold off
+    %1st and 2nd Volterra grouped with subplot - with error bars
+    figure;
+    subplot(2,1,1);
+    for Idx=1:nSubj    
+        for Jidx= 1:nJob
+             %add error bars
+            errorbar(FPu1{Jidx,Idx},TPu1{Jidx,Idx},TPu1l{Jidx,Idx},TPu1u{Jidx,Idx},linespec{Jidx,Idx}); hold on
+        end   
+    end
+    hold off
+    subplot(2,1,2);
+    for Idx=1:nSubj    
+        for Jidx= 1:nJob
+             errorbar(FPu2{Jidx,Idx},TPu2{Jidx,Idx},TPu2l{Jidx,Idx},TPu2u{Jidx,Idx},linespec{Jidx,Idx}); hold on
+        end   
+    end
+    hold off
+    
     %1st and 2nd Volterra grouped with subplot
     figure;
     subplot(2,1,1);
@@ -334,6 +520,64 @@ if generate_ROC_curves
     end
     hold off
     
+    %figure for SNR
+    figure;
+    for Idx=1:nSubj    
+        for Jidx= 1:nJob
+            m = median(T{Jidx,Idx}.SNR(:));
+            errorbar(median(T{Jidx,Idx}.a2),m,m-prctile(T{Jidx,Idx}.SNR(:),25),prctile(T{Jidx,Idx}.SNR(:),75)-m); hold on
+        end   
+    end
+    hold off
+    %better as a boxplot?
+    figure;
+    tmp = [];    
+    for Idx=1:nSubj    
+        for Jidx= 1:nJob
+           tmp = [tmp T{Jidx,Idx}.SNR(:)];          
+        end   
+    end
+    boxplot(tmp,'notch','on'); 
+    
+    %COMPARE HbO and HbR
+    %1st and 2nd Volterra grouped with subplot - with error bars
+    figure;
+    subplot(2,1,1);
+    for Idx=1:nSubj    
+        for Jidx= 1:nJob
+             %add error bars
+            errorbar(FPu1O{Jidx,Idx},TPu1O{Jidx,Idx},TPu1Ol{Jidx,Idx},TPu1Ou{Jidx,Idx},[linespec{Jidx,Idx} 'r']); hold on
+            errorbar(FPu1R{Jidx,Idx},TPu1R{Jidx,Idx},TPu1Rl{Jidx,Idx},TPu1Ru{Jidx,Idx},[linespec{Jidx,Idx} 'b']); hold on
+        end   
+    end
+    hold off
+    subplot(2,1,2);
+    for Idx=1:nSubj    
+        for Jidx= 1:nJob
+             errorbar(FPu2O{Jidx,Idx},TPu2O{Jidx,Idx},TPu2Ol{Jidx,Idx},TPu2Ou{Jidx,Idx},[linespec{Jidx,Idx} 'r']); hold on
+             errorbar(FPu2R{Jidx,Idx},TPu2R{Jidx,Idx},TPu2Rl{Jidx,Idx},TPu2Ru{Jidx,Idx},[linespec{Jidx,Idx} 'b']); hold on
+        end   
+    end
+    hold off
+    %Custom:
+    figure;
+    for Idx=1:nSubj    
+        for Jidx= 1:nJob
+             %add error bars
+            errorbar(FPu1O{Jidx,Idx},TPu1O{Jidx,Idx},TPu1Ol{Jidx,Idx},TPu1Ou{Jidx,Idx},[linespec{Jidx,Idx} 'r']); hold on
+            errorbar(FPu1R{Jidx,Idx},TPu1R{Jidx,Idx},TPu1Rl{Jidx,Idx},TPu1Ru{Jidx,Idx},[linespec{Jidx,Idx} 'b']); hold on
+        end   
+    end
+    hold off
+    addpath('J:\NIRS_nonlinear');
+    %careful: order of series is the opposite!!!
+    XMatrix1 = [FPu1R{2,1};FPu1O{2,1};FPu1R{1,1};FPu1O{1,1};]';
+    YMatrix1 = [TPu1R{2,1};TPu1O{2,1};TPu1R{1,1};TPu1O{1,1}]';
+    LMatrix1 = [TPu1Rl{2,1};TPu1Ol{2,1};TPu1Rl{1,1};TPu1Ol{1,1}]';
+    UMatrix1 = [TPu1Ru{2,1};TPu1Ou{2,1};TPu1Ru{1,1};TPu1Ou{1,1}]';        
+    Figure3_createfigure(XMatrix1, YMatrix1, LMatrix1, UMatrix1);
+    %Figure3_createfigure(FPu1O{Jidx,Idx},TPu1O{Jidx,Idx},TPu1Ol{Jidx,Idx},
+    %TPu1Ou{Jidx,Idx}
 else
     %1st Volterra
     figure;
@@ -392,7 +636,7 @@ else
            tmp = [tmp squeeze(mean(T{Jidx,Idx}.RE(:,2,:),3))];          
         end   
     end
-    boxplot(tmp); 
+    boxplot(tmp,'notch','on'); 
     
     %Relative error grouped as subplots
     %1st Volterra
@@ -404,7 +648,7 @@ else
            tmp = [tmp squeeze(mean(T{Jidx,Idx}.RE(:,1,:),3))];          
         end   
     end
-    boxplot(tmp); 
+    boxplot(tmp,'notch','on'); 
     %2nd Volterra
     subplot(1,2,2);
     tmp = [];    
@@ -413,7 +657,7 @@ else
            tmp = [tmp squeeze(mean(T{Jidx,Idx}.RE(:,2,:),3))];          
         end   
     end
-    boxplot(tmp); 
+    boxplot(tmp,'notch','on'); 
     
     %Relative error for 1st Volterra and ratio of 2nd to 1st Volterra for
     %second plot
@@ -425,7 +669,7 @@ else
            tmp = [tmp squeeze(mean(T{Jidx,Idx}.RE(:,1,:),3))];          
         end   
     end
-    boxplot(tmp); 
+    boxplot(tmp,'notch','on'); 
     %ratio of 2nd to 1st estimated Volterra less simulated
     subplot(1,2,2);
     tmp = [];    
@@ -434,7 +678,7 @@ else
            tmp = [tmp squeeze(mean(T{Jidx,Idx}.RE(:,3,:),3))];          
         end   
     end
-    boxplot(tmp); 
+    boxplot(tmp,'notch','on'); 
     
     
     %t-stat
@@ -446,7 +690,7 @@ else
            tmp = [tmp squeeze(mean(T{Jidx,Idx}.t(:,1,:),3))];          
         end   
     end
-    boxplot(tmp); 
+    boxplot(tmp,'notch','on'); 
     %2nd Volterra
     figure;
     tmp = [];    
@@ -455,7 +699,7 @@ else
            tmp = [tmp squeeze(mean(T{Jidx,Idx}.t(:,2,:),3))];          
         end   
     end
-    boxplot(tmp); 
+    boxplot(tmp,'notch','on'); 
     %1st and 2nd Volterra grouped as subplots
     %1st Volterra
     figure;
@@ -466,7 +710,7 @@ else
            tmp = [tmp squeeze(mean(T{Jidx,Idx}.t(:,1,:),3))];          
         end   
     end
-    boxplot(tmp); 
+    boxplot(tmp,'notch','on'); 
     %2nd Volterra
     subplot(1,2,2);
     tmp = [];    
@@ -475,12 +719,51 @@ else
            tmp = [tmp squeeze(mean(T{Jidx,Idx}.t(:,2,:),3))];          
         end   
     end
-    boxplot(tmp); 
+    boxplot(tmp,'notch','on'); 
+    
 end
 %max(reshape(cell2mat(TPu),10,[]))
 %br = squeeze(beta(:,2,11:20))./squeeze(beta(:,1,11:20));
 %
-
+%4 plots combined
+ %1st Volterra
+    figure;
+    subplot(2,2,1)
+    %for Idx=1:nSubj    
+        Jidx= 1;
+            plot(FPu1{Jidx,Idx},TPu1{Jidx,Idx},'-b',...
+                FPu1{Jidx,Idx},TPu1{Jidx,Idx},'ob'); hold on
+               
+         Jidx = 2;
+          plot(FPu1{Jidx,Idx},TPu1{Jidx,Idx},'--r',...
+                FPu1{Jidx,Idx},TPu1{Jidx,Idx},'+r'); hold on
+    %   end   
+    %end
+    hold off   
+    subplot(2,2,2);
+    tmp = [];    
+    for Idx=1:nSubj    
+        for Jidx= 1:nJob
+           tmp = [tmp squeeze(mean(T{Jidx,Idx}.RE(:,1,:),3))];          
+        end   
+    end
+    boxplot(tmp,'notch','on'); 
+    subplot(2,2,3);
+    tmp = [];    
+    for Idx=1:nSubj    
+        for Jidx= 1:nJob
+           tmp = [tmp squeeze(mean(T{Jidx,Idx}.t(:,1,:),3))];          
+        end   
+    end
+    boxplot(tmp,'notch','on'); 
+    subplot(2,2,4);
+    tmp = [];    
+    for Idx=1:nSubj    
+        for Jidx= 1:nJob
+           tmp = [tmp T{Jidx,Idx}.SNR(:)];          
+        end   
+    end
+    boxplot(tmp,'notch','on'); 
 %figures for box-whisker plot
 
 out.NIRSmat = job.NIRSmat;

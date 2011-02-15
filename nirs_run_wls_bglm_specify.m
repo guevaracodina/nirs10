@@ -2,7 +2,11 @@ function out = nirs_run_wls_bglm_specify(job)
 %Specify a GLM for each subject, each session and each chromophore
 
 %to generate display of design matrix
-flag_window = 1;
+try
+    flag_window = job.flag_window;
+catch
+    flag_window = 0;
+end
 NIRS.multi_reg = job.subj.multi_reg;
 %group_sessions = job.group_sessions;
 %NIRS.onset_files = job.subj.input_onsets;
@@ -457,6 +461,11 @@ for Idx=1:size(job.NIRSmat,1)
         SPM.xX.LPFbutter = LPFbutter;
         SPM.xX.lpf_butter_freq = lpf_butter_freq;
         
+        try 
+            SPM.GenerateHbT = job.GenerateHbT;
+        catch
+            SPM.GenerateHbT = 0;
+        end
         %Add model specification
         try SPM.xX.opt = Opt; catch; end
                 
