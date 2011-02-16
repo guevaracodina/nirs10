@@ -3095,6 +3095,15 @@ end
 % Liom Group Level Model Estimation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% dir_ga         = cfg_entry; 
+% dir_ga.name    = 'Group Analysis';
+% dir_ga.tag     = 'dir_ga';       
+% dir_ga.strtype = 's';
+% dir_ga.num     = [1 Inf];     
+% dir_ga.val{1}  = 'Stat';
+% dir_ga.help    = {'Enter a subdirectory name where the NIRS_SPM.mat files '
+%         'containing the specified design matrix will be written.'}'; 
+
 session_number         = cfg_entry; 
 session_number.name    = 'Session number';
 session_number.tag     = 'session_number';       
@@ -3120,7 +3129,7 @@ FFX_or_RFX.help = {'Use fixed effects (FFX) for group of sessions (intra-subject
 liom_group      = cfg_exbranch;       
 liom_group.name = 'Liom Group Model Estimation';             
 liom_group.tag  = 'liom_group'; 
-liom_group.val  = {NIRSmat FFX_or_RFX session_number contrast_figures contrast_p_value}; 
+liom_group.val  = {out_dir NIRSmat FFX_or_RFX session_number contrast_figures contrast_p_value}; 
 liom_group.prog = @nirs_run_liom_group;  
 liom_group.vout = @nirs_cfg_vout_liom_group; 
 liom_group.help = {'Liom Group level model estimation.'};
