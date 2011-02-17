@@ -307,7 +307,7 @@ for Idx=1:size(job.NIRSmat,1)
                     whp = hp/max(max(hp));
                     level = graythresh(whp);% Otsu
                     whp_b = im2bw(whp,level);
-                    figure;imagesc(whp_b);title(['Heart pace: ' rDtp{f}]);
+                    %figure;imagesc(whp_b);title(['Heart pace: ' rDtp{f}]);
                     
                     % reconstruction
                     bouchetrou = hp.*whp_b;
@@ -317,6 +317,7 @@ for Idx=1:size(job.NIRSmat,1)
                         if reg(1,t)==0
                             %cherche sur une autre paire
                             try
+                                i=1;
                                 while bouchetrou(i,t)==0
                                     i = i+1;
                                 end
@@ -328,6 +329,7 @@ for Idx=1:size(job.NIRSmat,1)
                         end
                     end
                     
+                    if ~isempty(holes)
                     debuts=holes(1);
                     fins=[];
                     for ih=2:length(holes)-1;
@@ -338,39 +340,49 @@ for Idx=1:size(job.NIRSmat,1)
                     end
                     fins=[fins holes(end)];
                     % moment de l'interpolation sur les holes
-                    try
-                        % de prendre les bornes inf et sup et on interpole
-                        % lineairement
-                        
-                        
-                    catch
-                        % sinon, on prend une valeur constante
+                    if(debuts(1)==1)
+                            reg(1:fins(1))=reg(fins(1)+1);
+                    end
+                    for i=1:length(debuts)
+                        if fins(i)==size(reg)
+                            reg(fins(i):end)=reg(fins(1)-1);
+                        else
+                            interpx  =[debuts(i)-1 fins(i)+1];
+                            interpY  = [reg(debuts(i)-1) reg(fins(i)+1)];
+                            interpxi = (debuts(i):fins(i));
+                            reg(debuts(i):fins(i)) = interp1(interpx,interpY,interpxi,'linear');
+                        end
+                    end
                     end
                     
-                    %on cherche une paire fiable (une evolution sans coupure)
-                    nc = size(hp,1);
-                    ci=14;
-                    cref=0;
-                    err =[];
-                    err_t =[];%size(hp);
-                    while ci<nc && cref==0
-                        if sum(hp(ci,:)~= zeros(1,size(hp,2)))>100 && cref==0
-                            for t=1:size(hp,2)-1
-                                if hp(ci,t+1)>hp(ci,t)+5 || hp(ci,t+1)<hp(ci,t)-5% && t<size(hp,2)-1;
-                                    err = [err,1];
-                                     err_t = [err_t t+1];
-                                    cok_t(ci,t) =1;
-                                end
-                            end
-                            if size(err,2)<10
-                                cref=ci;
-                            end
-                        end
-                        [histo(ci,1:10),bins(ci,1:10)] = hist(hp(ci,:)); 
-                        ci = ci+1;
-                        err =[];
-                    end
-                    if cref==0, disp([rDtp{f} ' : no heart pace in any channel !']);end
+                    NIRS.Dt.fir.Sess(f).fR{1} = reg;
+%                     NIRS.Dt.fir.ht{f}.reg 
+%                     NIRS.Dt.fir.ht{f}.from = rDtp{f};
+
+%                     %on cherche une paire fiable (une evolution sans coupure)
+%                     nc = size(hp,1);
+%                     ci=14;
+%                     cref=0;
+%                     err =[];
+%                     err_t =[];%size(hp);
+%                     while ci<nc && cref==0
+%                         if sum(hp(ci,:)~= zeros(1,size(hp,2)))>100 && cref==0
+%                             for t=1:size(hp,2)-1
+%                                 if hp(ci,t+1)>hp(ci,t)+5 || hp(ci,t+1)<hp(ci,t)-5% && t<size(hp,2)-1;
+%                                     err = [err,1];
+%                                      err_t = [err_t t+1];
+%                                     cok_t(ci,t) =1;
+%                                 end
+%                             end
+%                             if size(err,2)<10
+%                                 cref=ci;
+%                             end
+%                         end
+%                         [histo(ci,1:10),bins(ci,1:10)] = hist(hp(ci,:)); 
+%                         ci = ci+1;
+%                         err =[];
+%                     end
+%                     if cref==0, disp([rDtp{f} ' : no heart pace in any channel !']);end
                 catch
                 end
             end
