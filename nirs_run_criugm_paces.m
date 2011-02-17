@@ -1,4 +1,9 @@
 function out = nirs_run_criugm_paces(job)
+%_______________________________________________________________________
+% Copyright (C) 2010 Laboratoire d'Imagerie Optique et Moleculaire
+% Clément Bonnéry
+% 2010-10
+
 prefix = 'r'; %heart "rate"
 DelPreviousData  = job.DelPreviousData;
 try
@@ -8,16 +13,11 @@ catch
     NewDirCopyNIRS = 0;
 end
 
-%_______________________________________________________________________
-% Copyright (C) 2010 Laboratoire d'Imagerie Optique et Moleculaire
-% Clément Bonnéry
-% 2010-10
-
 %Boolean to remove channels with no heartbeat from data files
 remove_no_heartbeat = job.remove_no_heartbeat;
+
 %Parameters for the FFT
 % Short Term Fourier Transform :
-
 try
     %resting state
     % width : 6 seconds
@@ -53,18 +53,14 @@ catch
     windo_width = job.heart_rate_cfg.heart_exercise.STFT_param.win_width;
     n = job.heart_rate_cfg.heart_exercise.STFT_param.Nprobe;
     fft_size = job.heart_rate_cfg.heart_exercise.STFT_param.fft_size;
-    
     InternalMinHeartRate = 0.5;
     InternalMaxHeartRate = 4; %or 3?
-    
     ex =1;
 end
-
 
 %to store output information for all subjects on heartrate
 heartpace_all = {};
 
-%list of NIRS.mat locations, one per subject
 for Idx=1:size(job.NIRSmat,1)
     try
         NIRS = [];
@@ -76,6 +72,9 @@ for Idx=1:size(job.NIRSmat,1)
         %NIRS total number of channels
         NC = NIRS.Cf.H.C.N;
         wl = NIRS.Cf.dev.wl;
+        
+        slab_width = floor(windo_width*fs)-1;   % width of a slab of signal
+        win = window(windo,floor(windo_width*fs)); % window to attenuate high frequencies when working on time slabs
         
         HbO_like = [];
         HbR_like = [];
@@ -92,11 +91,6 @@ for Idx=1:size(job.NIRSmat,1)
         %use last step of preprocessing
         lst = length(NIRS.Dt.fir.pp);
         rDtp = NIRS.Dt.fir.pp(lst).p; % path for files to be processed
-        
-        slab_width = floor(windo_width*fs)-1;   % width of a slab of signal
-        %win is ?
-        win = window(windo,floor(windo_width*fs));
-        
         %loop over data files
         for f=1:size(rDtp,1)
             %load data
@@ -117,10 +111,8 @@ for Idx=1:size(job.NIRSmat,1)
             
             % on repere la qualite de chaque paire en regardant si on a les battements
             % physiologiques :
-            
             %Channels to keep:
             k1 = [];
-            
             %Loop over channels
             for Ci=1:NC
                 %Only check channels corresponding to selected wavelength(s)
@@ -225,9 +217,9 @@ for Idx=1:size(job.NIRSmat,1)
             
             % % % % % %             est ce qu'on en a vraiment besoin puisqu'on
             % conserve tout dans heart ??????
-                        %needs to be generalized to more than one session
-%                         outheartfile = fullfile(NIRS.Dt.s.p,'heart_pace.mat');
-%                         save(outheartfile,'heart');
+            %needs to be generalized to more than one session
+            %                         outheartfile = fullfile(NIRS.Dt.s.p,'heart_pace.mat');
+            %                         save(outheartfile,'heart');
             
             % on calcule les decours temporels de ces bonnes paires et on enleve les
             % artefacts de mouvements...(voir si on peut pas trier a plus
@@ -288,17 +280,115 @@ for Idx=1:size(job.NIRSmat,1)
             catch
             end
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%             heartpace  = [heartpace; outheartfile]; %cb: vide, est ce qu'on supprime ???
+            %             heartpace  = [heartpace; outheartfile]; %cb: vide, est ce qu'on supprime ???
+            
+            
+            heart_regressor=1;
+            if heart_regressor
+                % Attention deux pb
+                %-- on a parfois une mauvaise detection des rythmes cardiaques et
+                %ceux-ci sont consideres comme bons...
+                %-- il faut raisonner en temporel pour voir quels rythmes se
+                %correspondent d'une paire a l'autre et ainsi moyenner que ce qui
+                %est bon
+                %>> on cherche une paire qui est fiable (critere : elle n'a pas de grands sauts...)
+                %--- on cherche le fichier du rythme qui correspond au fichier de
+                %donnees
+                try
+                    %                 %ancien code de run_runVOIRE
+                    %                 fi=1;
+                    %                 while isempty(strfind(NIRS.Dt.fir.ht{fi,1}.from,fil1(3:end)))
+                    %                     fi =fi+1;
+                    %                 end
+                    %                 hp = NIRS.Dt.fir.ht{fi,1}.pace;
+                    hp = heart.pace;
+                    % methode 2: on trqite toutes les pqires en meme temps,
+                    % comme ca on utilise l'information mutuelle...
+                    whp = hp/max(max(hp));
+                    level = graythresh(whp);% Otsu
+                    whp_b = im2bw(whp,level);
+                    figure;imagesc(whp_b);title(['Heart pace: ' rDtp{f}]);
+                    
+                    % reconstruction
+                    bouchetrou = hp.*whp_b;
+                    reg = bouchetrou(1,:);
+                    holes =[];
+                    for t=1:size(reg,2)
+                        if reg(1,t)==0
+                            %cherche sur une autre paire
+                            try
+                                while bouchetrou(i,t)==0
+                                    i = i+1;
+                                end
+                                reg(1,t) = bouchetrou(i,t);
+                            catch
+                                %pas de valeur disponible, on interpolera
+                                    holes = [holes t]; 
+                            end
+                        end
+                    end
+                    
+                    debuts=holes(1);
+                    fins=[];
+                    for ih=2:length(holes)-1;
+                        if holes(ih) ~= holes(ih-1)+1
+                            debuts = [debuts holes(ih)];
+                            fins = [fins holes(ih-1)];
+                        end
+                    end
+                    fins=[fins holes(end)];
+                    % moment de l'interpolation sur les holes
+                    try
+                        % de prendre les bornes inf et sup et on interpole
+                        % lineairement
+                        
+                        
+                    catch
+                        % sinon, on prend une valeur constante
+                    end
+                    
+                    %on cherche une paire fiable (une evolution sans coupure)
+                    nc = size(hp,1);
+                    ci=14;
+                    cref=0;
+                    err =[];
+                    err_t =[];%size(hp);
+                    while ci<nc && cref==0
+                        if sum(hp(ci,:)~= zeros(1,size(hp,2)))>100 && cref==0
+                            for t=1:size(hp,2)-1
+                                if hp(ci,t+1)>hp(ci,t)+5 || hp(ci,t+1)<hp(ci,t)-5% && t<size(hp,2)-1;
+                                    err = [err,1];
+                                     err_t = [err_t t+1];
+                                    cok_t(ci,t) =1;
+                                end
+                            end
+                            if size(err,2)<10
+                                cref=ci;
+                            end
+                        end
+                        [histo(ci,1:10),bins(ci,1:10)] = hist(hp(ci,:)); 
+                        ci = ci+1;
+                        err =[];
+                    end
+                    if cref==0, disp([rDtp{f} ' : no heart pace in any channel !']);end
+                catch
+                end
+            end
+            
+            
         end
+        
         if remove_no_heartbeat
             %update the NIRS structure
             NIRS.Cf.H.C.N = length(first_k2);
             try NIRS.Cf.H.C.n = NIRS.Cf.H.C.n(first_k2); end
             try NIRS.Cf.H.C.id = NIRS.Cf.H.C.id(:,first_k2); end
             try NIRS.Cf.H.C.wl = NIRS.Cf.H.C.wl(first_k2); end
-            try NIRS.Cf.H.C.gp = NIRS.Cf.H.C.gp(first_k2); end            
+            try NIRS.Cf.H.C.gp = NIRS.Cf.H.C.gp(first_k2); end
         end
+        
         try NIRS.Cf.H.C.ok = first_k2; end %gives good channels whether they
+        
         %were removed or not
         if NewDirCopyNIRS
             newNIRSlocation = fullfile(dir2,'NIRS.mat');
