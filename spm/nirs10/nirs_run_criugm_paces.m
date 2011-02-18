@@ -311,79 +311,86 @@ for Idx=1:size(job.NIRSmat,1)
                     
                     % reconstruction
                     bouchetrou = hp.*whp_b;
-                    reg = bouchetrou(1,:);
-                    holes =[];
-                    for t=1:size(reg,2)
-                        if reg(1,t)==0
-                            %cherche sur une autre paire
-                            try
-                                i=1;
-                                while bouchetrou(i,t)==0
-                                    i = i+1;
+                    
+                    testq = sum(whp_b,2);
+                    [val,canal] =max(testq);
+                    reg = bouchetrou(canal,:);
+                    
+                    if val<length(reg)
+                        holes =[];
+                        for t=1:length(reg)
+                            if reg(t)==0
+                                %cherche sur une autre paire
+                                try
+                                    i=1;
+                                    while bouchetrou(i,t)==0
+                                        i = i+1;
+                                    end
+                                    reg(1,t) = bouchetrou(i,t);
+                                catch
+                                    %pas de valeur disponible, on interpolera
+                                    holes = [holes t];
                                 end
-                                reg(1,t) = bouchetrou(i,t);
-                            catch
-                                %pas de valeur disponible, on interpolera
-                                    holes = [holes t]; 
+                            end
+                        end
+                        if ~isempty(holes)
+                            debuts=holes(1);
+                            fins=[];
+                            for ih=2:length(holes)-1;
+                                if holes(ih) ~= holes(ih-1)+1
+                                    debuts = [debuts holes(ih)];
+                                    fins = [fins holes(ih-1)];
+                                end
+                            end
+                            fins=[fins holes(end)];
+                            % moment de l'interpolation sur les holes
+                            if(debuts(1)==1)
+                                reg(1:fins(1))=reg(fins(1)+1);
+                            end
+                            for i=1:length(debuts)
+                                if fins(i)==size(reg)
+                                    reg(fins(i):end)=reg(fins(1)-1);
+                                else
+                                    interpx  =[debuts(i)-1 fins(i)+1];
+                                    interpY  = [reg(debuts(i)-1) reg(fins(i)+1)];
+                                    interpxi = (debuts(i):fins(i));
+                                    reg(debuts(i):fins(i)) = interp1(interpx,interpY,interpxi,'linear');
+                                end
                             end
                         end
                     end
                     
-                    if ~isempty(holes)
-                    debuts=holes(1);
-                    fins=[];
-                    for ih=2:length(holes)-1;
-                        if holes(ih) ~= holes(ih-1)+1
-                            debuts = [debuts holes(ih)];
-                            fins = [fins holes(ih-1)];
-                        end
-                    end
-                    fins=[fins holes(end)];
-                    % moment de l'interpolation sur les holes
-                    if(debuts(1)==1)
-                            reg(1:fins(1))=reg(fins(1)+1);
-                    end
-                    for i=1:length(debuts)
-                        if fins(i)==size(reg)
-                            reg(fins(i):end)=reg(fins(1)-1);
-                        else
-                            interpx  =[debuts(i)-1 fins(i)+1];
-                            interpY  = [reg(debuts(i)-1) reg(fins(i)+1)];
-                            interpxi = (debuts(i):fins(i));
-                            reg(debuts(i):fins(i)) = interp1(interpx,interpY,interpxi,'linear');
-                        end
-                    end
-                    end
                     
-                    NIRS.Dt.fir.Sess(f).cR{1} = reg;
+                    
+%                     NIRS.Dt.fir.Sess(f).cR{1} = reg;
                     NIRS.Dt.fir.Sess(f).fR{1} = reg;
-%                     NIRS.Dt.fir.ht{f}.reg 
-%                     NIRS.Dt.fir.ht{f}.from = rDtp{f};
-
-%                     %on cherche une paire fiable (une evolution sans coupure)
-%                     nc = size(hp,1);
-%                     ci=14;
-%                     cref=0;
-%                     err =[];
-%                     err_t =[];%size(hp);
-%                     while ci<nc && cref==0
-%                         if sum(hp(ci,:)~= zeros(1,size(hp,2)))>100 && cref==0
-%                             for t=1:size(hp,2)-1
-%                                 if hp(ci,t+1)>hp(ci,t)+5 || hp(ci,t+1)<hp(ci,t)-5% && t<size(hp,2)-1;
-%                                     err = [err,1];
-%                                      err_t = [err_t t+1];
-%                                     cok_t(ci,t) =1;
-%                                 end
-%                             end
-%                             if size(err,2)<10
-%                                 cref=ci;
-%                             end
-%                         end
-%                         [histo(ci,1:10),bins(ci,1:10)] = hist(hp(ci,:)); 
-%                         ci = ci+1;
-%                         err =[];
-%                     end
-%                     if cref==0, disp([rDtp{f} ' : no heart pace in any channel !']);end
+                    %                     NIRS.Dt.fir.ht{f}.reg
+                    %                     NIRS.Dt.fir.ht{f}.from = rDtp{f};
+                    
+                    %                     %on cherche une paire fiable (une evolution sans coupure)
+                    %                     nc = size(hp,1);
+                    %                     ci=14;
+                    %                     cref=0;
+                    %                     err =[];
+                    %                     err_t =[];%size(hp);
+                    %                     while ci<nc && cref==0
+                    %                         if sum(hp(ci,:)~= zeros(1,size(hp,2)))>100 && cref==0
+                    %                             for t=1:size(hp,2)-1
+                    %                                 if hp(ci,t+1)>hp(ci,t)+5 || hp(ci,t+1)<hp(ci,t)-5% && t<size(hp,2)-1;
+                    %                                     err = [err,1];
+                    %                                      err_t = [err_t t+1];
+                    %                                     cok_t(ci,t) =1;
+                    %                                 end
+                    %                             end
+                    %                             if size(err,2)<10
+                    %                                 cref=ci;
+                    %                             end
+                    %                         end
+                    %                         [histo(ci,1:10),bins(ci,1:10)] = hist(hp(ci,:));
+                    %                         ci = ci+1;
+                    %                         err =[];
+                    %                     end
+                    %                     if cref==0, disp([rDtp{f} ' : no heart pace in any channel !']);end
                 catch
                 end
             end
