@@ -505,6 +505,32 @@ vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Configuration  Read NIRS onsets from CRIUGM Eprime (Excel)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ep_output         = cfg_files;
+ep_output.name    = 'Eprime output (Excel file)';
+ep_output.tag     = 'ep_output';
+ep_output.num     = [1 Inf];
+ep_output.help    = {'Select Excel file output from Eprime.'}';
+
+% Executable Branch
+readEprimeOnsets      = cfg_exbranch;       
+readEprimeOnsets.name = 'Read Eprime onsets';            
+readEprimeOnsets.tag  = 'readEprimeOnsets'; 
+readEprimeOnsets.val  = {ep_output}; 
+readEprimeOnsets.prog = @nirs_run_readEprimeOnsets;  
+readEprimeOnsets.vout = @nirs_cfg_vout_readEprimeOnsets; 
+readEprimeOnsets.help = {'Read Eprime output data.'}';
+
+function vout = nirs_cfg_vout_readEprimeOnsets(job)
+vout = cfg_dep;                    
+vout.sname      = 'NIRS.mat';       
+vout.src_output = substruct('.','NIRSmat'); 
+vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Configuration  Permute Onsets if required
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -3511,7 +3537,7 @@ readNIRS.help   = {'These modules read NIRS data in different formats.'};
 readOnsets        = cfg_choice; 
 readOnsets.name   = 'Read Onsets';
 readOnsets.tag    = 'readOnsets';
-readOnsets.values = {AnalyzerOnsets permuteOnsets addTestStimuli}; 
+readOnsets.values = {AnalyzerOnsets readEprimeOnsets permuteOnsets addTestStimuli}; 
 readOnsets.help   = {'These modules create stimuli structures '
                     'as inputs to the General Linear Model.'}';
 %module 2

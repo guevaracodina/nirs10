@@ -295,107 +295,81 @@ for Idx=1:size(job.NIRSmat,1)
                 %--- on cherche le fichier du rythme qui correspond au fichier de
                 %donnees
                 try
-                    %                 %ancien code de run_runVOIRE
-                    %                 fi=1;
-                    %                 while isempty(strfind(NIRS.Dt.fir.ht{fi,1}.from,fil1(3:end)))
-                    %                     fi =fi+1;
-                    %                 end
-                    %                 hp = NIRS.Dt.fir.ht{fi,1}.pace;
                     hp = heart.pace;
-                    % methode 2: on trqite toutes les pqires en meme temps,
-                    % comme ca on utilise l'information mutuelle...
-                    whp = hp/max(max(hp));
-                    level = graythresh(whp);% Otsu
-                    whp_b = im2bw(whp,level);
-                    %figure;imagesc(whp_b);title(['Heart pace: ' rDtp{f}]);
-                    
-                    % reconstruction
-                    bouchetrou = hp.*whp_b;
-                    
-                    testq = sum(whp_b,2);
-                    [val,canal] =max(testq);
-                    reg = bouchetrou(canal,:);
-                    
-                    if val<length(reg)
-                        holes =[];
-                        for t=1:length(reg)
-                            if reg(t)==0
-                                %cherche sur une autre paire
-                                try
-                                    i=1;
-                                    while bouchetrou(i,t)==0
-                                        i = i+1;
+                    if sum(sum(hp))==0
+                        % arbitraire
+                        interpx  =[1 size(hp,2)];
+                        interpY  = [60 65];
+                        interpxi = (1:size(hp,2));
+                        reg(1:size(hp,2)) = interp1(interpx,interpY,interpxi,'linear');
+                    else
+                        whp = hp/max(max(hp));
+                        level = graythresh(whp);% Otsu
+                        whp_b = im2bw(whp,level);
+                        %figure;imagesc(whp_b);title(['Heart pace: ' rDtp{f}]);
+                        
+                        % reconstruction
+                        bouchetrou = hp.*whp_b;
+                        testq = sum(whp_b,2);
+                        [val,canal] =max(testq);
+                        reg = bouchetrou(canal,:);
+                        
+                        if val<length(reg)
+                            holes =[];
+                            for t=1:length(reg)
+                                if reg(t)==0
+                                    %cherche sur une autre paire
+                                    try
+                                        i=1;
+                                        while bouchetrou(i,t)==0
+                                            i = i+1;
+                                        end
+                                        reg(1,t) = bouchetrou(i,t);
+                                    catch
+                                        %pas de valeur disponible, on interpolera
+                                        holes = [holes t];
                                     end
-                                    reg(1,t) = bouchetrou(i,t);
-                                catch
-                                    %pas de valeur disponible, on interpolera
-                                    holes = [holes t];
                                 end
                             end
-                        end
-                        if ~isempty(holes)
-                            debuts=holes(1);
-                            fins=[];
-                            for ih=2:length(holes)-1;
-                                if holes(ih) ~= holes(ih-1)+1
-                                    debuts = [debuts holes(ih)];
-                                    fins = [fins holes(ih-1)];
+                            if ~isempty(holes)
+                                debuts=holes(1);
+                                fins=[];
+                                for ih=2:length(holes)-1;
+                                    if holes(ih) ~= holes(ih-1)+1
+                                        debuts = [debuts holes(ih)];
+                                        fins = [fins holes(ih-1)];
+                                    end
                                 end
-                            end
-                            fins=[fins holes(end)];
-                            % moment de l'interpolation sur les holes
-                            if(debuts(1)==1)
-                                reg(1:fins(1))=reg(fins(1)+1);
-                            end
-                            for i=1:length(debuts)
-                                if fins(i)==size(reg)
-                                    reg(fins(i):end)=reg(fins(1)-1);
+                                fins=[fins holes(end)];
+                                
+                                if length(debuts)==1
+                                    if debuts(1)==1
+                                    else
+                                    end
                                 else
-                                    interpx  =[debuts(i)-1 fins(i)+1];
-                                    interpY  = [reg(debuts(i)-1) reg(fins(i)+1)];
-                                    interpxi = (debuts(i):fins(i));
-                                    reg(debuts(i):fins(i)) = interp1(interpx,interpY,interpxi,'linear');
+                                    % moment de l'interpolation sur les holes
+                                    if(debuts(1)==1)
+                                        reg(1:fins(1))=reg(fins(1)+1);
+                                    end
+                                    for i=1:length(debuts)
+                                        if fins(i)==size(reg,2)
+                                            reg(debuts(i):end)=reg(debuts(i)-1);
+                                        else
+                                            interpx  =[debuts(i)-1 fins(i)+1];
+                                            interpY  = [reg(debuts(i)-1) reg(fins(i)+1)];
+                                            interpxi = (debuts(i):fins(i));
+                                            reg(debuts(i):fins(i)) = interp1(interpx,interpY,interpxi,'linear');
+                                        end
+                                    end
                                 end
                             end
                         end
                     end
-                    
-                    
-                    
-%                     NIRS.Dt.fir.Sess(f).cR{1} = reg;
-                    NIRS.Dt.fir.Sess(f).fR{1} = reg;
-                    %                     NIRS.Dt.fir.ht{f}.reg
-                    %                     NIRS.Dt.fir.ht{f}.from = rDtp{f};
-                    
-                    %                     %on cherche une paire fiable (une evolution sans coupure)
-                    %                     nc = size(hp,1);
-                    %                     ci=14;
-                    %                     cref=0;
-                    %                     err =[];
-                    %                     err_t =[];%size(hp);
-                    %                     while ci<nc && cref==0
-                    %                         if sum(hp(ci,:)~= zeros(1,size(hp,2)))>100 && cref==0
-                    %                             for t=1:size(hp,2)-1
-                    %                                 if hp(ci,t+1)>hp(ci,t)+5 || hp(ci,t+1)<hp(ci,t)-5% && t<size(hp,2)-1;
-                    %                                     err = [err,1];
-                    %                                      err_t = [err_t t+1];
-                    %                                     cok_t(ci,t) =1;
-                    %                                 end
-                    %                             end
-                    %                             if size(err,2)<10
-                    %                                 cref=ci;
-                    %                             end
-                    %                         end
-                    %                         [histo(ci,1:10),bins(ci,1:10)] = hist(hp(ci,:));
-                    %                         ci = ci+1;
-                    %                         err =[];
-                    %                     end
-                    %                     if cref==0, disp([rDtp{f} ' : no heart pace in any channel !']);end
                 catch
                 end
+                NIRS.Dt.fir.Sess(f).fR{1} = reg';
+                save(job.NIRSmat{Idx,1},'NIRS');
             end
-            
-            
         end
         
         if remove_no_heartbeat
