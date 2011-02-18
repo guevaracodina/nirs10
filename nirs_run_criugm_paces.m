@@ -355,6 +355,7 @@ for Idx=1:size(job.NIRSmat,1)
                     end
                     end
                     
+                    NIRS.Dt.fir.Sess(f).cR{1} = reg;
                     NIRS.Dt.fir.Sess(f).fR{1} = reg;
 %                     NIRS.Dt.fir.ht{f}.reg 
 %                     NIRS.Dt.fir.ht{f}.from = rDtp{f};
