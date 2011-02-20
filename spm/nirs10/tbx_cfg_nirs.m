@@ -514,11 +514,19 @@ ep_output.tag     = 'ep_output';
 ep_output.num     = [1 Inf];
 ep_output.help    = {'Select Excel file output from Eprime.'}';
 
+columns         = cfg_entry;
+columns.tag     = 'columns';
+columns.name    = 'Columns to read';
+columns.strtype = 's';
+columns.num     = [1 Inf];
+columns.def     = @(val)nirs_get_defaults('readOnsets.readEprimeOnsets.columns', val{:});
+columns.help = {''};
+
 % Executable Branch
 readEprimeOnsets      = cfg_exbranch;       
 readEprimeOnsets.name = 'Read Eprime onsets';            
 readEprimeOnsets.tag  = 'readEprimeOnsets'; 
-readEprimeOnsets.val  = {ep_output}; 
+readEprimeOnsets.val  = {ep_output columns}; 
 readEprimeOnsets.prog = @nirs_run_readEprimeOnsets;  
 readEprimeOnsets.vout = @nirs_cfg_vout_readEprimeOnsets; 
 readEprimeOnsets.help = {'Read Eprime output data.'}';

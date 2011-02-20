@@ -141,3 +141,44 @@ names{1,5}='Pseudo_Abstract';
 save Onsets_S3 names onsets durations
 
 end
+
+% 
+% % % to calculate RT and accuracy from excel ePrime files
+% % to get the respons culmns 
+% clear all;
+% cd('\\recherche2\documents$\amirim\Documents\My Project\Pilote; functional localizer\Excel Files')
+% RT_R1 = xlsread('904-17111.xlsx',1,'BX12:BX90');
+% lateRT_R1 = xlsread('904-17111.xlsx',1,'CG12:CG90');
+% StimOnsetTimeR1 = xlsread('904-17111.xlsx',1,'BU12:BU90');
+% StimTagsR1 = xlsread('904-17111.xlsx',1,'BY12:BY90');
+% lateRT_R1 = lateRT_R1(2:end);
+% lateRT_R1 = [lateRT_R1; 0];
+% RTs_R1 = RT_R1 + lateRT_R1;
+% RTTime_R1 = RTs_R1 - StimOnsetTimeR1;
+% % RT1_Round2 = xlsread('903-16222.xlsx',-1);
+% % RT1_Round3 = xlsread('903-16333.xlsx',-1);
+% RT_R2 = xlsread('904-17222.xlsx',1,'BX12:BX90');
+% lateRT_R2 = xlsread('904-17222.xlsx',1,'CG12:CG90');
+% StimOnsetTimeR2 = xlsread('904-17222.xlsx',1,'BU12:BU90');
+% StimTagsR2 = xlsread('904-17222.xlsx',1,'BY12:BY90');
+% lateRT_R2 = lateRT_R2(2:end);
+% lateRT_R2 = [lateRT_R2; 0];
+% RTs_R2 = RT_R2 + lateRT_R2;
+% RTTime_R2 = RTs_R2 - StimOnsetTimeR2;
+% % RTs for round3
+% % RT_R3 = xlsread('903-16333.xlsx',1,'BI2:BI80');
+% % lateRT_R3 = xlsread('903-16333.xlsx',1,'BR2:BR80');
+% % StimOnsetTimeR3 = xlsread('903-16333.xlsx',1,'BF2:BF80');
+% % StimTagsR3 = xlsread('903-16333.xlsx',1,'BJ2:BJ80');
+% RT_R3 = xlsread('904-17333.xlsx',1,'BX12:BX90');
+% lateRT_R3 = xlsread('904-17333.xlsx',1,'CG12:CG90');
+% StimOnsetTimeR3 = xlsread('904-17333.xlsx',1,'BU12:BU90');
+% StimTagsR3 = xlsread('904-17333.xlsx',1,'BY12:BY90');
+% lateRT_R3 = lateRT_R3(2:end);
+% lateRT_R3 = [lateRT_R3; 0];
+% RTs_R3 = RT_R3 + lateRT_R3;
+% RTTime_R3 = RTs_R3 - StimOnsetTimeR3;
+% 
+% TAGs = [StimTagsR1; StimTagsR2; StimTagsR3];
+% RTs = [RTTime_R1; RTTime_R2; RTTime_R3];
+% save Pilote904 TAGs RTs
