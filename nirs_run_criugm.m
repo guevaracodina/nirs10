@@ -48,8 +48,9 @@ for is=1:sN
     
     % Helmet
     if ~isempty(job.subj(1,is).text_brainsight{:})
+        staxp =job.subj(1,is).text_brainsight{:};
         NIRS.Dt.fir.stax.n = 'Brainsight(c)';
-        NIRS.Dt.fir.stax.p{1} = staxp;
+        NIRS.Dt.fir.stax.p{1} = job.subj(1,is).text_brainsight{:};
     else
         NIRS.Dt.fir.stax.n = 'Template LIOM'; % template
         [DirSPM,~,~] = fileparts(which('nirs10'));
@@ -62,12 +63,13 @@ for is=1:sN
     
     % Topo Data
     if isempty(job.subj(1,is).TopoData{:})
-        % TopoData
-        load(fullfile(dir_nt,'TopoData.mat'));
-        NIRS.Dt.ana.rend = fullfile(dir_nt,'TopoData.mat');
-        save(fullfile(NIRS.Dt.s.p,'TopoData.mat'),'rendered_MNI');
-        disp('Inutile de faire la coregistration !');
-        helmetdone =1;
+                helmetdone=0;
+% % % % % % % % % %         % TopoData
+% % % % % % % % % %         load(fullfile(dir_nt,'TopoData.mat'));
+% % % % % % % % % %         NIRS.Dt.ana.rend = fullfile(dir_nt,'TopoData.mat');
+% % % % % % % % % %         save(fullfile(NIRS.Dt.s.p,'TopoData.mat'),'rendered_MNI');
+% % % % % % % % % %         disp('Inutile de faire la coregistration !');
+% % % % % % % % % %         helmetdone =1;
     else
         helmetdone=0;
     end

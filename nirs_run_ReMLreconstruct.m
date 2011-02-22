@@ -17,10 +17,6 @@ load huppert_reml_demo.mat
 %
 %  W -      the wavelet transform matrix 
 
-%Note- this example is a bit smaller than the one described in the paper
-%because I want this to run faster.  The model used in the paper took
-%~20min per fit.
-
 % CNR=5;  %Define the contrast-to-noise of the data
 
 %Run the code
@@ -83,7 +79,7 @@ brainWL_bias=s2(:);
 
 % Now, define the actual covariance components.  There are four; one for
 % each layer times Hbo/HbR
-%Note, we define this in the wavelet domain ...
+%%%Note, we define this in the wavelet domain ...
 Qp{1}=sparse(lstskin,lstskin,skinWL_bias,nvox*2,nvox*2);  %Skin layer- HbO
 Qp{2}=sparse(lstbrain,lstbrain,brainWL_bias,nvox*2,nvox*2);  %Brain layer- HbO
 Qp{3}=sparse(nvox+lstskin,nvox+lstskin,skinWL_bias,nvox*2,nvox*2);  %Skin layer- HbR
@@ -92,7 +88,7 @@ Qp{4}=sparse(nvox+lstbrain,nvox+lstbrain,brainWL_bias,nvox*2,nvox*2);  %Brain la
 
 % This is a single prior (MNE) which will give us results equvelent to the
 % MNE prior Beta = inv(X'*X+lambda*I)*X'*Y
-QpT{1}=speye(nvox*2);  %For equivelent to Tikhonov/MNE;
+% % % % QpT{1}=speye(nvox*2);  %For equivelent to Tikhonov/MNE;
 
 
 %%Now, the actual data and reconstructions
@@ -127,6 +123,7 @@ disp('Computing multiple prior solution');
 % [lambda,Beta_W_Tikhonov,Stats]=nirs_run_DOT_REML(Y,X*W',Beta_prior,Qn,QpT);
 
 %Convert to the image domain and display
+%%% passage de beta a beta decompose sur l'espace des ondelettes de Daubechy
 Beta = W'*Beta_W;
 % Beta_Tikhonov = W'*Beta_W_Tikhonov;
 
