@@ -31,7 +31,6 @@ for Idx=1:nsubj
         V.fname = job.image_in{Idx,:};
     end
     
-    
     [dir1, ~, ~] = fileparts(V.fname);
     tmpf = spm_select('List',dir1,'_segmented_');
     if ~isempty(tmpf)
