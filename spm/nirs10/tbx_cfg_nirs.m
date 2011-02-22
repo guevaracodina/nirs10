@@ -1150,6 +1150,15 @@ end
 %Configuration for coregistration: coreg   
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+segT1_4fit         = cfg_files; 
+segT1_4fit.name    = 'Images segmented to fit P on.'; % The displayed name
+segT1_4fit.tag     = 'segT1_4fit';       
+segT1_4fit.filter  = 'image';    
+segT1_4fit.num     = [1 1];     
+segT1_4fit.help    = {['Optodes will be represented on the cortex or the ',...
+    'scalp depending on the previous answer. If you answered Yes, please ',...
+    'choose ''c3_'' image, otherwise choose the segmented image ',...
+    '(0021_ or any other combination).']};      
 
 anatT1_template         = cfg_files; 
 anatT1_template.name    = 'Anatomical template image'; 
@@ -1199,7 +1208,7 @@ coreg1      = cfg_exbranch;
 coreg1.name = 'NIRScoreg';             
 coreg1.tag  = 'coreg1'; 
 coreg1.val  = {NIRSmat DelPreviousData NewDirCopyNIRS anatT1 ...
-    anatT1_template nasion_wMNI AL_wMNI AR_wMNI GenDataTopo};    
+    anatT1_template segT1_4fit nasion_wMNI AL_wMNI AR_wMNI GenDataTopo};    
 coreg1.prog = @nirs_run_coreg;  
 coreg1.vout = @nirs_cfg_vout_coreg; 
 coreg1.help = {'Automatic coregistration.'};
