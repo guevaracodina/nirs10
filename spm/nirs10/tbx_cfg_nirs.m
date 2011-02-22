@@ -937,7 +937,7 @@ output_prefix.help    = {'You can choose to give a particular prefix to the ',..
 buildroi1      = cfg_exbranch;
 buildroi1.tag  = 'buildroi1';
 buildroi1.name = 'Set vertices and build ROI';
-buildroi1.val  = {DelPreviousData NewDirCopyNIRS image_in crop_image output_prefix};
+buildroi1.val  = {DelPreviousData NewDirCopyNIRS NIRSmat image_in crop_image output_prefix};
 buildroi1.prog = @nirs_run_buildroi;
 buildroi1.help = {'Define region of interest.'};
 
@@ -2236,7 +2236,7 @@ MC_parameters.help = {'Parameters'};
 configMC1      = cfg_exbranch;       
 configMC1.name = 'Configure Monte Carlo inputs';            
 configMC1.tag  = 'configMC1'; 
-configMC1.val  = {MC_nam NIRSmat image_in MC_CUDAchoice MC_configdir MC_parameters};    
+configMC1.val  = {MC_nam NIRSmat NewDirCopyNIRS image_in MC_CUDAchoice MC_configdir MC_parameters};    
 configMC1.prog = @nirs_run_configMC;  
 configMC1.vout = @nirs_cfg_vout_configMC; 
 configMC1.help = {'Generate configuration input files for Monte Carlo simulation.'};

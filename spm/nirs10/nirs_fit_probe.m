@@ -6,11 +6,16 @@ P = job.image_in{:};
 V = spm_vol(P);
 Y = spm_read_vols(V);
 
-NIRS = job.NIRS;
-
-Pp_rmm = NIRS.Cf.H.P.r.m.mm.p;
-Pp_c1_rmm = NIRS.Cf.H.P.r.m.mm.c1.p;
-NP = NIRS.Cf.H.P.N;
+% NIRS = job.NIRS;
+% 
+% Pp_rmm = NIRS.Cf.H.P.r.m.mm.p;
+% Pp_c1_rmm = NIRS.Cf.H.P.r.m.mm.c1.p;
+% NP = NIRS.Cf.H.P.N;
+%%%%% a changer eventuellement
+Pp_rmm = job.Pp_rmm;
+Pp_c1_rmm = job.Pp_c1_rmm;
+NP = job.NP;
+%%%%%
 
 Pd_rmm = -(Pp_rmm - Pp_c1_rmm)/norm(Pp_rmm - Pp_c1_rmm);% pointing outside of the head
 Pfp_rmm = Pp_c1_rmm;
@@ -36,10 +41,10 @@ for Pi = 1:NP
     test_vx = min(max(test_vx,min_size),max_size);
     
     %previous version
-    %     while sum(Y(test_vx(1,1),test_vx(2,1),test_vx(3,1)))>0%==0
-    %         Pfp_rmm(:,Pi) = Pfp_rmm(:,Pi) - count*prec*Pd_rmm(:,Pi);
-    while sum(Y(test_vx(1,1),test_vx(2,1),test_vx(3,1)))>0%==0
-        Pfp_rmm(:,Pi) = Pp_c1_rmm(:,Pi) + count*prec*Pd_rmm(:,Pi);
+        while sum(Y(test_vx(1,1),test_vx(2,1),test_vx(3,1)))>0%==0
+            Pfp_rmm(:,Pi) = Pfp_rmm(:,Pi) - count*prec*Pd_rmm(:,Pi);
+%     while sum(Y(test_vx(1,1),test_vx(2,1),test_vx(3,1)))>0%==0
+%         Pfp_rmm(:,Pi) = Pp_c1_rmm(:,Pi) + count*prec*Pd_rmm(:,Pi);
         
         count =count+1;
         test_MNI = Pfp_rmm(:,Pi);

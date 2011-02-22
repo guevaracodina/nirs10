@@ -26,6 +26,7 @@ if strcmp(Action,'getvertice')
     vertice = varargin{4};
 elseif strcmp(Action,'build_ROI')
     output_prefix = varargin{4};
+    NIRSmat = varargin{5}
 end
 
 switch Action
@@ -95,6 +96,32 @@ switch Action
         V_roi = spm_write_vol(V_roi, Y_roi);
         
         varargout{1} = V_roi;
+        
+        % rajout pour que tout roule...
+        NIRS = [];
+        load(NIRSmat);
+        %%% on sauve les fibres qui sont a la surface dans la ROI
+        NP = NIRS.Cf.H.P.N;
+        Pfp_rmv = NIRS.Cf.H.P.r.m.vx.fp;
+%         Pfp_segR_rmv = [];
+        Pn_segR_fp_rmv =[];
+        for i=1:NP
+            if (Pfp_rmv(1,i)>b(1,1) && Pfp_rmv(1,i)<b(2,1) &&...
+                    Pfp_rmv(2,i)>b(1,2) && Pfp_rmv(2,i)<b(2,2) &&...
+                    Pfp_rmv(3,i)>b(1,3) && Pfp_rmv(3,i)<b(2,3))
+%                 Pfp_segR_rmv = [Pfp_segR_rmv Pfp_rmv(:,i)] ;
+                Pn_segR_fp_rmv = [Pn_segR_fp_rmv i];
+            end
+        end
+        
+%         NIRS.Cs.temp.P_segR.rmv = Pfp_segR_rmv;
+        NIRS.Cs.temp.P_segR.n = Pn_segR_fp_rmv;
+        
+        %%% il va falloir avoir le choix pour la simulation qu'on fait
+        %%% rouler ... donc NIRS.Cs.mcs(imcs).segR
+        NIRS.Cs.temp.segR = fullfile(dir,[output_prefix,name,'.nii']);
+        save(NIRSmat,'NIRS');
+        
         disp('Done    ''Build ROI''');
         disp('');
 end

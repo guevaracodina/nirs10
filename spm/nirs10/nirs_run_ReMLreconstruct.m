@@ -17,8 +17,6 @@ load huppert_reml_demo.mat
 %
 %  W -      the wavelet transform matrix 
 
-% CNR=5;  %Define the contrast-to-noise of the data
-
 %Run the code
 clc;
 disp('Tests on ReML code for the reconstruction of DOT images')
@@ -26,13 +24,14 @@ disp('Written by:  T. Huppert and Farras Abdelnour');
 disp('Hijacked by:  C. Bonnery');
 disp(' ');
 
+%% donnees
+donnees = 'D:\Users\Clément\Projet_ReML\donnees\donnees2test\roi_00021_segmented_s201007051500-0002-00001-000160-01.nii'
+
 %% 
 %Construct the covariance components and the heirachical model
-
 %Image prior 
-Beta_prior = zeros(size(X,2),1);  %Sparsity prior (akin to Tikhonov/Min Norm Est)
-
-
+% les concentrations sont sensees rester nulles
+Beta_prior = zeros(size(donnees,2),1);  %Sparsity prior (akin to Tikhonov/Min Norm Est)
 %% Construct the covariance components used in the model
 
 %First, covariance components for the measurements
@@ -85,30 +84,7 @@ Qp{2}=sparse(lstbrain,lstbrain,brainWL_bias,nvox*2,nvox*2);  %Brain layer- HbO
 Qp{3}=sparse(nvox+lstskin,nvox+lstskin,skinWL_bias,nvox*2,nvox*2);  %Skin layer- HbR
 Qp{4}=sparse(nvox+lstbrain,nvox+lstbrain,brainWL_bias,nvox*2,nvox*2);  %Brain layer- HbR
 
-
-% This is a single prior (MNE) which will give us results equvelent to the
-% MNE prior Beta = inv(X'*X+lambda*I)*X'*Y
-% % % % QpT{1}=speye(nvox*2);  %For equivelent to Tikhonov/MNE;
-
-
 %%Now, the actual data and reconstructions
-
-% for idx=1:2
-    %Two passes.  
-%     Contrast=std(X * SampleImage1(:));
-%     
-%     if(idx==1)
-%     %Example 1: No noise in skin layer
-%         disp('Example I- no superficial noise');
-%         TrueImage=SampleImage1;
-%     elseif(idx==2)
-%         disp('Example II- with superficial noise');
-%         TrueImage=SampleImage2;
-%     end
-%     
-% Y = X * TrueImage(:);
-% noise=randn(ny,1)*Contrast/CNR;
-% Y=Y+noise;
 Y = donnees;
 
 %The actual model
@@ -139,6 +115,9 @@ Stats.tstat.pval=2*tcdf(-abs(Stats.tstat.t),Stats.tstat.dfe);
 Recon_Image=reshape(full(Beta),size(TrueImage));
 % Recon_Image_Tikhonov=reshape(full(Beta_Tikhonov),size(TrueImage));
 
+%%% Attention, TrueImage est  l'image en deux temps differents me
+%%% semble-t-il...
+
 %Scale all images the same
 maxHbO1=max(max(abs([Recon_Image(:,:,1,1) TrueImage(:,:,1,1)])));
 maxHbO2=max(max(abs([Recon_Image(:,:,2,1) TrueImage(:,:,2,1)])));
@@ -168,20 +147,6 @@ for idx=1:size(SD.SrcPos,1); text(SD.SrcPos(idx,1),SD.SrcPos(idx,2),['S-' num2st
 for idx=1:size(SD.DetPos,1); text(SD.DetPos(idx,1),SD.DetPos(idx,2),['D-' num2str(idx)]); end;
 caxis([-maxHbO2 maxHbO2]); axis tight; axis off; colorbar;
 title('REML Reconstructed Layer-II');
-
-% subplot(3,2,3); hold on;
-% imagesc(Medium.CompVol.X,Medium.CompVol.Y,squeeze(Recon_Image_Tikhonov(:,:,1,1)));
-% for idx=1:size(SD.SrcPos,1); text(SD.SrcPos(idx,1),SD.SrcPos(idx,2),['S-' num2str(idx)]); end;
-% for idx=1:size(SD.DetPos,1); text(SD.DetPos(idx,1),SD.DetPos(idx,2),['D-' num2str(idx)]); end;
-% caxis([-maxHbO1 maxHbO1]); axis tight; axis off; colorbar;
-% title('MNE Regularized Layer-I');
-% 
-% subplot(3,2,4); hold on;
-% imagesc(Medium.CompVol.X,Medium.CompVol.Y,squeeze(Recon_Image_Tikhonov(:,:,2,1)));
-% for idx=1:size(SD.SrcPos,1); text(SD.SrcPos(idx,1),SD.SrcPos(idx,2),['S-' num2str(idx)]); end;
-% for idx=1:size(SD.DetPos,1); text(SD.DetPos(idx,1),SD.DetPos(idx,2),['D-' num2str(idx)]); end;
-% caxis([-maxHbO2 maxHbO2]); axis tight; axis off; colorbar;
-% title('MNE Regularized Layer-II');
 
 subplot(3,2,5); hold on;
 imagesc(Medium.CompVol.X,Medium.CompVol.Y,squeeze(TrueImage(:,:,1,1)));

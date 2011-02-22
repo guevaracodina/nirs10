@@ -18,17 +18,18 @@ load(NIRSmat{:});
 if isfield(NIRS.Cf.H.P.r.m.mm,'p')
     Pp_rmm = NIRS.Cf.H.P.r.m.mm.p;% positions on head surface
     Pp_c1_rmm = NIRS.Cf.H.P.r.m.mm.c1.p;% positions on cortex
+    Pfp_rmm = NIRS.Cf.H.P.r.m.mm.fp;% positions fitted on skin
 end
 
 NP = NIRS.Cf.H.P.N;
 NS = NIRS.Cf.H.S.N;
 ND = NIRS.Cf.H.D.N;
 
-% Fitted positions (positions are fitted with respect to the scalp)
-jobe.NIRS = NIRS;
-jobe.image_in = image_in;
-out = nirs_fit_probe(jobe);
-Pfp_rmm = out{1};
+% % Fitted positions (positions are fitted with respect to the scalp)
+% jobe.NIRS = NIRS;
+% jobe.image_in = image_in;
+% out = nirs_fit_probe(jobe);
+% Pfp_rmm = out{1};
 
 % from MNI real space (mm) to MNI voxel space
 for i=1:NP
