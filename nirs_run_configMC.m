@@ -18,6 +18,13 @@ function out = nirs_run_configMC(job)
 % isotropiques mais en gardant les mêmes orientations !!!
 % 2 : changer de uint16 a uint8
 
+try
+    NewNIRSdir = job.NewDirCopyNIRS.CreateNIRSCopy.NewNIRSdir;
+    NewDirCopyNIRS = 1;
+catch
+    NewDirCopyNIRS = 0;
+end
+
 load(job.NIRSmat{1,1});
 NIRS.Cs = {};
 
@@ -25,12 +32,18 @@ if ~exist(fullfile(NIRS.Dt.s.p,[job.MC_configdir job.MC_nam]),'dir')%Directory f
     mkdir(fullfile(NIRS.Dt.s.p,[job.MC_configdir job.MC_nam]));
 end
 
-% on test pour voir co;bien il esxiste de simulation deja roulee :
+% on test pour voir combien il existe de simulation deja roulee :
 if isfield(NIRS.Cs,'mcs'), cs_n = size(NIRS.Cs.mcs,1)+1; else cs_n=1; end
 cs.alg = job.MC_CUDAchoice;%1=MCX ; 2=tMCimg
 cs.dir = [job.MC_configdir job.MC_nam];
 cs.par = job.MC_parameters;
-cs.seg = job.image_in{1,1};
+if isfield(NIRS.Cs.temp)%on utilise la ROI qu'on vient de creer
+    cs.seg = NIRS.Cs.temp.segR;
+    cs.Pn = NIRS.Cs.temp.P_segR.n;
+else
+    cs.seg = job.image_in{1,1};
+    cs.Pn = NIRS.Cf.H.P.n;
+end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %ATTENTION ON DOIT VERROUILLER POUR NE PAS CREER DEUX SIMS AVEC LE MEME NOM
 NIRS.Cs.mcs{cs_n,1} = cs;
@@ -70,6 +83,9 @@ scalings = diag(inv_mat(7:9));
 
 dim_rmiv = ceil((dim-1) * abs(scalings));
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ATTENTION, ON DOIT NE GARDER QUE LES BONS P..............................
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 NS = NIRS.Cf.H.S.N;
 ND = NIRS.Cf.H.D.N;
 NQ = NIRS.Cf.H.Q.N;
@@ -133,7 +149,6 @@ for iP=1:NP
     Pwd_rmiv(:,iP) = temp_dir/lgth;
 end
 
-
 Sr = job.MC_parameters.radiis * ones(NIRS.Cf.H.S.N,1);
 Dr = job.MC_parameters.radiid * ones(NIRS.Cf.H.D.N,1);
 
@@ -167,7 +182,7 @@ for iwl = 1:size(NIRS.Cf.dev.wl,2)
     % tMCimg
     jobW.n_id = n_id;
     jobW.mc_dir = fullfile(NIRS.Dt.s.p,[job.MC_configdir job.MC_nam]);
-
+    
     jobW.n = cs.b8i;
     
     jobW.dim_rmiv = dim_rmiv;
@@ -184,6 +199,17 @@ for iwl = 1:size(NIRS.Cf.dev.wl,2)
     jobW.P =P;
     
     jobW.wl = NIRS.Cf.dev.wl(iwl);
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %&% en fin de fichier
+    %         if NewDirCopyNIRS
+    %             newNIRSlocation = fullfile(dir2,'NIRS.mat');
+    %             save(newNIRSlocation,'NIRS');
+    %             job.NIRSmat{Idx,1} = newNIRSlocation;
+    %         else
+    %             save(job.NIRSmat{Idx,1},'NIRS');
+    %         end
+    
     
     out = nirs_configMC_writeCFGfiles(jobW);
 end

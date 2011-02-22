@@ -153,6 +153,25 @@ for Idx=1:size(job.NIRSmat,1)
         NIRS.Cf.H.P.r.m.mm.c1.p = Pp_c1_rmm;
         NIRS.Cf.H.P.void = Pvoid;
         
+        %calculation of fitted positions on the skin surface
+        % Fitted positions (positions are fitted with respect to the scalp)
+        %jobe.NIRS = NIRS;
+        jobe.Pp_rmm = Pp_rmm;
+        jobe.Pp_c1_rmm = Pp_c1_rmm;
+        jobe.NP = NP;
+        jobe.image_in = job.segT1_4fit;
+        out = nirs_fit_probe(jobe);
+        Pfp_rmm = out{1};
+        % from MNI real space (mm) to MNI voxel space
+        V_4fit = spm_vol(job.segT1_4fit{:});
+        for i=1:NP
+            Pfp_rmv(:,i) = V_4fit.mat\[Pfp_rmm(:,i);1];
+        end
+        Pfp_rmv = Pfp_rmv(1:3,:);
+        %Save MNI and voxel coordinates of optodes
+        NIRS.Cf.H.P.r.m.mm.fp = Pfp_rmm;
+        NIRS.Cf.H.P.r.m.vx.fp = Pfp_rmv;
+        
         %
         if job.GenDataTopo
             [dir1,fil1,ext1] = fileparts(NIRS.Dt.ana.T1);
@@ -266,7 +285,7 @@ for Idx=1:size(job.NIRSmat,1)
                     % %                         axis image
                     % %                         axis off
                     % %                     end
-                end
+% %                 end
             catch
                 disp('Could not create TopoData.mat file');
             end

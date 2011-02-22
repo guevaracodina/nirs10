@@ -20,9 +20,11 @@ if (~strcmp(varargin{1},'initialise') &&...
     Action = 'welcome';
     P = varargin{1,1}.image_in{:};
     output_prefix = char(varargin{1,1}.output_prefix);
+    NIRSmat = char(varargin{1,1}.NIRSmat);
 elseif strcmp(varargin{1},'initialise')
     Action = varargin{1};
     output_prefix = varargin{2};
+    NIRSmat = varargin{3};
 elseif (strcmp(varargin{1},'rf') ||...
        strcmp(varargin{1},'lb') ||...
        strcmp(varargin{1},'up') ||...
@@ -46,7 +48,7 @@ switch lower(Action)
         end
         
         % Get all default values (these may effect GUI)
-        nirs_run_buildroi('initialise',output_prefix);
+        nirs_run_buildroi('initialise',output_prefix,NIRSmat);
         
         % Since we are using persistent variables we better make sure
         % there is no-one else out there.
@@ -163,6 +165,7 @@ switch lower(Action)
         handles.out_buildroi=[];
         handles.ready2build=zeros(4,1);
         handles.output_prefix = output_prefix;
+        handles.NIRSmat = NIRSmat;
     case 'rf'
         handles.roi.b = nirs_buildroi(handles.V,handles.roi.b,'getvertice','rf');
         h = findobj(get(roiwin,'Children'),'Tag','pos_rf');
@@ -184,7 +187,7 @@ switch lower(Action)
         set(h,'String',int2str(handles.roi.b(1,2)));
         handles.ready2build(4,1)=1;
     case 'br'
-        handles.out_buildroi = nirs_buildroi(handles.V,handles.roi.b,'build_ROI',handles.output_prefix);
+        handles.out_buildroi = nirs_buildroi(handles.V,handles.roi.b,'build_ROI',handles.output_prefix,handles.NIRSmat);
         out = 1; %handles.out_buildroi;
         delete(gcf);% window is closed once the ROI is build
 end
