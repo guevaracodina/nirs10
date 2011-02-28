@@ -17,23 +17,26 @@ if (~strcmp(varargin{1},'initialise') &&...
         ~strcmp(varargin{1},'lo') &&...
         ~strcmp(varargin{1},'br'))
     
-    Action = 'welcome';
+    ui_action = 'welcome';
     P = varargin{1,1}.image_in{:};
     output_prefix = char(varargin{1,1}.output_prefix);
     NIRSmat = char(varargin{1,1}.NIRSmat);
+    Ckpt = varargin{1,1}.keepAllChannels;
+    
 elseif strcmp(varargin{1},'initialise')
-    Action = varargin{1};
+    ui_action = varargin{1};
     output_prefix = varargin{2};
     NIRSmat = varargin{3};
+    Ckpt = varargin{4};
 elseif (strcmp(varargin{1},'rf') ||...
        strcmp(varargin{1},'lb') ||...
        strcmp(varargin{1},'up') ||...
        strcmp(varargin{1},'lo') ||...
        strcmp(varargin{1},'br'))
-   Action = varargin{1};
+   ui_action = varargin{1};
 end
 
-switch lower(Action)
+switch lower(ui_action)
     
     case 'welcome'
         % Unless specified, set visibility to on
@@ -48,7 +51,7 @@ switch lower(Action)
         end
         
         % Get all default values (these may effect GUI)
-        nirs_run_buildroi('initialise',output_prefix,NIRSmat);
+        nirs_run_buildroi('initialise',output_prefix,NIRSmat,Ckpt);
         
         % Since we are using persistent variables we better make sure
         % there is no-one else out there.
@@ -166,6 +169,7 @@ switch lower(Action)
         handles.ready2build=zeros(4,1);
         handles.output_prefix = output_prefix;
         handles.NIRSmat = NIRSmat;
+        handles.Ckpt = Ckpt;
     case 'rf'
         handles.roi.b = nirs_buildroi(handles.V,handles.roi.b,'getvertice','rf');
         h = findobj(get(roiwin,'Children'),'Tag','pos_rf');
@@ -187,7 +191,7 @@ switch lower(Action)
         set(h,'String',int2str(handles.roi.b(1,2)));
         handles.ready2build(4,1)=1;
     case 'br'
-        handles.out_buildroi = nirs_buildroi(handles.V,handles.roi.b,'build_ROI',handles.output_prefix,handles.NIRSmat);
+        handles.out_buildroi = nirs_buildroi(handles.V,handles.roi.b,'build_ROI',handles.output_prefix,handles.NIRSmat,handles.Ckpt);
         out = 1; %handles.out_buildroi;
         delete(gcf);% window is closed once the ROI is build
 end

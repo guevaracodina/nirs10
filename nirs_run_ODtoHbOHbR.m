@@ -175,7 +175,6 @@ for Idx=1:size(job.NIRSmat,1)
                 delete(rDtp{f,1});
             end
             
-            
             fwrite_NIR(outfile,c);
             %add outfile name to NIRS
             if f == 1
