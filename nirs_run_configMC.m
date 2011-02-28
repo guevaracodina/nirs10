@@ -26,7 +26,6 @@ catch
 end
 
 load(job.NIRSmat{1,1});
-NIRS.Cs = {};
 
 if ~exist(fullfile(NIRS.Dt.s.p,[job.MC_configdir job.MC_nam]),'dir')%Directory for configuration files
     mkdir(fullfile(NIRS.Dt.s.p,[job.MC_configdir job.MC_nam]));
@@ -47,13 +46,13 @@ else
     cs.Pn = NIRS.Cs.temp.P_segR.n;
 end
 
-NIRS.Cs.mcs{cs_n,1} = cs;
+NIRS.Cs.mcs{cs_n} = cs;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %ATTENTION ON DOIT VERROUILLER POUR NE PAS CREER DEUX SIMS AVEC LE MEME NOM
 NIRS.Cs.n{cs_n,1} = job.MC_nam;
 save(job.NIRSmat{1,1},'NIRS');
 
-jobR.image_in = job.image_in;
+jobR.image_in = {cs.seg};
 jobR.out_dir = fullfile(NIRS.Dt.s.p,[job.MC_configdir job.MC_nam]);
 jobR.out_dim = [1 1 1];
 jobR.out_dt = 'same';
@@ -76,7 +75,7 @@ end
 Y8_rmiv = uint8(Y_rmiv);% en fait on est dans des voxels de 1 mm d'ou le racourci
 
 load(job.NIRSmat{1,1});
-cs = NIRS.Cs.mcs{cs_n,:};
+cs = NIRS.Cs.mcs{cs_n};
 
 V = spm_vol(cs.seg);
 dim = V.dim;
@@ -84,16 +83,6 @@ inv_mat = spm_imatrix(V.mat);
 scalings = diag(inv_mat(7:9));
 
 dim_rmiv = ceil((dim-1) * abs(scalings));
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% ATTENTION, ON DOIT NE GARDER QUE LES BONS P..............................
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Pn = cs.Pn;
-
-
-NS = NIRS.Cf.H.S.N;
-ND = NIRS.Cf.H.D.N;
-NQ = NIRS.Cf.H.Q.N;
 
 [~,id,~] = fileparts(V.fname);
 if strcmp(id(1:3),'roi')
@@ -119,6 +108,31 @@ fclose(fid);
 %for sources, and same for detectors, with .d
 
 % Source and detector positions
+Pn = cs.Pn;
+NS = NIRS.Cf.H.S.N;
+ND = NIRS.Cf.H.D.N;
+Cid = NIRS.Cf.H.C.id;
+NQ = NIRS.Cf.H.Q.N;
+Cre =[];
+%on extrait les sources
+Sn_roi = Pn(Pn<=NS);
+%on reconstruit les paires
+CidS = Cid(2,:);
+for i=1:length(Sn_roi)
+    Cpossible{i} = Cid(1,CidS==Sn_roi(i));
+    Cposs = Cpossible{i};
+    for j=1:length(Cposs)
+        if sum(Pn==Cid(3,Cposs(j)))
+            Cre = [Cre Cposs(j)];
+        end
+    end
+end
+
+if Cre==[]
+    disp('aucune paire');
+end
+
+
 if isfield(NIRS.Cf.H.P,'void')
     Pvoid = NIRS.Cf.H.P.void;% Keep track of non-existent sources/detectors, to exclude them explicitly later
 else

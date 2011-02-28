@@ -285,7 +285,8 @@ for Idx=1:nsubj
             spm_progress_bar('Clear');
 
             if NIRSok
-                NIRS.Cs.mcs.seg = Vsegmented.fname;
+%                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                 NIRS.Cs.mcs.seg = Vsegmented.fname;
                 save(outNIRSmat{Idx},'NIRS');
             else
                 %what to do if we don't have a NIRS structure already?
