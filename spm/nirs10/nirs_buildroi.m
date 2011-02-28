@@ -73,6 +73,13 @@ switch Action
             bb(1,ib) = max(1,bb(1,ib));
             bb(2,ib) = min(V.dim(ib),bb(2,ib));
         end
+        %%%%%%%
+        % roi must contain the selected channels
+        jobSD.Ckpt = varargin{6}.keepChannels;
+        jobSD.NIRSmat = {NIRSmat};
+        jobSD.bb = bb;
+        out = nirs_buildroi_SDcorrected(jobSD);
+        bb = out{1};
         
         % With resizing
         %  mat_roi2raw is the transformation matrix from the voxel space

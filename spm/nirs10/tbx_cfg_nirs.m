@@ -937,7 +937,7 @@ output_prefix.help    = {'You can choose to give a particular prefix to the ',..
 buildroi1      = cfg_exbranch;
 buildroi1.tag  = 'buildroi1';
 buildroi1.name = 'Set vertices and build ROI';
-buildroi1.val  = {DelPreviousData NewDirCopyNIRS NIRSmat image_in crop_image output_prefix};
+buildroi1.val  = {DelPreviousData NewDirCopyNIRS NIRSmat keepAllChannels image_in crop_image output_prefix};
 buildroi1.prog = @nirs_run_buildroi;
 buildroi1.help = {'Define region of interest.'};
 
