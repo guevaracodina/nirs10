@@ -13,7 +13,7 @@ function [varargout] = nirs_buildroi(varargin)
 
 % Clément Bonnéry
 % $Id: spm_mc_buildroi.m 2010-06-11 Clément $
-% Mise au format par Clément : 2010-11-17
+% Mise au format par Clément : 2010-11-17 et 02-2011
 
 V = varargin{1};
 Y = spm_read_vols(V);
@@ -26,7 +26,7 @@ if strcmp(Action,'getvertice')
     vertice = varargin{4};
 elseif strcmp(Action,'build_ROI')
     output_prefix = varargin{4};
-    NIRSmat = varargin{5}
+    NIRSmat = varargin{5};
 end
 
 switch Action
@@ -79,7 +79,6 @@ switch Action
         %  of the ROI to the voxel space of the raw image
         mat_roi2raw = eye(4) + [zeros(4,3) [bb(1,:)';0]];
         
-        % V_roi
         V_roi.dim = [bb(2,1)-bb(1,1)+1 bb(2,2)-bb(1,2)+1 bb(2,3)-bb(1,3)+1];
         % V_roi.mat is the mat from voxel ROI to the raw image space in mm
         V_roi.mat = V.mat*mat_roi2raw;
@@ -94,8 +93,6 @@ switch Action
         
         V_roi = spm_create_vol(V_roi);
         V_roi = spm_write_vol(V_roi, Y_roi);
-        
-        varargout{1} = V_roi;
         
         % rajout pour que tout roule...
         NIRS = [];
@@ -114,18 +111,18 @@ switch Action
             end
         end
         
-%         NIRS.Cs.temp.P_segR.rmv = Pfp_segR_rmv;
+        if isfield(NIRS.Cs,'temp'), clear NIRS.Cs.temp; end
         NIRS.Cs.temp.P_segR.n = Pn_segR_fp_rmv;
-        
         %%% il va falloir avoir le choix pour la simulation qu'on fait
         %%% rouler ... donc NIRS.Cs.mcs(imcs).segR
         NIRS.Cs.temp.segR = fullfile(dir,[output_prefix,name,'.nii']);
-        save(NIRSmat,'NIRS');
+        save(NIRSmat,'NIRS');  
         
+        varargout{1} = V_roi;
         disp('Done    ''Build ROI''');
         disp('');
 end
-%         if c==0 % crop_image
+%         if c==0 % no crop_image
 %             % No resizing
 %             Y_roi = zeros(V.dim(1:3));
 %             Y_roi(bb(1,1):bb(2,1),bb(1,2):bb(2,2),bb(1,3):bb(2,3)) = Y(bb(1,1):bb(2,1),bb(1,2):bb(2,2),bb(1,3):bb(2,3));

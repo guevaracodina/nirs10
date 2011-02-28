@@ -37,16 +37,19 @@ if isfield(NIRS.Cs,'mcs'), cs_n = size(NIRS.Cs.mcs,1)+1; else cs_n=1; end
 cs.alg = job.MC_CUDAchoice;%1=MCX ; 2=tMCimg
 cs.dir = [job.MC_configdir job.MC_nam];
 cs.par = job.MC_parameters;
-if isfield(NIRS.Cs.temp)%on utilise la ROI qu'on vient de creer
-    cs.seg = NIRS.Cs.temp.segR;
-    cs.Pn = NIRS.Cs.temp.P_segR.n;
-else
+
+%%%%%%%%%%%%%%%%%%% bOITEUX
+if isfield(job.mcim_cfg,'mcim_in')
     cs.seg = job.image_in{1,1};
     cs.Pn = NIRS.Cf.H.P.n;
+else
+    cs.seg = NIRS.Cs.temp.segR;
+    cs.Pn = NIRS.Cs.temp.P_segR.n;
 end
+
+NIRS.Cs.mcs{cs_n,1} = cs;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %ATTENTION ON DOIT VERROUILLER POUR NE PAS CREER DEUX SIMS AVEC LE MEME NOM
-NIRS.Cs.mcs{cs_n,1} = cs;
 NIRS.Cs.n{cs_n,1} = job.MC_nam;
 save(job.NIRSmat{1,1},'NIRS');
 
@@ -65,13 +68,12 @@ Y_rmiv = spm_read_vols(V_rmiv);
 
 if job.MC_CUDAchoice==1
     Y_rmiv=permute(Y_rmiv,[2,1,3]);
+elseif job.MC_CUDAchoice==3
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % IL FAUT FAIRE DEUX CHEMINS CAR POUR UN IL FAUT INVERSER MAIS PAS POUR L AUTRE
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 end
 Y8_rmiv = uint8(Y_rmiv);% en fait on est dans des voxels de 1 mm d'ou le racourci
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% ATTENTION SI CAS 3 ALORS IL FAUT FAIRE DEUX CHEMINS CAR POUR UN IL FAUT
-% INVERSER MAIS PAS POUR L AUTRE
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 load(job.NIRSmat{1,1});
 cs = NIRS.Cs.mcs{cs_n,:};
@@ -86,6 +88,9 @@ dim_rmiv = ceil((dim-1) * abs(scalings));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % ATTENTION, ON DOIT NE GARDER QUE LES BONS P..............................
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Pn = cs.Pn;
+
+
 NS = NIRS.Cf.H.S.N;
 ND = NIRS.Cf.H.D.N;
 NQ = NIRS.Cf.H.Q.N;

@@ -2029,13 +2029,33 @@ end
 %Configure input files for Monte Carlo simulation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-image_in         = cfg_files; %Select MC segmented volume for this subject 
-image_in.name    = 'MC segmented volume'; % The displayed name
-image_in.tag     = 'image_in';       %file names
-image_in.filter = 'image';
-image_in.ufilter = '.nii';    
-image_in.num     = [1 1];     % Number of inputs required 
-image_in.help    = {'Select MC segmented volume for this subject.'}; % help text displayed
+latest_mcim         = cfg_entry;
+latest_mcim.tag     = 'latest_mcim';
+latest_mcim.name    = 'Latest ROI';
+latest_mcim.val     = {'latestROI'}; 
+latest_mcim.help    = {'Latest ROI generated selected.'};
+
+mcim_in         = cfg_files; %Select MC segmented volume for this subject 
+mcim_in.name    = 'MC segmented volume'; % The displayed name
+mcim_in.tag     = 'mcim_in';       %file names
+mcim_in.filter = 'image';
+mcim_in.ufilter = '.nii';    
+mcim_in.num     = [1 1];     % Number of inputs required 
+mcim_in.def    = @(val)nirs_get_defaults('configMC1.image_in', val{:});
+mcim_in.help    = {'Select MC segmented volume for this subject.'}; % help text displayed
+
+% select_mcim         = cfg_branch;
+% select_mcim.tag     = 'select_mcim';
+% select_mcim.name    = 'Selected image';
+% select_mcim.val     = {mcim_in};
+% select_mcim.help    = {'Choose image.'};
+
+mcim_cfg           = cfg_choice;
+mcim_cfg.name      = 'Image';
+mcim_cfg.tag       = 'mcim_cfg';
+mcim_cfg.values    = {latest_mcim mcim_in};
+mcim_cfg.val       = {latest_mcim}; 
+mcim_cfg.help      = {'bla'}; 
 
 MC_CUDAchoice    = cfg_menu;
 MC_CUDAchoice.name   = 'Configuration file type';
@@ -2236,7 +2256,7 @@ MC_parameters.help = {'Parameters'};
 configMC1      = cfg_exbranch;       
 configMC1.name = 'Configure Monte Carlo inputs';            
 configMC1.tag  = 'configMC1'; 
-configMC1.val  = {MC_nam NIRSmat NewDirCopyNIRS image_in MC_CUDAchoice MC_configdir MC_parameters};    
+configMC1.val  = {MC_nam NIRSmat NewDirCopyNIRS mcim_cfg MC_CUDAchoice MC_configdir MC_parameters};    
 configMC1.prog = @nirs_run_configMC;  
 configMC1.vout = @nirs_cfg_vout_configMC; 
 configMC1.help = {'Generate configuration input files for Monte Carlo simulation.'};
