@@ -61,6 +61,18 @@ switch cimethod
             level = graythresh(squeeze(Y(i,:,:)));
             Y(i,:,:) = im2bw(squeeze(Y(i,:,:)),level);
         end
+        
+    case 4%median filter then otsu in different orientations...
+        % extreme smoothing
+        for i=1:size(Y,2)
+            Y(:,i,:) = medfilt2(squeeze(Y(:,i,:)));
+        end
+        
+        for i=1:size(Y,1)
+            Y(i,:,:) = medfilt2(squeeze(Y(i,:,:)));
+            level = graythresh(squeeze(Y(i,:,:)));
+            Y(i,:,:) = im2bw(squeeze(Y(i,:,:)),level);
+        end
 end
 
 V_processed = struct('fname',fullfile(dir,['processed_',name,'.nii']),...

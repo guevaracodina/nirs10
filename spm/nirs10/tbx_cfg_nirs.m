@@ -985,8 +985,8 @@ output_prefix.help = {'You can choose to give a particular prefix to the ',...
 sorting_method        = cfg_menu;
 sorting_method.tag    = 'sorting_method';
 sorting_method.name   = 'Sorting method';
-sorting_method.labels = {'Median Filter','Opening','Gaussian Filter and Dilatation','Otsu'};
-sorting_method.values = {0,1,2,3};
+sorting_method.labels = {'Median Filter','Opening','Gaussian Filter and Dilatation','Otsu','Median Filter and orthogonal Otsu'};
+sorting_method.values = {0,1,2,3,4};
 sorting_method.help   = {
     'NewSegment output images must be processed before pursuing segmentation : '
     '- (basic processing) Median Filter'
