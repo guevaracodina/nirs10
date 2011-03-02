@@ -204,7 +204,7 @@ for Idx=1:size(job.NIRSmat,1)
                 NIRS.Dt.ana.rend = rend_file;
                 
                 %Viewer from NIRS_SPM
-                viewer_ON = 1;
+                viewer_ON = 0;
                 if viewer_ON
                     %rendered_MNI = varargin{1};
                     Nch = size(rendered_MNI{1}.rchn,1);
