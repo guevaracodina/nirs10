@@ -105,17 +105,7 @@ switch Action
         bb(1,3) = min(min(Pfp_roi_rmv(3,:))-marge,bb(1,3));
         bb(2,3) = max(max(Pfp_roi_rmv(3,:))+marge,bb(2,3));  
         bb = round(bb);
-        
-        if isfield(NIRS.Cs,'temp'), clear NIRS.Cs.temp; end
-        NIRS.Cs.temp.Pkpt = Pkpt;
-        NIRS.Cs.temp.NSkpt = size(Skpt,2);
-        NIRS.Cs.temp.NDkpt = size(Dkpt,2);
-        NIRS.Cs.temp.Pfp_roi_rmv = Pfp_roi_rmv;
-        NIRS.Cs.temp.Pp_roi_rmm = Pp_roi_rmm;
-        NIRS.Cs.temp.Pp_roi_c1_rmm = Pp_roi_c1_rmm;        
-        NIRS.Cs.temp.segR = fullfile(dir,[output_prefix,name,'.nii']);
-        save(NIRSmat,'NIRS');
-        
+                
         % the size of the plotted image can be bigger than the size read in
         % the header, in such case the value kept is the one of header
         for ib =1:3
@@ -127,6 +117,24 @@ switch Action
         %  mat_roi2raw is the transformation matrix from the voxel space
         %  of the ROI to the voxel space of the raw image
         mat_roi2raw = eye(4) + [zeros(4,3) [bb(1,:)';0]];
+        
+        % Sources and detectors positions must be updated also
+        for i=1:size(Pkpt,2)
+        PfpR_roi_rmv(:,i) = [Pfp_roi_rmv(:,i);1] - mat_roi2raw(:,4);
+        PpR_roi_rmm(:,i) = mat_roi2raw\[Pp_roi_rmm(:,i);1];
+        PpR_roi_c1_rmm(:,i) = mat_roi2raw\[Pp_roi_c1_rmm(:,i);1];
+        end
+        %then saved
+        if ~isfield(NIRS,'Cs'), NIRS.Cs={}; end
+        if isfield(NIRS.Cs,'temp'), clear NIRS.Cs.temp; end
+        NIRS.Cs.temp.Pkpt = Pkpt;
+        NIRS.Cs.temp.NSkpt = size(Skpt,2);
+        NIRS.Cs.temp.NDkpt = size(Dkpt,2);
+        NIRS.Cs.temp.Pfp_roi_rmv = Pfp_roi_rmv;
+        NIRS.Cs.temp.Pp_roi_rmm = Pp_roi_rmm;
+        NIRS.Cs.temp.Pp_roi_c1_rmm = Pp_roi_c1_rmm;        
+        NIRS.Cs.temp.segR = fullfile(dir,[output_prefix,name,'.nii']);
+        save(NIRSmat,'NIRS');
         
         V_roi.dim = [bb(2,1)-bb(1,1)+1 bb(2,2)-bb(1,2)+1 bb(2,3)-bb(1,3)+1];
         % V_roi.mat is the mat from voxel ROI to the raw image space in mm

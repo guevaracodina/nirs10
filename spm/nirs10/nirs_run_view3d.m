@@ -85,7 +85,7 @@ for Pi = 1:NP
     xfp = Pfp_rmv(2,Pi);
     yfp = Pfp_rmv(1,Pi);
     zfp = Pfp_rmv(3,Pi);
-    text(xfp,yfp,zfp,'X','FontWeight','bold','Color',list{1,1});
+    text(xfp,yfp,zfp,'X','FontWeight','bold','Color','black');%list{1,1}
     
     plot3([Pp_c1_rmv(2,Pi),Pp_rmv(2,Pi)],...
         [Pp_c1_rmv(1,Pi),Pp_rmv(1,Pi)],...
