@@ -7,7 +7,6 @@ function out = nirs_run_liom_contrast(job)
 % 5: 'frontal'
 % 6: 'occipital'
 
-%views_to_run = [4 3]; %[4 3];
 views_to_run = job.view;
 contrast_data = job.contrast_data;
 
@@ -16,6 +15,33 @@ try
     p_value = job.contrast_p_value;
 catch
     p_value = 0.05;
+end
+try
+    cbar.c_min = job.override_colorbar.colorbar_override.colorbar_min;
+    cbar.c_max = job.override_colorbar.colorbar_override.colorbar_max;
+    cbar.colorbar_override = 1;
+catch
+    cbar.colorbar_override = 0;
+end
+try 
+    switch job.figures_visible
+        case 1
+            cbar.visible = 'on';
+        case 0
+            cbar.visible = 'off';
+    end
+catch
+    cbar.visible = 'off';
+end
+try 
+    GInv = job.GenerateInverted;
+catch
+    GInv = 1;
+end
+try 
+    GFIS = job.GroupFiguresIntoSubplots;
+catch
+    GFIS = 1;
 end
 %Booleans to choose which figures to write to disk, if any
 switch job.contrast_figures
@@ -45,8 +71,15 @@ for Idx=1:size(job.NIRSmat,1)
         load(job.NIRSmat{Idx,1});
         NC = NIRS.Cf.H.C.N;
         %load topographic information (formerly known as preproc_info)
-        fname_ch = NIRS.Dt.ana.rend;
-        load(fname_ch);
+        try
+            fname_ch = job.TopoData{1};
+            load(fname_ch);
+            NIRS.Dt.ana.rend = fname_ch;
+        catch
+            fname_ch = NIRS.Dt.ana.rend;
+            load(fname_ch);
+        end
+            
         %load SPM - first GLM - might want to generalize 
         dir1 = NIRS.SPM{1};
         load(fullfile(dir1,'SPM.mat'));
@@ -103,7 +136,8 @@ for Idx=1:size(job.NIRSmat,1)
                     %contrast_name{2} = 'n1'; 
                     %2nd Volterra kernel
                     if SPM.job.volt > 1
-                        if nr > 4
+                        if nr > 5 %Careful, this might not be the correct number
+                            %if there are more confounding regressors
                             %assume 2 stimuli - only take the first one
                             contrast{2} = [0 0 1 zeros(1,nr-3)];
                             contrast_name{2} = '2';
@@ -112,6 +146,17 @@ for Idx=1:size(job.NIRSmat,1)
                             contrast{2} = [0 1 zeros(1,nr-2)];
                             contrast_name{2} = '2';
                         end
+                    end
+                    if SPM.job.volt == 3
+                        if nr > 5
+                            %assume 2 stimuli - only take the first one
+                            contrast{3} = [0 0 0 0 0 0 1 zeros(1,nr-7)];
+                            contrast_name{3} = '3';
+                        else
+                            %assume only 1 stimulus
+                            contrast{3} = [0 0 1 zeros(1,nr-3)];
+                            contrast_name{3} = '3';
+                        end 
                     end
                 else
                     %user specified contrast specification
@@ -152,6 +197,31 @@ for Idx=1:size(job.NIRSmat,1)
                     try
                         ch_HbT = NC+index_ch;
                     end
+                    nC = length(xCon);
+                    if GFIS                      
+                        fh0Pt = figure('Visible',cbar.visible,'Name',['A_tube_' ...
+                            num2str(p_value) '_S' int2str(f1) '_Pos'],'NumberTitle','off');
+                        %subplot(fh0Pt,nC,3,1);
+                        fh0Pu = figure('Visible',cbar.visible,'Name',['A_unc_' ...
+                            num2str(p_value) '_S' int2str(f1) '_Pos'],'NumberTitle','off');
+                        %subplot(fh0Pu,nC,3,1);
+                        if GInv
+                            fh0Nt = figure('Visible',cbar.visible,'Name',['A_tube_' ...
+                                num2str(p_value) '_S' int2str(f1) '_Neg'],'NumberTitle','off');
+                            %subplot(fh0Nt,nC,3,1);
+                            fh0Nu = figure('Visible',cbar.visible,'Name',['A_unc_' ...
+                                num2str(p_value) '_S' int2str(f1) '_Neg'],'NumberTitle','off');
+                            %subplot(fh0Nu,nC,3,1);
+                        else
+                            fh0Nt = [];
+                            fh0Nu = [];
+                        end
+                    else %not used
+                        fh0Pt = [];
+                        fh0Pu = [];
+                        fh0Nt = [];
+                        fh0Nu = [];
+                    end
                     try
                         %for NIRS_SPM method
                         var = SPM.xXn{f1}.ResSS./SPM.xXn{f1}.trRV; 
@@ -161,9 +231,8 @@ for Idx=1:size(job.NIRSmat,1)
                         %for WLS and BGLM methods
                         corr_beta = SPM.xXn{f1}.Bvar;
                         %will not work as we don't have var = ResSS/trRV
-                    end
+                    end                                        
                     %GLM estimates - which beta though???
-
                     beta_tmp = SPM.xXn{f1}.beta(:, ch_HbO);
                     beta_HbO = beta_tmp(:); %taken as one vector
                     beta_tmp = SPM.xXn{f1}.beta(:, ch_HbR);
@@ -178,7 +247,6 @@ for Idx=1:size(job.NIRSmat,1)
                     erdf = SPM.xXn{f1}.erdf;
                     %HbO
                     %Note that var(ch_HbO) depends on HbO vs HbR
-
                     [cov_beta_r B Bx By rmask cmask] = interpolation_kernel(...
                         corr_beta,length(ch_HbO),mtx_var_HbO,s1,s2,rchn,cchn);
 
@@ -186,8 +254,10 @@ for Idx=1:size(job.NIRSmat,1)
                         loop_contrasts(xCon,beta_HbO,corr_beta,cov_beta_r,...
                         mtx_var_HbO,B,Bx,By,rmask,cmask,s1,s2);
                     if gen_fig || gen_tiff
-                        interpolated_maps(xCon,sum_kappa,c_interp_beta,c_cov_interp_beta,...
-                            s1,s2,brain,spec_hemi,f1,dir1,erdf,p_value,'HbO',gen_fig,gen_tiff);
+                        [fh0Pt,fh0Pu,fh0Nt,fh0Nu] = interpolated_maps(...
+                            xCon,sum_kappa,c_interp_beta,c_cov_interp_beta,...
+                            s1,s2,brain,spec_hemi,f1,dir1,erdf,p_value,'HbO',gen_fig,gen_tiff,cbar,GInv,...
+                            GFIS,fh0Pt,fh0Pu,fh0Nt,fh0Nu);
                     end
                     TOPO.v{side_hemi}.s{f1}.hb{1}.sum_kappa = sum_kappa;
                     TOPO.v{side_hemi}.s{f1}.hb{1}.c_interp_beta = c_interp_beta;
@@ -201,8 +271,10 @@ for Idx=1:size(job.NIRSmat,1)
                         loop_contrasts(xCon,beta_HbR,corr_beta,cov_beta_r,...
                         mtx_var_HbR,B,Bx,By,rmask,cmask,s1,s2);
                     if gen_fig || gen_tiff
-                        interpolated_maps(xCon,sum_kappa,c_interp_beta,c_cov_interp_beta,...
-                            s1,s2,brain,spec_hemi,f1,dir1,erdf,p_value,'HbR',gen_fig,gen_tiff);
+                        [fh0Pt,fh0Pu,fh0Nt,fh0Nu] = interpolated_maps(...
+                            xCon,sum_kappa,c_interp_beta,c_cov_interp_beta,...
+                            s1,s2,brain,spec_hemi,f1,dir1,erdf,p_value,'HbR',gen_fig,gen_tiff,cbar,GInv,...
+                            GFIS,fh0Pt,fh0Pu,fh0Nt,fh0Nu);
                     end
                     TOPO.v{side_hemi}.s{f1}.hb{2}.sum_kappa = sum_kappa;
                     TOPO.v{side_hemi}.s{f1}.hb{2}.c_interp_beta = c_interp_beta;
@@ -217,12 +289,22 @@ for Idx=1:size(job.NIRSmat,1)
                             loop_contrasts(xCon,beta_HbT,corr_beta,cov_beta_r,...
                             mtx_var_HbT,B,Bx,By,rmask,cmask,s1,s2);
                         if gen_fig || gen_tiff
-                            interpolated_maps(xCon,sum_kappa,c_interp_beta,c_cov_interp_beta,...
-                                s1,s2,brain,spec_hemi,f1,dir1,erdf,p_value,'HbT',gen_fig,gen_tiff);
+                            [fh0Pt,fh0Pu,fh0Nt,fh0Nu] = interpolated_maps(...
+                                xCon,sum_kappa,c_interp_beta,c_cov_interp_beta,...
+                                s1,s2,brain,spec_hemi,f1,dir1,erdf,p_value,'HbT',gen_fig,gen_tiff,cbar,GInv,...
+                                GFIS,fh0Pt,fh0Pu,fh0Nt,fh0Nu);
                         end
                         TOPO.v{side_hemi}.s{f1}.hb{3}.sum_kappa = sum_kappa;
                         TOPO.v{side_hemi}.s{f1}.hb{3}.c_interp_beta = c_interp_beta;
                         TOPO.v{side_hemi}.s{f1}.hb{3}.c_cov_interp_beta = c_cov_interp_beta;   
+                    end
+                    if GFIS 
+                        save_session_figures(fh0Pt,gen_fig,gen_tiff,p_value,'Pos',dir1,spec_hemi,cbar,'tube',f1);
+                        save_session_figures(fh0Pu,gen_fig,gen_tiff,p_value,'Pos',dir1,spec_hemi,cbar,'unc',f1);
+                        if GInv
+                            save_session_figures(fh0Nt,gen_fig,gen_tiff,p_value,'Neg',dir1,spec_hemi,cbar,'tube',f1);
+                            save_session_figures(fh0Nu,gen_fig,gen_tiff,p_value,'Neg',dir1,spec_hemi,cbar,'unc',f1);
+                        end
                     end
                 end %end for f1
                 TOPO.v{side_hemi}.s1 = s1; %sizes of topographic projection
@@ -284,13 +366,13 @@ function [sum_kappa c_interp_beta c_cov_interp_beta] =...
 %F-contrasts?
 rmask_vector = rmask{1};
 cmask_vector = cmask{1};
-nCon = size(xCon,2);
+nC = size(xCon,2);
 nm = length(rmask_vector);
 %preallocate
-sum_kappa = zeros(nCon,1);
-kappa = zeros(nCon,s1,s2);
-c_interp_beta = zeros(nCon,s1,s2);
-c_cov_interp_beta = zeros(nCon,s1,s2);
+sum_kappa = zeros(nC,1);
+kappa = zeros(nC,s1,s2);
+c_interp_beta = zeros(nC,s1,s2);
+c_cov_interp_beta = zeros(nC,s1,s2);
 sz_xCon  = size(xCon(1).c,1);
 % B2 = zeros(nch, 1);
 % B2x = zeros(nch, 1);
@@ -306,13 +388,13 @@ for kk = 1:nm
     B3x = kron(B2x, tmp);
     B3y = kron(B2y, tmp);
     B3t = kron(B2', tmp);
-    for Ic = 1:nCon
+    for c1 = 1:nC
         %this is the same for HbO and HbR
-        c_corr_beta = xCon(Ic).c' * corr_beta * xCon(Ic).c; 
+        c_corr_beta = xCon(c1).c' * corr_beta * xCon(c1).c; 
         %this is different for HbO and HbR
-        P = cov_beta_r * (B3* xCon(Ic).c);
-        Px = cov_beta_r * (B3x * xCon(Ic).c);
-        Py = cov_beta_r * (B3y * xCon(Ic).c);
+        P = cov_beta_r * (B3* xCon(c1).c);
+        Px = cov_beta_r * (B3x * xCon(c1).c);
+        Py = cov_beta_r * (B3y * xCon(c1).c);
         tmp_1 = P'*P; tmp_2 = tmp_1^(-1/2); tmp_3 = tmp_2^3; 
         u_derx = Px*tmp_2 - (P*(P'*Px))*tmp_3;
         u_dery = Py*tmp_2 - (P*(P'*Py))*tmp_3;
@@ -320,11 +402,11 @@ for kk = 1:nm
         %and c_cov_interp_beta
         
         %Positive contrasts
-        kappa(Ic,rmask_vector(kk), cmask_vector(kk)) =  ...
+        kappa(c1,rmask_vector(kk), cmask_vector(kk)) =  ...
            sqrt(abs(det([u_derx'*u_derx u_derx'*u_dery; u_dery'*u_derx u_dery'*u_dery])));
-        c_interp_beta(Ic,rmask_vector(kk), cmask_vector(kk)) = ...
-                (xCon(Ic).c' * B3t) * beta;
-        c_cov_interp_beta(Ic,rmask_vector(kk), cmask_vector(kk)) = ...
+        c_interp_beta(c1,rmask_vector(kk), cmask_vector(kk)) = ...
+                (xCon(c1).c' * B3t) * beta;
+        c_cov_interp_beta(c1,rmask_vector(kk), cmask_vector(kk)) = ...
                 (B2'*mtx_var*B2) * c_corr_beta;
            
         %%%%%%INSTEAD, JUST RECALL THAT ONLY c_interp_beta flips sign%%%%%    
@@ -333,60 +415,91 @@ for kk = 1:nm
         %tmp_1,2,3,4 are unchanged, u_derx, u_dery flip sign
         %kappa is unchanged, c_interp_beta flips sign
         %c_cov_interp_beta is unchanged
-% %         kappa(2*Ic,rmask_vector(kk), cmask_vector(kk)) = ...
-% %             kappa(2*Ic-1,rmask_vector(kk), cmask_vector(kk));
-% %         c_interp_beta(2*Ic,rmask_vector(kk), cmask_vector(kk)) = ...
-% %             -c_interp_beta(2*Ic-1,rmask_vector(kk), cmask_vector(kk));     
-% %         c_cov_interp_beta(2*Ic,rmask_vector(kk), cmask_vector(kk)) = ...
-% %             c_cov_interp_beta(2*Ic-1,rmask_vector(kk), cmask_vector(kk));    
+% %         kappa(2*c1,rmask_vector(kk), cmask_vector(kk)) = ...
+% %             kappa(2*c1-1,rmask_vector(kk), cmask_vector(kk));
+% %         c_interp_beta(2*c1,rmask_vector(kk), cmask_vector(kk)) = ...
+% %             -c_interp_beta(2*c1-1,rmask_vector(kk), cmask_vector(kk));     
+% %         c_cov_interp_beta(2*c1,rmask_vector(kk), cmask_vector(kk)) = ...
+% %             c_cov_interp_beta(2*c1-1,rmask_vector(kk), cmask_vector(kk));    
     end
 end
-for Ic = 1:nCon
-    tm = kappa(Ic,:,:);
-    sum_kappa(Ic) = sum(tm(:)); 
+for c1 = 1:nC
+    tm = kappa(c1,:,:);
+    sum_kappa(c1) = sum(tm(:)); 
 end
 end    
 
 
-function interpolated_maps(xCon,sum_kappa,c_interp_beta,c_cov_interp_beta,...
-    s1,s2,brain,spec_hemi,f1,pathn,erdf,p_value,hb,gen_fig,gen_tiff)
+function [fh0Pt,fh0Pu,fh0Nt,fh0Nu] = interpolated_maps(xCon,sum_kappa,c_interp_beta,c_cov_interp_beta,...
+    s1,s2,brain,spec_hemi,f1,pathn,erdf,p_value,hb,gen_fig,gen_tiff,cbar,GInv,...
+    GFIS,fh0Pt,fh0Pu,fh0Nt,fh0Nu)
 %loop over contrasts
-nCon = size(xCon,2);
-for Ic=1:nCon
-    index_mask = find(squeeze(c_cov_interp_beta(Ic,:,:)) ~= 0);
+nC = size(xCon,2);
+for c1=1:nC
+    index_mask = find(squeeze(c_cov_interp_beta(c1,:,:)) ~= 0);
     T_map = zeros(s1, s2);
-    T_map(index_mask) = squeeze(c_interp_beta(Ic,index_mask))./ ...
-        sqrt(squeeze(c_cov_interp_beta(Ic,index_mask)));
+    T_map(index_mask) = squeeze(c_interp_beta(c1,index_mask))./ ...
+        sqrt(squeeze(c_cov_interp_beta(c1,index_mask)));
     %names
-    contrast_info = [num2str(p_value) '_' spec_hemi '_' hb '_S' int2str(f1) '_Pos' xCon(Ic).n];
-    contrast_info_for_fig = [num2str(p_value) ' ' spec_hemi ' ' hb '_S' int2str(f1) ' Pos' xCon(Ic).n];
+    contrast_info = [num2str(p_value) '_' spec_hemi '_' hb '_S' int2str(f1) '_Pos' xCon(c1).n];
+    contrast_info_for_fig = [num2str(p_value) ' ' spec_hemi ' ' hb '_S' int2str(f1) ' Pos' xCon(c1).n];
     
     load Split
 %     %no threshold
 %     nirs_draw_figure(1,brain,T_map,contrast_info,...
-%         contrast_info_for_fig,split,pathn,erdf,sum_kappa(Ic),p_value,gen_fig,gen_tiff);
+%         contrast_info_for_fig,split,pathn,erdf,sum_kappa(c1),p_value,gen_fig,gen_tiff,cbar);
     %uncorrected
-    nirs_draw_figure(2,brain,T_map,contrast_info,...
-        contrast_info_for_fig,split,pathn,erdf,sum_kappa(Ic),p_value,gen_fig,gen_tiff);      
-    %tube
-    nirs_draw_figure(3,brain,T_map,contrast_info,...
-        contrast_info_for_fig,split,pathn,erdf,sum_kappa(Ic),p_value,gen_fig,gen_tiff); 
-    
+    if GInv || strcmp(hb,'HbO') || strcmp(hb,'HbT')
+        [fh1 ax1 hc1] = nirs_draw_figure(2,brain,T_map,contrast_info,...
+            contrast_info_for_fig,split,pathn,erdf,sum_kappa(c1),p_value,gen_fig,gen_tiff,cbar); 
+        if GFIS, [fh0Pu, fh0Nu] = nirs_copy_figure(fh0Pu,fh0Nu,c1,nC,hb,GInv,fh1,ax1,hc1,1,split); end
+        %tube
+        [fh1 ax1 hc1] = nirs_draw_figure(3,brain,T_map,contrast_info,...
+        contrast_info_for_fig,split,pathn,erdf,sum_kappa(c1),p_value,gen_fig,gen_tiff,cbar); 
+        if GFIS, [fh0Pt, fh0Nt] = nirs_copy_figure(fh0Pt,fh0Nt,c1,nC,hb,GInv,fh1,ax1,hc1,1,split); end
+    end
     %repeat for negative contrasts
     T_map = - T_map;
-    contrast_info = [num2str(p_value) '_' spec_hemi '_' hb '_S' int2str(f1) '_Neg' xCon(Ic).n];
-    contrast_info_for_fig = [num2str(p_value) ' ' spec_hemi ' ' hb '_S' int2str(f1) ' Neg' xCon(Ic).n];
+    contrast_info = [num2str(p_value) '_' spec_hemi '_' hb '_S' int2str(f1) '_Neg' xCon(c1).n];
+    contrast_info_for_fig = [num2str(p_value) ' ' spec_hemi ' ' hb '_S' int2str(f1) ' Neg' xCon(c1).n];
 
 %     %no threshold
 %     nirs_draw_figure(1,brain,T_map,contrast_info,...
-%         contrast_info_for_fig,split,pathn,erdf,sum_kappa(Ic),p_value,gen_fig,gen_tiff);
-    %uncorrected
-    nirs_draw_figure(2,brain,T_map,contrast_info,...
-        contrast_info_for_fig,split,pathn,erdf,sum_kappa(Ic),p_value,gen_fig,gen_tiff);      
-    %tube
-    nirs_draw_figure(3,brain,T_map,contrast_info,...
-        contrast_info_for_fig,split,pathn,erdf,sum_kappa(Ic),p_value,gen_fig,gen_tiff); 
-
+%         contrast_info_for_fig,split,pathn,erdf,sum_kappa(c1),p_value,gen_fig,gen_tiff,cbar);
+    if GInv || strcmp(hb,'HbR')
+        %uncorrected
+        [fh1 ax1 hc1] = nirs_draw_figure(2,brain,T_map,contrast_info,...
+            contrast_info_for_fig,split,pathn,erdf,sum_kappa(c1),p_value,gen_fig,gen_tiff,cbar);  
+        if GFIS, [fh0Pu, fh0Nu] = nirs_copy_figure(fh0Pu,fh0Nu,c1,nC,hb,GInv,fh1,ax1,hc1,0,split); end
+        %tube
+        [fh1 ax1 hc1] = nirs_draw_figure(3,brain,T_map,contrast_info,...
+            contrast_info_for_fig,split,pathn,erdf,sum_kappa(c1),p_value,gen_fig,gen_tiff,cbar); 
+        if GFIS, [fh0Pt, fh0Nt] = nirs_copy_figure(fh0Pt,fh0Nt,c1,nC,hb,GInv,fh1,ax1,hc1,0,split); end
+    end
 end
 end
 
+% figure(1);
+% ax1=axes('Parent',1);
+% plot(ax1,rand(100,1));
+% title(ax1,'some title');
+% xlabel(ax1,'time');
+% ylabel(ax1,'amplitude');
+% 
+% figure(2);
+% ax2=subplot(211);
+% copyobj(allchild(ax1),ax2);
+
+function save_session_figures(fh0,gen_fig,gen_tiff,p_value,Inv,dir1,spec_hemi,cbar,str_cor,f1) 
+filen1 = fullfile(dir1,[str_cor '_' num2str(p_value) '_' spec_hemi '_S' int2str(f1) '_' Inv '.fig']);
+if gen_fig
+    saveas(fh0,filen1,'fig');
+end
+if gen_tiff
+    filen2 = fullfile(dir1,['A_' str_cor '_' num2str(p_value) '_' spec_hemi '_S' int2str(f1) '_' Inv '.tiff']);
+    print(fh0, '-dtiffn', filen2);
+end
+if strcmp(cbar.visible, 'off')
+    try close(fh0); end
+end
+end

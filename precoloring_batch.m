@@ -55,47 +55,52 @@ switch SPM.xX.K.HParam.type
         %note NIRS_SPM has a catch if out of memory occurs (- deleted here)
 end
 
-%Difficulty with calculation of TrRV and especially TrRVRV is that the
-%nScan values that contribute to the traces are very badly distributed,
-%with a few very large values. Strategy is to calculate the values that
-%contribute to TrRV exactly, and since the indices where they occur will
-%be the same as for trRVRV, approximate trRVRV by those values.
+if SPM.generate_trRV
 
-%computation of var1 and var2 is fairly quick - actually, no: var1 takes
-%about 3.5 minutes. Why is it slower this time than in the earlier test?
-var1 = S * S';
-var2 = var1 - SPM.xX.xKXs.X * (SPM.xX.pKX * var1); % RV * e(kk)
-%var3 = var1*var2 is the long calculation - instead...
-%find extreme values (k2) of var2
-RVd = diag(var2);
-trRV = sum(RVd); %exact
-RVs = std(RVd);
-RVm = median(RVd);
-k2 = abs(RVd-RVm)>RVs; %exceeding one standard deviation 
-%largest contributions to var3
-var3e = var1 * var2(:,k2); %e for extreme
-var4e = var3e - SPM.xX.xKXs.X * (SPM.xX.pKX * var3e);
-RVRVe = diag(var4e(k2,:));
-%find typical value of RVRV contribution:
-sample_size = 100;
-var3t = var1 * var2(:,1:sample_size); %t for typical
-var4t = var3t - SPM.xX.xKXs.X * (SPM.xX.pKX * var3t);
-RVRVt = median(diag(var4t(1:sample_size,:))); %median is insensitive to extreme values
-%trRVRV approximated by sum of extreme values and contribution from typical
-%values
-trRVRV = sum(RVRVe) + RVRVt*(nScan-length(find(k2)));
+    %Difficulty with calculation of TrRV and especially TrRVRV is that the
+    %nScan values that contribute to the traces are very badly distributed,
+    %with a few very large values. Strategy is to calculate the values that
+    %contribute to TrRV exactly, and since the indices where they occur will
+    %be the same as for trRVRV, approximate trRVRV by those values.
 
-%In one example, "exact" calculation of trRV, trRVRV gave:
-% 341.25, 238.84
-%while truncation to 100 random samples gave
-% 334.19 , 202.19
-%and trunction to 1000 random samples gave
-% 339.53, 206.81
-%so the error is as much as 15%
+    %computation of var1 and var2 is fairly quick - actually, no: var1 takes
+    %about 3.5 minutes. Why is it slower this time than in the earlier test?
+    var1 = S * S';
+    var2 = var1 - SPM.xX.xKXs.X * (SPM.xX.pKX * var1); % RV * e(kk)
+    %var3 = var1*var2 is the long calculation - instead...
+    %find extreme values (k2) of var2
+    RVd = diag(var2);
+    trRV = sum(RVd); %exact
+    RVs = std(RVd);
+    RVm = median(RVd);
+    k2 = abs(RVd-RVm)>RVs; %exceeding one standard deviation 
+    %largest contributions to var3
+    var3e = var1 * var2(:,k2); %e for extreme
+    var4e = var3e - SPM.xX.xKXs.X * (SPM.xX.pKX * var3e);
+    RVRVe = diag(var4e(k2,:));
+    %find typical value of RVRV contribution:
+    sample_size = 100;
+    var3t = var1 * var2(:,1:sample_size); %t for typical
+    var4t = var3t - SPM.xX.xKXs.X * (SPM.xX.pKX * var3t);
+    RVRVt = median(diag(var4t(1:sample_size,:))); %median is insensitive to extreme values
+    %trRVRV approximated by sum of extreme values and contribution from typical
+    %values
+    trRVRV = sum(RVRVe) + RVRVt*(nScan-length(find(k2)));
 
+    %In one example, "exact" calculation of trRV, trRVRV gave:
+    % 341.25, 238.84
+    %while truncation to 100 random samples gave
+    % 334.19 , 202.19
+    %and trunction to 1000 random samples gave
+    % 339.53, 206.81
+    %so the error is as much as 15%
+else
+    trRV = 0;
+    trRVRV = 0;
+end
 SPM.xX.trRV = trRV; % <R'*y'*y*R>
 SPM.xX.trRVRV = trRVRV; %- Satterthwaite
-SPM.xX.erdf = trRV^2/trRVRV;
+try SPM.xX.erdf = trRV^2/trRVRV; end
 % SPM.xX.Bcov = SPM.xX.pKX*V*SPM.xX.pKX';
 SPM.xX.Bcov = (SPM.xX.pKX * S);
 SPM.xX.Bcov = SPM.xX.Bcov * SPM.xX.Bcov';

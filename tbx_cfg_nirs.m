@@ -1169,6 +1169,16 @@ anatT1_template.def = @(val)nirs_get_defaults('coregNIRS.coreg1.anatT1_template'
 anatT1_template.num     = [1 1];     % Number of inputs required 
 anatT1_template.help    = {'Select anatomical template image for this subject.'}; 
 
+fid_in_subject_MNI = cfg_menu;
+fid_in_subject_MNI.tag    = 'fid_in_subject_MNI';
+fid_in_subject_MNI.name   = 'Fiducials in subject MNI coordinates?';
+fid_in_subject_MNI.labels = {'Yes','No'};
+fid_in_subject_MNI.values = {1,0};
+fid_in_subject_MNI.def    = @(val)nirs_get_defaults('coregNIRS.coreg1.fid_in_subject_MNI', val{:});
+fid_in_subject_MNI.help   = {'Specify if coordinates of fiducials below are specified'
+    'in the subject or patient MNI coordinates. The default option is NO: the default values'
+    'are fiducial positions in normalized MNI coordinates of the SPM8 standard subject.'}';
+        
 %Atlas Normalized coordinates of fiducials
 nasion_wMNI         = cfg_entry; %nasion_wMNI
 nasion_wMNI.name    = 'Nasion';
@@ -1208,7 +1218,7 @@ coreg1      = cfg_exbranch;
 coreg1.name = 'NIRScoreg';             
 coreg1.tag  = 'coreg1'; 
 coreg1.val  = {NIRSmat DelPreviousData NewDirCopyNIRS anatT1 ...
-    anatT1_template segT1_4fit nasion_wMNI AL_wMNI AR_wMNI GenDataTopo};    
+    anatT1_template fid_in_subject_MNI nasion_wMNI AL_wMNI AR_wMNI GenDataTopo};    
 coreg1.prog = @nirs_run_coreg;  
 coreg1.vout = @nirs_cfg_vout_coreg; 
 coreg1.help = {'Automatic coregistration.'};
@@ -2626,9 +2636,10 @@ volt.help    = {
 }';
 volt.labels = {
                'Do not model Interactions'
-               'Model Interactions'
+               'Model Interactions (2nd Volterra)'
+               'Model 3rd Volterra'
 }';
-volt.values = {1 2};
+volt.values = {1 2 3};
 volt.val = {2};
 %volt.def = @(val)nirs_get_defaults('model_specify.volt', val{:}); 
 
@@ -2838,6 +2849,25 @@ hpf_butter_Off.name    = 'HP filter off';
 hpf_butter_Off.val     = {}; 
 hpf_butter_Off.help    = {'High pass filter turned off.'};
 
+generate_trRV      = cfg_menu;
+generate_trRV.tag  = 'generate_trRV';
+generate_trRV.name = 'Generate TrRV';
+generate_trRV.labels = {'Yes','No'};
+generate_trRV.values = {1,0};
+generate_trRV.val = {1};
+generate_trRV.help = {'Generate TrRV and TrRVRV - needed for interpolated maps.'
+    'Careful! Note that TrRV is required for the NIRS_SPM method, to calculate t-stats.'}';
+
+filter_design_matrix      = cfg_menu;
+filter_design_matrix.tag  = 'filter_design_matrix';
+filter_design_matrix.name = 'Filter the design matrix';
+filter_design_matrix.labels = {'Yes','No'};
+filter_design_matrix.values = {1,0};
+filter_design_matrix.val = {0};
+filter_design_matrix.help = {'Currently under testing. Potential problem:'
+    'introduces long range correlations in the design matrix that falsify'
+    'the calculation of the nubmer of degrees of freedom, and thus the covariance.'}';
+
 hpf_butter      = cfg_choice;
 hpf_butter.tag  = 'hpf_butter';
 hpf_butter.name = 'Butterworth High Pass Filter';
@@ -2854,7 +2884,7 @@ wls_bglm_specify.name = 'LIOM GLM Specification';
 wls_bglm_specify.tag  = 'wls_bglm_specify'; 
 wls_bglm_specify.val  = {NIRSmat dir1 subj units time_res derivs ...
     volt GLM_include_cardiac GLM_include_Mayer GenerateHbT flag_window ...
-    channel_pca hpf_butter lpf_butter...
+    channel_pca hpf_butter lpf_butter generate_trRV filter_design_matrix ...
      wls_or_bglm LiomDeleteLarge}; 
 wls_bglm_specify.prog = @nirs_run_wls_bglm_specify;  
 wls_bglm_specify.vout = @nirs_cfg_vout_wls_bglm_specify; 
@@ -3108,11 +3138,72 @@ contrast_figures.help = {'Generate contrast figures. '
     'Note .fig colorbar is incorrect - it is not saved properly by Matlab.'
     'Use .tiff to view colorbar for t-stat.'}';
 
+figures_visible      = cfg_menu;
+figures_visible.tag  = 'figures_visible';
+figures_visible.name = 'Make figures visible';
+figures_visible.labels = {'Yes','No'};
+figures_visible.values = {1,0};
+figures_visible.val = {0};
+figures_visible.help = {'Make figures visible during processing.'}';
+
+colorbar_max         = cfg_entry; 
+colorbar_max.name    = 'Colorbar maximum value';
+colorbar_max.tag     = 'colorbar_max';       
+colorbar_max.strtype = 'r';
+colorbar_max.num     = [1 1];
+colorbar_max.val     = {5};
+colorbar_max.help    = {'Enter maximum value for colorbar'}; 
+
+colorbar_min         = cfg_entry; 
+colorbar_min.name    = 'Colorbar minimum value';
+colorbar_min.tag     = 'colorbar_min';       
+colorbar_min.strtype = 'r';
+colorbar_min.num     = [1 1];
+colorbar_min.val     = {2};
+colorbar_min.help    = {'Enter minimum value for colorbar'}; 
+
+colorbar_override      = cfg_branch;
+colorbar_override.name      = 'Override colorbar';
+colorbar_override.tag       = 'colorbar_override';
+colorbar_override.val       = {colorbar_min colorbar_max}; 
+colorbar_override.help      = {'Override colorbar.'};
+
+colorbar_default      = cfg_branch;
+colorbar_default.name      = 'Default colorbar';
+colorbar_default.tag       = 'colorbar_default';
+colorbar_default.val       = {}; 
+colorbar_default.help      = {'Default colorbar.'};
+
+override_colorbar           = cfg_choice;
+override_colorbar.name      = 'Override colorbar';
+override_colorbar.tag       = 'override_colorbar';
+override_colorbar.values    = {colorbar_default colorbar_override};
+override_colorbar.val       = {colorbar_default}; 
+override_colorbar.help      = {'Override default treatment of colorbar.'
+    'User can then specify maximum and minimum values for the colorbar.'}';
+
+GenerateInverted      = cfg_menu;
+GenerateInverted.tag  = 'GenerateInverted';
+GenerateInverted.name = 'Generate Inverted Responses';
+GenerateInverted.labels = {'Yes','No'};
+GenerateInverted.values = {1,0};
+GenerateInverted.val = {1};
+GenerateInverted.help = {'Generate contrasts for inverted responses.'};
+
+GroupFiguresIntoSubplots      = cfg_menu;
+GroupFiguresIntoSubplots.tag  = 'GroupFiguresIntoSubplots';
+GroupFiguresIntoSubplots.name = 'Group Figures Into Subplots';
+GroupFiguresIntoSubplots.labels = {'Yes','No'};
+GroupFiguresIntoSubplots.values = {1,0};
+GroupFiguresIntoSubplots.val = {1};
+GroupFiguresIntoSubplots.help = {'Group Figures Into Subplots.'};
+
 % Executable Branch
 liom_contrast      = cfg_exbranch;      
 liom_contrast.name = 'Liom Contrast Calculations';            
 liom_contrast.tag  = 'liom_contrast';
-liom_contrast.val  = {NIRSmat view liom_contrast_struct contrast_p_value contrast_figures}; 
+liom_contrast.val  = {NIRSmat view liom_contrast_struct GenerateInverted contrast_p_value ...
+    contrast_figures override_colorbar figures_visible GroupFiguresIntoSubplots TopoData}; 
 liom_contrast.prog = @nirs_run_liom_contrast;  
 liom_contrast.vout = @nirs_cfg_vout_liom_contrast; 
 liom_contrast.help = {'Liom Contrast Calculations.'};
@@ -3192,7 +3283,8 @@ FFX_or_RFX.help = {'Use fixed effects (FFX) for group of sessions (intra-subject
 liom_group      = cfg_exbranch;       
 liom_group.name = 'Liom Group Model Estimation';             
 liom_group.tag  = 'liom_group'; 
-liom_group.val  = {out_dir NIRSmat FFX_or_RFX session_number contrast_figures contrast_p_value}; 
+liom_group.val  = {NIRSmat FFX_or_RFX contrast_figures contrast_p_value ...
+        GenerateInverted override_colorbar figures_visible GroupFiguresIntoSubplots}; 
 liom_group.prog = @nirs_run_liom_group;  
 liom_group.vout = @nirs_cfg_vout_liom_group; 
 liom_group.help = {'Liom Group level model estimation.'};
@@ -3686,7 +3778,7 @@ nirs10        = cfg_choice;
 nirs10.name   = 'nirs10';
 nirs10.tag    = 'nirs10'; %Careful, this tag nirs10 must be the same as
 %the name of the toolbox and when called by spm_jobman in nirs10.m
-nirs10.values = {readNIRS readOnsets preprocANAT coregNIRS preprocessNIRS ...
+nirs10.values = {readNIRS readOnsets preprocessNIRS preprocANAT coregNIRS ...
     configMC1 runMC1 makesens1 model_reconstruct model_specify ...
-    model_estimate model_display NIRS_HDM CRIUGM}; 
+    model_estimate NIRS_HDM CRIUGM}; %model_display
 end

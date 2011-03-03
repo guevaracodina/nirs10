@@ -125,7 +125,13 @@ for Idx=1:size(job.NIRSmat,1)
             %negative sign so that an increase in chromophore
             %concentration corresponds to a decrease in intensity due
             %to light absorption
-            d = -1e6 * real(log(d));
+            if markers_available
+                for i1 =1:length(si)
+                    d(:,si(i1):ei(i1)) = -1e6 * real(log(d(:,si(i1):ei(i1))));
+                end
+            else
+                d = -1e6 * real(log(d));
+            end
             
             if LPFon && (DS_When == 2)
                 [NIRS d bpi bpd] = NIRS_SPM_filter(NIRS,K,d,DSon,...
