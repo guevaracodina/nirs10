@@ -7,12 +7,16 @@ try
 catch
     flag_window = 0;
 end
-NIRS.multi_reg = job.subj.multi_reg;
-%group_sessions = job.group_sessions;
-%NIRS.onset_files = job.subj.input_onsets;
-
-%Begin by specifying filters, though we recommend filtering earlier,
-%at the preprocessing stage, but maintained for convenience
+try 
+    generate_trRV = job.generate_trRV;
+catch
+    generate_trRV = 1;
+end
+try 
+    filter_design_matrix = job.filter_design_matrix;
+catch
+    filter_design_matrix = 0;
+end
 
 %Specify WLS or BGLM parameters
 meth0=job.wls_or_bglm;
@@ -368,7 +372,10 @@ for Idx=1:size(job.NIRSmat,1)
                 for i = 1:length(Fc)
                     X(:,Fc(i).i) = spm_orth(X(:,Fc(i).i));
                 end
-
+                %To orthogonalize 2nd Volterra:
+                %tX = spm_orth(X(:,1:2));
+                %X = [tX X(:,3:end)];
+                
                 % get user specified regressors
                 %================================
                 try
@@ -570,6 +577,8 @@ for Idx=1:size(job.NIRSmat,1)
         %for the purpose of GLM estimation, we do not care if a channel
         %is HbO or HbR, so we can loop over all the channels
         SPM.xY.P = NIRS.Dt.fir.pp(lst).p; 
+        SPM.generate_trRV = generate_trRV;
+        SPM.filter_design_matrix = filter_design_matrix;
         SPM.job = job;
         save(fullfile(spm_dir,'SPM.mat'),'SPM');
         %store path to SPM, after possible prior GLMs 
@@ -585,7 +594,6 @@ for Idx=1:size(job.NIRSmat,1)
     %NIRS is now modified - it includes a link to the GLM   
     newNIRSlocation = fullfile(spm_dir,'NIRS.mat');
     save(newNIRSlocation,'NIRS');
-    job.NIRSmat{Idx,1} = newNIRSlocation;
-    %save(job.NIRSmat{Idx,1},'NIRS');    
+    job.NIRSmat{Idx,1} = newNIRSlocation;   
 end
 out.NIRSmat = job.NIRSmat;

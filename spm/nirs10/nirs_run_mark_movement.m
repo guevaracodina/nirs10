@@ -192,7 +192,10 @@ for Idx=1:size(job.NIRSmat,1)
             NIRS.Dt.fir.pp(lst+1).bpi{f,1} = bpi; %bad point indices
             NIRS.Dt.fir.pp(lst+1).bpd{f,1} = bpd; %bad point durations
             NIRS.Dt.fir.pp(lst+1).si{f,1} = si;
-            NIRS.Dt.fir.pp(lst+1).ei{f,1} = ei;            
+            NIRS.Dt.fir.pp(lst+1).ei{f,1} = ei; 
+            try
+                NIRS.Dt.fir.pp(lst+1).dur{f,1} = (ei-si)/fs;  
+            end
         end 
         %update NIRS matrix
         NIRS.Cf.H.C.N = length(first_k2);

@@ -87,14 +87,19 @@ for Idx=1:size(job.NIRSmat,1)
         %Hence the need to transpose our matrices of coordinates in NIRS.mat
         %Below: label with temp_ all the transposed coordinates to avoid confusion
         Q = (NIRS.Dt.ana.wT1.VG.mat/NIRS.Dt.ana.wT1.Affine)/NIRS.Dt.ana.wT1.VF.mat;
-        
-        NIRS.Cf.H.F.w.m.mm.p  = [job.nasion_wMNI' job.AL_wMNI' job.AR_wMNI'];
-        Fp_wmm = NIRS.Cf.H.F.w.m.mm.p;
-        %call temp_... all the transposed positions
-        temp_Fp_wmm = [Fp_wmm; [1 1 1]];
-        temp_Fp_rmm = Q\temp_Fp_wmm;
-        NIRS.Cf.H.F.r.m.mm.p = temp_Fp_rmm(1:3,:);
-        
+        %quick fix to use previously obtained coordinates in subject MNI
+        %coordinates
+        %fid_in_subject_MNI = 1;
+        if job.fid_in_subject_MNI
+            NIRS.Cf.H.F.r.m.mm.p  = [job.nasion_wMNI' job.AL_wMNI' job.AR_wMNI'];
+        else
+            NIRS.Cf.H.F.w.m.mm.p  = [job.nasion_wMNI' job.AL_wMNI' job.AR_wMNI'];       
+            Fp_wmm = NIRS.Cf.H.F.w.m.mm.p;
+            %call temp_... all the transposed positions
+            temp_Fp_wmm = [Fp_wmm; [1 1 1]];
+            temp_Fp_rmm = Q\temp_Fp_wmm;
+            NIRS.Cf.H.F.r.m.mm.p = temp_Fp_rmm(1:3,:);
+        end
         y = NIRS.Cf.H.F.r.m.mm.p;
         x = NIRS.Cf.H.F.r.o.mm.p;
         
@@ -174,6 +179,7 @@ for Idx=1:size(job.NIRSmat,1)
         
         %
         if job.GenDataTopo
+            [pth2,~,~] = fileparts(job.NIRSmat{Idx,1});
             [dir1,fil1,ext1] = fileparts(NIRS.Dt.ana.T1);
             fwT1 = fullfile(dir1,['w' fil1 ext1]);
             NIRS.Dt.ana.fwT1 = fwT1;
@@ -199,7 +205,7 @@ for Idx=1:size(job.NIRSmat,1)
                 for kk = 1:6
                     rendered_MNI{kk}.ren = rend{kk}.ren;
                 end
-                rend_file = fullfile(pth,'TopoData.mat');
+                rend_file = fullfile(pth2,'TopoData.mat');
                 save(rend_file, 'rendered_MNI');
                 NIRS.Dt.ana.rend = rend_file;
                 
@@ -240,51 +246,6 @@ for Idx=1:size(job.NIRSmat,1)
                             end
                         end
                     end
-                 end
-                    
-                    % %                     Nch = size(rendered_MNI{1}.rchn,1)/2;
-                    % %                     load Split
-                    % %                     figure;
-                    % %                     for kk = 1:6
-                    % %                         figure;
-                    % %                         brain = rend{kk}.ren;
-                    % %                         %brain = rendered_MNI{kk}.ren;
-                    % %                         brain = brain.* 0.5;
-                    % %                         sbar = linspace(0, 1, 128);
-                    % %                         sbrain = ((-sbar(1) + sbar(64))/(0.5)).* brain + sbar(1);
-                    % %                         sbrain(1,1) = 1;
-                    % % %                         switch kk
-                    % % %                             case 1
-                    % % %                                 axes(handles.axes_ventral_view);
-                    % % %                             case 2
-                    % % %                                 axes(handles.axes_dorsal_view);
-                    % % %                             case 3
-                    % % %                                 axes(handles.axes_lateral_view_right);
-                    % % %                             case 4
-                    % % %                                 axes(handles.axes_lateral_view_left);
-                    % % %                             case 5
-                    % % %                                 axes(handles.axes_frontal_view);
-                    % % %                             case 6
-                    % % %                                 axes(handles.axes_occipital_view);
-                    % % %                         end
-                    % %                         imagesc(sbrain);
-                    % %                         for jj = 1:Nch
-                    % %                             rchn = rendered_MNI{kk}.rchn(jj);
-                    % %                             cchn = rendered_MNI{kk}.cchn(jj);
-                    % %                             if rchn ~= -1 && cchn ~= -1 %% updated 2009-02-25
-                    % %                                 if rchn < 6 || cchn < 6
-                    % %                                     sbrain(rchn, cchn) = 0.67;
-                    % %                                 else
-                    % %                                     sbrain(rchn-5:rchn+5, cchn-5:cchn+5) = 0.67;
-                    % %                                     text(cchn, rchn, num2str(jj), 'color', 'r');
-                    % %                                 end
-                    % %                             end
-                    % %                         end
-                    % %                         imagesc(sbrain);
-                    % %                         colormap(split);
-                    % %                         axis image
-                    % %                         axis off
-                    % %                     end
 % %                 end
             catch
                 disp('Could not create TopoData.mat file');

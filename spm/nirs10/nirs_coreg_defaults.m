@@ -12,4 +12,4 @@ nirs10.coregNIRS.coreg1.nasion_wMNI = [0 84 -48];
 nirs10.coregNIRS.coreg1.AL_wMNI = [-83 -19 -38];
 nirs10.coregNIRS.coreg1.AR_wMNI = [ 83 -19 -38];
 nirs10.coregNIRS.coreg1.GenDataTopo = 1;
-
+nirs10.coregNIRS.coreg1.fid_in_subject_MNI = 0;
