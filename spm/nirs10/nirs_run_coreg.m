@@ -246,7 +246,7 @@ for Idx=1:size(job.NIRSmat,1)
                             end
                         end
                     end
-% %                 end
+                 end
             catch
                 disp('Could not create TopoData.mat file');
             end
