@@ -13,14 +13,19 @@ load(job.NIRSmat{1,1});
 % V = spm_vol(t1);
 f = job.outMCfiles;
 cs_dir =  fileparts(f{1,:});
-%%%%%%% il faut verrouiller le nom et le path choisi ou sinon changer la recuperation du nom de la simulation v
 cs_ldir = cs_dir(max(strfind(cs_dir,'\'))+9:end);
 
 ics =1;
-while isempty(strfind(cs_ldir,NIRS.Cs.n{ics,1})), ics =ics+1; end
+while ~strcmp(cs_ldir,NIRS.Cs.n{ics}) 
+    ics =ics+1; 
+end
 
-if NIRS.Cs.mcs{ics,1}.alg==1, Oe='.'; elseif NIRS.Cs.mcs{ics,1}.alg==2, Oe='.2pt'; end;
-seg = NIRS.Cs.mcs{ics,1}.seg;
+if NIRS.Cs.mcs{ics}.alg==1
+    Oe='.'; 
+elseif NIRS.Cs.mcs{ics}.alg==2
+    Oe='.2pt'; 
+end
+seg = NIRS.Cs.mcs{ics}.seg;
 V_seg = spm_vol(seg);
 
 wl = NIRS.Cf.dev.wl; %= [830 690];
