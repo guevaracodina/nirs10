@@ -73,8 +73,9 @@ switch Action
         % roi must contain the selected channels
         load(NIRSmat);
         %%% on sauve les fibres qui sont a la surface dans la ROI
-        NS = NIRS.Cf.H.S.N;       
+        NS = NIRS.Cf.H.S.N;
         Pfp_rmv = NIRS.Cf.H.P.r.m.vx.fp;
+        Pfp_rmm = NIRS.Cf.H.P.r.m.mm.fp;
         Pp_rmm = NIRS.Cf.H.P.r.m.mm.p;
         Pp_c1_rmm = NIRS.Cf.H.P.r.m.mm.c1.p;
         Cid = NIRS.Cf.H.C.id;
@@ -89,30 +90,30 @@ switch Action
         Skpt = unique(Cid(2,Ckpt));
         Dkpt = unique(Cid(3,Ckpt));
         Pkpt=[Skpt Dkpt+NS];
-        
-        Pfp_roi_rmv = zeros(3,size(Pkpt,2));
+
         for i=1:size(Pkpt,2)
+            Pfp_roi_rmm(:,i) = Pfp_rmm(:,Pkpt(i));
             Pfp_roi_rmv(:,i) = Pfp_rmv(:,Pkpt(i));
             Pp_roi_rmm(:,i) = Pp_rmm(:,Pkpt(i));
             Pp_roi_c1_rmm(:,i) = Pp_c1_rmm(:,Pkpt(i));
         end
-%         Pn_segR_fp_rmv =[];
+        %         Pn_segR_fp_rmv =[];
         marge =20;
         bb(1,1) = min(min(Pfp_roi_rmv(1,:))-marge,bb(1,1));
         bb(1,2) = min(min(Pfp_roi_rmv(2,:))-marge,bb(1,2));
         bb(2,1) = max(max(Pfp_roi_rmv(1,:))+marge,bb(2,1));
         bb(2,2) = max(max(Pfp_roi_rmv(2,:))+marge,bb(2,2));
         bb(1,3) = min(min(Pfp_roi_rmv(3,:))-marge,bb(1,3));
-        bb(2,3) = max(max(Pfp_roi_rmv(3,:))+marge,bb(2,3));  
+        bb(2,3) = max(max(Pfp_roi_rmv(3,:))+marge,bb(2,3));
         bb = round(bb);
-                
+        
         % the size of the plotted image can be bigger than the size read in
         % the header, in such case the value kept is the one of header
         for ib =1:3
             bb(1,ib) = max(1,bb(1,ib));
             bb(2,ib) = min(V.dim(ib),bb(2,ib));
         end
-               
+        
         % With resizing
         %  mat_roi2raw is the transformation matrix from the voxel space
         %  of the ROI to the voxel space of the raw image
@@ -120,9 +121,7 @@ switch Action
         
         % Sources and detectors positions must be updated also
         for i=1:size(Pkpt,2)
-        PfpR_roi_rmv(:,i) = [Pfp_roi_rmv(:,i);1] - mat_roi2raw(:,4);
-        PpR_roi_rmm(:,i) = mat_roi2raw\[Pp_roi_rmm(:,i);1];
-        PpR_roi_c1_rmm(:,i) = mat_roi2raw\[Pp_roi_c1_rmm(:,i);1];
+            PfpR_roi_rmv(:,i) = [Pfp_roi_rmv(:,i);1] - mat_roi2raw(:,4);
         end
         %then saved
         if ~isfield(NIRS,'Cs'), NIRS.Cs={}; end
@@ -130,9 +129,10 @@ switch Action
         NIRS.Cs.temp.Pkpt = Pkpt;
         NIRS.Cs.temp.NSkpt = size(Skpt,2);
         NIRS.Cs.temp.NDkpt = size(Dkpt,2);
-        NIRS.Cs.temp.Pfp_roi_rmv = Pfp_roi_rmv;
+        NIRS.Cs.temp.Pfp_roi_rmv = PfpR_roi_rmv(1:3,:);
+        NIRS.Cs.temp.Pfp_roi_rmm = Pfp_roi_rmm;
         NIRS.Cs.temp.Pp_roi_rmm = Pp_roi_rmm;
-        NIRS.Cs.temp.Pp_roi_c1_rmm = Pp_roi_c1_rmm;        
+        NIRS.Cs.temp.Pp_roi_c1_rmm = Pp_roi_c1_rmm;
         NIRS.Cs.temp.segR = fullfile(dir,[output_prefix,name,'.nii']);
         save(NIRSmat,'NIRS');
         
@@ -151,29 +151,29 @@ switch Action
         V_roi = spm_create_vol(V_roi);
         V_roi = spm_write_vol(V_roi, Y_roi);
         
-%         % rajout pour que tout roule...
-%         NIRS = [];
-%         load(NIRSmat);
-%         %%% on sauve les fibres qui sont a la surface dans la ROI
-%         NP = NIRS.Cf.H.P.N;
-%         Pfp_rmv = NIRS.Cf.H.P.r.m.vx.fp;
-%         %         Pfp_segR_rmv = [];
-%         Pn_segR_fp_rmv =[];
-%         for i=1:NP
-%             if (Pfp_rmv(1,i)>b(1,1) && Pfp_rmv(1,i)<b(2,1) &&...
-%                     Pfp_rmv(2,i)>b(1,2) && Pfp_rmv(2,i)<b(2,2) &&...
-%                     Pfp_rmv(3,i)>b(1,3) && Pfp_rmv(3,i)<b(2,3))
-%                 %                 Pfp_segR_rmv = [Pfp_segR_rmv Pfp_rmv(:,i)] ;
-%                 Pn_segR_fp_rmv = [Pn_segR_fp_rmv i];
-%             end
-%         end
+        %         % rajout pour que tout roule...
+        %         NIRS = [];
+        %         load(NIRSmat);
+        %         %%% on sauve les fibres qui sont a la surface dans la ROI
+        %         NP = NIRS.Cf.H.P.N;
+        %         Pfp_rmv = NIRS.Cf.H.P.r.m.vx.fp;
+        %         %         Pfp_segR_rmv = [];
+        %         Pn_segR_fp_rmv =[];
+        %         for i=1:NP
+        %             if (Pfp_rmv(1,i)>b(1,1) && Pfp_rmv(1,i)<b(2,1) &&...
+        %                     Pfp_rmv(2,i)>b(1,2) && Pfp_rmv(2,i)<b(2,2) &&...
+        %                     Pfp_rmv(3,i)>b(1,3) && Pfp_rmv(3,i)<b(2,3))
+        %                 %                 Pfp_segR_rmv = [Pfp_segR_rmv Pfp_rmv(:,i)] ;
+        %                 Pn_segR_fp_rmv = [Pn_segR_fp_rmv i];
+        %             end
+        %         end
         
-%         if isfield(NIRS.Cs,'temp'), clear NIRS.Cs.temp; end
-%         NIRS.Cs.temp.P_segR.n = Pn_segR_fp_rmv;
-%         %%% il va falloir avoir le choix pour la simulation qu'on fait
-%         %%% rouler ... donc NIRS.Cs.mcs(imcs).segR
-%         NIRS.Cs.temp.segR = fullfile(dir,[output_prefix,name,'.nii']);
-%         save(NIRSmat,'NIRS');
+        %         if isfield(NIRS.Cs,'temp'), clear NIRS.Cs.temp; end
+        %         NIRS.Cs.temp.P_segR.n = Pn_segR_fp_rmv;
+        %         %%% il va falloir avoir le choix pour la simulation qu'on fait
+        %         %%% rouler ... donc NIRS.Cs.mcs(imcs).segR
+        %         NIRS.Cs.temp.segR = fullfile(dir,[output_prefix,name,'.nii']);
+        %         save(NIRSmat,'NIRS');
         
         varargout{1} = V_roi;
         disp('Done    ''Build ROI''');
