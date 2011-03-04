@@ -45,7 +45,7 @@ for fi = 1:size(f,1)
         Sn_fi = str2double(fn(5:6));
 
         fid=fopen(f{fi,:},'rb');
-        ms = fread(fid,V_segR.dim(1)*V_segR.dim(2)*V_segR.dim(3),'single');
+        ms = fread(fid,V_segR.dim(1)*V_segR.dim(2)*V_segR.dim(3),'double');%'single');
         fclose(fid);
         
         [~,D_Sn] = find(Cid(2,:)== Sn_fi);% looking for detectors seeing current source
@@ -62,7 +62,7 @@ for fi = 1:size(f,1)
 %                     Cn_it = wl_Sn(c);
                     
                     fid=fopen(fullfile(cs_dir,[Dfn Oe]),'rb');
-                    md = fread(fid,V_segR.dim(1)*V_segR.dim(2)*V_segR.dim(3),'single');
+                    md = fread(fid,V_segR.dim(1)*V_segR.dim(2)*V_segR.dim(3),'double');%'single');
                     fclose(fid);
                     
                     %sens_sd = real(ms)/max(real(ms)).*real(md)/max(real(md)); %treated as long vectors
