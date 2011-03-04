@@ -2411,11 +2411,10 @@ end
 %Configuration: generate sensitivity matrix
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-outMCfiles      = cfg_files; %Select MC output files
-outMCfiles.name    = 'Select MC output files'; % The displayed name
-outMCfiles.tag     = 'outMCfiles';       %file names
-%outMCfiles.filter = '';
-%outMCfiles.ufilter = '^NIRS.mat$';    
+outMCfiles      = cfg_files;
+outMCfiles.name    = 'Select MC output files';
+outMCfiles.tag     = 'outMCfiles';
+outMCfiles.ufilter = '.2pt';    
 outMCfiles.num     = [1 Inf];     
 outMCfiles.help    = {'Select .mc2 or .2pt files for this subject.'}; 
 
