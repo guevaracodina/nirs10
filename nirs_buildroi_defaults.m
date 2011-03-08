@@ -12,4 +12,4 @@ global nirs10
 
 %- output default prefix
 nirs10.preprocANAT.buildroi1.output_prefix = 'roi_';
-nirs10.preprocANAT.buildroi1.crop_image = 1;
+% nirs10.preprocANAT.buildroi1.lby = 'Coreg';

@@ -24,8 +24,8 @@ disp('Written by:  T. Huppert and Farras Abdelnour');
 disp('Hijacked by:  C. Bonnery');
 disp(' ');
 
-%% donnees
-donnees = 'D:\Users\Clément\Projet_ReML\donnees\donnees2test\roi_00021_segmented_s201007051500-0002-00001-000160-01.nii'
+%%Now, the actual data and reconstructions
+Y = job.image_in{:};
 
 %% 
 %Construct the covariance components and the heirachical model
@@ -84,8 +84,7 @@ Qp{2}=sparse(lstbrain,lstbrain,brainWL_bias,nvox*2,nvox*2);  %Brain layer- HbO
 Qp{3}=sparse(nvox+lstskin,nvox+lstskin,skinWL_bias,nvox*2,nvox*2);  %Skin layer- HbR
 Qp{4}=sparse(nvox+lstbrain,nvox+lstbrain,brainWL_bias,nvox*2,nvox*2);  %Brain layer- HbR
 
-%%Now, the actual data and reconstructions
-Y = donnees;
+
 
 %The actual model
 disp('Computing multiple prior solution');

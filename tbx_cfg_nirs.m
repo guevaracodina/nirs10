@@ -914,13 +914,13 @@ image_in.ufilter = '.*';
 image_in.num     = [1 1];
 
 % 
-crop_image      = cfg_menu;
-crop_image.tag  = 'crop_image';
-crop_image.name = 'Crop image';
-crop_image.labels = {'Yes','No'};
-crop_image.values = {1,0};
-crop_image.def  = @(val)nirs_get_defaults('preprocANAT.buildroi1.crop_image', val{:});
-crop_image.help = {'Help'};
+% crop_image      = cfg_menu;
+% crop_image.tag  = 'crop_image';
+% crop_image.name = 'Crop image';
+% crop_image.labels = {'Yes','No'};
+% crop_image.values = {1,0};
+% crop_image.def  = @(val)nirs_get_defaults('preprocANAT.buildroi1.crop_image', val{:});
+% crop_image.help = {'Help'};
     
 %_______________________________________________________________________
 output_prefix         = cfg_entry;
@@ -937,8 +937,8 @@ output_prefix.help    = {'You can choose to give a particular prefix to the ',..
 buildroi1      = cfg_exbranch;
 buildroi1.tag  = 'buildroi1';
 buildroi1.name = 'Set vertices and build ROI';
-buildroi1.val  = {DelPreviousData NewDirCopyNIRS NIRSmat keepAllChannels image_in crop_image output_prefix};
-buildroi1.prog = @nirs_run_buildroi;
+buildroi1.val  = {NIRSmat keepAllChannels image_in output_prefix};
+buildroi1.prog = @nirs_run_buildroi2;
 buildroi1.help = {'Define region of interest.'};
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1217,7 +1217,7 @@ GenDataTopo.help   = {'Generate rend data (NIRS_SPM) for topographic '
 coreg1      = cfg_exbranch;       
 coreg1.name = 'NIRScoreg';             
 coreg1.tag  = 'coreg1'; 
-coreg1.val  = {NIRSmat DelPreviousData NewDirCopyNIRS anatT1 ...
+coreg1.val  = {NIRSmat DelPreviousData NewDirCopyNIRS anatT1 segT1_4fit ...
     anatT1_template fid_in_subject_MNI nasion_wMNI AL_wMNI AR_wMNI GenDataTopo};    
 coreg1.prog = @nirs_run_coreg;  
 coreg1.vout = @nirs_cfg_vout_coreg; 
@@ -2461,7 +2461,7 @@ end
 sensmat         = cfg_files; %Select sensitivity matrix for this subject
 sensmat.name    = 'Sensitivity Matrix'; % The displayed name
 sensmat.tag     = 'sensmat';       %file names
-sensmat.filter  = 'mat';
+sensmat.filter  = 'nii';
 sensmat.num     = [1 1];     % Number of inputs required
 sensmat.help    = {'Select sensitivity matrix for this subject.'}; % help t
 
@@ -2495,7 +2495,7 @@ priors.help = {'Choose priors you want to use for the reconstruction.'};
 ReMLreconstruct1      = cfg_exbranch;       
 ReMLreconstruct1.name = '3D NIRS data ReML reconstruction';             
 ReMLreconstruct1.tag  = 'ReMLreconstruct1';
-ReMLreconstruct1.val  = {sensmat priors};   
+ReMLreconstruct1.val  = {NIRSmat sensmat};   
 ReMLreconstruct1.prog = @nirs_run_ReMLreconstruct;  
 ReMLreconstruct1.vout = @nirs_cfg_vout_ReMLreconstruct; 
 ReMLreconstruct1.help = {'Run 3D NIRS data reconstruction.'};
