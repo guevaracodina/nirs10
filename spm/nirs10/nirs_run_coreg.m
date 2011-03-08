@@ -165,6 +165,7 @@ for Idx=1:size(job.NIRSmat,1)
         jobe.Pp_c1_rmm = Pp_c1_rmm;
         jobe.NP = NP;
         jobe.image_in = job.segT1_4fit;
+        jobe.lby = 'coreg';
         out = nirs_fit_probe(jobe);
         Pfp_rmm = out{1};
         % from MNI real space (mm) to MNI voxel space
@@ -176,6 +177,11 @@ for Idx=1:size(job.NIRSmat,1)
         %Save MNI and voxel coordinates of optodes
         NIRS.Cf.H.P.r.m.mm.fp = Pfp_rmm;
         NIRS.Cf.H.P.r.m.vx.fp = Pfp_rmv;
+        
+        save(job.NIRSmat{Idx},'NIRS');
+        NIRS =[];
+        
+        load(job.NIRSmat{Idx});
         
         %
         if job.GenDataTopo
@@ -256,7 +262,7 @@ for Idx=1:size(job.NIRSmat,1)
         disp(['Coregistration failed for subject' int2str(Idx)]);
     end
 end
-out.NIRSmat = job.NIRSmat;
+out.NIRSmat = job.NIRSmat{Idx};
 
 
 function [s R t] = abs_orientation(x,y)
