@@ -54,7 +54,8 @@ for is=1:sN
     else
         NIRS.Dt.fir.stax.n = 'Template LIOM'; % template
         [DirSPM,~,~] = fileparts(which('nirs10'));
-        staxp = fullfile(DirSPM,'nirs10_templates','Brainsight(c).txt');
+%         staxp = fullfile(DirSPM,'nirs10_templates','Brainsight(c).txt');
+        staxp =fullfile('D:\Users\Clément\Projets_CRIUGM\nirs10_templates','Brainsight(c).txt');
         NIRS.Dt.fir.stax.p{1} = staxp;
         % coordinates
         load(fullfile(dir_nt,'Hcoregistered.mat'));
