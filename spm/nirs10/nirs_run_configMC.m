@@ -18,13 +18,6 @@ function out = nirs_run_configMC(job)
 % isotropiques mais en gardant les mêmes orientations !!!
 % 2 : changer de uint16 a uint8
 
-% try
-%     NewNIRSdir = job.NewDirCopyNIRS.CreateNIRSCopy.NewNIRSdir;
-%     NewDirCopyNIRS = 1;
-% catch
-%     NewDirCopyNIRS = 0;
-% end
-
 load(job.NIRSmat{1,1});
 
 if isfield(NIRS.Cs,'mcs')
@@ -100,14 +93,27 @@ scalings = diag(inv_mat(7:9));
 
 % Transform also P positions and directions
 NP = size(cs.Pfp_rmv,2);
-%Transform MNI voxels -> MNI isotropic voxels
-Pfp_rmiv = scalings * cs.Pfp_rmv;
+% %Transform MNI voxels -> MNI isotropic voxels
+% Pfp_rmiv = scalings * cs.Pfp_rmv;
 
+% Positions
 for i=1:size(cs.Pfp_rmm,2)
 Pfp_ancienne_rmv(:,i) = V.mat\[cs.Pfp_rmm(:,i);1];
 Pfp_ancienne_rmiv(:,i) = abs(inv_mat(7:9)').*Pfp_ancienne_rmv(1:3,i);
 end
 
+Pfp_ancienne_rmiv = round(Pfp_ancienne_rmiv);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% on verifie qu'on n'a pas de pb apres le resizing
+jobF.Pp_rmm = cs.Pp_rmm;
+jobF.Pp_c1_rmm = cs.Pp_c1_rmm;
+jobF.NP = NP;
+jobF.image_in = {outRS};
+jobF.Pfp_ancienne_rmiv = Pfp_ancienne_rmiv;
+jobF.lby = 'configMC';
+outF = nirs_fit_probe(jobF);
+Pfp_ancienne_rmiv = outF{1};
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Directions
 Pd_rmm = cs.Pp_rmm - cs.Pp_c1_rmm;
@@ -118,20 +124,21 @@ for iP=1:NP
     lgth = (temp_dir(1)^2 + temp_dir(2)^2 + temp_dir(3)^2)^(1/2);
     Pwd_rmm(:,iP) = temp_dir/lgth;
 end
-%%%%
-R = V.mat(1:3,1:3); %no translations
-%Transform MNI mm -> MNI voxels
-Pd_rmv = R\Pd_rmm;
-%Transform Voxels -> Isotropic Voxels Space
-Pd_rmiv = scalings * Pd_rmv;
-%normalize directions
-Pwd_rmiv = zeros(3,NP);
-for iP=1:NP
-    temp_dir = Pd_rmiv(:,iP);
-    lgth = (temp_dir(1)^2 + temp_dir(2)^2 + temp_dir(3)^2)^(1/2);
-    Pwd_rmiv(:,iP) = temp_dir/lgth;
-end
+% %%%%
+% R = V.mat(1:3,1:3); %no translations
+% %Transform MNI mm -> MNI voxels
+% Pd_rmv = R\Pd_rmm;
+% %Transform Voxels -> Isotropic Voxels Space
+% Pd_rmiv = scalings * Pd_rmv;
+% %normalize directions
+% Pwd_rmiv = zeros(3,NP);
+% for iP=1:NP
+%     temp_dir = Pd_rmiv(:,iP);
+%     lgth = (temp_dir(1)^2 + temp_dir(2)^2 + temp_dir(3)^2)^(1/2);
+%     Pwd_rmiv(:,iP) = temp_dir/lgth;
+% end
 
+% 8bits .bin image
 dim_rmiv = ceil((dim-1) * abs(scalings));
 
 [~,id,~] = fileparts(V.fname);
@@ -204,19 +211,7 @@ for iwl = 1:size(NIRS.Cf.dev.wl,2)
     P.wd = Pwd_rmm;%Pwd_rmiv;
     P.r = [Sr' Dr' zeros(1,NP -(cs.NSkpt+cs.NDkpt))];
     jobW.P =P;
-    
     jobW.wl = NIRS.Cf.dev.wl(iwl);
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %&% en fin de fichier
-    %         if NewDirCopyNIRS
-    %             newNIRSlocation = fullfile(dir2,'NIRS.mat');
-    %             save(newNIRSlocation,'NIRS');
-    %             job.NIRSmat{Idx,1} = newNIRSlocation;
-    %         else
-    %             save(job.NIRSmat{Idx,1},'NIRS');
-    %         end
-    
     
     out = nirs_configMC_writeCFGfiles(jobW);
 end

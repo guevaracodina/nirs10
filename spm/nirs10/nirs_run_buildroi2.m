@@ -93,16 +93,6 @@ for i=1:size(Pkpt,2)
     PfpR_roi_rmv(:,i) = [Pfp_roi_rmv(:,i);1] - mat_roi2raw(:,4);
 end
 
-%%% on verifie qu'on n'a pas de pb apres le resizing
-jobF.Pp_rmm = Pp_rmm;
-jobF.Pp_c1_rmm = Pp_c1_rmm;
-jobF.NP = size(PfpR_roi_rmv,2);
-jobF.image_in = {fullfile(dir,[job.output_prefix,name,'.nii'])};
-jobF.PfpR_roi_rmv = PfpR_roi_rmv;
-jobF.lby = 'buildroi2';
-outF = nirs_fit_probe(jobF);
-PfpR_roi_rmv = outF{1};
-
 %then saved
 if ~isfield(NIRS,'Cs'), NIRS.Cs={}; end
 if isfield(NIRS.Cs,'temp'), clear NIRS.Cs.temp; end
