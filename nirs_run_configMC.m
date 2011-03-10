@@ -124,6 +124,10 @@ for iP=1:NP
     lgth = (temp_dir(1)^2 + temp_dir(2)^2 + temp_dir(3)^2)^(1/2);
     Pwd_rmm(:,iP) = temp_dir/lgth;
 end
+
+% on prepare la suvegarde de cs
+cs.Pfp_rmiv = Pfp_ancienne_rmiv;
+cs.Pwd_rmm = Pwd_rmm;
 % %%%%
 % R = V.mat(1:3,1:3); %no translations
 % %Transform MNI mm -> MNI voxels

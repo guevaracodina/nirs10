@@ -2488,14 +2488,19 @@ priors.tag  = 'priors';
 priors.val  = {anat_segT1 hb_relative_evolution};
 priors.help = {'Choose priors you want to use for the reconstruction.'};
 
-% smoothing
-% wavelet method from Huppert
+dir_in         = cfg_files;
+dir_in.tag     = 'dir_in';
+dir_in.name    = 'MonteCarlo output directory';
+dir_in.filter = 'dir';
+dir_in.ufilter = '.*';
+dir_in.num     = [1 1];
+dir_in.help    = {'Select the MonteCarlo simulation output directory.'};
 
 % Executable Branch
 ReMLreconstruct1      = cfg_exbranch;       
 ReMLreconstruct1.name = '3D NIRS data ReML reconstruction';             
 ReMLreconstruct1.tag  = 'ReMLreconstruct1';
-ReMLreconstruct1.val  = {NIRSmat sensmat};   
+ReMLreconstruct1.val  = {NIRSmat dir_in sensmat};   
 ReMLreconstruct1.prog = @nirs_run_ReMLreconstruct;  
 ReMLreconstruct1.vout = @nirs_cfg_vout_ReMLreconstruct; 
 ReMLreconstruct1.help = {'Run 3D NIRS data reconstruction.'};

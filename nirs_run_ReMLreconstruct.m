@@ -25,32 +25,61 @@ disp('Hijacked by:  C. Bonnery');
 disp(' ');
 
 %%Now, the actual data and reconstructions
-Y = job.image_in{:};
+load(job.NIRSmat{:});
+% on recupere cs
 
-%% 
-%Construct the covariance components and the heirachical model
+% try ~sum(strcmp(NIRS.Cs.n,job.MCchoice.MC_nam))
+%     csn = job.MC_nam;
+%     else
+%         csn = [job.MC_nam '1'];
+% end
+dir_in = job.dir_in{:};
+sep = strfind(dir_in,'\');
+csn = dir_in(sep(end-1)+1:sep(end)-1);
+
+itest=1;
+while itest<=length(NIRS.Cs.n) && isempty(strfind(csn,NIRS.Cs.n{itest}))
+itest =itest+1;
+end
+i_cs =itest+1;
+
+cs = NIRS.Cs.mcs{i_cs};
+
+V = spm_vol(cs.segR);
+Y = spm_read_vols(V);
+
+%% Construct the covariance components and the hierarchical model
 %Image prior 
 % les concentrations sont sensees rester nulles
-Beta_prior = zeros(size(donnees,2),1);  %Sparsity prior (akin to Tikhonov/Min Norm Est)
-%% Construct the covariance components used in the model
+%%% est ce au4on cherche a etre sur un masque de la tete ???
+% Beta_prior = zeros(size(donnees,2),1);  %Sparsity prior (akin to Tikhonov/Min Norm Est)
+Beta_prior = zeros(size(Y));
+
+% Construct the covariance components used in the model
 
 %First, covariance components for the measurements
-ny=size(SD.MeasList,1);  %Total number of measurements
-for idx=1:length(SD.Lambda) %loop over number of wavelengths
-    lst=find(SD.MeasList(:,4)==idx); %List of all wavelength <idx>
-    Qn{idx}=sparse(lst,lst,ones(size(lst)),ny,ny);
+NC = NIRS.Cf.H.C.N;  %Total number of measurements
+Cwl = NIRS.Cf.H.C.wl;
+wl = unique(Cwl);
+for iwl=1:length(wl) %loop over number of wavelengths
+    lst=find(Cwl==iwl); %List of all wavelength <idx>
+    Qn{iwl}=sparse(lst,lst,ones(size(lst)),NC,NC);
 end
 
-
 %Now, covariance components for the parameters (4 total- 2 per HbO/HbR {layer 1; layer II})
-nvox=Medium.nVox;
-lstskin=1:nvox/2;  %This is a two-layer model
+
+% c1 : couche cortex
+% c5 : couche skin
+
+Nvox=V.dim(1)*V.dim(2)*V.dim(3);
+% on ne garde que deux couches dans lesquelles on reconstruit
+lstskin=1:Nvox/2;  %This is a two-layer model
 lstbrain=nvox/2+1:nvox;
 
 %%
 %This will act as a band-pass filter on each layer 
-sigma_skin=6; 
-sigma_brain=1;  %Sigma (see text) defines the attenuation at each frequency band
+sigma_c5=6; 
+sigma_c1=1;  %Sigma (see text) defines the attenuation at each frequency band
 % If you increase sigma, this will act more as a low-pass filter (bias to
 % low frequency).  If Skin> Brain, the bias will be to reconstruct the
 % lower frequencies in layer 1
@@ -70,6 +99,8 @@ for ii = NS:-1:1
     s2 = [temp ones(1,length(Medium.CompVol.X)/2^ii)/sigma_brain^(NS-ii+1)];
     temp = s2;
 end
+%%% 1 skin
+%%% 2 cortex
 s1 = kron(s1',s1);  %I can do this as long as the image X/Y is square
 s2 = kron(s2',s2);
 skinWL_bias=s1(:);
