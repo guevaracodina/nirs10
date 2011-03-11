@@ -92,8 +92,8 @@ brainWL_bias=s2(:);
 % each layer times Hbo/HbR
 %Note, we define this in the wavelet domain ...
 Qp{1}=sparse(lstskin,lstskin,skinWL_bias,nvox*2,nvox*2);  %Skin layer- HbO
-Qp{2}=sparse(lstbrain,lstbrain,brainWL_bias,nvox*2,nvox*2);  %Brain layer- HbO
 Qp{3}=sparse(nvox+lstskin,nvox+lstskin,skinWL_bias,nvox*2,nvox*2);  %Skin layer- HbR
+Qp{2}=sparse(lstbrain,lstbrain,brainWL_bias,nvox*2,nvox*2);  %Brain layer- HbO
 Qp{4}=sparse(nvox+lstbrain,nvox+lstbrain,brainWL_bias,nvox*2,nvox*2);  %Brain layer- HbR
 
 

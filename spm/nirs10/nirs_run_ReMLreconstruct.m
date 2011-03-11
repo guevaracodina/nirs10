@@ -27,12 +27,6 @@ disp(' ');
 %%Now, the actual data and reconstructions
 load(job.NIRSmat{:});
 % on recupere cs
-
-% try ~sum(strcmp(NIRS.Cs.n,job.MCchoice.MC_nam))
-%     csn = job.MC_nam;
-%     else
-%         csn = [job.MC_nam '1'];
-% end
 dir_in = job.dir_in{:};
 sep = strfind(dir_in,'\');
 csn = dir_in(sep(end-1)+1:sep(end)-1);
@@ -46,74 +40,124 @@ i_cs =itest+1;
 cs = NIRS.Cs.mcs{i_cs};
 
 V = spm_vol(cs.segR);
-Y = spm_read_vols(V);
+% Y = spm_read_vols(V);
 
-%% Construct the covariance components and the hierarchical model
-%Image prior 
-% les concentrations sont sensees rester nulles
-%%% est ce au4on cherche a etre sur un masque de la tete ???
-% Beta_prior = zeros(size(donnees,2),1);  %Sparsity prior (akin to Tikhonov/Min Norm Est)
-Beta_prior = zeros(size(Y));
+% Le systeme qu'on resoud maintenant est le suivant :
+% on est a un point temporel donc 
+%
+%/ Y = X W betaWvx +epsilon_channel-noise
+%\ betaWvx = omega
+%
+% Y = un instant donne dans le fichier .nirs
+% X = matrice sensitivite avec un point temporel
+% W = matrice d'ondelettes spatialles
+% betaWvx = concentrations dans les voxels
+% epsilon_channel-noise = bruit dans les canaux
+% omega = GOMBOUAMBA
 
-% Construct the covariance components used in the model
+%% Y
+fnirs = load(NIRS.Dt.fir.pp(1,4).p{:},'-mat');
+t0 =6000;% on choisit au pif un point temporel
+Y_t0 = fnirs.d(t0,:)';
 
-%First, covariance components for the measurements
-NC = NIRS.Cf.H.C.N;  %Total number of measurements
-Cwl = NIRS.Cf.H.C.wl;
+%% X
+% p330
+% on prend pour \Omegachapeau I en premiere approximation
+Kmat = load(fullfile(dir_in,'sens.mat'));
+K = Kmat.sens;
+% %Omega chapeau est le bruit d'observation. Ici on le prend egal a un
+% Omegachapo = eye(NC);
+% Kbarre = Omegachapo*K;
+%% epsilon_channel-noise
+%%%%%%%%%%%% 
+
+%%%%%%%%%%%% First, covariance components for the measurements
+NC = 2*2; %Total number of measurements
+Cwl = [1;1;2;2];%NIRS.Cf.H.C.wl;
 wl = unique(Cwl);
 for iwl=1:length(wl) %loop over number of wavelengths
     lst=find(Cwl==iwl); %List of all wavelength <idx>
     Qn{iwl}=sparse(lst,lst,ones(size(lst)),NC,NC);
 end
 
-%Now, covariance components for the parameters (4 total- 2 per HbO/HbR {layer 1; layer II})
+%% omega
+Beta_prior = zeros(size(Y_t0));
 
-% c1 : couche cortex
-% c5 : couche skin
+%% W
 
-Nvox=V.dim(1)*V.dim(2)*V.dim(3);
-% on ne garde que deux couches dans lesquelles on reconstruit
-lstskin=1:Nvox/2;  %This is a two-layer model
-lstbrain=nvox/2+1:nvox;
 
-%%
+%% Now, covariance components for the parameters (4 total- 2 per HbO/HbR {layer 1; layer II})
+% c1 : couche cortex : huppert 2
+% c5 : couche skin   : huppert 1
+
+% % % % % % % % % % % % % % %%% et si on travaillait dans l'espace des paires comme ca on aurait
+% % % % % % % % % % % % % % %%% directement la tangente au plan des sources et detecteurs...
+% % % % % % % % % % % % % % %%% DON T YOU THINK ?
+
+%%%%%%%% PREMIERE IDEE
+%%%%%%%%%%%%%%%%%%% actually : MAYBE USELESS
+% lecture du volume dans l'ordre de la matrice de sensitivite
+fid=fopen(cs.b8i,'rb');
+ms = fread(fid);
+fclose(fid);
+Nvx = length(ms);
+% reperage des couches :
+ms_c1 = find(ms==1);
+ms_c5 = find(ms==5);
+
+ms_c1Hb = zeros(2,size(ms)*2);%[HbO;HbR]
+ms_c5Hb = zeros(2,size(ms)*2);%[HbO;HbR]
+
+ms_c1Hb(1,1:size(ms)) = find(ms==1);
+ms_c1Hb(2,size(ms):end) = find(ms==1);
+ms_c5Hb(1,1:size(ms)) = find(ms==5);
+ms_c5Hb(2,size(ms):end) = find(ms==5);
+%%%%%%%%%%%%%%%%%
+
+%%%%%%%% DEUXIEME IDEE
+%- on calcule des wavelets dans un plan et on incline ce plan selon celui
+%des sources et detecteurs
+
+
+
 %This will act as a band-pass filter on each layer 
 sigma_c5=6; 
-sigma_c1=1;  %Sigma (see text) defines the attenuation at each frequency band
+sigma_c1=1;  
+%Sigma (see text) defines the attenuation at each frequency band
 % If you increase sigma, this will act more as a low-pass filter (bias to
 % low frequency).  If Skin> Brain, the bias will be to reconstruct the
-% lower frequencies in layer 1
-
+% lower frequencies in layer 1\c5
 
 %This is a little messy since this demo does not provide all the code to
 %calculate the original wavelets... so just 
 % Number of stages
 NS = 3;
-temp = [ones(1,length(Medium.CompVol.X)/2^NS)];
+temp = ones(1,length(ms_c5)/2^NS);
 for ii = NS:-1:1
-    s1 = [temp ones(1,length(Medium.CompVol.X)/2^ii)/sigma_skin^(NS-ii+1)];
+    s1 = [temp ones(1,length(ms_c5)/2^ii)/sigma_c5^(NS-ii+1)];
     temp = s1;
 end
-temp = [ones(1,length(Medium.CompVol.X)/2^NS)];
+temp = ones(1,length(ms_c1)/2^NS);
 for ii = NS:-1:1
-    s2 = [temp ones(1,length(Medium.CompVol.X)/2^ii)/sigma_brain^(NS-ii+1)];
+    s2 = [temp ones(1,length(ms_c1)/2^ii)/sigma_c1^(NS-ii+1)];
     temp = s2;
 end
-%%% 1 skin
-%%% 2 cortex
 s1 = kron(s1',s1);  %I can do this as long as the image X/Y is square
 s2 = kron(s2',s2);
-skinWL_bias=s1(:);
-brainWL_bias=s2(:);
-%%
+WL_bias_c5=s1(:);
+WL_bias_c1=s2(:);
 
-% Now, define the actual covariance components.  There are four; one for
-% each layer times Hbo/HbR
-%%%Note, we define this in the wavelet domain ...
+Qp{1}=sparse(ms_c5Hb(1,:),ms_c5Hb(1,:),WL_bias_c5,nvox*2,nvox*2); %c5 - HbO
+Qp{2}=sparse(ms_c1Hb(1,:),ms_c1Hb(1,:),WL_bias_c1,nvox*2,nvox*2); %c1 - HbO
+Qp{3}=sparse(ms_c5Hb(2,:),ms_c5Hb(2,:),WL_bias_c5,nvox*2,nvox*2); %c5 - HbR
+Qp{4}=sparse(ms_c1Hb(2,:),ms_c1Hb(2,:),WL_bias_c1,nvox*2,nvox*2); %c1 - HbR
+
+
 Qp{1}=sparse(lstskin,lstskin,skinWL_bias,nvox*2,nvox*2);  %Skin layer- HbO
 Qp{2}=sparse(lstbrain,lstbrain,brainWL_bias,nvox*2,nvox*2);  %Brain layer- HbO
 Qp{3}=sparse(nvox+lstskin,nvox+lstskin,skinWL_bias,nvox*2,nvox*2);  %Skin layer- HbR
 Qp{4}=sparse(nvox+lstbrain,nvox+lstbrain,brainWL_bias,nvox*2,nvox*2);  %Brain layer- HbR
+
 
 
 
