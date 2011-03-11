@@ -67,7 +67,7 @@ for fi = 1:size(f,1)
                     
                     %sens_sd = real(ms)/max(real(ms)).*real(md)/max(real(md)); %treated as long vectors
                     sens_sd = ms.*md;
-                    sens_sd = log(sens_sd);
+%                     sens_sd = log(sens_sd);
                     
                     sens(isd+1,:) = sens_sd';%double();
                     isd = isd+1;
