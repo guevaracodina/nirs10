@@ -20,6 +20,8 @@ for Idx=1:size(job.NIRSmat,1)
         NIRS = [];
         load(job.NIRSmat{Idx,1});
         
+        if strcmp(NIRS.Dt.fir.stax.n,'Brainsight(c)') %%%%%%% PHILIPPE : comment tu y rentres ????
+        
         %Allow user-specified image of subject to overwrite previous
         %anatomical image in NIRS.mat; unlikely to ever happen
         if isempty(job.anatT1{1,1})
@@ -113,6 +115,10 @@ for Idx=1:size(job.NIRSmat,1)
         %double2str does not exist in my version of Matlab
         disp(['Error Value for subject ' int2str(Idx) ': ' num2str(errVal)]);
         NIRS.Dt.pro.errValofCoreg_mm2 = errVal;
+        
+        else%%%% choice vitamins
+            
+        end
         
         try Sp_rom = NIRS.Cf.H.S.r.o.mm.p; end
         try Dp_rom = NIRS.Cf.H.D.r.o.mm.p; end
