@@ -310,7 +310,7 @@ protocol.name   = 'Study protocol';
 protocol.filter = '.mat';
 protocol.num    = [0 1];
 protocol.val{1} = {''};
-protocol.help   = {'Select the protocol matrix if any.'};
+protocol.help   = {'Select the protocol matrix if any. The file MUST be in SPM format'};
 
 TopoData        = cfg_files;
 TopoData.tag    = 'TopoData';
@@ -333,19 +333,18 @@ text_brainsight.tag     = 'text_brainsight';
 text_brainsight.name    = 'Text file from Brainsight';
 text_brainsight.filter  = '.txt';
 text_brainsight.ufilter = '.*';
-text_brainsight.num     = [0 1];
-text_brainsight.val{1}  = {''};
+text_brainsight.num     = [1 1];
 text_brainsight.help    = {'Select the text file from Brainsight.'};
  
 T1_vitamins           = cfg_branch; 
 T1_vitamins.name      = 'Vitamins markers on T1';
 T1_vitamins.tag       = 'T1_vitamins';
-T1_vitamins.help      = {''};
+T1_vitamins.help      = {'The helmet will be read in future module from T1 image and positions of vitamins in the image.'};
 
 no_helmet = cfg_branch; 
 no_helmet.name      = 'No helmet';
 no_helmet.tag       = 'no_helmet';
-no_helmet.help      = {'No helmet'};
+no_helmet.help      = {'No helmet. Some modules won''t work properly.'};
 
 helmet         = cfg_choice;
 helmet.tag     = 'helmet';

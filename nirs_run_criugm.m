@@ -8,9 +8,6 @@ function out = nirs_run_criugm(job)
 
 outNIRSmat ={};
 
-% template directory
-% % % % dir_nt = 'D:\Users\Clément\Projets_CRIUGM\nirs10_templates';
-
 %Big loop over all subjects
 sN = size(job.subj,2);
 for is=1:sN
@@ -48,35 +45,28 @@ for is=1:sN
     
     % Helmet
     if isfield(job.subj(1,is).helmet,'text_brainsight')
-         staxp =job.subj(1,is).text_brainsight{:};
+        staxp =job.subj(1,is).helmet.text_brainsight{:};
         NIRS.Dt.fir.stax.n = 'Brainsight(c)';
-        NIRS.Dt.fir.stax.p{1} = job.subj(1,is).text_brainsight{:};   
-        %%%% ancien choix no brainsight text
-%                 NIRS.Dt.fir.stax.n = 'Template LIOM'; % template
-%         [DirSPM,~,~] = fileparts(which('nirs10'));
-% %         staxp = fullfile(DirSPM,'nirs10_templates','Brainsight(c).txt');
-%         staxp =fullfile('D:\Users\Clément\Projets_CRIUGM\nirs10_templates','Brainsight(c).txt');
-%         NIRS.Dt.fir.stax.p{1} = staxp;
-%         % coordinates
-%         load(fullfile(dir_nt,'Hcoregistered.mat'));
-%         NIRS.Cf.H = Hcoregistered;
+        NIRS.Dt.fir.stax.p{1} = job.subj(1,is).helmet.text_brainsight{:};
+        if ~isempty(strfind(job.subj(1,is).helmet.text_brainsight{:},'template'))
+            %%% CB : etude Said.... a mettre coherent /////
+            % coordinates
+            load(fullfile(dir_nt,'Hcoregistered.mat'));
+            NIRS.Cf.H = Hcoregistered;
+        end
     elseif isfield(job.subj(1,is).helmet,'T1_vitamins')
         NIRS.Dt.fir.stax.n = 'T1_vitamins';
         %read nirs file if already specified
-%         try catch
+        %         try catch
     elseif isfield(job.subj(1,is).helmet,'no_helmet')
         NIRS.Dt.fir.stax.n = 'no_helmet';
     end
     
     % Topo Data
-    if isempty(job.subj(1,is).TopoData{:})
-                helmetdone=0;
-% % % % % % % % % %         % TopoData
-% % % % % % % % % %         load(fullfile(dir_nt,'TopoData.mat'));
-% % % % % % % % % %         NIRS.Dt.ana.rend = fullfile(dir_nt,'TopoData.mat');
-% % % % % % % % % %         save(fullfile(NIRS.Dt.s.p,'TopoData.mat'),'rendered_MNI');
-% % % % % % % % % %         disp('Inutile de faire la coregistration !');
-% % % % % % % % % %         helmetdone =1;
+    if ~isempty(job.subj(1,is).TopoData{:})
+        helmetdone=1;
+        % nirs_run_coreg has already been executed to generated once for all the
+        % TopoData matrix
     else
         helmetdone=0;
     end
