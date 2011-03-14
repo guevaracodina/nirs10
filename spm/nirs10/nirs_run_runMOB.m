@@ -1,5 +1,4 @@
 function out = nirs_run_runMOB(job)
-
 % Script_ProcessDataAccelerometer
 % Determines variability during walk
 % Clément Bonnéry - clement.bonnery@polymtl.ca
@@ -15,12 +14,6 @@ sN = size(job.subj,2);
 for is=1:sN
     
     %%  From Accelerometer to Matlab
-    
-    
-    % (uncomment(ctrl+T) following lines (from 20 to 24))to import datas to Matlab :
-    % - double clic on the datas (.csv) you want to import (import wizard) in
-    % current directory window (next then finish : the datas are stored in the workspace)
-    % - enter the right path and the right name then launch the script :
     filemat = csv2cell(job.subj(1,is).acc_file{:});
     data = cell2mat(filemat(11:end,:));
     textdata = filemat(1:10,1);
@@ -77,7 +70,7 @@ for is=1:sN
         
         %analyse if spectrum contains pick showing there is a regularity in
         %the signal
-        [bool, E] = walktest(fft_slab,fft_size);
+        [bool, E] = nirs_runMOB_walktest(fft_slab,fft_size);
         if bool_mem~=bool
             time2remember(count) = Ni+offset;
             count = count+1;
@@ -156,7 +149,7 @@ for is=1:sN
     % subplot(2,1,2)
     % %plot(begin_step)
     
-    % Traitement des temps entre les pas
+    % Calculating temporal length between steps
     length_step = zeros(0);
     moy_length_step = zeros(size(begin_step,1),1);
     std_length_step = zeros(size(begin_step,1),1);
@@ -172,7 +165,7 @@ for is=1:sN
         std_length_step(i) =  std(length_step(i,:));
     end
     
-    %% Visualisation des résultats
+    %% Results display
     indice =1;
     visu = zeros(0);
     
