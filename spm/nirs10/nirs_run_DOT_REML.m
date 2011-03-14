@@ -6,12 +6,9 @@ function [lambda,Beta,Stats]=nirs_run_DOT_REML(Y,X,Beta_prior,Qn,Qp,maxIter);
 %       brain images. London: Academic; 2007.
 %
 
-
-
 if(~exist('maxIter'))
     maxIter=35;  %Max # of iterations of REML code
 end
-
 
 if(size(X,1)<size(X,2))
    % If X is not full rank, then we can make this MUCH faster
@@ -57,7 +54,6 @@ else
     Y = [Y; sparse(size(X,2),size(Y,2))];
     X = [X; speye(size(X,2))];
 
-    
     %Set up the extended covariance model by concatinating the measurement
     %and parameter noise terms
     Q=cell(length(Qn)+length(Qp),1);

@@ -9,11 +9,10 @@ function out = nirs_run_runMC(job)
 %Simulate MCX
 %change working directory as 'system' command cannot take a space in the
 %filename path
-start_dir = pwd;
-algo = job.MC_runCUDAchoice;
+% algo = job.MC_runCUDAchoice;
 
 if isfield(job.MC_runCUDAchoice,'MCX1')
-    t = job.MCXconfigFiles;
+    t = job.MC_runCUDAchoice.MCX1.MCXconfigFiles;
     %run MCX
     for Idx=1:size(t,1)
         if size(t,1) == 1
@@ -21,17 +20,16 @@ if isfield(job.MC_runCUDAchoice,'MCX1')
         else
             nfile=t(Idx,:);
         end
-        [dir1 file1] = fileparts(nfile);
+        [dir1 file1] = fileparts(nfile{:});
         file2 = [file1 '.inp'];
         cd(dir1);
         if Idx == 1
-            copyfile([mcx_dir '\mcx.exe'],[dir1 '\mcx.exe']);
+            copyfile('D:\Users\Clément\MonteCarlo\mcx.exe',[dir1 '\mcx.exe']);% le premier etait mcx_dir
         end
         str_run = ['mcx.exe -t 3584 -T 128 -g 10 -m 100000 -f ' file2 ' -s ' file1 ' -r 10 -a 0 -b 0 -l'];
         res=system(str_run);
     end
     delete([dir1 '\mcx.exe']);
-    cd(start_dir);
     
 elseif isfield(job.MC_runCUDAchoice,'tMCimg1')
     t = job.MC_runCUDAchoice.tMCimg1.tMCimg_configFiles;

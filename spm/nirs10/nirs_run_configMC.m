@@ -157,7 +157,7 @@ fid = fopen(fullfile(NIRS.Dt.s.p,[job.MC_configdir csn],n),'wb');
 fwrite(fid, Y8_rmiv, 'uint8');
 fclose(fid);
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %Generate the .cfg (tMCimg) or .inp (CUDA MCX) configuration files
 %Required data: optodes.positionsInROI.s, optodes.directions.s, radii.s and
 %for sources, and same for detectors, with .d
@@ -197,7 +197,7 @@ for iwl = 1:size(NIRS.Cf.dev.wl,2)
         parameters.perturbationPpties = job.MC_parameters.perturbationPpties_l2+job.MC_parameters.gmPpties_l2;
     end
     
-    % tMCimg
+    jobW.algo = job.MC_CUDAchoice;
     jobW.n_id = n;
     jobW.mc_dir = fullfile(NIRS.Dt.s.p,[job.MC_configdir csn]);
     
