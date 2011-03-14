@@ -336,12 +336,23 @@ text_brainsight.ufilter = '.*';
 text_brainsight.num     = [0 1];
 text_brainsight.val{1}  = {''};
 text_brainsight.help    = {'Select the text file from Brainsight.'};
+ 
+T1_vitamins           = cfg_branch; 
+T1_vitamins.name      = 'Vitamins markers on T1';
+T1_vitamins.tag       = 'T1_vitamins';
+T1_vitamins.help      = {''};
 
-% helmet         = cfg_branch;
-% helmet.tag     = 'helmet';
-% helmet.name    = 'Helmet';
-% helmet.val     = {text_brainsight};
-% helmet.help    = {'If you choose a Brainsight text file, it will be used to determine all you need about sources, detectors, channels,... Otherwise, information will be extrqcted from the first file.'};
+no_helmet = cfg_branch; 
+no_helmet.name      = 'No helmet';
+no_helmet.tag       = 'no_helmet';
+no_helmet.help      = {'No helmet'};
+
+helmet         = cfg_choice;
+helmet.tag     = 'helmet';
+helmet.name    = 'Helmet';
+helmet.values = {text_brainsight T1_vitamins no_helmet};
+helmet.val     = {text_brainsight};
+helmet.help    = {'If you choose a Brainsight text file, it will be used to determine all you need about sources, detectors, channels,... Otherwise, information will be extrqcted from the first file.'};
 
 nirs_files         = cfg_files;
 nirs_files.name    = '''^.nirs'' files'; % The displayed name
@@ -391,7 +402,7 @@ subj_path.num     = [1 1];
 subj         = cfg_branch;
 subj.tag     = 'subj';
 subj.name    = 'Subject';
-subj.val     = {age1 subj_path anatT1 text_brainsight TopoData CWsystem nirs_files baseline_method};
+subj.val     = {age1 subj_path anatT1 helmet TopoData CWsystem nirs_files baseline_method};
 subj.help    = {'Subject'};
 
 generic         = cfg_repeat;
