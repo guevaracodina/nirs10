@@ -31,6 +31,7 @@ if isempty(nirs10)
     nirs_testStimuli_defaults;
     nirs_buildroi_defaults;
     nirs_MCsegment_defaults;
+    nirs_detectVitamins_defaults;
     nirs_coreg_defaults;
     nirs_view3d_defaults;
     nirs_resize_defaults;
