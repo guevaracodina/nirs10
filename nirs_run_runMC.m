@@ -24,10 +24,12 @@ if isfield(job.MC_runCUDAchoice,'MCX1')
         file2 = [file1 '.inp'];
         cd(dir1);
         if Idx == 1
-            copyfile('D:\Users\Clément\MonteCarlo\mcx.exe',[dir1 '\mcx.exe']);% le premier etait mcx_dir
+            copyfile('D:\Users\Clément\MonteCarlo\MCX_Sam\mcx.exe',[dir1 '\mcx.exe']);% le premier etait mcx_dir
         end
-        str_run = ['mcx.exe -t 3584 -T 128 -g 10 -m 100000 -f ' file2 ' -s ' file1 ' -r 10 -a 0 -b 0 -l'];
+%         str_run = ['mcx.exe -t 3584 -T 128 -g 10 -m 100000 -f ' file2 ' -s ' file1 ' -r 10 -a 0 -b 0 -l'];
+        str_run = ['mcx.exe -t 32768 -T 64 -g 10 -n 1e7 -f ' file2 ' -s ' file1 ' -r 100 -a 0 -b 0'];
         res=system(str_run);
+%         res=system('mcx.exe  -t 32768 -T 64 -g 10 -n 1e7 -f D_No01_690nm.inp -s D_No01_690nm -r 100 -a 0 -b 0')
     end
     delete([dir1 '\mcx.exe']);
     
