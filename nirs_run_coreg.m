@@ -22,99 +22,99 @@ for Idx=1:size(job.NIRSmat,1)
         
         if strcmp(NIRS.Dt.fir.stax.n,'Brainsight(c)') %%%%%%% PHILIPPE : comment tu y rentres ????
         
-        %Allow user-specified image of subject to overwrite previous
-        %anatomical image in NIRS.mat; unlikely to ever happen
-        if isempty(job.anatT1{1,1})
-            try
-                NIRS.Dt.ana.T1;
-            catch
-                disp('Could not find an anatomical image');
-            end
-        else
-            %Store T1 file location
-            NIRS.Dt.ana.T1 = job.anatT1{1,1};
-        end
-        try
-            tmpf = job.anatT1_template{1,1};
-            if spm_existfile(tmpf)
-                NIRS.Dt.ana.tT1 = tmpf;
+            %Allow user-specified image of subject to overwrite previous
+            %anatomical image in NIRS.mat; unlikely to ever happen
+            if isempty(job.anatT1{1,1})
+                try
+                    NIRS.Dt.ana.T1;
+                catch
+                    disp('Could not find an anatomical image');
+                end
             else
-                [DirSPM,~,~] = fileparts(which('spm'));
-                NIRS.Dt.ana.tT1 = fullfile(DirSPM,'templates','T1.nii');
+                %Store T1 file location
+                NIRS.Dt.ana.T1 = job.anatT1{1,1};
             end
-        end
-        %Various options that we don't make available to the user in the GUI
-        matlabbatch{1}.spm.spatial.normalise.estwrite.subj.source = {NIRS.Dt.ana.T1};
-        matlabbatch{1}.spm.spatial.normalise.estwrite.subj.wtsrc = '';
-        matlabbatch{1}.spm.spatial.normalise.estwrite.subj.resample = {NIRS.Dt.ana.T1};
-        matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.template = {NIRS.Dt.ana.tT1};
-        matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.weight = '';
-        matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.smosrc = 8;
-        matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.smoref = 0;
-        matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.regtype = 'mni';
-        matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.cutoff = 25;
-        matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.nits = 16;
-        matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.reg = 1;
-        matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.preserve = 0;
-        matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.bb = [-78 -112 -50
-            78 76 85];
-        matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.vox = [2 2 2];
-        matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.interp = 1;
-        matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.wrap = [0 0 0];
-        matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.prefix = 'w';
-        
-        spm_jobman('run_nogui',matlabbatch);
-        
-        %Recreate name of _sn.mat file just created by spm_normalise, and load it
-        [pth,nam] = spm_fileparts(deblank(NIRS.Dt.ana.T1));
-        sn_filename  = fullfile(pth,[nam,'_sn.mat']);
-        NIRS.Dt.ana.wT1 = load(sn_filename);
-        
-        %There are two physical objects: the MRI image, and the NIRS construct
-        %for the MRI image, it can be normalized to a standard atlas (Talairach Tournoux) or not
-        %for the MRI image, it can be in mm or in voxels
-        %for the NIRS construct, it comes in a DGT system
-        %In addition, we may want to project on the cortex or not
-        %Thus, upon alignment, quantities can be expressed
-        %   a) normalized or not
-        %   b) in mm or voxels
-        %   c) in MNI or DGT coordinates
-        %   d) surface positions can be on cortex or on skin / helmet / head
-        %For the MonteCarlo simulation, we want MNI in mm, not normalized, on skin
-        
-        %Matrix Q maps unnormalized world coordinates to normalized world coordinates
-        %Affine maps unnormalized voxelcoordinates to normalized voxel coordinates
-        %Note that transformations always act on the right, on column vectors of
-        %coordinates, returning column vectors
-        %Hence the need to transpose our matrices of coordinates in NIRS.mat
-        %Below: label with temp_ all the transposed coordinates to avoid confusion
-        Q = (NIRS.Dt.ana.wT1.VG.mat/NIRS.Dt.ana.wT1.Affine)/NIRS.Dt.ana.wT1.VF.mat;
-        %quick fix to use previously obtained coordinates in subject MNI
-        %coordinates
-        %fid_in_subject_MNI = 1;
-        if job.fid_in_subject_MNI
-            NIRS.Cf.H.F.r.m.mm.p  = [job.nasion_wMNI' job.AL_wMNI' job.AR_wMNI'];
-        else
-            NIRS.Cf.H.F.w.m.mm.p  = [job.nasion_wMNI' job.AL_wMNI' job.AR_wMNI'];       
-            Fp_wmm = NIRS.Cf.H.F.w.m.mm.p;
-            %call temp_... all the transposed positions
-            temp_Fp_wmm = [Fp_wmm; [1 1 1]];
-            temp_Fp_rmm = Q\temp_Fp_wmm;
-            NIRS.Cf.H.F.r.m.mm.p = temp_Fp_rmm(1:3,:);
-        end
-        y = NIRS.Cf.H.F.r.m.mm.p;
-        x = NIRS.Cf.H.F.r.o.mm.p;
-        
-        [s R t] = abs_orientation(x,y); % y = s*R(x) + t
-        estY = zeros(size(y));
-        for Fi = 1:3
-            estY(:,Fi) = s*R*x(:,Fi) + t;
-        end;
-        err = y - estY;
-        errVal = sum(err(:).^2);
-        %double2str does not exist in my version of Matlab
-        disp(['Error Value for subject ' int2str(Idx) ': ' num2str(errVal)]);
-        NIRS.Dt.pro.errValofCoreg_mm2 = errVal;
+            try
+                tmpf = job.anatT1_template{1,1};
+                if spm_existfile(tmpf)
+                    NIRS.Dt.ana.tT1 = tmpf;
+                else
+                    [DirSPM,~,~] = fileparts(which('spm'));
+                    NIRS.Dt.ana.tT1 = fullfile(DirSPM,'templates','T1.nii');
+                end
+            end
+            %Various options that we don't make available to the user in the GUI
+            matlabbatch{1}.spm.spatial.normalise.estwrite.subj.source = {NIRS.Dt.ana.T1};
+            matlabbatch{1}.spm.spatial.normalise.estwrite.subj.wtsrc = '';
+            matlabbatch{1}.spm.spatial.normalise.estwrite.subj.resample = {NIRS.Dt.ana.T1};
+            matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.template = {NIRS.Dt.ana.tT1};
+            matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.weight = '';
+            matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.smosrc = 8;
+            matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.smoref = 0;
+            matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.regtype = 'mni';
+            matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.cutoff = 25;
+            matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.nits = 16;
+            matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.reg = 1;
+            matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.preserve = 0;
+            matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.bb = [-78 -112 -50
+                78 76 85];
+            matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.vox = [2 2 2];
+            matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.interp = 1;
+            matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.wrap = [0 0 0];
+            matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.prefix = 'w';
+
+            spm_jobman('run_nogui',matlabbatch);
+
+            %Recreate name of _sn.mat file just created by spm_normalise, and load it
+            [pth,nam] = spm_fileparts(deblank(NIRS.Dt.ana.T1));
+            sn_filename  = fullfile(pth,[nam,'_sn.mat']);
+            NIRS.Dt.ana.wT1 = load(sn_filename);
+
+            %There are two physical objects: the MRI image, and the NIRS construct
+            %for the MRI image, it can be normalized to a standard atlas (Talairach Tournoux) or not
+            %for the MRI image, it can be in mm or in voxels
+            %for the NIRS construct, it comes in a DGT system
+            %In addition, we may want to project on the cortex or not
+            %Thus, upon alignment, quantities can be expressed
+            %   a) normalized or not
+            %   b) in mm or voxels
+            %   c) in MNI or DGT coordinates
+            %   d) surface positions can be on cortex or on skin / helmet / head
+            %For the MonteCarlo simulation, we want MNI in mm, not normalized, on skin
+
+            %Matrix Q maps unnormalized world coordinates to normalized world coordinates
+            %Affine maps unnormalized voxelcoordinates to normalized voxel coordinates
+            %Note that transformations always act on the right, on column vectors of
+            %coordinates, returning column vectors
+            %Hence the need to transpose our matrices of coordinates in NIRS.mat
+            %Below: label with temp_ all the transposed coordinates to avoid confusion
+            Q = (NIRS.Dt.ana.wT1.VG.mat/NIRS.Dt.ana.wT1.Affine)/NIRS.Dt.ana.wT1.VF.mat;
+            %quick fix to use previously obtained coordinates in subject MNI
+            %coordinates
+            %fid_in_subject_MNI = 1;
+            if job.fid_in_subject_MNI
+                NIRS.Cf.H.F.r.m.mm.p  = [job.nasion_wMNI' job.AL_wMNI' job.AR_wMNI'];
+            else
+                NIRS.Cf.H.F.w.m.mm.p  = [job.nasion_wMNI' job.AL_wMNI' job.AR_wMNI'];       
+                Fp_wmm = NIRS.Cf.H.F.w.m.mm.p;
+                %call temp_... all the transposed positions
+                temp_Fp_wmm = [Fp_wmm; [1 1 1]];
+                temp_Fp_rmm = Q\temp_Fp_wmm;
+                NIRS.Cf.H.F.r.m.mm.p = temp_Fp_rmm(1:3,:);
+            end
+            y = NIRS.Cf.H.F.r.m.mm.p;
+            x = NIRS.Cf.H.F.r.o.mm.p;
+
+            [s R t] = abs_orientation(x,y); % y = s*R(x) + t
+            estY = zeros(size(y));
+            for Fi = 1:3
+                estY(:,Fi) = s*R*x(:,Fi) + t;
+            end;
+            err = y - estY;
+            errVal = sum(err(:).^2);
+            %double2str does not exist in my version of Matlab
+            disp(['Error Value for subject ' int2str(Idx) ': ' num2str(errVal)]);
+            NIRS.Dt.pro.errValofCoreg_mm2 = errVal;
         
         else%%%% choice vitamins
             
@@ -216,7 +216,7 @@ for Idx=1:size(job.NIRSmat,1)
                 [rend, rendered_MNI] = render_MNI_coordinates(ch_MNI_vx, wT1_info);%%%% la notation serait Cp_rmv
                 for kk = 1:6
                     rendered_MNI{kk}.ren = rend{kk}.ren;
-                end
+                end 
                 rend_file = fullfile(pth2,'TopoData.mat');
                 save(rend_file, 'rendered_MNI');
                 NIRS.Dt.ana.rend = rend_file;
