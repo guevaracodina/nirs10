@@ -1,7 +1,7 @@
 function out = nirs_run_ReMLreconstruct(job)
 % Demo of Restricted Maximum Likelihood estimation in DOT
 
-load huppert_reml_demo.mat
+% load huppert_reml_demo.mat
 %File contains:
 %  SD-  Source-detector arrangement (see documentation for PMI toolbox from
 %                   Harvard or HOMER software; www.nmr.mgh.harvard.edu/DOT)
@@ -32,15 +32,11 @@ sep = strfind(dir_in,'\');
 csn = dir_in(sep(end-1)+1:sep(end)-1);
 
 itest=1;
-while itest<=length(NIRS.Cs.n) && isempty(strfind(csn,NIRS.Cs.n{itest}))
+while itest<length(NIRS.Cs.n)-1 && isempty(strfind(csn,NIRS.Cs.n{itest}))
 itest =itest+1;
 end
 i_cs =itest+1;
-
 cs = NIRS.Cs.mcs{i_cs};
-
-% V = spm_vol(cs.segR);
-% Y = spm_read_vols(V);
 
 % volume 8bits et voxels isotropiques
 % lecture du volume dans l'ordre de la matrice de sensitivite
@@ -51,7 +47,7 @@ Nvx = length(ms);
 clear ms;
 
 % Le systeme qu'on resoud maintenant est le suivant :
-% on est a un point temporel donc 
+% on est en un unique point temporel donc 
 %
 %/ Y = X W betaWvx +epsilon_channel-noise
 %\ betaWvx = omega
@@ -63,37 +59,45 @@ clear ms;
 % epsilon_channel-noise = bruit dans les canaux
 % omega = GOMBOUAMBA
 
+%%%%%%% attention Huppert ne prend qu'une seule longueur d'onde !!!!
+% Pairs....
+Cmc = cs.C;
+NC = length(Cmc); %Total number of measurements
+Cwl=[];
+Cwl = [Cwl NIRS.Cf.H.C.wl(Cmc)];
+wl = unique(Cwl);
+
 %% Y
 fnirs = load(NIRS.Dt.fir.pp(1,4).p{:},'-mat');
 t0 =6000;% on choisit au pif un point temporel
-Y_t0 = fnirs.d(t0,[1 2 29 30])';
+Y_t0 = fnirs.d(t0,Cmc)';
 
 %% X
 % p330
 % on prend pour \Omegachapeau I en premiere approximation
 Kmat = load(fullfile(dir_in,'sens.mat'));
-X = Kmat.sens;
+Xdemi = Kmat.sens;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% attention dans la demo de huppert, les deux longueurs d'onde sont sur une
+% meme ligne
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+NCdemi = size(Xdemi,1)/2;
+X = sparse([[Xdemi(1:NCdemi,:)*1.2956 Xdemi(1:NCdemi,:)];[Xdemi(NCdemi+1:end,:)*0.1940 Xdemi(NCdemi+1:end,:)]]);
 % %Omega chapeau est le bruit d'observation. Ici on le prend egal a un
 % Omegachapo = eye(NC);
 % Kbarre = Omegachapo*K;
 %% epsilon_channel-noise
-%%%%%%%%%%%% 
-
-%%%%%%%%%%%% First, covariance components for the measurements
-NC = 2*2; %Total number of measurements
-Cwl = [1;1;2;2];%NIRS.Cf.H.C.wl;
-wl = unique(Cwl);
 for iwl=1:length(wl) %loop over number of wavelengths
     lst=find(Cwl==iwl); %List of all wavelength <idx>
     Qn{iwl}=sparse(lst,lst,ones(size(lst)),NC,NC);
 end
 
 %% omega
-Beta_prior = zeros(Nvx,1);
+Beta_prior = zeros(2*Nvx,1);
 
 %% W
 % dans le cas d'une premiere reconstruction, on prend W =Id
-W = sparse((1:Nvx),(1:Nvx),ones(1,Nvx)',Nvx,Nvx);
+W = sparse((1:2*Nvx),(1:2*Nvx),ones(1,2*Nvx)',2*Nvx,2*Nvx);
 
 
 %% Now, covariance components for the parameters (4 total- 2 per HbO/HbR {layer 1; layer II})
@@ -106,11 +110,6 @@ W = sparse((1:Nvx),(1:Nvx),ones(1,Nvx)',Nvx,Nvx);
 
 %%%%%%%% PREMIERE IDEE
 %%%%%%%%%%%%%%%%%%% actually : MAYBE USELESS
-% lecture du volume dans l'ordre de la matrice de sensitivite
-fid=fopen(cs.b8i,'rb');
-ms = fread(fid);
-fclose(fid);
-Nvx = length(ms);
 % % reperage des couches :
 % ms_c1 = find(ms==1);
 % ms_c5 = find(ms==5);
@@ -162,20 +161,11 @@ Nvx = length(ms);
 % Qp{3}=sparse(ms_c5Hb(2,:),ms_c5Hb(2,:),WL_bias_c5,nvox*2,nvox*2); %c5 - HbR
 % Qp{4}=sparse(ms_c1Hb(2,:),ms_c1Hb(2,:),WL_bias_c1,nvox*2,nvox*2); %c1 - HbR
 
-for i=1:4
-     Qp{i}=sparse((1:Nvx),(1:Nvx),ones(1,Nvx)',Nvx,Nvx);
-end
+Qp{1}=sparse((1:Nvx),(1:Nvx),zeros(1,Nvx)',2*Nvx,2*Nvx);  %Skin layer- HbO
+Qp{2}=sparse((1:Nvx),(1:Nvx),ones(1,Nvx)',2*Nvx,2*Nvx);  %Brain layer- HbO
+Qp{3}=sparse(Nvx+(1:Nvx),Nvx+(1:Nvx),zeros(1,Nvx)',2*Nvx,2*Nvx);  %Skin layer- HbR
+Qp{4}=sparse(Nvx+(1:Nvx),Nvx+(1:Nvx),ones(1,Nvx)',2*Nvx,2*Nvx);  %Brain layer- HbR
 
-
-% 
-% Qp{1}=sparse(lstskin,lstskin,skinWL_bias,nvox*2,nvox*2);  %Skin layer- HbO
-% Qp{2}=sparse(lstbrain,lstbrain,brainWL_bias,nvox*2,nvox*2);  %Brain layer- HbO
-% Qp{3}=sparse(nvox+lstskin,nvox+lstskin,skinWL_bias,nvox*2,nvox*2);  %Skin layer- HbR
-% Qp{4}=sparse(nvox+lstbrain,nvox+lstbrain,brainWL_bias,nvox*2,nvox*2);  %Brain layer- HbR
-
-
-
-X(isinf(X))=-20;
 %The actual model
 disp('Computing multiple prior solution');
 [lambda,Beta_W,Stats]=nirs_run_DOT_REML(Y_t0,X*W',Beta_prior,Qn,Qp);
