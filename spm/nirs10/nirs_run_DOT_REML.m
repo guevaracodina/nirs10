@@ -13,7 +13,7 @@ end
 if(size(X,1)<size(X,2))
    % If X is not full rank, then we can make this MUCH faster
    %  noting that the hyper-parameters of the reduced problem are the same as
-   %  the orginal forward model.  Note- this was not done in the paper, but is
+   %  the original forward model.  Note- this was not done in the paper, but is
    %  a worthwhile extension in future work.  This trick was discovered after
    %  we finished the paper in prep of this demo.
 
@@ -41,7 +41,7 @@ if(size(X,1)<size(X,2))
     
     foo=Cp*X';
     iCe=inv(Cn+X*foo);
-    C_beta_y=Cp-foo*iCe*foo';
+    C_beta_y=Cp-foo*iCe*foo';%%%OUT OF MEMORY
     Xt_iCe=X'*inv(Cn);
     %The rest will be calculated the same as for the "else" term so we will
     %wait until after the If/End
