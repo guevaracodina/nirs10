@@ -8,35 +8,17 @@ function out = nirs_run_criugm(job)
 
 outNIRSmat ={};
 
-%Big loop over all subjects
+% Loop over all subjects
 sN = size(job.subj,2);
 for is=1:sN
     age = job.subj(1,is).age1;
     sDtp = job.subj(1,is).subj_path{:};
     
-    %Reinitialize NIRS matrix for each subject
+    % Reinitialize NIRS matrix for each subject
     NIRS = [];
     NIRS.Dt.s.age = age;
     NIRS.Dt.s.p = sDtp;
-    UN = size(job.subj(1,is).nirs_files,1);
-    
-    % Protocol
-    if ~isempty(job.protocol{:})
-        
-        %Ignore parametric modulations - cf spm_run_fmri_design.m
-        P.name = 'none';
-        P.h    = 0;
-        
-        for iU=1:UN
-            load(job.protocol{:});
-            for kk = 1:size(names, 2)
-                NIRS.Dt.fir.Sess(iU).U(kk).name = names(kk);
-                NIRS.Dt.fir.Sess(iU).U(kk).ons = onsets{kk};
-                NIRS.Dt.fir.Sess(iU).U(kk).dur = durations{kk};
-                NIRS.Dt.fir.Sess(iU).U(kk).P = P;
-            end
-        end
-    end
+    UN = size(job.subj(1,is).nirs_files,1); % Number of sessions
     
     % Anatomical image
     if ~isempty(job.subj(1,is).anatT1{:})
@@ -57,6 +39,7 @@ for is=1:sN
     elseif isfield(job.subj(1,is).helmet,'T1_vitamins')
         NIRS.Dt.fir.stax.n = 'T1_vitamins';
         %read nirs file if already specified
+        
         %         try catch
     elseif isfield(job.subj(1,is).helmet,'no_helmet')
         NIRS.Dt.fir.stax.n = 'no_helmet';
@@ -64,28 +47,40 @@ for is=1:sN
     
     % Topo Data
     if ~isempty(job.subj(1,is).TopoData{:})
-        helmetdone=1;
-        % nirs_run_coreg has already been executed to generated once for all the
-        % TopoData matrix
+        helmetdone = 1;
+        % If nirs_run_coreg has already been executed to generated once and 
+        % for all the TopoData matrix.
     else
-        helmetdone=0;
+        helmetdone = 0;
     end
     
     save(fullfile(sDtp, 'NIRS.mat'),'NIRS');
     NIRS =[];
     
+    % Read setup information from nirs file
+    % System used for acquisition
+    job1.system = job.subj(1,is).CWsystem;
+    job1.nirs_file = f;
+    job1.sDtp = sDtp;
+    job1.coregType = NIRS.Dt.fir.stax.n;
+    out = nirs_criugm_readtechen(job1);% get C configuration from nirs files
+    clear f
+    
+    % MICH: I DON'T UNDERSTAND THIS?? What is done exactly (saved,
+    % outputed, ??) by this GUI?
     if ~helmetdone
         jobH.subj.sDtp = sDtp;
         jobH.subj.helmet.staxp = staxp;
-        outH = nirs_criugm_getHelmet(jobH);% get helmet configuration (S,D,P,Q) from Brainsight
+        outH = nirs_criugm_getHelmet(jobH); % get helmet configuration (S,D,P,Q) from Brainsight
     end
     fig=findall(0,'name','Get positions from Brainsight (clbon)');
     waitfor(fig,'BeingDeleted','On');
     
-    load(fullfile(sDtp, 'NIRS.mat'));
-    %Loop over all sessions
-    for iU=1:UN
+    load(fullfile(sDtp, 'NIRS.mat'));    
+    % Loop over all sessions
+    for iU=1:UN % # of data files
         fp = job.subj(1,is).nirs_files(iU,1);
+        %clear f
         f = load(fp{:},'-mat');
         
         NIRS.Dt.fir.pp(1).p{iU,1} = fp{:};
@@ -93,15 +88,27 @@ for is=1:sN
         NIRS.Dt.fir.pp(1).pre = 'readCriugm';
         NIRS.Dt.fir.pp(1).job = job;
         
+         % Protocol
+        if ~job.subj(1,is).protocol(iU,1)
+            %Ignore parametric modulations - cf spm_run_fmri_design.m
+            P.name = 'none';
+            P.h    = 0;
+
+            % Read "multiple conditions" file (.mat)
+            load(job.subj(1,is).protocol(iU,1));
+            for kk = 1:size(names, 2)
+                NIRS.Dt.fir.Sess(iU).U(kk).name = names(kk);
+                NIRS.Dt.fir.Sess(iU).U(kk).ons = onsets{kk};
+                NIRS.Dt.fir.Sess(iU).U(kk).dur = durations{kk};
+                NIRS.Dt.fir.Sess(iU).U(kk).P = P;
+            end
+        end
+        
         save(fullfile(sDtp, 'NIRS.mat'),'NIRS');
         
-        % test sur la machine utilisee
-        job1.system = job.subj(1,is).CWsystem;
-        job1.nirs_file = f;
-        job1.sDtp = sDtp;
-        out = nirs_criugm_readtechen(job1);% get C configuration from nirs files
-        clear f
     end
+
+    
     outNIRSmat = [outNIRSmat; fullfile(sDtp,'NIRS.mat')];
 end
 out.NIRSmat = outNIRSmat;
