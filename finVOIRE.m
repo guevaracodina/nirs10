@@ -1,3 +1,21 @@
+%% Affichage rythme cardiaque
+
+figure;
+subplot(4,1,1);
+t = ((1:size(NIRS.Dt.fir.Sess(1,1).fR{1,1},1))*0.04)';
+plot(t,NIRS.Dt.fir.Sess(1,1).fR{1,1});
+subplot(4,1,2);
+t = ((1:size(NIRS.Dt.fir.Sess(1,2).fR{1,1},1))*0.04)';
+plot(t,NIRS.Dt.fir.Sess(1,2).fR{1,1});
+subplot(4,1,3);
+t = ((1:size(NIRS.Dt.fir.Sess(1,3).fR{1,1},1))*0.04)';
+plot(t,NIRS.Dt.fir.Sess(1,3).fR{1,1});
+subplot(4,1,4);
+t = ((1:size(NIRS.Dt.fir.Sess(1,4).fR{1,1},1))*0.04)';
+plot(t,NIRS.Dt.fir.Sess(1,4).fR{1,1});
+title('nath');
+
+%% Affichage des moyennes de HbO sur le temps
 p ='D:\Users\Clément\Projets_CRIUGM\Donnees\Said_etude1\aurelia';
 
 load(fullfile(p,'NIRS.mat'));
@@ -25,7 +43,7 @@ for i=1:size(Cok,2)/2
     som = som+d(:,Cok(1,i));
 end
 som = som/(size(Cok,2)/2);
-subplot(4,1,1);plot(t,som);hold on;
+subplot(4,1,1);plot(t,som);hold on; 
 
 load(fullfile(p,'hbrcath40.nirs'),'-mat');
 Cok = NIRS.Cf.H.C.ok;
