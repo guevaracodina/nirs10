@@ -182,10 +182,10 @@ for iSubj = 1:nSubj
     
      % Update NIRS matrix with new info:
     NIRS.Dt.ana.T1 = Vanat_WOspots.fname; % New path to anatomical
-    % Positions of all points in mm : [pos_mm; 1] = V.mat * [pos_vox; 1]
-    Pp_rmv = coord_fid;
-    Pp_rmm = Vanat.mat * [Pp_rmv; 1];
-    NIRS.Cf.H.P.r.m.mm.p = Pp_rmm(1:end-1,:);
+    % Positions of all points in mm : [pos_mm(x;y;z); 1] = V.mat * [pos_vox(x;y;z); 1]
+    Pp_rmv = coord_fid'; % column vectors of coordinates
+    Pp_rmm = Vanat.mat * [Pp_rmv; ones(1,size(Pp_rmv,2))];
+    NIRS.Cf.H.P.r.m.mm.p = Pp_rmm(1:3,:);
     
     % Save outputs: anatomical without markers and NIRS matrix updated
     % with the positions of the markers
