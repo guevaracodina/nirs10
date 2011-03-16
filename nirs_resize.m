@@ -16,11 +16,13 @@ V = spm_vol(P);
 dimi = V.dim;
 
 if PO_dim == [1 1 1];%isotropic voxels
+    vxsize = job.out_vxsize;
+    
     inv_mat = spm_imatrix(V.mat);
     scalings = diag(inv_mat(7:9)); %see spm_matrix for definition
     
-    dimf = ceil((dimi-1) * abs(scalings));
-    for i =1:3, RZS(:,i) = V.mat(:,i)./norm(V.mat(:,i)); end
+    dimf = ceil((dimi-1)/vxsize * abs(scalings));
+    for i =1:3, RZS(:,i) = vxsize*(V.mat(:,i)./norm(V.mat(:,i))); end
     rV.mat = [RZS V.mat(:,4)];
 else
     dimf = PO_dim;

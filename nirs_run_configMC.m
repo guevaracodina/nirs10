@@ -60,10 +60,12 @@ NIRS.Cs.mcs{i_cs} = cs;
 NIRS.Cs.n{i_cs} = csn;
 save(job.NIRSmat{1,1},'NIRS');
 
+parameters.voxelSize = job.MC_parameters.voxelSize;
 % transform image from anisotropic voxels space to isotropic voxels space
 jobRS.image_in = {cs.seg};
 jobRS.out_dir = fullfile(NIRS.Dt.s.p,[job.MC_configdir csn]);
 jobRS.out_dim = [1 1 1];
+jobRS.out_vxsize = parameters.voxelSize;
 jobRS.out_dt = 'same';
 jobRS.out_autonaming = 0;
 jobRS.out_prefix = 'prefix';
@@ -87,19 +89,16 @@ load(job.NIRSmat{1,1});
 cs = NIRS.Cs.mcs{i_cs};
 
 V = spm_vol(cs.seg);
-dim = V.dim;
+dim = V.dim;% on est ici avec l'ancienne image qui permet d'obtenir les bonnes positions en voxels
 inv_mat = spm_imatrix(V.mat);
 scalings = diag(inv_mat(7:9));
 
 % Transform also P positions and directions
 NP = size(cs.Pfp_rmv,2);
-% %Transform MNI voxels -> MNI isotropic voxels
-% Pfp_rmiv = scalings * cs.Pfp_rmv;
-
-% Positions
+% Positions : Transform MNI mm -> MNI isotropic voxels
 for i=1:size(cs.Pfp_rmm,2)
 Pfp_ancienne_rmv(:,i) = V.mat\[cs.Pfp_rmm(:,i);1];
-Pfp_ancienne_rmiv(:,i) = abs(inv_mat(7:9)').*Pfp_ancienne_rmv(1:3,i);
+Pfp_ancienne_rmiv(:,i) = abs(inv_mat(7:9)').*(Pfp_ancienne_rmv(1:3,i)/parameters.voxelSize);
 end
 
 Pfp_ancienne_rmiv = round(Pfp_ancienne_rmiv);
@@ -117,7 +116,6 @@ Pfp_ancienne_rmiv = outF{1};
 
 % Directions
 Pd_rmm = cs.Pp_rmm - cs.Pp_c1_rmm;
-%%%%test
 Pwd_rmm = zeros(3,NP);
 for iP=1:NP
     temp_dir = Pd_rmm(:,iP);
@@ -125,28 +123,14 @@ for iP=1:NP
     Pwd_rmm(:,iP) = temp_dir/lgth;
 end
 
-% on prepare la suvegarde de cs
+% on prepare la sauvegarde de cs
 cs.Pfp_rmiv = Pfp_ancienne_rmiv;
 cs.Pwd_rmm = Pwd_rmm;
-% %%%%
-% R = V.mat(1:3,1:3); %no translations
-% %Transform MNI mm -> MNI voxels
-% Pd_rmv = R\Pd_rmm;
-% %Transform Voxels -> Isotropic Voxels Space
-% Pd_rmiv = scalings * Pd_rmv;
-% %normalize directions
-% Pwd_rmiv = zeros(3,NP);
-% for iP=1:NP
-%     temp_dir = Pd_rmiv(:,iP);
-%     lgth = (temp_dir(1)^2 + temp_dir(2)^2 + temp_dir(3)^2)^(1/2);
-%     Pwd_rmiv(:,iP) = temp_dir/lgth;
-% end
 
 % 8bits .bin image
-dim_rmiv = ceil((dim-1) * abs(scalings));
-
-[~,id,~] = fileparts(V.fname);
-n = ['vol8bit' id '-' num2str(dim_rmiv(1)) 'x' num2str(dim_rmiv(2)) 'x' num2str(dim_rmiv(3)) '.bin'];
+[~,id,~] = fileparts(V_rmiv.fname);
+dim_rmiv = V_rmiv.dim;
+n = ['vol8bit_' id '.bin'];
 
 cs.segR = outRS;
 cs.b8i = fullfile(NIRS.Dt.s.p,[job.MC_configdir csn],n);
@@ -173,7 +157,7 @@ Dr = job.MC_parameters.radiid * ones(cs.NDkpt,1);
 parameters.nphotons = job.MC_parameters.nphotons;
 parameters.seed = job.MC_parameters.seed;
 parameters.modulationFreq = job.MC_parameters.modulationFreq;
-parameters.voxelSize = job.MC_parameters.voxelSize;
+
 parameters.numTimeGates = job.MC_parameters.numTimeGates;
 parameters.deltaT = job.MC_parameters.deltaT;
 
@@ -197,6 +181,7 @@ for iwl = 1:size(NIRS.Cf.dev.wl,2)
         parameters.perturbationPpties = job.MC_parameters.perturbationPpties_l2+job.MC_parameters.gmPpties_l2;
     end
     
+    %%%% attention la on est avec l'image resizee...........
     jobW.algo = job.MC_CUDAchoice;
     jobW.n_id = n;
     jobW.mc_dir = fullfile(NIRS.Dt.s.p,[job.MC_configdir csn]);
@@ -204,13 +189,15 @@ for iwl = 1:size(NIRS.Cf.dev.wl,2)
     jobW.n = cs.b8i;
     
     jobW.dim_rmiv = dim_rmiv;
-    jobW.ROIlimits = [1 1 1; V.dim];
+    jobW.ROIlimits = [1 1 1; dim_rmiv];
     
     jobW.parameters = parameters;
     jobW.NS = cs.NSkpt;
     jobW.ND = cs.NDkpt;
     jobW.Pvoid = Pvoid;
     
+    %%% attention, ce qu'on transmet est la position en mm par rapport a
+    %%% l'origine des voxels de l'image
     P.p = Pfp_ancienne_rmiv;%cs.Pfp_rmm;%abs(round(Pfp_rmiv));
     P.wd = Pwd_rmm;%Pwd_rmiv;
     P.r = [Sr' Dr' zeros(1,NP -(cs.NSkpt+cs.NDkpt))];
