@@ -413,7 +413,7 @@ subj_path.num     = [1 1];
 subj         = cfg_branch;
 subj.tag     = 'subj';
 subj.name    = 'Subject';
-subj.val     = {age1 subj_path anatT1 helmet TopoData CWsystem nirs_files baseline_method};
+subj.val     = {age1 subj_path anatT1 helmet TopoData CWsystem protocol nirs_files baseline_method};
 subj.help    = {'Subject'};
 
 generic         = cfg_repeat;
