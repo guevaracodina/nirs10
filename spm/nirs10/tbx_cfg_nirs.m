@@ -304,13 +304,6 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Configuration for IUGM (Techen CW5 [UNF] or CW6 [LESCA])
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% protocol        = cfg_files;
-% protocol.tag    = 'protocol';
-% protocol.name   = 'Study protocol';
-% protocol.filter = '.mat';
-% protocol.num    = [0 1];
-% protocol.val{1} = {''};
-% protocol.help   = {'Select the protocol matrix if any. The file MUST be in SPM format'};
 
 TopoData        = cfg_files;
 TopoData.tag    = 'TopoData';
@@ -428,7 +421,7 @@ generic.num     = [1 Inf];
 criugm1      = cfg_exbranch;
 criugm1.name = 'Read and format CRIUGM data';
 criugm1.tag  = 'criugm1';
-criugm1.val  = {protocol generic};
+criugm1.val  = {generic};
 criugm1.prog = @nirs_run_criugm;
 criugm1.vout = @nirs_cfg_vout_criugm;
 criugm1.help = {'Help'};
