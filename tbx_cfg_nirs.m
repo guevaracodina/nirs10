@@ -304,13 +304,13 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Configuration for IUGM (Techen CW5 [UNF] or CW6 [LESCA])
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-protocol        = cfg_files;
-protocol.tag    = 'protocol';
-protocol.name   = 'Study protocol';
-protocol.filter = '.mat';
-protocol.num    = [0 1];
-protocol.val{1} = {''};
-protocol.help   = {'Select the protocol matrix if any. The file MUST be in SPM format'};
+% protocol        = cfg_files;
+% protocol.tag    = 'protocol';
+% protocol.name   = 'Study protocol';
+% protocol.filter = '.mat';
+% protocol.num    = [0 1];
+% protocol.val{1} = {''};
+% protocol.help   = {'Select the protocol matrix if any. The file MUST be in SPM format'};
 
 TopoData        = cfg_files;
 TopoData.tag    = 'TopoData';
@@ -342,9 +342,9 @@ T1_vitamins.tag       = 'T1_vitamins';
 T1_vitamins.help      = {'The helmet will be read in future module from T1 image and positions of vitamins in the image.'};
 
 no_helmet = cfg_branch; 
-no_helmet.name      = 'No helmet';
+no_helmet.name      = 'No helmet information';
 no_helmet.tag       = 'no_helmet';
-no_helmet.help      = {'No helmet. Some modules won''t work properly.'};
+no_helmet.help      = {'No helmet information available. Some modules won''t work properly.'};
 
 helmet         = cfg_choice;
 helmet.tag     = 'helmet';
@@ -359,6 +359,18 @@ nirs_files.tag     = 'nirs_files';       %file names
 nirs_files.filter  = 'nirs';
 nirs_files.num     = [1 Inf];     % Number of inputs required
 nirs_files.help    = {'Select all the sessions sharing the same device and helmet.'}; % help text displayed
+
+protocol        = cfg_files;
+protocol.tag    = 'protocol';
+protocol.name   = 'Experimental conditions';
+protocol.filter = '.mat';
+protocol.num    = [0 Inf];
+protocol.val{1} = {''};
+protocol.help   = {['Select the "SPM conditions" .mat files. The order must correspond to that of the .nirs files.' ...
+    ' If some (N) .nirs file have no corresponding protocol, they must be selected as the N last ones.' ...
+    ' The format of the "SPM conditions" files is as follows: for n conditions, 3 (1xn) cell arrays contain' ...
+    ' the names (string), onsets (vector) and durations (1 scalar or vector), ...'
+    ' (where length(onsets{i}) = number of events for condition i.']};
 
 CWsystem      = cfg_menu;
 CWsystem.tag  = 'CWsystem';
