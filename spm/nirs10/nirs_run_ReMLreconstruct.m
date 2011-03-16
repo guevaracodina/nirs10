@@ -15,7 +15,7 @@ function out = nirs_run_ReMLreconstruct(job)
 %                   size = <x><y><z><{HbO,HbR}>
 %                   size = 16 16 2  2
 %
-%  W -      the wavelet transform matrix 
+%  W -      the wavelet transform matrix
 
 %Run the code
 clc;
@@ -33,7 +33,7 @@ csn = dir_in(sep(end-1)+1:sep(end)-1);
 
 itest=1;
 while itest<length(NIRS.Cs.n)-1 && isempty(strfind(csn,NIRS.Cs.n{itest}))
-itest =itest+1;
+    itest =itest+1;
 end
 i_cs =itest+1;
 cs = NIRS.Cs.mcs{i_cs};
@@ -44,10 +44,15 @@ fid=fopen(cs.b8i,'rb');
 ms = fread(fid);
 fclose(fid);
 Nvx = length(ms);
+
+% reperage des couches :
+ms_c1 = find(ms==1);
+% ms_c5 = find(ms==5);
+
 clear ms;
 
 % Le systeme qu'on resoud maintenant est le suivant :
-% on est en un unique point temporel donc 
+% on est en un unique point temporel donc
 %
 %/ Y = X W betaWvx +epsilon_channel-noise
 %\ betaWvx = omega
@@ -110,13 +115,11 @@ W = sparse((1:2*Nvx),(1:2*Nvx),ones(1,2*Nvx)',2*Nvx,2*Nvx);
 
 %%%%%%%% PREMIERE IDEE
 %%%%%%%%%%%%%%%%%%% actually : MAYBE USELESS
-% % reperage des couches :
-% ms_c1 = find(ms==1);
-% ms_c5 = find(ms==5);
-% 
+
+%
 % ms_c1Hb = zeros(2,size(ms)*2);%[HbO;HbR]
 % ms_c5Hb = zeros(2,size(ms)*2);%[HbO;HbR]
-% 
+%
 % ms_c1Hb(1,1:size(ms)) = find(ms==1);
 % ms_c1Hb(2,size(ms):end) = find(ms==1);
 % ms_c5Hb(1,1:size(ms)) = find(ms==5);
@@ -127,18 +130,16 @@ W = sparse((1:2*Nvx),(1:2*Nvx),ones(1,2*Nvx)',2*Nvx,2*Nvx);
 %- on calcule des wavelets dans un plan et on incline ce plan selon celui
 %des sources et detecteurs
 
-
-
-% %This will act as a band-pass filter on each layer 
-% sigma_c5=6; 
-% sigma_c1=1;  
+% %This will act as a band-pass filter on each layer
+% sigma_c5=6;
+% sigma_c1=1;
 % %Sigma (see text) defines the attenuation at each frequency band
 % % If you increase sigma, this will act more as a low-pass filter (bias to
 % % low frequency).  If Skin> Brain, the bias will be to reconstruct the
 % % lower frequencies in layer 1\c5
-% 
+%
 % %This is a little messy since this demo does not provide all the code to
-% %calculate the original wavelets... so just 
+% %calculate the original wavelets... so just
 % % Number of stages
 % NS = 3;
 % temp = ones(1,length(ms_c5)/2^NS);
@@ -161,26 +162,45 @@ W = sparse((1:2*Nvx),(1:2*Nvx),ones(1,2*Nvx)',2*Nvx,2*Nvx);
 % Qp{3}=sparse(ms_c5Hb(2,:),ms_c5Hb(2,:),WL_bias_c5,nvox*2,nvox*2); %c5 - HbR
 % Qp{4}=sparse(ms_c1Hb(2,:),ms_c1Hb(2,:),WL_bias_c1,nvox*2,nvox*2); %c1 - HbR
 
-Qp{1}=sparse((1:Nvx),(1:Nvx),zeros(1,Nvx)',2*Nvx,2*Nvx);  %Skin layer- HbO
-Qp{2}=sparse((1:Nvx),(1:Nvx),ones(1,Nvx)',2*Nvx,2*Nvx);  %Brain layer- HbO
-Qp{3}=sparse(Nvx+(1:Nvx),Nvx+(1:Nvx),zeros(1,Nvx)',2*Nvx,2*Nvx);  %Skin layer- HbR
-Qp{4}=sparse(Nvx+(1:Nvx),Nvx+(1:Nvx),ones(1,Nvx)',2*Nvx,2*Nvx);  %Brain layer- HbR
+
+% Qp{1}=sparse((1:2*Nvx),(1:2*Nvx),zeros(1,2*Nvx)',2*Nvx,2*Nvx);  %Skin layer- HbO
+Qp{1}=sparse(ms_c1,ms_c1,ones(length(ms_c1),1),2*Nvx,2*Nvx);  %Brain layer- HbO
+% Qp{3}=sparse(Nvx+(1:Nvx),Nvx+(1:Nvx),zeros(1,Nvx)',2*Nvx,2*Nvx);  %Skin layer- HbR
+Qp{2}=sparse(ms_c1,ms_c1,ones(length(ms_c1),1),2*Nvx,2*Nvx);  %Brain layer- HbR
 
 %The actual model
+%% code Huppert :
 disp('Computing multiple prior solution');
-[lambda,Beta_W,Stats]=nirs_run_DOT_REML(Y_t0,X*W',Beta_prior,Qn,Qp);
+% % % % % % % [lambda,Beta_W,Stats]=nirs_run_DOT_REML(Y_t0,X*W',Beta_prior,Qn,Qp);
 %lambda   - hyperparameters
 %Beta_W   - the estimated image (in wavelet domain)
 %Stats    - model Statistics (in the wavelet domain)
+%% code SPM
 
-% %For comparison, the Tikhonov (equivelent) result
-% disp('Computing Tikhonov/MNE solution');
-% [lambda,Beta_W_Tikhonov,Stats]=nirs_run_DOT_REML(Y,X*W',Beta_prior,Qn,QpT);
+%Set up the extended covariance model by concatinating the measurement
+%and parameter noise terms
+Q=cell(length(Qn)+length(Qp),1);
+for idx=1:length(Qn)
+    Q{idx}=blkdiag(Qn{idx},sparse(size(Qp{1},1),size(Qp{1},2))); % Build block diagonal matrix from Qn & Qp matrices
+end
+for idx2=1:length(Qp)
+    Q{idx+idx2}=blkdiag(sparse(size(Qn{1},1),size(Qn{1},2)),Qp{idx2});
+end
+% sample covariance matrix Y*Y'
+YY = Y_t0*Y_t0';
 
+%[C,h,Ph,F,Fa,Fc]=spm_reml(YY,X,Q);
+[C,h,Ph,F,Fa,Fc]=nirs_spm_reml(YY,X,Q);
+
+iC     = spm_inv(C);
+iCX    = iC*X;
+Cq = spm_inv(X'*iCX);
+
+Beta = iC*Cq*Y;
+
+%%
 %Convert to the image domain and display
-%%% passage de beta a beta decompose sur l'espace des ondelettes de Daubechy
 Beta = W'*Beta_W;
-% Beta_Tikhonov = W'*Beta_W_Tikhonov;
 
 %Convert the Stats
 %%% juste les t stats
@@ -190,9 +210,7 @@ Stats.tstat.pval=2*tcdf(-abs(Stats.tstat.t),Stats.tstat.dfe);
 %%%
 
 %Now, display the results
-%%% c'est biensur les beta qu'on affiche
 Recon_Image=reshape(full(Beta),size(TrueImage));
-% Recon_Image_Tikhonov=reshape(full(Beta_Tikhonov),size(TrueImage));
 
 %%% Attention, TrueImage est  l'image en deux temps differents me
 %%% semble-t-il...
@@ -203,11 +221,10 @@ maxHbO2=max(max(abs([Recon_Image(:,:,2,1) TrueImage(:,:,2,1)])));
 maxHbR1=max(max(abs([Recon_Image(:,:,1,2) TrueImage(:,:,1,2)])));
 maxHbR2=max(max(abs([Recon_Image(:,:,2,2) TrueImage(:,:,2,2)])));
 
-maxHbO1=max([maxHbO1 maxHbO2]); 
+maxHbO1=max([maxHbO1 maxHbO2]);
 maxHbO2=maxHbO1;  %Remove this line if you don't want layer1 to be scaled the same as layer2
-maxHbR1=max([maxHbR1 maxHbR2]); 
+maxHbR1=max([maxHbR1 maxHbR2]);
 maxHbR2=maxHbR1;  %Remove this line if you don't want layer1 to be scaled the same as layer2
-
 
 figure;
 %%% on affiche les resultats qui ont ete calcules et ranges dans les
@@ -248,15 +265,15 @@ end
 % % % % % % % % % % % % % %_______________________________________________________________________
 % % % % % % % % % % % % % % Copyright (C) 2010 Laboratoire d'Imagerie Optique et Moleculaire
 % % % % % % % % % % % % % % from Ted Huppert ReML code
-% % % % % % % % % % % % % 
+% % % % % % % % % % % % %
 % % % % % % % % % % % % % % Clément Bonnéry
 % % % % % % % % % % % % % % 2010-09
-% % % % % % % % % % % % % 
+% % % % % % % % % % % % %
 % % % % % % % % % % % % % NIRS = job.NIRS;
-% % % % % % % % % % % % % % 
+% % % % % % % % % % % % % %
 % % % % % % % % % % % % % % NIRS.nirsfile = job.nirsfile
 % % % % % % % % % % % % % % nirsfile = load('NIRS.nirsfile','-mat');
-% % % % % % % % % % % % % 
+% % % % % % % % % % % % %
 % % % % % % % % % % % % % % % % % covariances inter and intra NIRS signals
 % % % % % % % % % % % % % % % %
 % % % % % % % % % % % % % % % % % intra (temporal covariance)
@@ -267,7 +284,7 @@ end
 % % % % % % % % % % % % % % % %
 % % % % % % % % % % % % % % % % %-- est ce qu'on devrait calculer la correlation entre HbO et HbR ????????
 % % % % % % % % % % % % % % % % %(en prenant soin de correler HbO et -HbR disons...)
-% % % % % % % % % % % % % 
+% % % % % % % % % % % % %
 % % % % % % % % % % % % % n_pairs = size(NIRS.nirs_file.d,2)/2;
 % % % % % % % % % % % % % % SAME wavelength
 % % % % % % % % % % % % % for n_wl = 1:2
@@ -279,7 +296,7 @@ end
 % % % % % % % % % % % % %         end
 % % % % % % % % % % % % %     end
 % % % % % % % % % % % % % end
-% % % % % % % % % % % % % 
+% % % % % % % % % % % % %
 % % % % % % % % % % % % % [C,h,Ph,F,Fa,Fc] = spm_reml_sc(YY,X,Q,NIRS.nirs_file.size(d,1),-32,256,V);
 % % % % % % % % % % % % % % ReML estimation of covariance components from y*y' - proper components
 % % % % % % % % % % % % % % FORMAT [C,h,Ph,F,Fa,Fc] = spm_reml_sc(YY,X,Q,N,[hE,hC,V]);
@@ -309,14 +326,14 @@ end
 % % % % % % % % % % % % % %
 % % % % % % % % % % % % % %__________________________________________________________________________
 % % % % % % % % % % % % % %      spm_reml_sc: positivity constraints on covariance parameters
-% % % % % % % % % % % % % 
+% % % % % % % % % % % % %
 % % % % % % % % % % % % % % on resout à t donné
-% % % % % % % % % % % % % 
+% % % % % % % % % % % % %
 % % % % % % % % % % % % % %get anatomical and functional datas
 % % % % % % % % % % % % % %-> anatomical datas : 5 layer segmented image
-% % % % % % % % % % % % % 
-% % % % % % % % % % % % % 
-% % % % % % % % % % % % % 
+% % % % % % % % % % % % %
+% % % % % % % % % % % % %
+% % % % % % % % % % % % %
 % % % % % % % % % % % % % %-> functional datas :
 % % % % % % % % % % % % % %   -- position of sources and detectors
 % % % % % % % % % % % % % %   -- HbO and HbT [in SD pairs domain]
@@ -324,7 +341,7 @@ end
 % % % % % % % % % % % % % %   -- ??
 % % % % % % % % % % % % % out{1} =1;
 % % % % % % % % % % % % % return
-% % % % % % % % % % % % % 
+% % % % % % % % % % % % %
 % % % % % % % % % % % % % % function out = nirs_run_reconstruction(job)
 % % % % % % % % % % % % % % % Achieve image segmentation after New Segment
 % % % % % % % % % % % % % % %_______________________________________________________________________

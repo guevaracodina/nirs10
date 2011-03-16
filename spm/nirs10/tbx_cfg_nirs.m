@@ -2518,12 +2518,12 @@ end
 %Configuration: 3D reconstruction -- ReML reconstruction
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-sensmat         = cfg_files; %Select sensitivity matrix for this subject
-sensmat.name    = 'Sensitivity Matrix'; % The displayed name
-sensmat.tag     = 'sensmat';       %file names
-sensmat.filter  = 'nii';
-sensmat.num     = [1 1];     % Number of inputs required
-sensmat.help    = {'Select sensitivity matrix for this subject.'}; % help t
+% sensmat         = cfg_files; %Select sensitivity matrix for this subject
+% sensmat.name    = 'Sensitivity Matrix'; % The displayed name
+% sensmat.tag     = 'sensmat';       %file names
+% sensmat.filter  = 'nii';
+% sensmat.num     = [1 1];     % Number of inputs required
+% sensmat.help    = {'Select sensitivity matrix for this subject.'}; % help t
 
 anat_segT1         = cfg_files; %Select MC segmented volume for this subject
 anat_segT1.name    = 'Anatomical segmented image'; % The displayed name
@@ -2560,7 +2560,7 @@ dir_in.help    = {'Select the MonteCarlo simulation output directory.'};
 ReMLreconstruct1      = cfg_exbranch;       
 ReMLreconstruct1.name = '3D NIRS data ReML reconstruction';             
 ReMLreconstruct1.tag  = 'ReMLreconstruct1';
-ReMLreconstruct1.val  = {NIRSmat dir_in sensmat};   
+ReMLreconstruct1.val  = {NIRSmat dir_in};   
 ReMLreconstruct1.prog = @nirs_run_ReMLreconstruct;  
 ReMLreconstruct1.vout = @nirs_cfg_vout_ReMLreconstruct; 
 ReMLreconstruct1.help = {'Run 3D NIRS data reconstruction.'};
