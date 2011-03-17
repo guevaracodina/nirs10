@@ -2539,7 +2539,7 @@ anat_segT1.num     = [1 1];     % Number of inputs required
 anat_segT1.help    = {'Anatomical segmented image with NewSegment and MCsegment.'}; % help text displayed
 
 % Priors
-hb_relative_evolution    = cfg_menu;
+hb_relative_evolution        = cfg_menu;
 hb_relative_evolution.name   = 'Relative evolution HbO/HbR';
 hb_relative_evolution.tag    = 'hb_relative_evolution';
 hb_relative_evolution.labels = {'Yes','No'};
@@ -2547,7 +2547,7 @@ hb_relative_evolution.values = {1,0};
 %hb_relative_evolution.def    = @(val)nirs_get_defaults('hb_relative_evolution', val{:});
 hb_relative_evolution.help   = {'Choose type of configuration files to generate.'};
 
-priors = cfg_branch;
+priors      = cfg_branch;
 priors.name = 'Priors';
 priors.tag  = 'priors';
 priors.val  = {anat_segT1 hb_relative_evolution};
@@ -2561,11 +2561,19 @@ dir_in.ufilter = '.*';
 dir_in.num     = [1 1];
 dir_in.help    = {'Select the MonteCarlo simulation output directory.'};
 
+ReML_method          = cfg_menu;
+ReML_method.name      = 'ReML method';
+ReML_method.tag       = 'ReML_method';
+ReML_method.labels    = {'Huppert' 'SPM'};
+ReML_method.values    = {0,1};
+ReML_method.val       = {0};
+ReML_method.help      = {'Choose ReML reconstruction method.'};
+
 % Executable Branch
 ReMLreconstruct1      = cfg_exbranch;       
 ReMLreconstruct1.name = '3D NIRS data ReML reconstruction';             
 ReMLreconstruct1.tag  = 'ReMLreconstruct1';
-ReMLreconstruct1.val  = {NIRSmat dir_in};   
+ReMLreconstruct1.val  = {NIRSmat dir_in ReML_method};   
 ReMLreconstruct1.prog = @nirs_run_ReMLreconstruct;  
 ReMLreconstruct1.vout = @nirs_cfg_vout_ReMLreconstruct; 
 ReMLreconstruct1.help = {'Run 3D NIRS data reconstruction.'};
