@@ -1,30 +1,5 @@
 function out = nirs_run_ReMLreconstruct(job)
-% Demo of Restricted Maximum Likelihood estimation in DOT
 
-% load huppert_reml_demo.mat
-%File contains:
-%  SD-  Source-detector arrangement (see documentation for PMI toolbox from
-%                   Harvard or HOMER software; www.nmr.mgh.harvard.edu/DOT)
-%  X-   Optical forward model (including spectral priors) calculated from
-%                   the PMI toolbox.  Y = X*[HbO; HbR]
-%       NOTE- X is normalized by 1000 so both HbX and dOD are O(1-10)
-%  Medium-  Structure describing the mesh used to generate the optical
-%                   forward model (used here for display purposes)
-%
-%  SampleImage1-    Example of image (zero in layer 1)
-%                   size = <x><y><z><{HbO,HbR}>
-%                   size = 16 16 2  2
-%
-%  W -      the wavelet transform matrix
-
-%Run the code
-clc;
-disp('Tests on ReML code for the reconstruction of DOT images')
-disp('Written by:  T. Huppert and Farras Abdelnour');
-disp('Hijacked by:  C. Bonnery');
-disp(' ');
-
-%%Now, the actual data and reconstructions
 load(job.NIRSmat{:});
 % on recupere cs
 dir_in = job.dir_in{:};
@@ -82,365 +57,118 @@ Y_t0 = fnirs.d(t0,Cmc)';
 % on prend pour \Omegachapeau I en premiere approximation
 Kmat = load(fullfile(dir_in,'sens.mat'));
 Xdemi = Kmat.sens;
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% attention dans la demo de huppert, les deux longueurs d'onde sont sur une
-% meme ligne
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 1.2956 et 0.1940 sont les rapports entre les coefficients d'absortivite
+% de HbO et HbR pour 690 et 830.
 NCdemi = size(Xdemi,1)/2;
 X = sparse([[Xdemi(1:NCdemi,:)*1.2956 Xdemi(1:NCdemi,:)];[Xdemi(NCdemi+1:end,:)*0.1940 Xdemi(NCdemi+1:end,:)]]);
 % %Omega chapeau est le bruit d'observation. Ici on le prend egal a un
 % Omegachapo = eye(NC);
 % Kbarre = Omegachapo*K;
-%% epsilon_channel-noise
-for iwl=1:length(wl) %loop over number of wavelengths
-    lst=find(Cwl==iwl); %List of all wavelength <idx>
-    Qn{iwl}=sparse(lst,lst,ones(size(lst)),NC,NC);
-end
-
 %% omega
-Beta_prior = zeros(2*Nvx,1);
+beta_prior = zeros(2*Nvx,1);
 
 %% W
 % dans le cas d'une premiere reconstruction, on prend W =Id
 W = sparse((1:2*Nvx),(1:2*Nvx),ones(1,2*Nvx)',2*Nvx,2*Nvx);
 
-
-%% Now, covariance components for the parameters (4 total- 2 per HbO/HbR {layer 1; layer II})
+%% Qn : epsilon_channel-noise
+for iwl=1:length(wl) %loop over number of wavelengths
+    lst=find(Cwl==iwl); %List of all wavelength <idx>
+    Qn{iwl}=sparse(lst,lst,ones(size(lst)),NC,NC);
+end
+%%  Qp : Covariance components for the parameters (4 total- 2 per HbO/HbR {layer 1; layer II})
 % c1 : couche cortex : huppert 2
 % c5 : couche skin   : huppert 1
-
-% % % % % % % % % % % % % % %%% et si on travaillait dans l'espace des paires comme ca on aurait
-% % % % % % % % % % % % % % %%% directement la tangente au plan des sources et detecteurs...
-% % % % % % % % % % % % % % %%% DON T YOU THINK ?
-
-%%%%%%%% PREMIERE IDEE
-%%%%%%%%%%%%%%%%%%% actually : MAYBE USELESS
-
-%
-% ms_c1Hb = zeros(2,size(ms)*2);%[HbO;HbR]
-% ms_c5Hb = zeros(2,size(ms)*2);%[HbO;HbR]
-%
-% ms_c1Hb(1,1:size(ms)) = find(ms==1);
-% ms_c1Hb(2,size(ms):end) = find(ms==1);
-% ms_c5Hb(1,1:size(ms)) = find(ms==5);
-% ms_c5Hb(2,size(ms):end) = find(ms==5);
-%%%%%%%%%%%%%%%%%
-
-%%%%%%%% DEUXIEME IDEE
+%%% PREMIERE IDEE : on projette les ondelettes sur les couches en reperant
+%%% quelle valeur appartient a quelle couche dans la longue matrice colonne
+%%% (on fait comme si les voxels dans la matrice colonne etaient adjacents dans l'image)
+%%% DEUXIEME IDEE
 %- on calcule des wavelets dans un plan et on incline ce plan selon celui
 %des sources et detecteurs
-
-% %This will act as a band-pass filter on each layer
-% sigma_c5=6;
-% sigma_c1=1;
-% %Sigma (see text) defines the attenuation at each frequency band
-% % If you increase sigma, this will act more as a low-pass filter (bias to
-% % low frequency).  If Skin> Brain, the bias will be to reconstruct the
-% % lower frequencies in layer 1\c5
-%
-% %This is a little messy since this demo does not provide all the code to
-% %calculate the original wavelets... so just
-% % Number of stages
-% NS = 3;
-% temp = ones(1,length(ms_c5)/2^NS);
-% for ii = NS:-1:1
-%     s1 = [temp ones(1,length(ms_c5)/2^ii)/sigma_c5^(NS-ii+1)];
-%     temp = s1;
-% end
-% temp = ones(1,length(ms_c1)/2^NS);
-% for ii = NS:-1:1
-%     s2 = [temp ones(1,length(ms_c1)/2^ii)/sigma_c1^(NS-ii+1)];
-%     temp = s2;
-% end
-% s1 = kron(s1',s1);  %I can do this as long as the image X/Y is square
-% s2 = kron(s2',s2);
-% WL_bias_c5=s1(:);
-% WL_bias_c1=s2(:);
-
-% Qp{1}=sparse(ms_c5Hb(1,:),ms_c5Hb(1,:),WL_bias_c5,nvox*2,nvox*2); %c5 - HbO
-% Qp{2}=sparse(ms_c1Hb(1,:),ms_c1Hb(1,:),WL_bias_c1,nvox*2,nvox*2); %c1 - HbO
-% Qp{3}=sparse(ms_c5Hb(2,:),ms_c5Hb(2,:),WL_bias_c5,nvox*2,nvox*2); %c5 - HbR
-% Qp{4}=sparse(ms_c1Hb(2,:),ms_c1Hb(2,:),WL_bias_c1,nvox*2,nvox*2); %c1 - HbR
-
 
 % Qp{1}=sparse((1:2*Nvx),(1:2*Nvx),zeros(1,2*Nvx)',2*Nvx,2*Nvx);  %Skin layer- HbO
 Qp{1}=sparse(ms_c1,ms_c1,ones(length(ms_c1),1),2*Nvx,2*Nvx);  %Brain layer- HbO
 % Qp{3}=sparse(Nvx+(1:Nvx),Nvx+(1:Nvx),zeros(1,Nvx)',2*Nvx,2*Nvx);  %Skin layer- HbR
 Qp{2}=sparse(ms_c1,ms_c1,ones(length(ms_c1),1),2*Nvx,2*Nvx);  %Brain layer- HbR
 
-%The actual model
-%% code Huppert :
-disp('Computing multiple prior solution');
-% % % % % % % [lambda,Beta_W,Stats]=nirs_run_DOT_REML(Y_t0,X*W',Beta_prior,Qn,Qp);
-%lambda   - hyperparameters
-%Beta_W   - the estimated image (in wavelet domain)
-%Stats    - model Statistics (in the wavelet domain)
-%% code SPM
-
-%Set up the extended covariance model by concatinating the measurement
-%and parameter noise terms
-Q=cell(length(Qn)+length(Qp),1);
-for idx=1:length(Qn)
-    Q{idx}=blkdiag(Qn{idx},sparse(size(Qp{1},1),size(Qp{1},2))); % Build block diagonal matrix from Qn & Qp matrices
+switch code
+    case 'hup'
+        disp('code Huppert');
+        [lambda,beta_W,Stats]=nirs_run_DOT_REML(Y_t0,X*W',beta_prior,Qn,Qp);
+        %lambda   - hyperparameters
+        %beta_W   - the estimated image (in wavelet domain)
+        %Stats    - model Statistics (in the wavelet domain)
+        
+        %Convert to the image domain and display
+        beta = W'*beta_W;
+        
+    case 'spm'
+        disp('code spm_reml');
+        %Set up the extended covariance model by concatinating the measurement
+        %and parameter noise terms
+        Q=cell(length(Qn)+length(Qp),1);
+        for idx=1:length(Qn)
+            Q{idx}=blkdiag(Qn{idx},sparse(size(Qp{1},1),size(Qp{1},2))); % Build block diagonal matrix from Qn & Qp matrices
+        end
+        for idx2=1:length(Qp)
+            Q{idx+idx2}=blkdiag(sparse(size(Qn{1},1),size(Qn{1},2)),Qp{idx2});
+        end
+        % sample covariance matrix Y*Y'
+        YY = Y_t0*Y_t0';
+        
+        [C,h,Ph,F,Fa,Fc]=spm_reml(YY,X,Q);
+        
+        iC     = spm_inv(C);
+        iCX    = iC*X;
+        Cq = spm_inv(X'*iCX);
+        
+        beta = Cq*X'*iC*Y_t0;
 end
-for idx2=1:length(Qp)
-    Q{idx+idx2}=blkdiag(sparse(size(Qn{1},1),size(Qn{1},2)),Qp{idx2});
-end
-% sample covariance matrix Y*Y'
-YY = Y_t0*Y_t0';
-
-%[C,h,Ph,F,Fa,Fc]=spm_reml(YY,X,Q);
-[C,h,Ph,F,Fa,Fc]=nirs_spm_reml(YY,X,Q);
-
-iC     = spm_inv(C);
-iCX    = iC*X;
-Cq = spm_inv(X'*iCX);
-
-Beta = iC*Cq*Y;
-
 %%
-%Convert to the image domain and display
-Beta = W'*Beta_W;
+% %Convert the Stats
+% %%% juste les t stats
+% Stats.tstat.Cov_beta = W'*Stats.tstat.Cov_beta*W;
+% Stats.tstat.t=beta./sqrt(diag(Stats.tstat.Cov_beta));
+% Stats.tstat.pval=2*tcdf(-abs(Stats.tstat.t),Stats.tstat.dfe);
 
-%Convert the Stats
-%%% juste les t stats
-Stats.tstat.Cov_beta = W'*Stats.tstat.Cov_beta*W;
-Stats.tstat.t=Beta./sqrt(diag(Stats.tstat.Cov_beta));
-Stats.tstat.pval=2*tcdf(-abs(Stats.tstat.t),Stats.tstat.dfe);
-%%%
-
+V = spm_vol(cs.segR);
 %Now, display the results
-Recon_Image=reshape(full(Beta),size(TrueImage));
+beta_4d = reshape(full(beta),[V.dim 2]);
+beta_HbO = beta_4d(:,:,:,1)+abs(min(min(min(beta_4d(:,:,:,1)))));
+beta_HbR = beta_4d(:,:,:,2)+abs(min(min(min(beta_4d(:,:,:,2)))));
 
-%%% Attention, TrueImage est  l'image en deux temps differents me
-%%% semble-t-il...
+beta_HbO = beta_HbO/max(max(max(beta_HbO)));
+beta_HbR = beta_HbR/max(max(max(beta_HbR)));
 
-%Scale all images the same
-maxHbO1=max(max(abs([Recon_Image(:,:,1,1) TrueImage(:,:,1,1)])));
-maxHbO2=max(max(abs([Recon_Image(:,:,2,1) TrueImage(:,:,2,1)])));
-maxHbR1=max(max(abs([Recon_Image(:,:,1,2) TrueImage(:,:,1,2)])));
-maxHbR2=max(max(abs([Recon_Image(:,:,2,2) TrueImage(:,:,2,2)])));
+% creation de nii :
+V_O = struct('fname',fullfile(dir_in,['HbO' '.nii']),...
+    'dim',  V.dim,...
+    'dt',   V.dt,...
+    'pinfo',V.pinfo,...
+    'mat',  V.mat);
 
-maxHbO1=max([maxHbO1 maxHbO2]);
-maxHbO2=maxHbO1;  %Remove this line if you don't want layer1 to be scaled the same as layer2
-maxHbR1=max([maxHbR1 maxHbR2]);
-maxHbR2=maxHbR1;  %Remove this line if you don't want layer1 to be scaled the same as layer2
+V_O = spm_create_vol(V_O);
+V_O = spm_write_vol(V_O, beta_HbO);
 
-figure;
-%%% on affiche les resultats qui ont ete calcules et ranges dans les
-%%% matrices Recon_Image, Recon_Tikhonov_Image et TrueImage
-%%% Medium.CompVol n'est que les echelles des distances selon X et Y
-subplot(3,2,1); hold on;
-imagesc(Medium.CompVol.X,Medium.CompVol.Y,squeeze(Recon_Image(:,:,1,1)));
-for idx=1:size(SD.SrcPos,1); text(SD.SrcPos(idx,1),SD.SrcPos(idx,2),['S-' num2str(idx)]); end;
-for idx=1:size(SD.DetPos,1); text(SD.DetPos(idx,1),SD.DetPos(idx,2),['D-' num2str(idx)]); end;
-caxis([-maxHbO1 maxHbO1]); axis tight; axis off; colorbar;
-title('REML Reconstructed Layer-I');
+V_R = struct('fname',fullfile(dir_in,['HbR' '.nii']),...
+    'dim',  V.dim,...
+    'dt',   V.dt,...
+    'pinfo',V.pinfo,...
+    'mat',  V.mat);
 
-subplot(3,2,2); hold on;
-imagesc(Medium.CompVol.X,Medium.CompVol.Y,squeeze(Recon_Image(:,:,2,1)));
-for idx=1:size(SD.SrcPos,1); text(SD.SrcPos(idx,1),SD.SrcPos(idx,2),['S-' num2str(idx)]); end;
-for idx=1:size(SD.DetPos,1); text(SD.DetPos(idx,1),SD.DetPos(idx,2),['D-' num2str(idx)]); end;
-caxis([-maxHbO2 maxHbO2]); axis tight; axis off; colorbar;
-title('REML Reconstructed Layer-II');
+V_R = spm_create_vol(V_R);
+V_R = spm_write_vol(V_R, beta_HbR);
 
-subplot(3,2,5); hold on;
-imagesc(Medium.CompVol.X,Medium.CompVol.Y,squeeze(TrueImage(:,:,1,1)));
-for idx=1:size(SD.SrcPos,1); text(SD.SrcPos(idx,1),SD.SrcPos(idx,2),['S-' num2str(idx)]); end;
-for idx=1:size(SD.DetPos,1); text(SD.DetPos(idx,1),SD.DetPos(idx,2),['D-' num2str(idx)]); end;
-caxis([-maxHbO1 maxHbO1]); axis tight; axis off; colorbar;
-title('Truth Layer-I');
+% superpositions : on cree des images semi transparentes rouges ou bleues
+% sur les anatomiques
 
-subplot(3,2,6); hold on;
-imagesc(Medium.CompVol.X,Medium.CompVol.Y,squeeze(TrueImage(:,:,2,1)));
-for idx=1:size(SD.SrcPos,1); text(SD.SrcPos(idx,1),SD.SrcPos(idx,2),['S-' num2str(idx)]); end;
-for idx=1:size(SD.DetPos,1); text(SD.DetPos(idx,1),SD.DetPos(idx,2),['D-' num2str(idx)]); end;
-caxis([-maxHbO2 maxHbO2]); axis tight; axis off; colorbar;
-title('Truth Layer-II');
-% end
+[~,~] = spm_imcalc_ui({fullfile(dir_in,'HbO.nii');...
+    cs.segR},...
+    fullfile(dir_in,'HbO_anat.nii'),...
+    'i1+i2');
+
+[~,~] = spm_imcalc_ui({fullfile(dir_in,'HbR.nii');...
+    cs.segR},...
+    fullfile(dir_in,'HbR_anat.nii'),...
+    'i1+0.1*i2');
 end
-
-% % % % % % % % % % % % % function out = nirs_run_ReMLreconstruct(job)
-% % % % % % % % % % % % % % Achieve image segmentation after New Segment
-% % % % % % % % % % % % % %_______________________________________________________________________
-% % % % % % % % % % % % % % Copyright (C) 2010 Laboratoire d'Imagerie Optique et Moleculaire
-% % % % % % % % % % % % % % from Ted Huppert ReML code
-% % % % % % % % % % % % %
-% % % % % % % % % % % % % % Clément Bonnéry
-% % % % % % % % % % % % % % 2010-09
-% % % % % % % % % % % % %
-% % % % % % % % % % % % % NIRS = job.NIRS;
-% % % % % % % % % % % % % %
-% % % % % % % % % % % % % % NIRS.nirsfile = job.nirsfile
-% % % % % % % % % % % % % % nirsfile = load('NIRS.nirsfile','-mat');
-% % % % % % % % % % % % %
-% % % % % % % % % % % % % % % % % covariances inter and intra NIRS signals
-% % % % % % % % % % % % % % % %
-% % % % % % % % % % % % % % % % % intra (temporal covariance)
-% % % % % % % % % % % % % % % % %-- sur OD : sur chaque paire
-% % % % % % % % % % % % % % % % % inter (spatial covariance)
-% % % % % % % % % % % % % % % % %-- on calcule les covariances entre les OD qui constituent les signaux
-% % % % % % % % % % % % % % % % %directement enregistres sur les paires
-% % % % % % % % % % % % % % % %
-% % % % % % % % % % % % % % % % %-- est ce qu'on devrait calculer la correlation entre HbO et HbR ????????
-% % % % % % % % % % % % % % % % %(en prenant soin de correler HbO et -HbR disons...)
-% % % % % % % % % % % % %
-% % % % % % % % % % % % % n_pairs = size(NIRS.nirs_file.d,2)/2;
-% % % % % % % % % % % % % % SAME wavelength
-% % % % % % % % % % % % % for n_wl = 1:2
-% % % % % % % % % % % % %     for i = 1:n_pairs
-% % % % % % % % % % % % %         for j = 1:n_pairs
-% % % % % % % % % % % % %             Q{(n_wl-1)*n_pairs+i,(n_wl-1)*n_pairs+j} = xcorr(NIRS.nirs_file.d(:,(n_wl-1)*n_pairs+i),NIRS.nirs_file.d(:,(n_wl-1)*n_pairs+j));
-% % % % % % % % % % % % %             Q{i,(n_wl-1)*n_pairs+j} = xcorr(NIRS.nirs_file.d(:,i),NIRS.nirs_file.d(:,n_pairs+j));
-% % % % % % % % % % % % %             Q{(n_wl-1)*n_pairs+i,j} = xcorr(NIRS.nirs_file.d(:,n_pairs+i),NIRS.nirs_file.d(:,j));
-% % % % % % % % % % % % %         end
-% % % % % % % % % % % % %     end
-% % % % % % % % % % % % % end
-% % % % % % % % % % % % %
-% % % % % % % % % % % % % [C,h,Ph,F,Fa,Fc] = spm_reml_sc(YY,X,Q,NIRS.nirs_file.size(d,1),-32,256,V);
-% % % % % % % % % % % % % % ReML estimation of covariance components from y*y' - proper components
-% % % % % % % % % % % % % % FORMAT [C,h,Ph,F,Fa,Fc] = spm_reml_sc(YY,X,Q,N,[hE,hC,V]);
-% % % % % % % % % % % % % %
-% % % % % % % % % % % % % % YY  - (m x m) sample covariance matrix Y*Y'  {Y = (m x N) data matrix}
-% % % % % % % % % % % % % % X   - (m x p) design matrix
-% % % % % % % % % % % % % % Q   - {1 x q} covariance components
-% % % % % % % % % % % % % % N   - number of samples
-% % % % % % % % % % % % % %
-% % % % % % % % % % % % % % hE  - hyperprior expectation in log-space [default = -32]
-% % % % % % % % % % % % % % hC  - hyperprior covariance  in log-space [default = 256]
-% % % % % % % % % % % % % % V   - fixed covariance component
-% % % % % % % % % % % % % %
-% % % % % % % % % % % % % % C   - (m x m) estimated errors = h(1)*Q{1} + h(2)*Q{2} + ...
-% % % % % % % % % % % % % % h   - (q x 1) ReML hyperparameters h
-% % % % % % % % % % % % % % Ph  - (q x q) conditional precision of log(h)
-% % % % % % % % % % % % % %
-% % % % % % % % % % % % % % F   - [-ve] free energy F = log evidence = p(Y|X,Q) = ReML objective
-% % % % % % % % % % % % % %
-% % % % % % % % % % % % % % Fa  - accuracy
-% % % % % % % % % % % % % % Fc  - complexity (F = Fa - Fc)
-% % % % % % % % % % % % % %
-% % % % % % % % % % % % % % Performs a Fisher-Scoring ascent on F to find MAP variance parameter
-% % % % % % % % % % % % % % estimates.  NB: uses weakly informative log-normal hyperpriors.
-% % % % % % % % % % % % % % See also spm_reml for an unconstrained version that allows for negative
-% % % % % % % % % % % % % % hyperparameters
-% % % % % % % % % % % % % %
-% % % % % % % % % % % % % %__________________________________________________________________________
-% % % % % % % % % % % % % %      spm_reml_sc: positivity constraints on covariance parameters
-% % % % % % % % % % % % %
-% % % % % % % % % % % % % % on resout à t donné
-% % % % % % % % % % % % %
-% % % % % % % % % % % % % %get anatomical and functional datas
-% % % % % % % % % % % % % %-> anatomical datas : 5 layer segmented image
-% % % % % % % % % % % % %
-% % % % % % % % % % % % %
-% % % % % % % % % % % % %
-% % % % % % % % % % % % % %-> functional datas :
-% % % % % % % % % % % % % %   -- position of sources and detectors
-% % % % % % % % % % % % % %   -- HbO and HbT [in SD pairs domain]
-% % % % % % % % % % % % % %   -- HbO and HbT hemodynamic response ?? (prior temporel...)
-% % % % % % % % % % % % % %   -- ??
-% % % % % % % % % % % % % out{1} =1;
-% % % % % % % % % % % % % return
-% % % % % % % % % % % % %
-% % % % % % % % % % % % % % function out = nirs_run_reconstruction(job)
-% % % % % % % % % % % % % % % Achieve image segmentation after New Segment
-% % % % % % % % % % % % % % %_______________________________________________________________________
-% % % % % % % % % % % % % % % Copyright (C) 2010 Laboratoire d'Imagerie Optique et Moleculaire
-% % % % % % % % % % % % % % % from Ted Huppert ReML code
-% % % % % % % % % % % % % %
-% % % % % % % % % % % % % % % Clément Bonnéry
-% % % % % % % % % % % % % % % 2010-09
-% % % % % % % % % % % % % %
-% % % % % % % % % % % % % %
-% % % % % % % % % % % % % % if(~exist('K'))
-% % % % % % % % % % % % % %     K=35;  %Max # of iterations of REML code
-% % % % % % % % % % % % % % end
-% % % % % % % % % % % % % %
-% % % % % % % % % % % % % % % on resout à t donné
-% % % % % % % % % % % % % %
-% % % % % % % % % % % % % % %get anatomical and functional datas
-% % % % % % % % % % % % % % %-> anatomical datas : 5 layer segmented image
-% % % % % % % % % % % % % % %-> functional datas :
-% % % % % % % % % % % % % % %   -- position of sources and detectors
-% % % % % % % % % % % % % % %   -- HbO and HbT [in SD pairs domain]
-% % % % % % % % % % % % % % %   -- HbO and HbT hemodynamic response ?? (prior temporel...)
-% % % % % % % % % % % % % % %   -- ??
-% % % % % % % % % % % % % %
-% % % % % % % % % % % % % % %set the model (write down explicitly the system)
-% % % % % % % % % % % % % % % From SPM book p 283______________________________________________________
-% % % % % % % % % % % % % %
-% % % % % % % % % % % % % % % setting of the model : augmentation to embody priors in error covariance
-% % % % % % % % % % % % % % X = [X,X;speye(size(X,1))];
-% % % % % % % % % % % % % % y = [y;zeros(size(X,2));eta_beta];
-% % % % % % % % % % % % % % C_beta = sparse(i,j,C_beta,m,n);
-% % % % % % % % % % % % % % C_epsilon = C_beta;
-% % % % % % % % % % % % % %
-% % % % % % % % % % % % % % lambda = ones(length(Q),1);  %Initial guess of lambda.
-% % % % % % % % % % % % % % tol = 1E-4; %REML goes till tolerance (or max iter)
-% % % % % % % % % % % % % % t = 256;
-% % % % % % % % % % % % % % dF = Inf;   %Initial decent
-% % % % % % % % % % % % % % cnt = 0;    %This is a bookkeeping param for display purposes
-% % % % % % % % % % % % % %
-% % % % % % % % % % % % % %
-% % % % % % % % % % % % % % % building Q matrixes______________________________________________________
-% % % % % % % % % % % % % %
-% % % % % % % % % % % % % %
-% % % % % % % % % % % % % % % until convergence EM algorithm___________________________________________
-% % % % % % % % % % % % % % for iter=1:K
-% % % % % % % % % % % % % %
-% % % % % % % % % % % % % %     % E-Step :
-% % % % % % % % % % % % % %     %______________________________________________________________________
-% % % % % % % % % % % % % %     %   -- C_epsilon
-% % % % % % % % % % % % % %     for i = 1:length(Q)
-% % % % % % % % % % % % % %         C_epsilon = C_epsilon + Q{i}*lambda(i);
-% % % % % % % % % % % % % %     end
-% % % % % % % % % % % % % %     %   -- C_beta|y
-% % % % % % % % % % % % % %     iC_epsilon = inv(C_epsilon);
-% % % % % % % % % % % % % %     Xt_iC_epsilon = X' * iC_epsilon;
-% % % % % % % % % % % % % %     Xt_iC_epsilon_X = Xt_iC_epsilon * X;
-% % % % % % % % % % % % % %     C_beta_y = inv(Xt_iC_epsilon_X);  %Estimate of covariance of beta given the measurements
-% % % % % % % % % % % % % %     % -- n_beta_y : jamais utilise...........
-% % % % % % % % % % % % % %
-% % % % % % % % % % % % % %     % M-Step :
-% % % % % % % % % % % % % %     %______________________________________________________________________
-% % % % % % % % % % % % % %     %   -- P
-% % % % % % % % % % % % % %     P = iC_epsilon - (iC_epsilon*X)*C_beta_y*Xt_iC_epsilon;
-% % % % % % % % % % % % % %     %   -- g_i and H_ij
-% % % % % % % % % % % % % %     PY=P*Y;
-% % % % % % % % % % % % % %     for i=1:size(Q,1)
-% % % % % % % % % % % % % %         PQ_i{i}=P*Q{i};
-% % % % % % % % % % % % % %     end
-% % % % % % % % % % % % % %
-% % % % % % % % % % % % % %     for i = 1:size(Q,1)
-% % % % % % % % % % % % % %         PQ = PQ_i{i};
-% % % % % % % % % % % % % %         PQt=PQ';
-% % % % % % % % % % % % % %         g(i,1) = -0.5*trace(PQ)*exp(lambda(i)) + 0.5*PY'*Q{i}*PY*exp(lambda(i));
-% % % % % % % % % % % % % %         for j = i:size(Q,1)
-% % % % % % % % % % % % % %             PQj = PQ_i{j};
-% % % % % % % % % % % % % %             H(i,j) = -0.5*sum(sum(PQt.*PQj))*exp(lambda(i)+lambda(j));
-% % % % % % % % % % % % % %             H(j,i)=H(i,j);
-% % % % % % % % % % % % % %         end
-% % % % % % % % % % % % % %     end
-% % % % % % % % % % % % % %
-% % % % % % % % % % % % % %     %Now update the lambda.  dLambda = -inv(H)*g
-% % % % % % % % % % % % % %     %     I=eye(size(H,1));
-% % % % % % % % % % % % % %     dlambda = -inv(H)*g;%(expm(H*t) - I)*inv(H)*g;
-% % % % % % % % % % % % % %     lambda = lambda + dlambda;
-% % % % % % % % % % % % % %
-% % % % % % % % % % % % % %     df    = g'*dlambda;
-% % % % % % % % % % % % % %     if df > dF - exp(-4), t = max(2,t/2); end %retune the regularization if req.????????????????
-% % % % % % % % % % % % % %     dF    = df;
-% % % % % % % % % % % % % %
-% % % % % % % % % % % % % %     for c=1:cnt, fprintf('\b'); end
-% % % % % % % % % % % % % %     cnt=fprintf('%-5s: %i %5s%e','  ReML Iteration',iter,'...',full(dF));
-% % % % % % % % % % % % % %
-% % % % % % % % % % % % % %     if dF < tol, break; end
-% % % % % % % % % % % % % %
-% % % % % % % % % % % % % % end
-% % % % % % % % % % % % % %
-% % % % % % % % % % % % % % %Now, put the final pieces together
-% % % % % % % % % % % % % % Beta= C_beta_y * Xt_iCe * Y;
-% % % % % % % % % % % % % %
-% % % % % % % % % % % % % % fprintf('\n');
-% % % % % % % % % % % % % % out{1} =1;
-% % % % % % % % % % % % % % return

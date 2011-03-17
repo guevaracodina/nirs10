@@ -87,21 +87,21 @@ end
 %%%%% PAS SUR EN FIN DE COMPTE
 %%%% attention ici sens est la matrice des flux !!!!
 %%%%Or nous, on veut la matrice de sensitivite donc la jacobienne de celle du flux
-opt_meas_model = sens;
-%v est une base de l'espace de depart, ici nbr de colonnesm soit en chaque
-%voxel de l'image
-for i=1:size(opt_meas_model,2)
-    
-end
-
-sensitivity = jacobian(opt_meas_model,);
-syms x y z
-f = [x*y*z; y; x + z];
-v = [x, y, z];        
-R = jacobian(f, v)
-b = jacobian(x + z, v)
-
-v=[];
+% opt_meas_model = sens;
+% %v est une base de l'espace de depart, ici nbr de colonnesm soit en chaque
+% %voxel de l'image
+% for i=1:size(opt_meas_model,2)
+%     
+% end
+% 
+% sensitivity = jacobian(opt_meas_model,);
+% syms x y z
+% f = [x*y*z; y; x + z];
+% v = [x, y, z];        
+% R = jacobian(f, v)
+% b = jacobian(x + z, v)
+% 
+% v=[];
 
 save(fullfile(cs_dir,'sens.mat'),'sens');
 
