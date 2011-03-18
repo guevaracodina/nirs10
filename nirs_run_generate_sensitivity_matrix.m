@@ -17,95 +17,100 @@ ics =1;
 while ~strcmp(cs_ldir,NIRS.Cs.n{ics})
     ics =ics+1;
 end
+cs = NIRS.Cs.mcs{ics};
 
-if NIRS.Cs.mcs{ics}.alg==1
-    Oe='.';
-elseif NIRS.Cs.mcs{ics}.alg==2
+if cs.alg==1
+    Oe='.inp';
+elseif cs.alg==2
     Oe='.2pt';
 end
-segR = NIRS.Cs.mcs{ics}.segR;
+segR = cs.segR;
 V_segR = spm_vol(segR);
+
+%%%% lecture du bin pour les Boas parts
+b8i = cs.b8i;
+% V_b8i = spm_vol(b8i);
+%%%%%% trouver LA TAILLE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+%%%%%% b8i a des valeurs NULLES !!!!!!!!!!!!!!!!!!!!!!!!
+%%%%%% VALEURS DES MD ET MS !!!!!!!!!!!!!!!!!!!!!!!!!!!!
+fid=fopen(b8i,'rb');
+b8i = fread(fid,11*12*13,'double');
+fclose(fid);
+% b8i = reshape(b8i,V_b8i);
+%%%%
 
 wl = NIRS.Cf.dev.wl; %= [830 690];
 Cid = NIRS.Cf.H.C.id;
 Cwl = NIRS.Cf.H.C.wl;
 C =[];
-count =1;
-isd =0; % number of lignes in sensitivity matrix
+ND =1;
+isd =0; % count of lignes in sensitivity matrix
 
 for fi = 1:size(f,1)
     [~,fn,~] = fileparts(f{fi,:});
     [~,Pwl] = find(wl==str2double(fn(8:10)));
     
-    if strcmp(fn(1:1),'D')% tous les 2pt des detecteurs sont ranges parce que D precede S dans l'alphabet
-        fD{count,:} = f{fi,:};
-        count = count+1;
+    if strcmp(fn(1:1),'D')% stores all ''D_No.._...nm.2pt'' files in a list
+        fD{ND,:} = f{fi,:};
+        ND = ND+1;
         
     elseif strcmp(fn(1:1),'S')
-        Sn_fi = str2double(fn(5:6));
+        Sn = str2double(fn(5:6));
         
         fid=fopen(f{fi,:},'rb');
-        ms = fread(fid,V_segR.dim(1)*V_segR.dim(2)*V_segR.dim(3),'double');%'single');
+        % in Boas code : float 64 : but same result...
+        ms = fread(fid,V_segR.dim(1)*V_segR.dim(2)*V_segR.dim(3),'double');
         fclose(fid);
-        
-        [~,C_Sn] = find(Cid(2,:)== Sn_fi);% looking for detectors seeing current source
-        D_Sn =[];%Detectors seeing source Sn_fi
-        for i=1:length(C_Sn)
-            D_Sn = unique([D_Sn Cid(3,C_Sn(i))]);
-        end
+        % Boas : scaling
+%         ms = reshape(ms,V_segR.dim);
+        ms = ms / cs.par.nphotons;
+        lst = find(ms<0); ms_neg = sum(ms(lst));
+        lst = find(ms>0); ms_pos = sum(ms(lst).*b8i(lst));
+        ms(lst) = ms(lst) * (1+ms_neg) / ms_pos;
+        % Boas : end scaling
+       
+        D_Sn =  Cid(3,Cid(2,:)== Sn);% Detectors seeing source Sn
         for i = 1:size(D_Sn,2)% overview of detectors seen by source thanks to Cid
-            for j = 1:size(fD,1)% only if detector has been selected by user...
+             for j = 1:size(fD,1)% only if detector has been selected by user...
                 [~,fD_n,~] = fileparts(fD{j,:});
                 
                 if D_Sn(1,i) < 10, Ds_Sn = ['0' int2str(D_Sn(1,i))]; else Ds_Sn = int2str(D_Sn(1,i));end
                 Dfn = ['D_No' Ds_Sn '_' int2str(wl(Pwl)) 'nm'];
                 b = strcmp(fD_n,Dfn);
                 if b % one pair found : processing goes on !
-                    [~,wl_Sn] = find(Cwl==Pwl);
-                    c = C_Sn(i)+(Pwl-1)*length(wl_Sn);
-%                     [~,c] = find(wl_Sn==D_Sn(1,i));
-                    %                     Cn_it = wl_Sn(c);
+                    c = find(Cid(2,:)== Sn & Cid(3,:)==D_Sn(i) & Cwl==Pwl);
                     
                     fid=fopen(fullfile(cs_dir,[Dfn Oe]),'rb');
-                    md = fread(fid,V_segR.dim(1)*V_segR.dim(2)*V_segR.dim(3),'double');%'single');
+                    md = fread(fid,V_segR.dim(1)*V_segR.dim(2)*V_segR.dim(3),'double');
                     fclose(fid);
+                    % Boas : scaling
+                    md = md / cs.par.nphotons;
+                    lst = find(ms<0); md_neg = sum(md(lst));
+                    lst = find(ms>0); md_pos = sum(md(lst).*b8i(lst));
+                    md(lst) = md(lst) * (1+md_neg) / md_pos;
                     
-                    %sens_sd = real(ms)/max(real(ms)).*real(md)/max(real(md)); %treated as long vectors
-                    sens_sd = ms.*md;
-                    %                     sens_sd = log(sens_sd);
-                    
-                    sens(isd+1,:) = sens_sd';%double();
-                    isd = isd+1;
-                    %%%%% on precise les paires qu'on a
-                    C = [C c];
+                    phi0 = md( floor(pos(idxD,1)), floor(pos(idxD,2)),floor(pos(idxD,3)) );
                 end
+                % Boas : end scaling
+                
+                sens_sd = ms.*md;
+                
+                for idx=1:nMeas
+                    A(:,:,:,idx) = p2pt(:,:,:,ml(idx,1)) .* p2pt(:,:,:,ml(idx,2)) ...
+                        / ((phio(ml(idx,1),ml(idx,2)) + phio(ml(idx,2),ml(idx,1))) / 2);
+                end
+                
+                sens(isd+1,:) = sens_sd';%double();
+                isd = isd+1;
+                %%%%% on precise les paires qu'on a
+                C = [C c];
             end
         end
     end
 end
-
-%%%%% PAS SUR EN FIN DE COMPTE
-%%%% attention ici sens est la matrice des flux !!!!
-%%%%Or nous, on veut la matrice de sensitivite donc la jacobienne de celle du flux
-% opt_meas_model = sens;
-% %v est une base de l'espace de depart, ici nbr de colonnesm soit en chaque
-% %voxel de l'image
-% for i=1:size(opt_meas_model,2)
-%     
-% end
-% 
-% sensitivity = jacobian(opt_meas_model,);
-% syms x y z
-% f = [x*y*z; y; x + z];
-% v = [x, y, z];        
-% R = jacobian(f, v)
-% b = jacobian(x + z, v)
-% 
-% v=[];
-
 save(fullfile(cs_dir,'sens.mat'),'sens');
 
-NIRS.Cs.mcs{ics}.C = C;
+cs.C = C;
 save(job.NIRSmat{1,1},'NIRS');
 
 %%% au passage on genere un nii, a mettre en OPTION...
@@ -127,42 +132,3 @@ V = spm_write_vol(V, sens_reshaped);
 
 out = 1;
 end
-
-%         %meme caracteristiques que l'image binaire envoyee
-%         cs = NIRS.Cs.mcs{ics,1};
-%         [~,n_segR,~] = fileparts(cs.segR);
-%         V_segR = spm_vol(cs.segR);
-%
-%         sens_sd = reshape(sens_sd,V_segR.dim);
-%
-%         V_sens.fname = fullfile(cs_dir,['sens' n_segR(1:11) '.nii']);
-%         V_sens.dim   = V_segR.dim; %same as dimi
-%         V_sens.dt    = V_segR.dt; %float32 not V.dt which is int16
-%         V_sens.mat   = V_segR.mat;
-%         V_sens.pinfo = V_segR.pinfo;
-%         spm_write_vol(V_sens,sens_sd);
-%
-%         jobR.image_in{:} = V_sens.fname;
-%         jobR.out_dt = 'same';
-%         jobR.out_autonaming = 0;
-%         jobR.out_prefix = 'bla';
-%         jobR.out_dim = V_seg.dim;
-%         jobR.out_dir = cs_dir;
-%         outR = nirs_resize(jobR);
-%
-%         %                     V.fname = [dir1 '\srcNo' file_str_s '_' num2str(wl(iwl)) 'nm.nii'];
-%         %                     ms_temp = reshape(log(ms),dimf);
-%         %                     ms_temp = interp3(xf1,yf1,zf1,ms_temp,xi1,yi1,zi1,'nearest');
-%         %                     spm_write_vol(V,ms_temp);
-%         %                     V.fname = [dir1 '\detNo' file_str_s '_' num2str(wl(iwl)) 'nm.nii'];
-%         %                     md_temp = reshape(log(md),dimf);
-%         %                     md_temp = interp3(xf1,yf1,zf1,md_temp,xi1,yi1,zi1,'nearest');
-%         %                     spm_write_vol(V,md_temp);
-%         %
-%         %Save in .nii format - use structure of segmented file
-%         V.fname = filen_sd; %[dir1 filen_sd];
-%         V.dim  = V.dim; %same as dimi
-%         V.dt   = [16 0]; %float32 not V.dt which is int16
-%         V.mat   = V.mat;
-%         V.pinfo = V.pinfo;
-%         spm_write_vol(V,outR);

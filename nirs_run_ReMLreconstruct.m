@@ -32,6 +32,11 @@ clear ms;
 %/ Y = X W betaWvx +epsilon_channel-noise
 %\ betaWvx = omega
 %
+% bien piger si on est dqns le cas : 
+% (la matrice de sensitivite est le FLUX....)
+%/ Y = X W delta mua +epsilon_channel-noise
+%\ delta mua = matrice de passage de mua a Hb. omega
+%
 % Y = un instant donne dans le fichier .nirs
 % X = matrice sensitivite avec un point temporel
 % W = matrice d'ondelettes spatialles
@@ -122,6 +127,10 @@ switch job.ReML_method
         Cq = spm_inv(X'*iCX);
         
         beta = Cq*X'*iC*Y_t0;
+    case 2
+        disp('peudo inverse');
+        meth = 'PseudoInv';
+        
 end
 %%
 % %Convert the Stats
@@ -170,4 +179,13 @@ V_R = spm_write_vol(V_R, beta_HbR);
     cs.segR},...
     fullfile(dir_in,['HbO_anat_' meth '.nii']),...
     'i1+0.1*i2');
+
+% [~,~] = spm_imcalc_ui({'D:\Users\Clément\Projet_ReML\donnees\test_GLM_ReML\MCconfigcul\roi3_00044_segmented_s201007051500-0002-00001-000160-01.nii';...
+%     'D:\Users\Clément\Projet_ReML\donnees\test_GLM_ReML\MCconfigcul\sens.nii'},...
+%     'D:\Users\Clément\Projet_ReML\donnees\test_GLM_ReML\MCconfigcul\test.nii',...
+%     'i1+0.0002*i2');
+% [~,~] = spm_imcalc_ui({'D:\Users\Clément\Projet_ReML\donnees\test_GLM_ReML\roi3_00044_segmented_s201007051500-0002-00001-000160-01.nii';...
+%     'D:\Users\Clément\Projet_ReML\donnees\test_GLM_ReML\MCconfigcul\sens.nii'},...
+%     'D:\Users\Clément\Projet_ReML\donnees\test_GLM_ReML\MCconfigcul\test_vx_truesize.nii',...
+%     'i1+0.0003*i2');
 end
