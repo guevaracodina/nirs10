@@ -149,6 +149,41 @@ for iSubj = 1:nSubj
     coord_fid = coord_fid(toKeep,:);
     nOptodes = size(coord_fid,1);
     
+    %load('spots.mat');
+    %Vanat=spm_vol('s201009150900-0004-00001-000176-01.nii');
+    Pp_rmv = coord_fid'; % column vectors of coordinates
+    Pp_rmm = Vanat.mat * [Pp_rmv; ones(1,size(Pp_rmv,2))];
+    %Pp_rmm = Pp_rmm(1:3,:);
+    
+    ctr_mass = [mean(Pp_rmm(1,:)); mean(Pp_rmm(2,:)); mean(Pp_rmm(3,:))];
+    Pp_rmm_ctr = Pp_rmm - ctr_mass*ones(1,size(Pp_rmm,2));  
+    
+    figure;
+    for idet=1:size(Pp_rmm,2)
+        xx(idet)=Pp_rmm(1,idet);
+        yy(idet)=Pp_rmm(2,idet);
+        zz(idet)=Pp_rmm(3,idet);
+    end
+    plot3(xx,yy,zz,'or','MarkerSize',14,'MarkerFaceColor','r')
+    figure, plot(yy,zz,'or','MarkerSize',14,'MarkerFaceColor','r')
+%     pca = princomp(Pp_rmm(2:3,:)');
+%     for idet=1:size(pca,1)
+%         xx1(idet)=pca(idet,1);
+%         yy1(idet)=pca(idet,2);
+%         %zz1(idet)=pca(idet,3);
+%     end
+%     %hold on, plot3(xx1,yy1,zz1,'xb','MarkerSize',14,'MarkerFaceColor','b')
+%     figure, plot(yy,zz,'or','MarkerSize',14,'MarkerFaceColor','r')
+%     hold on, plot(xx1,yy1,'xb','MarkerSize',14,'MarkerFaceColor','b')
+
+    % Projeté sur un des plans (je pense coronal - le plan yz (enlever coord x)),
+    % on voit 2 directions principales du "quadrillé"... peut-etre des "composantes principales"
+    % ou qqch du genre pourrait nous donner la bonne direction où regarder
+    % les coord extrêmes?
+    
+
+% Nice idea, maybe in 2050...
+% ----------------------------------------------------------------------- % 
     % Minimize the Euclidian distance (L-2 norm) between the "theoretical"
     % helmet (from the setup info in the NIRS matrix) and the ensemble of
     % positions identified using the fiducials:
@@ -173,6 +208,7 @@ for iSubj = 1:nSubj
 %    nDet = nn.SD.nDet;
 %    optodesCoord_click(Yanat,'Verify correspondance of the optodes',...
 %        coord_fid_opt([2 1 3],1:nSrc),coord_fid_opt([2 1 3],nSrc+1:nSrc+nDet))
+% ----------------------------------------------------------------------- % 
    
     
     % Create nifti object for anatomical without markers
@@ -186,6 +222,7 @@ for iSubj = 1:nSubj
     Pp_rmv = coord_fid'; % column vectors of coordinates
     Pp_rmm = Vanat.mat * [Pp_rmv; ones(1,size(Pp_rmv,2))];
     NIRS.Cf.H.P.r.m.mm.p = Pp_rmm(1:3,:);
+    NIRS.Cf.H.P.r.m.v.p = Pp_rmv;
     
     % Save outputs: anatomical without markers and NIRS matrix updated
     % with the positions of the markers
