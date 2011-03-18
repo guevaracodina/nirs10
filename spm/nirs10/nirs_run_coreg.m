@@ -13,85 +13,97 @@ function out = nirs_run_coreg(job)
 %4) output an updated NIRS.mat that contains the transformations and
 %the transformed coordinates
 
-for Idx=1:size(job.NIRSmat,1)
+% Loop over subjects
+for iSubj=1:size(job.NIRSmat,1)
     
-    %Load NIRS.mat information
+    % Load NIRS.mat
     try
         NIRS = [];
-        load(job.NIRSmat{Idx,1});
+        load(job.NIRSmat{iSubj,1});
         
-        if strcmp(NIRS.Dt.fir.stax.n,'Brainsight(c)') %%%%%%% PHILIPPE : comment tu y rentres ????
+        % SPATIAL NORMALIZATION OF ANATOMICAL IMAGE %
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
-            %Allow user-specified image of subject to overwrite previous
-            %anatomical image in NIRS.mat; unlikely to ever happen
-            if isempty(job.anatT1{1,1})
-                try
-                    NIRS.Dt.ana.T1;
-                catch
-                    disp('Could not find an anatomical image');
-                end
-            else
-                %Store T1 file location
-                NIRS.Dt.ana.T1 = job.anatT1{1,1};
-            end
+        %Allow user-specified image of subject to overwrite previous
+        %anatomical image in NIRS.mat; unlikely to ever happen
+        if isempty(job.anatT1{1,1})
             try
-                tmpf = job.anatT1_template{1,1};
-                if spm_existfile(tmpf)
-                    NIRS.Dt.ana.tT1 = tmpf;
-                else
-                    [DirSPM,~,~] = fileparts(which('spm'));
-                    NIRS.Dt.ana.tT1 = fullfile(DirSPM,'templates','T1.nii');
-                end
+                NIRS.Dt.ana.T1;
+            catch
+                disp('Could not find an anatomical image');
             end
-            %Various options that we don't make available to the user in the GUI
-            matlabbatch{1}.spm.spatial.normalise.estwrite.subj.source = {NIRS.Dt.ana.T1};
-            matlabbatch{1}.spm.spatial.normalise.estwrite.subj.wtsrc = '';
-            matlabbatch{1}.spm.spatial.normalise.estwrite.subj.resample = {NIRS.Dt.ana.T1};
-            matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.template = {NIRS.Dt.ana.tT1};
-            matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.weight = '';
-            matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.smosrc = 8;
-            matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.smoref = 0;
-            matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.regtype = 'mni';
-            matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.cutoff = 25;
-            matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.nits = 16;
-            matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.reg = 1;
-            matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.preserve = 0;
-            matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.bb = [-78 -112 -50
-                78 76 85];
-            matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.vox = [2 2 2];
-            matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.interp = 1;
-            matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.wrap = [0 0 0];
-            matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.prefix = 'w';
+        else
+            %Store T1 file location
+            NIRS.Dt.ana.T1 = job.anatT1{1,1};
+        end
+        try
+            tmpf = job.anatT1_template{1,1};
+            if spm_existfile(tmpf)
+                NIRS.Dt.ana.tT1 = tmpf;
+            else
+                [DirSPM,~,~] = fileparts(which('spm'));
+                NIRS.Dt.ana.tT1 = fullfile(DirSPM,'templates','T1.nii');
+            end
+        end
+        %Various options that we don't make available to the user in the GUI
+        matlabbatch{1}.spm.spatial.normalise.estwrite.subj.source = {NIRS.Dt.ana.T1};
+        matlabbatch{1}.spm.spatial.normalise.estwrite.subj.wtsrc = '';
+        matlabbatch{1}.spm.spatial.normalise.estwrite.subj.resample = {NIRS.Dt.ana.T1};
+        matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.template = {NIRS.Dt.ana.tT1};
+        matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.weight = '';
+        matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.smosrc = 8;
+        matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.smoref = 0;
+        matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.regtype = 'mni';
+        matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.cutoff = 25;
+        matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.nits = 16;
+        matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.reg = 1;
+        matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.preserve = 0;
+        matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.bb = [-78 -112 -50
+            78 76 85];
+        matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.vox = [2 2 2];
+        matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.interp = 1;
+        matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.wrap = [0 0 0];
+        matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.prefix = 'w';
 
-            spm_jobman('run_nogui',matlabbatch);
+        spm_jobman('run_nogui',matlabbatch);
 
-            %Recreate name of _sn.mat file just created by spm_normalise, and load it
-            [pth,nam] = spm_fileparts(deblank(NIRS.Dt.ana.T1));
-            sn_filename  = fullfile(pth,[nam,'_sn.mat']);
-            NIRS.Dt.ana.wT1 = load(sn_filename);
+        %Recreate name of _sn.mat file just created by spm_normalise, and load it
+        [pth,nam] = spm_fileparts(deblank(NIRS.Dt.ana.T1));
+        sn_filename  = fullfile(pth,[nam,'_sn.mat']);
+        NIRS.Dt.ana.wT1 = load(sn_filename);
 
-            %There are two physical objects: the MRI image, and the NIRS construct
-            %for the MRI image, it can be normalized to a standard atlas (Talairach Tournoux) or not
-            %for the MRI image, it can be in mm or in voxels
-            %for the NIRS construct, it comes in a DGT system
-            %In addition, we may want to project on the cortex or not
-            %Thus, upon alignment, quantities can be expressed
-            %   a) normalized or not
-            %   b) in mm or voxels
-            %   c) in MNI or DGT coordinates
-            %   d) surface positions can be on cortex or on skin / helmet / head
-            %For the MonteCarlo simulation, we want MNI in mm, not normalized, on skin
+        %There are two physical objects: the MRI image, and the NIRS construct
+        %for the MRI image, it can be normalized to a standard atlas (Talairach Tournoux) or not
+        %for the MRI image, it can be in mm or in voxels
+        %for the NIRS construct, it comes in a DGT system
+        %In addition, we may want to project on the cortex or not
+        %Thus, upon alignment, quantities can be expressed
+        %   a) normalized or not
+        %   b) in mm or voxels
+        %   c) in MNI or DGT coordinates
+        %   d) surface positions can be on cortex or on skin / helmet / head
+        %For the MonteCarlo simulation, we want MNI in mm, not normalized, on skin
 
-            %Matrix Q maps unnormalized world coordinates to normalized world coordinates
-            %Affine maps unnormalized voxelcoordinates to normalized voxel coordinates
-            %Note that transformations always act on the right, on column vectors of
-            %coordinates, returning column vectors
-            %Hence the need to transpose our matrices of coordinates in NIRS.mat
-            %Below: label with temp_ all the transposed coordinates to avoid confusion
-            Q = (NIRS.Dt.ana.wT1.VG.mat/NIRS.Dt.ana.wT1.Affine)/NIRS.Dt.ana.wT1.VF.mat;
+        %Matrix Q maps unnormalized world coordinates to normalized world coordinates
+        %Affine maps unnormalized voxelcoordinates to normalized voxel coordinates
+        %Note that transformations always act on the right, on column vectors of
+        %coordinates, returning column vectors
+        %Hence the need to transpose our matrices of coordinates in NIRS.mat
+        %Below: label with temp_ all the transposed coordinates to avoid confusion
+        Q = (NIRS.Dt.ana.wT1.VG.mat/NIRS.Dt.ana.wT1.Affine)/NIRS.Dt.ana.wT1.VF.mat;
+        
+        
+        % FIT ROM TO RMM POSITIONS, USING FIDUCIES %
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
+        % For 
+        if strcmp(NIRS.Dt.fir.stax.n,'Brainsight(c)') %%%%%%% PHILIPPE : comment tu y rentres ????
+
             %quick fix to use previously obtained coordinates in subject MNI
             %coordinates
             %fid_in_subject_MNI = 1;
+            
+            % Positions of fiducial points
             if job.fid_in_subject_MNI
                 NIRS.Cf.H.F.r.m.mm.p  = [job.nasion_wMNI' job.AL_wMNI' job.AR_wMNI'];
             else
@@ -105,51 +117,62 @@ for Idx=1:size(job.NIRSmat,1)
             y = NIRS.Cf.H.F.r.m.mm.p;
             x = NIRS.Cf.H.F.r.o.mm.p;
 
+            % Compute optimal rigid transformation to match fiducial
+            % positions to those of the normalized atlas
             [s R t] = abs_orientation(x,y); % y = s*R(x) + t
             estY = zeros(size(y));
             for Fi = 1:3
                 estY(:,Fi) = s*R*x(:,Fi) + t;
             end;
+            % Store coregistration error
             err = y - estY;
             errVal = sum(err(:).^2);
-            %double2str does not exist in my version of Matlab
-            disp(['Error Value for subject ' int2str(Idx) ': ' num2str(errVal)]);
+            disp(['Error Value for subject ' int2str(iSubj) ': ' num2str(errVal)]);
             NIRS.Dt.pro.errValofCoreg_mm2 = errVal;
+            
+            % Apply the same transformation to all points in order to
+            % achieve coregistration
+            try Sp_rom = NIRS.Cf.H.S.r.o.mm.p; end
+            try Dp_rom = NIRS.Cf.H.D.r.o.mm.p; end
+            try Qp_rom = NIRS.Cf.H.Q.r.o.mm.p; end
+            try
+                Pp_rom = [Sp_rom Dp_rom Qp_rom];
+            catch
+                Pp_rom = [Sp_rom Dp_rom];
+            end
+            NP = size(Pp_rom,2);
+            NIRS.Cf.H.P.N = NP;
+
+            Pp_rmm = zeros(size(Pp_rom));
+            Pvoid = zeros(1,size(Pp_rom,2));
+
+            for Pi = 1:NP
+                % check for Void sources (no data)
+                if Pp_rom(1,Pi) == 0 && Pp_rom(2,Pi) == 0 && Pp_rom(3,Pi) == 0
+                    Pvoid(Pi,1) = 1;
+                else
+                    Pp_rmm(:,Pi) = s*R*Pp_rom(:,Pi) + t;
+                end
+            end;
+            
+            % Save MNI coordinates of optodes
+            NIRS.Cf.H.P.r.m.mm.p = Pp_rmm;
         
-        else%%%% choice vitamins
+        else % For vitamin markers based coregistration, the positions were 
+            % obtained in detectVitamins module; those are already defined 
+            % in the MNI space (i voxels relative to anatomical image)
+            Pp_rmm = NIRS.Cf.H.P.r.m.mm.p;
             
         end
         
-        try Sp_rom = NIRS.Cf.H.S.r.o.mm.p; end
-        try Dp_rom = NIRS.Cf.H.D.r.o.mm.p; end
-        try Qp_rom = NIRS.Cf.H.Q.r.o.mm.p; end
-        try
-            Pp_rom = [Sp_rom Dp_rom Qp_rom];
-        catch
-            Pp_rom = [Sp_rom Dp_rom];
-        end
-        NP = size(Pp_rom,2);
-        NIRS.Cf.H.P.N = NP;
-        
-        Pp_rmm = zeros(size(Pp_rom));
-        Pvoid = zeros(1,size(Pp_rom,2));
-        
-        for Pi = 1:NP
-            %check for Void sources (no data)
-            if Pp_rom(1,Pi) == 0 && Pp_rom(2,Pi) == 0 && Pp_rom(3,Pi) == 0
-                Pvoid(Pi,1) = 1;
-            else
-                Pp_rmm(:,Pi) = s*R*Pp_rom(:,Pi) + t;
-            end
-        end;
-        
-        %Save MNI coordinates of optodes
-        NIRS.Cf.H.P.r.m.mm.p = Pp_rmm;
-        
-        %unnormalized -> normalized, for optodes
+        % unnormalized -> normalized, for optodes
         Pp_wmm = Q * [Pp_rmm;ones(1,NP)];          %% unit : mm
-        %projection on cortex - used to calculate normal directions of optodes to
-        %head surface, for Monte Carlo simulation
+        
+        % PROJECT OPTODE POSITIONS ON CORTEX SURFACE %
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
+        % Projection on cortex - used to calculate normal directions of
+        % optodes to head surface, for Monte Carlo simulation
         Pp_c1_wmm = projection_CS(Pp_wmm);
         Pp_c1_rmm = zeros(4,NP);
         for Pi = 1:NP
@@ -160,13 +183,15 @@ for Idx=1:size(job.NIRSmat,1)
         end;
         Pp_c1_rmm = Pp_c1_rmm(1:3,:);
         
-        %Save MNI coordinates of optodes on cortex (c1)
+        % Save MNI coordinates of optodes on cortex (c1)
         NIRS.Cf.H.P.r.m.mm.c1.p = Pp_c1_rmm;
         NIRS.Cf.H.P.void = Pvoid;
         
-        %calculation of fitted positions on the skin surface
+        % PROJECT OPTODE POSITIONS ON SKIN SURFACE %
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
+        % Calculation of fitted positions on the skin surface
         % Fitted positions (positions are fitted with respect to the scalp)
-        %jobe.NIRS = NIRS;
         jobe.Pp_rmm = Pp_rmm;
         jobe.Pp_c1_rmm = Pp_c1_rmm;
         jobe.NP = NP;
@@ -180,18 +205,20 @@ for Idx=1:size(job.NIRSmat,1)
             Pfp_rmv(:,i) = V_4fit.mat\[Pfp_rmm(:,i);1];
         end
         Pfp_rmv = Pfp_rmv(1:3,:);
-        %Save MNI and voxel coordinates of optodes
+        % Save MNI and voxel coordinates of optodes, fitted on skin surface
         NIRS.Cf.H.P.r.m.mm.fp = Pfp_rmm;
         NIRS.Cf.H.P.r.m.vx.fp = Pfp_rmv;
         
-        save(job.NIRSmat{Idx},'NIRS');
+        % Save all changes to NIRS matrix
+        save(job.NIRSmat{iSubj},'NIRS');
         NIRS =[];
         
-        load(job.NIRSmat{Idx});
+        % GENERATE TOPO DATA %
+        %%%%%%%%%%%%%%%%%%%%%%
         
-        %
+        load(job.NIRSmat{iSubj});
         if job.GenDataTopo
-            [pth2,~,~] = fileparts(job.NIRSmat{Idx,1});
+            [pth2,~,~] = fileparts(job.NIRSmat{iSubj,1});
             [dir1,fil1,ext1] = fileparts(NIRS.Dt.ana.T1);
             fwT1 = fullfile(dir1,['w' fil1 ext1]);
             NIRS.Dt.ana.fwT1 = fwT1;
@@ -263,12 +290,12 @@ for Idx=1:size(job.NIRSmat,1)
                 disp('Could not create TopoData.mat file');
             end
         end
-        save(job.NIRSmat{Idx},'NIRS');
+        save(job.NIRSmat{iSubj},'NIRS');
     catch
-        disp(['Coregistration failed for subject' int2str(Idx)]);
+        disp(['Coregistration failed for the ' int2str(iSubj) 'th subject.']);
     end
 end
-out.NIRSmat = job.NIRSmat{Idx};
+out.NIRSmat = job.NIRSmat{iSubj};
 
 
 function [s R t] = abs_orientation(x,y)
