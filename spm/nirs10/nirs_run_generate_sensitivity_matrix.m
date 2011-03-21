@@ -34,9 +34,12 @@ b8i = cs.b8i;
 %%%%%% b8i a des valeurs NULLES !!!!!!!!!!!!!!!!!!!!!!!!
 %%%%%% VALEURS DES MD ET MS !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 fid=fopen(b8i,'rb');
-b8i = fread(fid,11*12*13,'double');
+Yb8i = fread(fid,11*12*13,'double');
 fclose(fid);
-% b8i = reshape(b8i,V_b8i);
+b8i = 'D:\Users\Clément\Projet_ReML\donnees\test_GLM_ReML\MCconfigcul\11x12x13_roi3_00044_segmented_s201007051500-0002-00001-000160-01.nii';
+Vb8i = spm_vol(b8i);
+Yb8i = spm_read_vols(Vb8i);
+b8i = reshape(Yb8i,[11*12*13 1]);
 %%%%
 
 wl = NIRS.Cf.dev.wl; %= [830 690];
@@ -59,19 +62,20 @@ for fi = 1:size(f,1)
         
         fid=fopen(f{fi,:},'rb');
         % in Boas code : float 64 : but same result...
-        ms = fread(fid,V_segR.dim(1)*V_segR.dim(2)*V_segR.dim(3),'double');
+        ms = fread(fid,V_segR.dim(1)*V_segR.dim(2)*V_segR.dim(3),'float64');
         fclose(fid);
         % Boas : scaling
-%         ms = reshape(ms,V_segR.dim);
+        %         ms = reshape(ms,V_segR.dim);
         ms = ms / cs.par.nphotons;
         lst = find(ms<0); ms_neg = sum(ms(lst));
         lst = find(ms>0); ms_pos = sum(ms(lst).*b8i(lst));
         ms(lst) = ms(lst) * (1+ms_neg) / ms_pos;
+        clear lst;
         % Boas : end scaling
-       
-        D_Sn =  Cid(3,Cid(2,:)== Sn);% Detectors seeing source Sn
+        
+        D_Sn =  unique(Cid(3,Cid(2,:)== Sn));% Detectors seeing source Sn
         for i = 1:size(D_Sn,2)% overview of detectors seen by source thanks to Cid
-             for j = 1:size(fD,1)% only if detector has been selected by user...
+            for j = 1:size(fD,1)% only if detector has been selected by user...
                 [~,fD_n,~] = fileparts(fD{j,:});
                 
                 if D_Sn(1,i) < 10, Ds_Sn = ['0' int2str(D_Sn(1,i))]; else Ds_Sn = int2str(D_Sn(1,i));end
@@ -81,7 +85,7 @@ for fi = 1:size(f,1)
                     c = find(Cid(2,:)== Sn & Cid(3,:)==D_Sn(i) & Cwl==Pwl);
                     
                     fid=fopen(fullfile(cs_dir,[Dfn Oe]),'rb');
-                    md = fread(fid,V_segR.dim(1)*V_segR.dim(2)*V_segR.dim(3),'double');
+                    md = fread(fid,V_segR.dim(1)*V_segR.dim(2)*V_segR.dim(3),'float64');
                     fclose(fid);
                     % Boas : scaling
                     md = md / cs.par.nphotons;
@@ -89,21 +93,19 @@ for fi = 1:size(f,1)
                     lst = find(ms>0); md_pos = sum(md(lst).*b8i(lst));
                     md(lst) = md(lst) * (1+md_neg) / md_pos;
                     
-                    phi0 = md( floor(pos(idxD,1)), floor(pos(idxD,2)),floor(pos(idxD,3)) );
+                    msR = reshape(ms,Vb8i.dim);
+                    mdR = reshape(md,Vb8i.dim);
+                    phi0_S = msR(cs.Pfp_rmiv(1,Sn),cs.Pfp_rmiv(2,Sn),cs.Pfp_rmiv(3,Sn));
+                    phi0_D = mdR(cs.Pfp_rmiv(1,D_Sn(i)),cs.Pfp_rmiv(2,D_Sn(i)),cs.Pfp_rmiv(3,D_Sn(i)));
+                    
+                    % Boas : end scaling
+                    sens_sd = ms.*md / ((phi0_S + phi0_D)/2);
+                    
+                    sens(isd+1,:) = sens_sd';%double();
+                    isd = isd+1;
+                    %%%%% on precise les paires qu'on a
+                    C = [C c];
                 end
-                % Boas : end scaling
-                
-                sens_sd = ms.*md;
-                
-                for idx=1:nMeas
-                    A(:,:,:,idx) = p2pt(:,:,:,ml(idx,1)) .* p2pt(:,:,:,ml(idx,2)) ...
-                        / ((phio(ml(idx,1),ml(idx,2)) + phio(ml(idx,2),ml(idx,1))) / 2);
-                end
-                
-                sens(isd+1,:) = sens_sd';%double();
-                isd = isd+1;
-                %%%%% on precise les paires qu'on a
-                C = [C c];
             end
         end
     end
@@ -127,7 +129,7 @@ V = struct('fname',fullfile(cs_dir,['sens' '.nii']),...
     'mat',  V_segR.mat);
 
 V = spm_create_vol(V);
-V = spm_write_vol(V, sens_reshaped);
+V = spm_write_vol(V, log(sens_reshaped));
 %%%
 
 out = 1;

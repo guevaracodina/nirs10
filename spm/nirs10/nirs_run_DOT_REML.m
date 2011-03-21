@@ -119,7 +119,7 @@ else
         lambda = lambda + dL;
 
         df    = g'*dL;
-        if df > dF - exp(-4), t = max(2,t/2); end %retune the regularization if req.
+        if df > dF - exp(-8), t = max(2,t/2); end %retune the regularization if req.
         dF    = df;
 
         for c=1:cnt, fprintf('\b'); end

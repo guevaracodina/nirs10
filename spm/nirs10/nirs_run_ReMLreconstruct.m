@@ -91,10 +91,10 @@ end
 %- on calcule des wavelets dans un plan et on incline ce plan selon celui
 %des sources et detecteurs
 
-% Qp{1}=sparse((1:2*Nvx),(1:2*Nvx),zeros(1,2*Nvx)',2*Nvx,2*Nvx);  %Skin layer- HbO
-Qp{1}=sparse(ms_c1,ms_c1,ones(length(ms_c1),1),2*Nvx,2*Nvx);  %Brain layer- HbO
-% Qp{3}=sparse(Nvx+(1:Nvx),Nvx+(1:Nvx),zeros(1,Nvx)',2*Nvx,2*Nvx);  %Skin layer- HbR
-Qp{2}=sparse(ms_c1,ms_c1,ones(length(ms_c1),1),2*Nvx,2*Nvx);  %Brain layer- HbR
+Qp{1}=sparse((1:2*Nvx),(1:2*Nvx),zeros(1,2*Nvx)',2*Nvx,2*Nvx);  %Skin layer- HbO
+Qp{2}=sparse(ms_c1,ms_c1,ones(length(ms_c1),1),2*Nvx,2*Nvx);  %Brain layer- HbO
+Qp{3}=sparse((1:2*Nvx),(1:2*Nvx),zeros(1,2*Nvx)',2*Nvx,2*Nvx);  %Skin layer- HbR
+Qp{4}=sparse(ms_c1,ms_c1,ones(length(ms_c1),1),2*Nvx,2*Nvx);  %Brain layer- HbR
 
 switch job.ReML_method
     case 0
@@ -111,14 +111,14 @@ switch job.ReML_method
         %Set up the extended covariance model by concatinating the measurement
         %and parameter noise terms
         Q=cell(length(Qn)+length(Qp),1);
-        for idx=1:length(Qn)
-            Q{idx}=blkdiag(Qn{idx},sparse(size(Qp{1},1),size(Qp{1},2))); % Build block diagonal matrix from Qn & Qp matrices
-        end
-        for idx2=1:length(Qp)
-            Q{idx+idx2}=blkdiag(sparse(size(Qn{1},1),size(Qn{1},2)),Qp{idx2});
-        end
+    for idx=1:length(Qn)
+        Q{idx}=blkdiag(Qn{idx},sparse(size(Qp{1},1),size(Qp{1},2))); % Build block diagonal matrix from Qn & Qp matrices
+    end
+    for idx2=1:length(Qp)
+        Q{idx+idx2}=blkdiag(sparse(size(Qn{1},1),size(Qn{1},2)),Qp{idx2});
+    end
         % sample covariance matrix Y*Y'
-        YY = Y_t0*Y_t0';
+        YY = (Y_t0-mean(Y_t0))*(Y_t0-mean(Y_t0))';
         
         [C,h,Ph,F,Fa,Fc]=spm_reml(YY,X,Q);
         
@@ -170,15 +170,15 @@ V_R = spm_write_vol(V_R, beta_HbR);
 % superpositions : on cree des images semi transparentes rouges ou bleues
 % sur les anatomiques
 
-[~,~] = spm_imcalc_ui({fullfile(dir_in,['HbO_' meth '.nii']);...
+spm_imcalc_ui({fullfile(dir_in,['HbO_' meth '.nii']);...
     cs.segR},...
     fullfile(dir_in,['HbO_anat_' meth '.nii']),...
-    'i1+i2');
+    '10*i1+i2');
 
 [~,~] = spm_imcalc_ui({fullfile(dir_in,['HbR_' meth '.nii']);...
     cs.segR},...
-    fullfile(dir_in,['HbO_anat_' meth '.nii']),...
-    'i1+0.1*i2');
+    fullfile(dir_in,['HbR_anat_' meth '.nii']),...
+    '10*i1+i2');
 
 % [~,~] = spm_imcalc_ui({'D:\Users\Clément\Projet_ReML\donnees\test_GLM_ReML\MCconfigcul\roi3_00044_segmented_s201007051500-0002-00001-000160-01.nii';...
 %     'D:\Users\Clément\Projet_ReML\donnees\test_GLM_ReML\MCconfigcul\sens.nii'},...
@@ -188,4 +188,5 @@ V_R = spm_write_vol(V_R, beta_HbR);
 %     'D:\Users\Clément\Projet_ReML\donnees\test_GLM_ReML\MCconfigcul\sens.nii'},...
 %     'D:\Users\Clément\Projet_ReML\donnees\test_GLM_ReML\MCconfigcul\test_vx_truesize.nii',...
 %     'i1+0.0003*i2');
+out =1;
 end
