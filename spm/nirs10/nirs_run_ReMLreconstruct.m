@@ -95,9 +95,9 @@ end
 %- on calcule des wavelets dans un plan et on incline ce plan selon celui
 %des sources et detecteurs
 
-Qp{1}=sparse(Yb8i_c5,Yb8i_c5,ones(length(Yb8i_c5),1),2*Nvx,2*Nvx);  %Skin layer- HbO
+Qp{1}=sparse(Yb8i_c5,Yb8i_c5,zeros(length(Yb8i_c5),1),2*Nvx,2*Nvx);  %Skin layer- HbO
 Qp{2}=sparse(Yb8i_c1,Yb8i_c1,ones(length(Yb8i_c1),1),2*Nvx,2*Nvx);  %Brain layer- HbO
-Qp{3}=sparse(Yb8i_c5,Yb8i_c5,ones(length(Yb8i_c5),1),2*Nvx,2*Nvx);  %Skin layer- HbR
+Qp{3}=sparse(Yb8i_c5,Yb8i_c5,zeros(length(Yb8i_c5),1),2*Nvx,2*Nvx);  %Skin layer- HbR
 Qp{4}=sparse(Yb8i_c1,Yb8i_c1,ones(length(Yb8i_c1),1),2*Nvx,2*Nvx);  %Brain layer- HbR
 
 switch job.ReML_method
