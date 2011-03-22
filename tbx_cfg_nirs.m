@@ -2564,8 +2564,8 @@ dir_in.help    = {'Select the MonteCarlo simulation output directory.'};
 ReML_method          = cfg_menu;
 ReML_method.name      = 'ReML method';
 ReML_method.tag       = 'ReML_method';
-ReML_method.labels    = {'Huppert' 'SPM'};
-ReML_method.values    = {0,1};
+ReML_method.labels    = {'Huppert' 'SPM' 'Tikhonov'};
+ReML_method.values    = {0,1,2};
 ReML_method.val       = {0};
 ReML_method.help      = {'Choose ReML reconstruction method.'};
 

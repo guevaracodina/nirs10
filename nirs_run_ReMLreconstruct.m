@@ -16,15 +16,15 @@ cs = NIRS.Cs.mcs{i_cs};
 % volume 8bits et voxels isotropiques
 % lecture du volume dans l'ordre de la matrice de sensitivite
 fid=fopen(cs.b8i,'rb');
-ms = fread(fid);
+Yb8i = fread(fid);
 fclose(fid);
-Nvx = length(ms);
+Nvx = length(Yb8i);
 
 % reperage des couches :
-ms_c1 = find(ms==1);
-% ms_c5 = find(ms==5);
+Yb8i_c1 = find(Yb8i==1);
+Yb8i_c5 = find(Yb8i==5);
 
-clear ms;
+clear Yb8i;
 
 % Le systeme qu'on resoud maintenant est le suivant :
 % on est en un unique point temporel donc
@@ -54,7 +54,7 @@ wl = unique(Cwl);
 
 %% Y
 fnirs = load(NIRS.Dt.fir.pp(1,4).p{:},'-mat');
-t0 =6000;% on choisit au pif un point temporel
+t0 =3000;% on choisit au pif un point temporel
 Y_t0 = fnirs.d(t0,Cmc)';
 
 %% X
@@ -62,10 +62,14 @@ Y_t0 = fnirs.d(t0,Cmc)';
 % on prend pour \Omegachapeau I en premiere approximation
 Kmat = load(fullfile(dir_in,'sens.mat'));
 Xdemi = Kmat.sens;
+% maxi = max(Kmat.sens,[],2);
+% for i=1:size(Xdemi,1)
+%     Xdemi(i,:) = Xdemi(i,:)/maxi(i);
+% end
 % 1.2956 et 0.1940 sont les rapports entre les coefficients d'absortivite
 % de HbO et HbR pour 690 et 830.
 NCdemi = size(Xdemi,1)/2;
-X = sparse([[Xdemi(1:NCdemi,:)*1.2956 Xdemi(1:NCdemi,:)];[Xdemi(NCdemi+1:end,:)*0.1940 Xdemi(NCdemi+1:end,:)]]);
+X = sparse([[Xdemi(1:NCdemi,:)*415.5 Xdemi(1:NCdemi,:)*2141.8];[Xdemi(NCdemi+1:end,:)*1008.0 Xdemi(NCdemi+1:end,:)*778.0]]);
 % %Omega chapeau est le bruit d'observation. Ici on le prend egal a un
 % Omegachapo = eye(NC);
 % Kbarre = Omegachapo*K;
@@ -91,10 +95,10 @@ end
 %- on calcule des wavelets dans un plan et on incline ce plan selon celui
 %des sources et detecteurs
 
-Qp{1}=sparse((1:2*Nvx),(1:2*Nvx),zeros(1,2*Nvx)',2*Nvx,2*Nvx);  %Skin layer- HbO
-Qp{2}=sparse(ms_c1,ms_c1,ones(length(ms_c1),1),2*Nvx,2*Nvx);  %Brain layer- HbO
-Qp{3}=sparse((1:2*Nvx),(1:2*Nvx),zeros(1,2*Nvx)',2*Nvx,2*Nvx);  %Skin layer- HbR
-Qp{4}=sparse(ms_c1,ms_c1,ones(length(ms_c1),1),2*Nvx,2*Nvx);  %Brain layer- HbR
+Qp{1}=sparse(Yb8i_c5,Yb8i_c5,ones(length(Yb8i_c5),1),2*Nvx,2*Nvx);  %Skin layer- HbO
+Qp{2}=sparse(Yb8i_c1,Yb8i_c1,ones(length(Yb8i_c1),1),2*Nvx,2*Nvx);  %Brain layer- HbO
+Qp{3}=sparse(Yb8i_c5,Yb8i_c5,ones(length(Yb8i_c5),1),2*Nvx,2*Nvx);  %Skin layer- HbR
+Qp{4}=sparse(Yb8i_c1,Yb8i_c1,ones(length(Yb8i_c1),1),2*Nvx,2*Nvx);  %Brain layer- HbR
 
 switch job.ReML_method
     case 0
@@ -129,8 +133,15 @@ switch job.ReML_method
         beta = Cq*X'*iC*Y_t0;
     case 2
         disp('peudo inverse');
-        meth = 'PseudoInv';
+        meth = 'PInv';
         
+        K=X;
+        d=Y_t0;
+        %from Edgar's code spm_lot_tikh
+        %Tikhonov regularization parameters
+        alpha = 1; %to be determined later
+        f = (K*K' + alpha*eye(size(K,1))) \ d;
+        beta = K'*f;
 end
 %%
 % %Convert the Stats
@@ -142,11 +153,9 @@ end
 V = spm_vol(cs.segR);
 %Now, display the results
 beta_4d = reshape(full(beta),[V.dim 2]);
-beta_HbO = beta_4d(:,:,:,1)+abs(min(min(min(beta_4d(:,:,:,1)))));
-beta_HbR = beta_4d(:,:,:,2)+abs(min(min(min(beta_4d(:,:,:,2)))));
 
-beta_HbO = beta_HbO/max(max(max(beta_HbO)));
-beta_HbR = beta_HbR/max(max(max(beta_HbR)));
+beta_HbO = beta_4d(:,:,:,1);
+beta_HbR = beta_4d(:,:,:,2);
 
 % creation de nii :
 V_O = struct('fname',fullfile(dir_in,['HbO_' meth '.nii']),...
@@ -169,24 +178,15 @@ V_R = spm_write_vol(V_R, beta_HbR);
 
 % superpositions : on cree des images semi transparentes rouges ou bleues
 % sur les anatomiques
-
 spm_imcalc_ui({fullfile(dir_in,['HbO_' meth '.nii']);...
     cs.segR},...
     fullfile(dir_in,['HbO_anat_' meth '.nii']),...
-    '10*i1+i2');
+    'i1+i2');
 
-[~,~] = spm_imcalc_ui({fullfile(dir_in,['HbR_' meth '.nii']);...
+spm_imcalc_ui({fullfile(dir_in,['HbR_' meth '.nii']);...
     cs.segR},...
     fullfile(dir_in,['HbR_anat_' meth '.nii']),...
-    '10*i1+i2');
+    'i1+i2');
 
-% [~,~] = spm_imcalc_ui({'D:\Users\Clément\Projet_ReML\donnees\test_GLM_ReML\MCconfigcul\roi3_00044_segmented_s201007051500-0002-00001-000160-01.nii';...
-%     'D:\Users\Clément\Projet_ReML\donnees\test_GLM_ReML\MCconfigcul\sens.nii'},...
-%     'D:\Users\Clément\Projet_ReML\donnees\test_GLM_ReML\MCconfigcul\test.nii',...
-%     'i1+0.0002*i2');
-% [~,~] = spm_imcalc_ui({'D:\Users\Clément\Projet_ReML\donnees\test_GLM_ReML\roi3_00044_segmented_s201007051500-0002-00001-000160-01.nii';...
-%     'D:\Users\Clément\Projet_ReML\donnees\test_GLM_ReML\MCconfigcul\sens.nii'},...
-%     'D:\Users\Clément\Projet_ReML\donnees\test_GLM_ReML\MCconfigcul\test_vx_truesize.nii',...
-%     'i1+0.0003*i2');
 out =1;
 end
