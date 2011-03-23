@@ -23,7 +23,8 @@ Nvx = length(Yb8i);
 % reperage des couches :
 Yb8i_c1 = find(Yb8i==1);
 Yb8i_c5 = find(Yb8i==5);
-
+m_c1 = zeros(size(Yb8i));
+m_c1(find(Yb8i==1))=1;
 clear Yb8i;
 
 % Le systeme qu'on resoud maintenant est le suivant :
@@ -135,13 +136,37 @@ switch job.ReML_method
         disp('peudo inverse');
         meth = 'PInv';
         
-        K=X;
-        d=Y_t0;
-        %from Edgar's code spm_lot_tikh
-        %Tikhonov regularization parameters
-        alpha = 1; %to be determined later
-        f = (K*K' + alpha*eye(size(K,1))) \ d;
-        beta = K'*f;
+%         %from Edgar's code spm_lot_tikh
+%         %Tikhonov regularization parameters
+%         K=X;
+%         d=Y_t0;
+%         alpha = 1; %to be determined later
+%         f = (K*K' + alpha*eye(size(K,1))) \ d;
+%         beta = K'*f;
+        
+        % Clement's version
+        Ybar = sparse([Y_t0;zeros(3*size(X,2),1)]);
+        % M_c1 Mask for cortex
+        M_c1_wl = [m_c1;m_c1];
+        M_c1 = sparse(diag(M_c1_wl));
+        Xbar = sparse([X X*M_c1 X*M_c1; eye(3*size(X,2))]);
+        % Beta contient omega_space omega et beta_prior : pour Tikhonov pqs
+        % besoin de le definir puisque c'est nul...
+        % Betabar = sparse(,,,beta_prior);
+        
+        % ebar DE MEME, par contre on definit la matrice des covariances
+        % des erreurs :
+        coef = 0.1;%%%%% moyen de calculer ca sur les images ??????????????
+        % of course : idee : en pratique surtout au niveau des interfaces,
+        % peut etre sortir l'info de ci_ fournie par newsegment puisque
+        % c'est des cartes de probabilite....
+        Qs=sparse(1:2*Nvx,1:2*Nvx,coef*ones(2*Nvx,1),2*Nvx,2*Nvx); % omega_space
+        %Set up the extended covariance model by concatinating the measurement
+        %and parameter noise terms and spatial prior
+        Q =blkdiag(Qn{1}+Qn{2},Qs,Qp{1}+Qp{2}+Qp{3}+Qp{4},Qp{1}+Qp{2}+Qp{3}+Qp{4});
+        % on applique ensuite la putain de formule de la mort qui dechire
+        Beta_estimate = (Xbar'*Q*Xbar) \ (Xbar'*Q*Ybar);
+        beta = Beta_estimate(size(Y_t0,1)+zeros(2*size(X,2),1)+1:size(Beta_estimate));
 end
 %%
 % %Convert the Stats
