@@ -77,28 +77,27 @@ switch int2str(job.system) % System used for the acquisition
                 %NIRS.Cf.H.S.n
                 NIRS.Cf.H.S.N = f.SD.nSrcs;
                 %NIRS.Cf.H.S.void
-                NIRS.Cf.H.S.r.o.mm.p = f.SD.SrcPos; % nSrcs x 3
+                NIRS.Cf.H.S.r.o.mm.p = f.SD.SrcPos*10; % nSrcs x 3, cm->mm
                 
                 % Detectors
                 %NIRS.Cf.H.D.n
                 NIRS.Cf.H.D.N = f.SD.nDets;
                 %NIRS.Cf.H.D.void
-                NIRS.Cf.H.D.r.o.mm.p = f.SD.DetPos; % nSrcs x 3
+                NIRS.Cf.H.D.r.o.mm.p = f.SD.DetPos*10; % nSrcs x 3, cm->mm
                 
                 % All points
                 NIRS.Cf.H.P.N = f.SD.nSrcs + f.SD.nDets;
-                NIRS.Cf.H.S.r.o.mm.p = [f.SD.SrcPos; f.SD.DetPos]; % nPts x 3
+                NIRS.Cf.H.S.r.o.mm.p = [f.SD.SrcPos; f.SD.DetPos]*10; % nPts x 3, cm->mm
                 
                 % Channels (pairs)
                 NIRS.Cf.H.C.N = size(f.SD.MeasList,1);
                 
                 % Measurement list: # of Pair / # of source / # of detector
-                ml = f.SD.MeasList;               
-                % % Sort by wavelength, then source index
-                % ml = sortrows(ml,[4 1]);
-                %%%% MAKE SURE THE ORDER IS TAKEN INTO ACCOUNT WHEN
-                %%%% COMPUTING DODS AND CONCENTRATIONS FROM DATA???
+                ml = f.SD.MeasList;       
+                % Add a column for pair ID
                 ml = [1:size(ml,1); ml']';
+                % Sort by wavelength, then source index
+                ml = sortrows(ml,[5 2]);
                 NIRS.Cf.H.C.id = ml(:,[1 2 3])'; % 3 x nChannels
                 
                 % Wavelength
@@ -111,7 +110,7 @@ switch int2str(job.system) % System used for the acquisition
                     iD = ml(iC,3);   % # détecteur
                     distSD(iC,1) = sqrt(sum((f.SD.SrcPos(iS,:) - f.SD.DetPos(iD,:)).^2)) ;
                 end
-                NIRS.Cf.H.C.gp = distSD'; % 1 x nChannels
+                NIRS.Cf.H.C.gp = distSD'; % 1 x nChannels, cm
                 
         end
         
@@ -120,10 +119,6 @@ switch int2str(job.system) % System used for the acquisition
         
 end
 
-% MICH: je suggère qu'on retourne la matrice NIRS comme output et qu'on la
-% save une seule fois dans le code nirs_run_criugm... garder les
-% sous-fonctions avec seulement entrée/sortie et lorsqu'on veut modifier la
-% matrice nirs, on s'en tient aux modules principaux ("nirs_run_...").
 save(fullfile(NIRS.Dt.s.p,'NIRS.mat'),'NIRS');
 out.NIRSmat{1} = fullfile(NIRS.Dt.s.p,'NIRS.mat');
 
