@@ -48,13 +48,6 @@ for iSubj = 1:nSubj
         disp(['Could not read NIRS.mat or anatomical image for ' int2str(iSubj) 'th subject.' ]);
     end
     
-%     addpath(('Z:\Programmes\spm8_300710_r4010'));
-%     addpath(genpath('G:\MesProgrammes\SPM\pour_nirs10'))
-%     addpath(genpath('G:\MesProgrammes\tMCimg_scripts\Scripts\PourPreparerSimuMC\New_SPMnewSegment'));
-%     cd('V:\PreProc_Phase2\P2S1\test_nirs10');
-%     V=spm_vol('s201009150900-0004-00001-000176-01.nii');
-%     Y=spm_read_vols(V);
-
     % Define structuring elements
     se =  strel('ball',5,5);
     se_larger = strel('ball',7,7);
@@ -113,23 +106,24 @@ for iSubj = 1:nSubj
         coord_fid(iFiducial,:) = stats(iFiducial).Centroid(:);
         size_fid(iFiducial,:) = stats(iFiducial).Area(:);
     end
-    %optodesCoord_click(test3,'bob',round(coord([2 1 3])),[]);
     
     % Read helmet information
     
-    % Either keep helemt info (src & det positions) in NIRS matrix or use
+    % Either use helemt info (src & det positions) in NIRS matrix or use
     % template BrainSight-coregistered info
-    %nn=load('V:\PreProc_Phase2\P2S1\IOD\P2S1_scan3.nirs','-mat')
-    coord_helmet = [nn.SD.SrcPos; nn.SD.DetPos];
-    names_helmet = ['S1';'S2';'S3';'S4';'D1';'D2';'D3';'D4';'D5';'D6';'D7';'D8';];
-    
-   
+    % For now, we will use nirs file info.
+     nSrc = NIRS.Cf.H.S.N;
+     nDet = NIRS.Cf.H.D.N;
+     coord_helmet = [NIRS.Cf.H.S.r.o.mm.p; NIRS.Cf.H.D.r.o.mm.p]; % nOptodes x 3, mm
+                
     
     % We now have the coordinates of the centroïds of the fiducials. In
     % order to identify each source and detector and their names, as well
     % as correct for potential errors (fake markers due to noise mistaken
     % for a fiducial), we will compare with the information given in the
     % NIRS matrix regarding the helmet used for the acquisition.
+    % Thus we need to "match" coord_helmet and coord_fid by reordering the
+    % rows of coord_fid. (Both are of size nOptodesx3).
    
     % If there is a "fake" marker (remaining noise mistaken for a
     % fiducial), chances are it will be smaller or larger than the rest
@@ -149,77 +143,182 @@ for iSubj = 1:nSubj
     coord_fid = coord_fid(toKeep,:);
     nOptodes = size(coord_fid,1);
     
-    %load('spots.mat');
-    %Vanat=spm_vol('s201009150900-0004-00001-000176-01.nii');
-    Pp_rmv = coord_fid'; % column vectors of coordinates
-    Pp_rmm = Vanat.mat * [Pp_rmv; ones(1,size(Pp_rmv,2))];
-    %Pp_rmm = Pp_rmm(1:3,:);
+    % Project coorde_fid on a (well-chosen) 2D plane
     
-    ctr_mass = [mean(Pp_rmm(1,:)); mean(Pp_rmm(2,:)); mean(Pp_rmm(3,:))];
-    Pp_rmm_ctr = Pp_rmm - ctr_mass*ones(1,size(Pp_rmm,2));  
-    
-    figure;
-    for idet=1:size(Pp_rmm,2)
-        xx(idet)=Pp_rmm(1,idet);
-        yy(idet)=Pp_rmm(2,idet);
-        zz(idet)=Pp_rmm(3,idet);
+    % Find plane z = a1*x+a2*y+a0 that is closest to the points
+    Z = coord_fid(:,3);
+    X = [coord_fid(:,1) coord_fid(:,2) ones(nOptodes,1)];
+    aHat = inv(X'*X)*X'*Z; % [a1 a2 a0]
+    a1 = aHat(1);
+    a2 = aHat(2);
+    a0 = aHat(3);
+
+    % Project orthogonally on that plane
+    % 2 vectors that form an ortogonal basis for the plane are
+    u1 = [1; 0; a1]; % 3x1
+    u2 = [-a1*a2; 1+a1^2; a2];
+    u1 = u1./norm(u1);
+    u2 = u2./norm(u2);
+    % (It can be shown that these 2 vectors belong to the plane and that they
+    % are not only linearly independent, but also orthogonal)
+    % The projection of the coordinates on this plane is given by the (vector)
+    % sum of the projection on each of the vectors of the orthogonal basis,
+    % i.e. Proj = (coord*basisVector/(basisVector'*basisVector)) .* basis vector
+    for iOptode = 1:nOptodes
+        coord_fid_proj2D(iOptode) =  [ (coord_fid(iOptode,:)*u1)./(u1'*u1) ;...
+                                       (coord_fid(iOptode,:)*u2)./(u2'*u2) ];
     end
-    plot3(xx,yy,zz,'or','MarkerSize',14,'MarkerFaceColor','r')
-    figure, plot(yy,zz,'or','MarkerSize',14,'MarkerFaceColor','r')
-%     pca = princomp(Pp_rmm(2:3,:)');
-%     for idet=1:size(pca,1)
-%         xx1(idet)=pca(idet,1);
-%         yy1(idet)=pca(idet,2);
-%         %zz1(idet)=pca(idet,3);
+
+    % Center on 0 in u1-u2 plane
+    ctr_mass_fid = [mean(coord_fid_proj2D(:,1)); mean(coord_fid_proj2D(:,2))];
+    coord_fid_proj2D = coord_fid_proj2D - (ctr_mass_fid*ones(1,size(coord_fid_proj2D,1)))'; 
+    
+    % Center helmet on 0 and use 2D coordinates
+    ctr_mass_helmet = [mean(coord_helmet(:,1)); mean(coord_helmet(:,2)); mean(coord_helmet(:,3))];
+    coord_helmet = coord_helmet - (ctr_mass_helmet*ones(1,size(coord_helmet,1)))'; 
+    coord_helmet2D = coord_helmet(:,1:2);
+    
+    % We must now match 2 sets of 2D coordinates, which will require to
+    % first find the right orientation, using some manipulations of the
+    % images of the coordinates
+    
+    % Plot 2 geometries, then save as images and load them
+    figure('Units','normalized','Position',[0.05 0.2 0.8 0.7]),
+    hfid=plot(coord_fid_proj2D(:,1),coord_fid_proj2D(:,2),'ok','MarkerSize',70,'MarkerFaceColor','k');
+    set(gca,'Visible','off')
+    xlim(1.5*[min(coord_helmet2D(:,1)) max(coord_helmet2D(:,1))])
+    ylim(2.5*[min(coord_helmet2D(:,2)) max(coord_helmet2D(:,2))])
+    saveas(hfid,'im_fid.png','png');
+    figure('Units','normalized','Position',[0.05 0.2 0.8 0.7]),
+    hhelmet=plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob','MarkerSize',70,'MarkerFaceColor','b');
+    xlim(1.5*[min(coord_helmet2D(:,1)) max(coord_helmet2D(:,1))])
+    ylim(2.5*[min(coord_helmet2D(:,2)) max(coord_helmet2D(:,2))])
+    set(gca,'Visible','off')
+    saveas(hhelmet,'im_helmet.png','png');
+
+    im_fid = double(imread('im_fid.png','png'));
+    im_helmet = double(imread('im_helmet.png','png'));
+    % No need for RGB info, just want a mask where background=0 and optodes=1
+    im_fid = squeeze(im_fid(:,:,1));
+    im_fid2 = im_fid;
+    im_fid2(im_fid<max(im_fid(:)/2)) = 1; % optodes
+    im_fid2(im_fid>=max(im_fid(:)/2)) = 0; % background
+    im_helmet = squeeze(im_helmet(:,:,1));
+    im_helmet2 = im_helmet;
+    im_helmet2(im_helmet<max(im_helmet(:)/2)) = 1; % optodes
+    im_helmet2(im_helmet>=max(im_helmet(:)/2)) = 0; % background
+    % Crop borders (where was the figure background around the axes)
+    lim1 = round(0.1*size(im_helmet,1));
+    lim2 = round(0.1*size(im_helmet,2));
+    im_helmet = im_helmet2(lim1:end-lim1,lim2:end-lim2);
+    im_fid = im_fid2(lim1:end-lim1,lim2:end-lim2);
+    clear im_fid im_helmet
+    
+    % We now have 2 images of 2D probes and want to match their orientation
+    % by testing all possible rotations and choosing the one that yields
+    % the best match between both images
+    
+    angles = 1:2:360;
+    for iTheta=1:length(angles)
+        rotation = imrotate(im_fid,angles(iTheta),'bilinear','crop');
+        correlation(iTheta)  =  sum(rotation(:).*im_helmet(:));
+    end
+    [cmax imax] = max(correlation);
+    theta = angles(imax);
+    %figure,imagesc(im_helmet)
+    %figure,imagesc(imrotate(im_fid,theta,'bilinear','crop'))
+
+    % The orientation of the coordinates will be either the angle found or
+    % 180+it (it is almost symmetrical along the main axis). 
+    theta = theta*pi/180;
+    mat_rot1 = [cos(theta) -sin(theta); sin(theta) cos(theta)];
+    mat_rot2 = [cos(theta+pi) -sin(theta+pi); sin(theta+pi) cos(theta+pi)];
+    coord_fid_projP_rot1 = [mat_rot1 * coord_fid2_proj_ctr']';
+    coord_fid_projP_rot2 = [mat_rot2 * coord_fid2_proj_ctr']';
+
+%     figure, plot(coord_fid_projP_rot2(:,1),coord_fid_projP_rot2(:,2),'or');
+%     hold on, plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob')
+%     for iOptode=1:nOptodes
+%         hold on, 
+%         text(coord_fid2_proj_ctr_rot2(iOptode,1),...
+%             coord_fid2_proj_ctr_rot2(iOptode,2),0,['F' int2str(iOptode)],...
+%             'Color','k')
+%         text(coord_helmet2D(iOptode,1),...
+%             coord_helmet2D(iOptode,2),0,[names_helmet(iOptode,:)],...
+%             'Color','b')
 %     end
-%     %hold on, plot3(xx1,yy1,zz1,'xb','MarkerSize',14,'MarkerFaceColor','b')
-%     figure, plot(yy,zz,'or','MarkerSize',14,'MarkerFaceColor','r')
-%     hold on, plot(xx1,yy1,'xb','MarkerSize',14,'MarkerFaceColor','b')
 
-    % Projeté sur un des plans (je pense coronal - le plan yz (enlever coord x)),
-    % on voit 2 directions principales du "quadrillé"... peut-etre des "composantes principales"
-    % ou qqch du genre pourrait nous donner la bonne direction où regarder
-    % les coord extrêmes?
-    
+    % At this point, the 2D coordinates of the "theoretical" (setup) and
+    % "experimental" (vitamins) helmets should be in relatively good
+    % correspondance, and what remains to be done is to match each vitamin with
+    % the right optode (of which we know the "names" from the setup
+    % information). 
 
-% Nice idea, maybe in 2050...
-% ----------------------------------------------------------------------- % 
-    % Minimize the Euclidian distance (L-2 norm) between the "theoretical"
-    % helmet (from the setup info in the NIRS matrix) and the ensemble of
-    % positions identified using the fiducials:
+    % Two cases must be examined, because of the near-symmetry of the probe, 
+    % its 180 degree rotation is very similar. In the end the best
+    % correspondance will reveal the right choice.
+
+    % Distance between each optode and the closest fiducial
+    % - this is not so robust in case the probe is much deformed so that the
+    % 2D-projected coordinates do not closely match the setup helmet (or if the
+    % SD distances in it are very small, similar in scale to that of ). Eventually find a fix...
     
-%    I = eye(nOptodes);
-%    % Of all possible rearragements of the optodes...
-%    thePermutations = perms(1:nOptodes);
-%    for iPerm=1:factorial(nOptodes)
-%        I = I(thePermutations(iPerm,:),:);
-%        coord_fid_perm = I*coord_fid;
-%        %... find the one that corresponds best to the setup helmet
-%        dist(iPerm) = (sum(coord_fid_perm(:)-coord_helmet(:)).^2);
-%    end
-%    
-%    [theMinDist,theIdx] = min(dist);
-%    theOrder = thePermutations(theIdx,:);
-%    coord_fid_opt = I(theOrder,:) * coord_fid;
-%    names_fid_opt = inv(I(theOrder),:)*names_helmet;
-%    
-%    % Check
-%    nSrc = nn.SD.nSrc;
-%    nDet = nn.SD.nDet;
-%    optodesCoord_click(Yanat,'Verify correspondance of the optodes',...
-%        coord_fid_opt([2 1 3],1:nSrc),coord_fid_opt([2 1 3],nSrc+1:nSrc+nDet))
-% ----------------------------------------------------------------------- % 
-   
+    % Case rotation theta
+    optOrder1 = zeros(1,nOptodes);
+    for iOptode = 1:nOptodes
+        dd = sqrt(sum((coord_fid_projP_rot1 - ones(nOptodes,1)*coord_helmet2D(iOptode,:)).^2,2));
+        [err iFid] = min(dd);
+        optOrder1(iOptode) = iFid;
+    end
+    % Case rotation theta+pi
+    optOrder2 = zeros(1,nOptodes);
+    for iOptode = 1:nOptodes
+        dd = sqrt(sum((coord_fid_projP_rot2 - ones(nOptodes,1)*coord_helmet2D(iOptode,:)).^2,2));
+        [err iFid] = min(dd);
+        optOrder2(iOptode) = iFid;
+    end
+    % Find out which of the 2 orientations yields the best match with the
+    % setup helmet. Check using 2D distance.
+    I = eye(nOptodes);
+    coord_fid_perm1 = I(optOrder1,:)*coord_fid2_proj_ctr_rot1;
+    coord_fid_perm2 = I(optOrder2,:)*coord_fid2_proj_ctr_rot2;
+    %... find the one that corresponds best to the setup helmet
+    dist1 = sum((coord_fid_perm1(:)-coord_helmet2D(:)).^2);
+    dist2 = sum((coord_fid_perm2(:)-coord_helmet2D(:)).^2);
+
+    if dist1<dist2
+        optOrder = optOrder1;
+    else
+        optOrder = optOrder2;
+    end
+
+    % Now let's go back to 3D coordinates, rearranging the order of the
+    % markers to match the order that was to found to match the setup
+    % helmet
+    I = eye(nOptodes2);
+    coord_fid_opt = I(optOrder,:) * coord_fid2;
+
+%     figure, plot3(coord_fid_opt(1:nSrc,1),coord_fid_opt(1:nSrc,2),coord_fid_opt(1:nSrc,3),'or')
+%     hold on, plot3(coord_fid_opt(nSrc+1:nSrc+nDet,1),...
+%         coord_fid_opt(nSrc+1:nSrc+nDet,2),coord_fid_opt(nSrc+1:nSrc+nDet,3),'xb')
+%     for iF=1:nOptodes2
+%         text(coord_fid_opt(iF,1),coord_fid_opt(iF,2),...
+%             coord_fid_opt(iF,3),['F' int2str(iF)])
+%     end
+
+
+    % Save the results of all these computations %
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     % Create nifti object for anatomical without markers
     [dir,name,ext] = fileparts(Vanat.fname);    
     Vanat_WOspots = Vanat; 
     Vanat_WOspots.fname = fullfile(dir,[output_prefix_woVit,name,ext]);
     
-     % Update NIRS matrix with new info:
+    % Update NIRS matrix with new info:
     NIRS.Dt.ana.T1 = Vanat_WOspots.fname; % New path to anatomical
     % Positions of all points in mm : [pos_mm(x;y;z); 1] = V.mat * [pos_vox(x;y;z); 1]
-    Pp_rmv = coord_fid'; % column vectors of coordinates
+    Pp_rmv = coord_fid_opt'; % column vectors of coordinates
     Pp_rmm = Vanat.mat * [Pp_rmv; ones(1,size(Pp_rmv,2))];
     NIRS.Cf.H.P.r.m.mm.p = Pp_rmm(1:3,:);
     NIRS.Cf.H.P.r.m.v.p = Pp_rmv;
@@ -231,159 +330,9 @@ for iSubj = 1:nSubj
     
 end
 
-% clear NIRS
-% load(NIRSmat{:});
-% NIRS.Cf.H.P.r.m.mm.fp =Pfp_rmm;
-% NIRS.Cf.H.P.r.m.vx.fp = Pfp_rmv(1:3,:);
-% save(NIRSmat{:},'NIRS');
-
-%out = 1;
 % Updated NIRS matrix is made available as a dependency
 out.NIRSmat = outNIRSmat;
 
 return
 
 
-
-
-
-
-% OLD TRIES
-% 
-% im2d=squeeze(Y(:,:,:));
-%         t3 = 35;
-%         t2 = 168;
-%         % Tranche où on voit 4 sources!: Y(:,:,14)
-%         figure(4), subplot(1,2,1), imagesc(squeeze(im2d(:,:,t3)));
-%         subplot(1,2,2), imagesc(squeeze(im2d(:,t2,:)));
-%         %se = strel('disk',9,0);    
-%         se =  strel('ball',5,5);
-%         se2 = strel('ball',7,7);
-%         
-%         for i=1:size(im2d,3)
-%             filledim2d(:,:,i) = imfill(im2d(:,:,i),'holes');
-%         end
-%         figure(44), subplot(1,2,1), imagesc(squeeze(filledim2d(:,:,t3)));
-%         subplot(1,2,2), imagesc(squeeze(filledim2d(:,t2,:)));
-%         
-%         erodedBW = imerode(filledim2d,se);
-%         figure(5), subplot(1,2,1), imagesc(squeeze(erodedBW(:,:,t3)));
-%         subplot(1,2,2), imagesc(squeeze(erodedBW(:,t2,:)));
-%         
-%         dilatedBW = imdilate(erodedBW,se);
-%         figure(6), subplot(1,2,1), imagesc(squeeze(dilatedBW(:,:,t3)));
-%         subplot(1,2,2), imagesc(squeeze(dilatedBW(:,t2,:)));
-%         
-%         closedBW = imclose(dilatedBW,se2);
-%         figure(7), subplot(1,2,1), imagesc(squeeze(closedBW(:,:,t3)));
-%         subplot(1,2,2), imagesc(squeeze(closedBW(:,t2,:)));
-%         
-% %         filledBW = imfill(closedBW,'holes');
-% %         figure(8), subplot(1,2,1), imagesc(squeeze(filledBW(:,:,t3)));
-% %         subplot(1,2,2), imagesc(squeeze(filledBW(:,t2,:)));
-% %         
-%         for i=1:size(closedBW,3)
-%             filledBW(:,:,i) = imfill(closedBW(:,:,i),'holes');
-%         end
-%         figure(8), subplot(1,2,1), imagesc(squeeze(filledBW(:,:,t3)));
-%         subplot(1,2,2), imagesc(squeeze(filledBW(:,t2,:)));
-%         
-%         %thresh = 0.05;
-%         for i=1:size(filledBW,2)
-%             filtBW(:,i,:) = medfilt2(squeeze(filledBW(:,i,:)));
-%         end
-%         for i=1:size(filtBW,1)
-%             filtBW(i,:,:) = medfilt2(squeeze(filtBW(i,:,:)));
-%             level = graythresh(squeeze(filtBW(i,:,:)));
-%             otsuBW(i,:,:) = im2bw(squeeze(filtBW(i,:,:)),level);
-%         end
-%         figure(99), subplot(1,2,1), imagesc(squeeze(otsuBW(:,:,t3)));
-%         subplot(1,2,2), imagesc(squeeze(otsuBW(:,t2,:)));
-%         %thresh=0.05;
-%         %mask = filledBW>(thresh.*max(filledBW(:)));
-%         %figure(9), subplot(1,2,1), imagesc(squeeze(mask(:,:,t3)));
-%         %subplot(1,2,2), imagesc(squeeze(mask(:,t2,:)));
-%         
-% %         filledMask = imfill(mask,'holes');
-% %         figure(10), subplot(1,2,1), imagesc(squeeze(filledMask(:,:,t3)));
-% %         subplot(1,2,2), imagesc(squeeze(filledMask(:,t2,:)));
-% %         closedMask = imclose(double(mask),se2);
-% %         figure(10), subplot(1,2,1), imagesc(squeeze(closedMask(:,:,t3)));
-% %         subplot(1,2,2), imagesc(squeeze(closedMask(:,t2,:)));
-%         
-%         
-%         Yanat_WOspots = im2d.*mask;
-%         spots = im2d-Yanat_WOspots;
-%         figure(10), subplot(1,2,1), imagesc(squeeze(Yanat_WOspots(:,:,t3)));
-%         subplot(1,2,2), imagesc(squeeze(Yanat_WOspots(:,t2,:)));
-%         figure(11), subplot(1,2,1), imagesc(squeeze(spots(:,:,t3)));
-%         subplot(1,2,2), imagesc(squeeze(spots(:,t2,:)));
-%         % optodesCoord_click(spots,'Spots');
-%         
-% 
-%         
-%         
-% %         % Median filter + otsu
-% %         for i=1:size(spots,2)
-% %             spots2(:,i,:) = medfilt2(squeeze(spots(:,i,:)));
-% %         end
-% %         
-% %         for i=1:size(spots,1)
-% %             spots2(i,:,:) = medfilt2(squeeze(spots2(i,:,:)));
-% %             level = graythresh(squeeze(spots2(i,:,:)));
-% %             spots3(i,:,:) = im2bw(squeeze(spots2(i,:,:)),level);
-% %         end
-% %         
-% %         figure(12), subplot(1,2,1), imagesc(squeeze(spots2(:,:,t3)));
-% %         subplot(1,2,2), imagesc(squeeze(spots2(:,t2,:)));
-% %         figure(13), subplot(1,2,1), imagesc(squeeze(spots3(:,:,t3)));
-% %         subplot(1,2,2), imagesc(squeeze(spots3(:,t2,:)));
-% %         
-% %         % Histograms
-% %         [n,xout] = hist(spots(spots>0));
-% %         figure(14), bar(xout,n);
-% %         
-% %         [n2,xout2] = hist(spots2(spots2>0));
-% %         figure(15), bar(xout2,n2);
-%         
-% %         test = imregionalmax(spots,26);
-% %         figure(16), subplot(1,2,1), imagesc(squeeze(test(:,:,t3)));
-% %         subplot(1,2,2), imagesc(squeeze(test(:,t2,:)));
-% %         % Je voudrais les regional max mais avec un seuil sur la taille...
-% %         % Ou seuiller l'image avant de
-% %         % faire le regional maxima stuff. C'est pareil que imextendedmax...
-%         
-%         % REGIONAL MAXIMA
-%         thresh=0.5;
-%         vitaminsBW = imextendedmax(spots,thresh*max(spots(:)),26);
-%         figure(17), subplot(1,2,1), imagesc(squeeze(vitaminsBW(:,:,t3)));
-%         subplot(1,2,2), imagesc(squeeze(vitaminsBW(:,t2,:)));
-% 
-%         % Identify centroid
-%         stats = regionprops(test3, 'Centroid');
-%         %Stats(1).Centroid;
-%         for ii=1:size(stats,1)
-%             coord(ii,:) = round(stats(ii).Centroid([2 1 3]));
-%         end
-%         optodesCoord_click(test3,'bob',coord,[]);
-%         
-% %         thresh=0.01;
-% %         test2 = imhmax(spots,thresh*max(spots(:)));
-% %         figure(14), subplot(1,2,1), imagesc(squeeze(test2(:,:,t3)));
-% %         subplot(1,2,2), imagesc(squeeze(test2(:,t2,:)));
-% %         
-
-% Reflexions obsoletes.... et tata
- %  min sqrt((order*coord_fid-coord_helmet).^2) with respect to order of optodes
-    % will this converge?? (numOptodes variables optimized... not really%?).
-    % where order=a permutation of 1:nOptodes... in fact a rearrangement of
-    % the lines of eye(nopt,nopt). (Possible rearrangements of 12 lines)
-    % I([order],:)*pos_vit = pos_helmet. where order=randperm(1:12).
-    % (Means vitNames = inv(I)*helmet.names)).    
-    % x = lsqlin(C,d,A,b) solves the linear system C*x = d in the least-squares sense subject to A*x ? b,
-     % optimize wrt order, but not any 12 numbers... its 12 numbers taken
-    % out of 1:12 (1 of each). order=randperm(1:12);
-    % Fonction to minimize:
-    % f = bob(which argument??)
-    
-    

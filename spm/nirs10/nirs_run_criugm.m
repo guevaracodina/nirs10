@@ -37,6 +37,7 @@ for is=1:sN
             NIRS.Cf.H = Hcoregistered;
             
             % Topo Data
+            % CLEMENT: Vérifier Hcoregistered et TopoData (lien?)
             if ~isempty(job.subj(1,is).TopoData{:})
                 helmetdone = 1;
                 % If nirs_run_coreg has already been executed to generate once and 
@@ -45,8 +46,7 @@ for is=1:sN
                 helmetdone = 0;
             end
             
-            % MICH: I DON'T UNDERSTAND THIS?? What is done exactly (saved,
-            % outputed, ??) by this GUI?
+            % GUI for reading subject-specific setup from BrainSight file
             if ~helmetdone
                 jobH.subj.sDtp = sDtp;
                 jobH.subj.helmet.staxp = staxp;
