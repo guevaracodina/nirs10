@@ -104,14 +104,14 @@ end
 Pfp_ancienne_rmiv = round(Pfp_ancienne_rmiv);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% on verifie qu'on n'a pas de pb apres le resizing
-jobF.Pp_rmm = cs.Pp_rmm;
-jobF.Pp_c1_rmm = cs.Pp_c1_rmm;
-jobF.NP = NP;
-jobF.image_in = {outRS};
-jobF.Pfp_ancienne_rmiv = Pfp_ancienne_rmiv;
-jobF.lby = 'configMC';
-outF = nirs_fit_probe(jobF);
-Pfp_ancienne_rmiv = outF{1};
+% jobF.Pp_rmm = cs.Pp_rmm;
+% jobF.Pp_c1_rmm = cs.Pp_c1_rmm;
+% jobF.NP = NP;
+% jobF.image_in = {outRS};
+% jobF.Pfp_ancienne_rmiv = Pfp_ancienne_rmiv;
+% jobF.lby = 'configMC';
+% outF = nirs_fit_probe(jobF);
+% Pfp_ancienne_rmiv = outF{1};
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Directions
@@ -199,6 +199,7 @@ for iwl = 1:size(NIRS.Cf.dev.wl,2)
     % MonteCarlo in a particular frame. Positions must be in mm but the
     % origin is the same as the origin of the voxel frame (these positions 
     % don't respect SPM conventions)
+    %%% MCX en voxel /////!!!!!!!!!!!!!!!!!!!!!!!!!!
     P.p = parameters.voxelSize*Pfp_ancienne_rmiv;
     P.wd = Pwd_rmm;
     P.r = [Sr' Dr' zeros(1,NP -(cs.NSkpt+cs.NDkpt))];

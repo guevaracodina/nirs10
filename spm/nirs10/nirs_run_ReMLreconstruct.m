@@ -10,7 +10,7 @@ itest=1;
 while itest<length(NIRS.Cs.n)-1 && isempty(strfind(csn,NIRS.Cs.n{itest}))
     itest =itest+1;
 end
-i_cs =itest+1;
+i_cs =itest;%%% j'ai enlever le -1 car pas la derniere sim
 cs = NIRS.Cs.mcs{i_cs};
 
 % volume 8bits et voxels isotropiques
@@ -165,8 +165,8 @@ switch job.ReML_method
         %and parameter noise terms and spatial prior
         Q =blkdiag(Qn{1}+Qn{2},Qs,Qp{1}+Qp{2}+Qp{3}+Qp{4},Qp{1}+Qp{2}+Qp{3}+Qp{4});
         % on applique ensuite la putain de formule de la mort qui dechire
-        Beta_estimate = (Xbar'*Q*Xbar) \ (Xbar'*Q*Ybar);
-        beta = Beta_estimate(size(Y_t0,1)+zeros(2*size(X,2),1)+1:size(Beta_estimate));
+        Beta_estimate = (Xbar'*Xbar) \ (Xbar'*Ybar);%(Xbar'*Q*Xbar) \ (Xbar'*Q*Ybar);
+        beta = Beta_estimate((size(Y_t0,1)+2*size(Xbar,2)+1):size(Beta_estimate,1),1);
 end
 %%
 % %Convert the Stats
