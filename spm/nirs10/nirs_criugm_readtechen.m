@@ -87,7 +87,7 @@ switch int2str(job.system) % System used for the acquisition
                 
                 % All points
                 NIRS.Cf.H.P.N = f.SD.nSrcs + f.SD.nDets;
-                NIRS.Cf.H.S.r.o.mm.p = [f.SD.SrcPos; f.SD.DetPos]*10; % nPts x 3, cm->mm
+                NIRS.Cf.H.P.r.o.mm.p = [f.SD.SrcPos; f.SD.DetPos]*10; % nPts x 3, cm->mm
                 
                 % Channels (pairs)
                 NIRS.Cf.H.C.N = size(f.SD.MeasList,1);
