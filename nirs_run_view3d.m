@@ -53,8 +53,9 @@ patch(isosurface(smooth3(Y),4),...
     'FaceAlpha',0.5);
 
 % Views adjustments
+view(90,-90)
 daspect([1,1,1])
-lightangle(110,20);
+lightangle(70,-70);
 set(hfig_all3D,'Renderer','zbuffer');
 lighting phong
 
