@@ -165,7 +165,7 @@ for iSubj = 1:nSubj
     % sum of the projection on each of the vectors of the orthogonal basis,
     % i.e. Proj = (coord*basisVector/(basisVector'*basisVector)) .* basis vector
     for iOptode = 1:nOptodes
-        coord_fid_proj2D(iOptode) =  [ (coord_fid(iOptode,:)*u1)./(u1'*u1) ;...
+        coord_fid_proj2D(iOptode,:) =  [ (coord_fid(iOptode,:)*u1)./(u1'*u1) ...
                                        (coord_fid(iOptode,:)*u2)./(u2'*u2) ];
     end
 
@@ -212,7 +212,7 @@ for iSubj = 1:nSubj
     lim2 = round(0.1*size(im_helmet,2));
     im_helmet = im_helmet2(lim1:end-lim1,lim2:end-lim2);
     im_fid = im_fid2(lim1:end-lim1,lim2:end-lim2);
-    clear im_fid im_helmet
+    clear im_fid2 im_helmet2
     
     % We now have 2 images of 2D probes and want to match their orientation
     % by testing all possible rotations and choosing the one that yields
@@ -233,8 +233,8 @@ for iSubj = 1:nSubj
     theta = theta*pi/180;
     mat_rot1 = [cos(theta) -sin(theta); sin(theta) cos(theta)];
     mat_rot2 = [cos(theta+pi) -sin(theta+pi); sin(theta+pi) cos(theta+pi)];
-    coord_fid_projP_rot1 = [mat_rot1 * coord_fid2_proj_ctr']';
-    coord_fid_projP_rot2 = [mat_rot2 * coord_fid2_proj_ctr']';
+    coord_fid_proj2D_rot1 = [mat_rot1 * coord_fid_proj2D']';
+    coord_fid_proj2D_rot2 = [mat_rot2 * coord_fid_proj2D']';
 
 %     figure, plot(coord_fid_projP_rot2(:,1),coord_fid_projP_rot2(:,2),'or');
 %     hold on, plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob')
@@ -266,22 +266,22 @@ for iSubj = 1:nSubj
     % Case rotation theta
     optOrder1 = zeros(1,nOptodes);
     for iOptode = 1:nOptodes
-        dd = sqrt(sum((coord_fid_projP_rot1 - ones(nOptodes,1)*coord_helmet2D(iOptode,:)).^2,2));
+        dd = sqrt(sum((coord_fid_proj2D_rot1 - ones(nOptodes,1)*coord_helmet2D(iOptode,:)).^2,2));
         [err iFid] = min(dd);
         optOrder1(iOptode) = iFid;
     end
     % Case rotation theta+pi
     optOrder2 = zeros(1,nOptodes);
     for iOptode = 1:nOptodes
-        dd = sqrt(sum((coord_fid_projP_rot2 - ones(nOptodes,1)*coord_helmet2D(iOptode,:)).^2,2));
+        dd = sqrt(sum((coord_fid_proj2D_rot2 - ones(nOptodes,1)*coord_helmet2D(iOptode,:)).^2,2));
         [err iFid] = min(dd);
         optOrder2(iOptode) = iFid;
     end
     % Find out which of the 2 orientations yields the best match with the
     % setup helmet. Check using 2D distance.
     I = eye(nOptodes);
-    coord_fid_perm1 = I(optOrder1,:)*coord_fid2_proj_ctr_rot1;
-    coord_fid_perm2 = I(optOrder2,:)*coord_fid2_proj_ctr_rot2;
+    coord_fid_perm1 = I(optOrder1,:)*coord_fid_proj2D_rot1;
+    coord_fid_perm2 = I(optOrder2,:)*coord_fid_proj2D_rot2;
     %... find the one that corresponds best to the setup helmet
     dist1 = sum((coord_fid_perm1(:)-coord_helmet2D(:)).^2);
     dist2 = sum((coord_fid_perm2(:)-coord_helmet2D(:)).^2);
@@ -295,8 +295,8 @@ for iSubj = 1:nSubj
     % Now let's go back to 3D coordinates, rearranging the order of the
     % markers to match the order that was to found to match the setup
     % helmet
-    I = eye(nOptodes2);
-    coord_fid_opt = I(optOrder,:) * coord_fid2;
+    I = eye(nOptodes);
+    coord_fid_opt = I(optOrder,:) * coord_fid;
 
 %     figure, plot3(coord_fid_opt(1:nSrc,1),coord_fid_opt(1:nSrc,2),coord_fid_opt(1:nSrc,3),'or')
 %     hold on, plot3(coord_fid_opt(nSrc+1:nSrc+nDet,1),...
@@ -318,20 +318,20 @@ for iSubj = 1:nSubj
     % Update NIRS matrix with new info:
     NIRS.Dt.ana.T1 = Vanat_WOspots.fname; % New path to anatomical
     % Positions of all points in mm : [pos_mm(x;y;z); 1] = V.mat * [pos_vox(x;y;z); 1]
-    Pp_rmv = coord_fid_opt'; % column vectors of coordinates
+    Pp_rmv = coord_fid_opt(:,[2 1 3])'; % column vectors of coordinates
     Pp_rmm = Vanat.mat * [Pp_rmv; ones(1,size(Pp_rmv,2))];
     NIRS.Cf.H.P.r.m.mm.p = Pp_rmm(1:3,:);
     NIRS.Cf.H.P.r.m.v.p = Pp_rmv;
     
     % Save outputs: anatomical without markers and NIRS matrix updated
     % with the positions of the markers
-    save(outNIRSmat{iSubj},'NIRS');
+    save(NIRSmat{iSubj},'NIRS');
     spm_write_vol(Vanat_WOspots, Yanat_WOspots);
     
 end
 
 % Updated NIRS matrix is made available as a dependency
-out.NIRSmat = outNIRSmat;
+out.NIRSmat = NIRSmat;
 
 return
 
