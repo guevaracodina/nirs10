@@ -25,9 +25,9 @@ for Idx=1:nsubj
             disp(['Could not load NIRS.mat for subject ' int2str(Idx)]);
         end
     end
-    try
+    if ~isempty(job.image_in{Idx,:})
         V.fname = job.image_in{Idx,:};
-    catch
+    else
         V.fname = NIRS.Dt.ana.T1;
     end
     
