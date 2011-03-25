@@ -45,27 +45,36 @@ for iSubj=1:size(job.NIRSmat,1)
                 NIRS.Dt.ana.tT1 = fullfile(DirSPM,'templates','T1.nii');
             end
         end
-        %Various options that we don't make available to the user in the GUI
-        matlabbatch{1}.spm.spatial.normalise.estwrite.subj.source = {NIRS.Dt.ana.T1};
-        matlabbatch{1}.spm.spatial.normalise.estwrite.subj.wtsrc = '';
-        matlabbatch{1}.spm.spatial.normalise.estwrite.subj.resample = {NIRS.Dt.ana.T1};
-        matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.template = {NIRS.Dt.ana.tT1};
-        matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.weight = '';
-        matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.smosrc = 8;
-        matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.smoref = 0;
-        matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.regtype = 'mni';
-        matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.cutoff = 25;
-        matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.nits = 16;
-        matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.reg = 1;
-        matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.preserve = 0;
-        matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.bb = [-78 -112 -50
-            78 76 85];
-        matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.vox = [2 2 2];
-        matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.interp = 1;
-        matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.wrap = [0 0 0];
-        matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.prefix = 'w';
+        
+        [dirT1, fil, ext] = fileparts(NIRS.Dt.ana.T1);
+        fwT1 = [dirT1 filesep 'w' fil ext(1:4)];
+        if spm_existfile(fwT1)
+            disp('Spatial normalisation already run - skipping');
+        else
+        
+            %Various options that we don't make available to the user in the GUI
+            matlabbatch{1}.spm.spatial.normalise.estwrite.subj.source = {NIRS.Dt.ana.T1};
+            matlabbatch{1}.spm.spatial.normalise.estwrite.subj.wtsrc = '';
+            matlabbatch{1}.spm.spatial.normalise.estwrite.subj.resample = {NIRS.Dt.ana.T1};
+            matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.template = {NIRS.Dt.ana.tT1};
+            matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.weight = '';
+            matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.smosrc = 8;
+            matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.smoref = 0;
+            matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.regtype = 'mni';
+            matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.cutoff = 25;
+            matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.nits = 16;
+            matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.reg = 1;
+            matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.preserve = 0;
+            matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.bb = [-78 -112 -50
+                78 76 85];
+            matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.vox = [2 2 2];
+            matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.interp = 1;
+            matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.wrap = [0 0 0];
+            matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.prefix = 'w';
 
-        spm_jobman('run_nogui',matlabbatch);
+            spm_jobman('run_nogui',matlabbatch);
+        
+        end
 
         %Recreate name of _sn.mat file just created by spm_normalise, and load it
         [pth,nam] = spm_fileparts(deblank(NIRS.Dt.ana.T1));
@@ -162,6 +171,9 @@ for iSubj=1:size(job.NIRSmat,1)
             % obtained in detectVitamins module; those are already defined 
             % in the MNI space (i voxels relative to anatomical image)
             Pp_rmm = NIRS.Cf.H.P.r.m.mm.p;
+            % Initialize other variables used later in the code
+            NP = size(Pp_rmm,2);
+            Pvoid = zeros(1,NP);
             
         end
         
