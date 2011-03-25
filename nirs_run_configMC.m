@@ -77,7 +77,7 @@ V_rmiv = spm_vol(outRS);
 Y_rmiv = spm_read_vols(V_rmiv);
 
 if job.MC_CUDAchoice==1
-    Y_rmiv=permute(Y_rmiv,[2,1,3]);
+%     Y_rmiv=permute(Y_rmiv,[2,1,3]);
 elseif job.MC_CUDAchoice==3
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % IL FAUT FAIRE DEUX CHEMINS CAR POUR UN IL FAUT INVERSER MAIS PAS POUR L AUTRE
@@ -102,6 +102,8 @@ Pfp_ancienne_rmiv(:,i) = abs(inv_mat(7:9)').*(Pfp_ancienne_rmv(1:3,i)/parameters
 end
 
 Pfp_ancienne_rmiv = round(Pfp_ancienne_rmiv);
+%%%% VERIFIER CE QU"IL FAUT FAIRE POUR MCX, IL Y A UN SOUCIS SUR LE
+%%%% POSITIONNEMENT DES SOURCES ET DETECTEURS QUI NE SONT PAS GENERES
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% on verifie qu'on n'a pas de pb apres le resizing
 % jobF.Pp_rmm = cs.Pp_rmm;
