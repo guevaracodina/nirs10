@@ -26,9 +26,9 @@ for Idx=1:nsubj
         end
     end
     try
-        V.fname = NIRS.Dt.ana.T1;
-    catch
         V.fname = job.image_in{Idx,:};
+    catch
+        V.fname = NIRS.Dt.ana.T1;
     end
     
     [dir1, ~, ~] = fileparts(V.fname);
@@ -269,6 +269,20 @@ for Idx=1:nsubj
             [posAlpha,~]=find(squeeze(head_shadow_Y(i,:,:))>=rebel_thresh_hs & squeeze(Ysegmented(i,:,:))==0);
             rebel_count_processed = rebel_count_processed +  size(posAlpha,1);
         end
+        
+        % Last try at filling holes in c4 (cranium... usually holes around
+        % the sinuses)
+        cranium = (Ysegmented==4);
+        cranium = imfill(cranium,'holes'); % fill holes
+        Ysegmented = Ysegmented .* abs(1-cranium); % 0-out layer c4
+        Ysegmented = Ysegmented + 10*cranium; % then add cranium with holes filled
+        % then reset original layers where they were
+        Ysegmented(Ysegmented==15) = 5;
+        Ysegmented(Ysegmented==10) = 4;
+        Ysegmented(Ysegmented==13) = 3;
+        Ysegmented(Ysegmented==12) = 2;
+        Ysegmented(Ysegmented==11) = 1;
+        
         disp(['Remaining rebel voxels after processing : ',int2str(rebel_count_processed)]);
         
         % save of nifti image :
