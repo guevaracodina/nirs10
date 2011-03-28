@@ -285,6 +285,32 @@ for iSubj = 1:nSubj
     %... find the one that corresponds best to the setup helmet
     dist1 = sum((coord_fid_perm1(:)-coord_helmet2D(:)).^2);
     dist2 = sum((coord_fid_perm2(:)-coord_helmet2D(:)).^2);
+    
+%     % For displaying the 2 geometries in 2D
+%     names_helmet = ['S1';'S2';'S3';'S4';'D1';'D2';'D3';'D4';'D5';'D6';'D7';'D8';]; 
+%     figure, plot(coord_fid_proj2D_rot1(:,1),coord_fid_proj2D_rot1(:,2),'or');
+%     hold on, plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob')
+%     for iOptode=1:nOptodes
+%         hold on, 
+%         text(coord_fid_proj2D_rot1(iOptode,1),...
+%             coord_fid_proj2D_rot1(iOptode,2),0,['F' int2str(iOptode)],...
+%             'Color','k')
+%         text(coord_helmet2D(iOptode,1),...
+%             coord_helmet2D(iOptode,2),0,[names_helmet(iOptode,:)],...
+%             'Color','b')
+%     end
+%     figure, plot(coord_fid_proj2D_rot2(:,1),coord_fid_proj2D_rot2(:,2),'or');
+%     hold on, plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob')
+%     for iOptode=1:nOptodes
+%         hold on, 
+%         text(coord_fid_proj2D_rot2(iOptode,1),...
+%             coord_fid_proj2D_rot2(iOptode,2),0,['F' int2str(iOptode)],...
+%             'Color','k')
+%         text(coord_helmet2D(iOptode,1),...
+%             coord_helmet2D(iOptode,2),0,[names_helmet(iOptode,:)],...
+%             'Color','b')
+%     end
+
 
     if dist1<dist2
         optOrder = optOrder1;
@@ -298,10 +324,11 @@ for iSubj = 1:nSubj
     I = eye(nOptodes);
     coord_fid_opt = I(optOrder,:) * coord_fid;
 
+%     % For displaying the optimized geometry in 3D
 %     figure, plot3(coord_fid_opt(1:nSrc,1),coord_fid_opt(1:nSrc,2),coord_fid_opt(1:nSrc,3),'or')
 %     hold on, plot3(coord_fid_opt(nSrc+1:nSrc+nDet,1),...
 %         coord_fid_opt(nSrc+1:nSrc+nDet,2),coord_fid_opt(nSrc+1:nSrc+nDet,3),'xb')
-%     for iF=1:nOptodes2
+%     for iF=1:nOptodes
 %         text(coord_fid_opt(iF,1),coord_fid_opt(iF,2),...
 %             coord_fid_opt(iF,3),['F' int2str(iF)])
 %     end
