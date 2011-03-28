@@ -12,11 +12,11 @@ f = job.outMCfiles;
 cs_dir =  fileparts(f{1,:});
 cs_ldir = cs_dir(max(strfind(cs_dir,'\'))+9:end);
 
-% ics =1;
-% while ~strcmp(cs_ldir,NIRS.Cs.n{ics})
-%     ics =ics+1;
-% end
-ics =75;
+ics =1;
+while ~strcmp(cs_ldir,NIRS.Cs.n{ics})
+    ics =ics+1;
+end
+% % % % ics =75;
 cs = NIRS.Cs.mcs{ics};
 
 if cs.alg==1
@@ -183,7 +183,7 @@ for fi = 1:size(f,1)
         end
     end
 end
-cs.C = C;
+NIRS.Cs.mcs{ics}.C = C;
 save(job.NIRSmat{1,1},'NIRS');
 
 sens_index = [C' sens];
