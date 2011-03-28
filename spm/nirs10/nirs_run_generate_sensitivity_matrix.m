@@ -72,7 +72,7 @@ for fi = 1:size(f,1)
         
         switch cs.alg
             case 1 % MCX
-                ms=loadmc2(f{fi,:},V_segR);
+                ms=loadmc2(f{fi,:},V_segR.dim);
                 % Bonnery from Boas et al.
                 sum_Jout = sum(ms(ms<0)/cs.par.nphotons);
                 Svx = 5*5;
