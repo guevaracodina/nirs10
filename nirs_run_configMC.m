@@ -76,13 +76,14 @@ clear NIRS
 V_rmiv = spm_vol(outRS);
 Y_rmiv = spm_read_vols(V_rmiv);
 
-if job.MC_CUDAchoice==1
-%     Y_rmiv=permute(Y_rmiv,[2,1,3]);
-elseif job.MC_CUDAchoice==3
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % IL FAUT FAIRE DEUX CHEMINS CAR POUR UN IL FAUT INVERSER MAIS PAS POUR L AUTRE
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-end
+% % % % % % % % % % % % % % % % %%%%%% attention on inverse JAMAIS !!!!!!!!!!!!!!!!!!!!!!!!!
+% % % % % % % % % % % % % % % % if job.MC_CUDAchoice==1
+% % % % % % % % % % % % % % % % %     Y_rmiv=permute(Y_rmiv,[2,1,3]);
+% % % % % % % % % % % % % % % % elseif job.MC_CUDAchoice==3
+% % % % % % % % % % % % % % % %     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% % % % % % % % % % % % % % % %     % IL FAUT FAIRE DEUX CHEMINS CAR POUR UN IL FAUT INVERSER MAIS PAS POUR L AUTRE
+% % % % % % % % % % % % % % % %     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% % % % % % % % % % % % % % % % end
 Y8_rmiv = uint8(Y_rmiv);
 
 load(job.NIRSmat{1,1});
