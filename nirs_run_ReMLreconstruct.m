@@ -7,7 +7,7 @@ sep = strfind(dir_in,'\');
 csn = dir_in(sep(end-1)+1:sep(end)-1);
 
 itest=1;
-while itest<length(NIRS.Cs.n)-1 && isempty(strfind(csn,NIRS.Cs.n{itest}))
+while itest<length(NIRS.Cs.n) && isempty(strfind(csn,NIRS.Cs.n{itest}))
     itest =itest+1;
 end
 i_cs =itest;%%% j'ai enlever le -1 car pas la derniere sim
@@ -149,7 +149,7 @@ switch job.ReML_method
         % M_c1 Mask for cortex
         M_c1_wl = [m_c1;m_c1];
         M_c1 = sparse(diag(M_c1_wl));
-        Xbar = sparse([X X*M_c1 X*M_c1; eye(3*size(X,2))]);
+        Xbar = sparse([log(X) log(X)*M_c1 log(X)*M_c1; sparse(1:3*size(X,2),1:3*size(X,2),ones(3*size(X,2),1),3*size(X,2),3*size(X,2))]);
         % Beta contient omega_space omega et beta_prior : pour Tikhonov pqs
         % besoin de le definir puisque c'est nul...
         % Betabar = sparse(,,,beta_prior);
