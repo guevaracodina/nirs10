@@ -33,7 +33,7 @@ clear Yb8i;
 %/ Y = X W betaWvx +epsilon_channel-noise
 %\ betaWvx = omega
 %
-% bien piger si on est dqns le cas : 
+% bien piger si on est dqns le cas :
 % (la matrice de sensitivite est le FLUX....)
 %/ Y = X W delta mua +epsilon_channel-noise
 %\ delta mua = matrice de passage de mua a Hb. omega
@@ -101,6 +101,8 @@ Qp{2}=sparse(Yb8i_c1,Yb8i_c1,ones(length(Yb8i_c1),1),2*Nvx,2*Nvx);  %Brain layer
 Qp{3}=sparse(Yb8i_c5,Yb8i_c5,zeros(length(Yb8i_c5),1),2*Nvx,2*Nvx);  %Skin layer- HbR
 Qp{4}=sparse(Yb8i_c1,Yb8i_c1,ones(length(Yb8i_c1),1),2*Nvx,2*Nvx);  %Brain layer- HbR
 
+%% On prepare les reconstructions :
+
 switch job.ReML_method
     case 0
         disp('code Huppert');
@@ -116,12 +118,12 @@ switch job.ReML_method
         %Set up the extended covariance model by concatinating the measurement
         %and parameter noise terms
         Q=cell(length(Qn)+length(Qp),1);
-    for idx=1:length(Qn)
-        Q{idx}=blkdiag(Qn{idx},sparse(size(Qp{1},1),size(Qp{1},2))); % Build block diagonal matrix from Qn & Qp matrices
-    end
-    for idx2=1:length(Qp)
-        Q{idx+idx2}=blkdiag(sparse(size(Qn{1},1),size(Qn{1},2)),Qp{idx2});
-    end
+        for idx=1:length(Qn)
+            Q{idx}=blkdiag(Qn{idx},sparse(size(Qp{1},1),size(Qp{1},2))); % Build block diagonal matrix from Qn & Qp matrices
+        end
+        for idx2=1:length(Qp)
+            Q{idx+idx2}=blkdiag(sparse(size(Qn{1},1),size(Qn{1},2)),Qp{idx2});
+        end
         % sample covariance matrix Y*Y'
         YY = (Y_t0-mean(Y_t0))*(Y_t0-mean(Y_t0))';
         
@@ -134,38 +136,46 @@ switch job.ReML_method
         beta = Cq*X'*iC*Y_t0;
     case 2
         disp('peudo inverse');
-        meth = 'PInv';
-        
-%         %from Edgar's code spm_lot_tikh
-%         %Tikhonov regularization parameters
-%         K=X;
-%         d=Y_t0;
-%         alpha = 1; %to be determined later
-%         f = (K*K' + alpha*eye(size(K,1))) \ d;
-%         beta = K'*f;
-        
+        meth = 'PInv';       
         % Clement's version
-        Ybar = sparse([Y_t0;zeros(3*size(X,2),1)]);
+        
+
+        
+        % % % % %         Ybar = sparse([Y_t0;zeros(3*size(X,2),1)]);
         % M_c1 Mask for cortex
         M_c1_wl = [m_c1;m_c1];
         M_c1 = sparse(diag(M_c1_wl));
-        Xbar = sparse([log(X) log(X)*M_c1 log(X)*M_c1; sparse(1:3*size(X,2),1:3*size(X,2),ones(3*size(X,2),1),3*size(X,2),3*size(X,2))]);
+        % % % % %         Xbar = sparse([log(X) log(X)*M_c1 log(X)*M_c1; sparse(1:3*size(X,2),1:3*size(X,2),ones(3*size(X,2),1),3*size(X,2),3*size(X,2))]);
+        Ybar = Y_t0;
+        
+        % begin SVD :                                    
+        % Chapitre 26 : p330
+        % observation noise : hatOmega plur nous Qn
+        Qinv =blkdiag(Qn{1}+Qn{2}); % hatsigma = Q
+        Q = inv(Qinv);
+        Xbar = Q.^(1/2)*full(X*M_c1);
+        [U,S,V] = svd(Xbar');
+        Vbar = S*V';
+        Xbar = Vbar;
+        % end SVD
+        
+
         % Beta contient omega_space omega et beta_prior : pour Tikhonov pqs
         % besoin de le definir puisque c'est nul...
         % Betabar = sparse(,,,beta_prior);
         
         % ebar DE MEME, par contre on definit la matrice des covariances
         % des erreurs :
-        coef = 0.1;%%%%% moyen de calculer ca sur les images ??????????????
+        %         coef = 0.1;%%%%% moyen de calculer ca sur les images ??????????????
         % of course : idee : en pratique surtout au niveau des interfaces,
         % peut etre sortir l'info de ci_ fournie par newsegment puisque
         % c'est des cartes de probabilite....
-        Qs=sparse(1:2*Nvx,1:2*Nvx,coef*ones(2*Nvx,1),2*Nvx,2*Nvx); % omega_space
+        %         Qs=sparse(1:2*Nvx,1:2*Nvx,coef*ones(2*Nvx,1),2*Nvx,2*Nvx); % omega_space
         %Set up the extended covariance model by concatinating the measurement
         %and parameter noise terms and spatial prior
-        Q =blkdiag(Qn{1}+Qn{2},Qs,Qp{1}+Qp{2}+Qp{3}+Qp{4},Qp{1}+Qp{2}+Qp{3}+Qp{4});
+        %         Q =blkdiag(Qn{1}+Qn{2},Qs,Qp{1}+Qp{2}+Qp{3}+Qp{4},Qp{1}+Qp{2}+Qp{3}+Qp{4});
         % on applique ensuite la putain de formule de la mort qui dechire
-        Beta_estimate = (Xbar'*Xbar) \ (Xbar'*Ybar);%(Xbar'*Q*Xbar) \ (Xbar'*Q*Ybar);
+        Beta_estimate = (Xbar'*Xbar) \ (Xbar'*U'*Ybar); % (Xbar'*Q*Xbar) \ (Xbar'*Q*Ybar);
         beta = Beta_estimate((size(Y_t0,1)+2*size(Xbar,2)+1):size(Beta_estimate,1),1);
 end
 %%
