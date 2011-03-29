@@ -207,7 +207,7 @@ V = struct('fname',fullfile(cs_dir,['sens' '.nii']),...
     'mat',  V_segR.mat);
 
 V = spm_create_vol(V);
-V = spm_write_vol(V,log(sens_reshaped));
+V = spm_write_vol(V,sens_reshaped);
 %%%
 
 out = 1;
