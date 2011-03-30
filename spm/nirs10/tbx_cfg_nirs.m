@@ -924,7 +924,7 @@ end
 
 % Inputs:
 % NIRSmat
-% anatT1/image_in or create a new one (anatT1"mandatorY")
+% anatT1/image_in 
 
 image_in         = cfg_files;
 image_in.tag     = 'image_in';
@@ -949,10 +949,10 @@ output_prefix_woVit.help    = {'You can choose to give a particular prefix to th
 detectVitamins1      = cfg_exbranch;      
 detectVitamins1.name = 'Coregistration with fiducials';            
 detectVitamins1.tag  = 'detectVitamins1';
-detectVitamins1.val  = {NIRSmat image_in output_prefix_woVit}; 
+detectVitamins1.val  = {NIRSmat anatT1 output_prefix_woVit}; 
 detectVitamins1.prog = @nirs_run_detectVitamins;  
 detectVitamins1.vout = @nirs_cfg_vout_detectVitamins; 
-detectVitamins1.help = {['This modeul detects fiducial markers (vitamin capsules)'...
+detectVitamins1.help = {['This module detects fiducial markers (vitamin capsules)'...
     ' on anatomical image (T1), saves their positions in the NIRS.mat matrix, and'...
     ' creates a copy of the anatomical image where the markers are erased.']};
 
