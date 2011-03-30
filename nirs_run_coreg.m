@@ -204,15 +204,27 @@ for iSubj=1:size(job.NIRSmat,1)
         
         % Calculation of fitted positions on the skin surface
         % Fitted positions (positions are fitted with respect to the scalp)
+        
+        if isempty(job.segT1_4fit{1,1})
+            try
+                fsegT1_4fit = NIRS.Dt.ana.T1seg;
+            catch
+                disp('Could not find a segmented image to fit positions on scalp.');
+            end
+        else
+            % Store segmented image file location
+            NIRS.Dt.ana.T1seg = job.segT1_4fit{1,1};
+        end
+        
         jobe.Pp_rmm = Pp_rmm;
         jobe.Pp_c1_rmm = Pp_c1_rmm;
         jobe.NP = NP;
-        jobe.image_in = job.segT1_4fit;
+        jobe.image_in = fsegT1_4fit;
         jobe.lby = 'coreg';
         out = nirs_fit_probe(jobe);
         Pfp_rmm = out{1};
         % from MNI real space (mm) to MNI voxel space
-        V_4fit = spm_vol(job.segT1_4fit{:});
+        V_4fit = spm_vol(fsegT1_4fit);
         for i=1:NP
             Pfp_rmv(:,i) = V_4fit.mat\[Pfp_rmm(:,i);1];
         end
@@ -307,7 +319,7 @@ for iSubj=1:size(job.NIRSmat,1)
         disp(['Coregistration failed for the ' int2str(iSubj) 'th subject.']);
     end
 end
-out.NIRSmat = job.NIRSmat{iSubj};
+out.NIRSmat = job.NIRSmat;%job.NIRSmat{iSubj};
 
 
 function [s R t] = abs_orientation(x,y)
