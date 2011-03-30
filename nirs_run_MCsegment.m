@@ -300,6 +300,8 @@ for Idx=1:nsubj
         spm_progress_bar('Set',50);
         spm_progress_bar('Clear');
         
+        % Save name of segmented image in NIRS matrix
+        NIRS.Dt.ana.T1seg = fullfile(dir,[output_prefix,'_segmented_',name,'.nii']);
         if NIRSok
             %                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %                 NIRS.Cs.mcs.seg = Vsegmented.fname;
