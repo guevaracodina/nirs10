@@ -17,10 +17,8 @@ function out = nirs_run_detectVitamins(job)
 NIRSmat = job.NIRSmat;
 %load(NIRSmat{:});
 
-% Path to anatomical image for all subjects
-image_in = job.image_in;
-%V = spm_vol(anatT1{:});
-%Y = spm_read_vols(V);
+% (Optional) Path to anatomical image for all subjects
+%job.anatT1; -> is read for each subject in the loop below
 
 % Prefix to be added to the name of anatT1 file when saving image with
 % markers removed
@@ -42,7 +40,17 @@ for iSubj = 1:nSubj
     % Read anatomical image and NIRS matrix
     try    
         load(NIRSmat{iSubj});
-        Vanat = spm_vol(image_in{iSubj});
+        if isempty(job.anatT1{iSubj})
+            try
+                image_in = NIRS.Dt.ana.T1;
+            catch
+                disp('Could not find an anatomical image');
+            end
+%         else
+%             % Store T1 file location
+%             NIRS.Dt.ana.T1 = job.anatT1{iSubj};
+        end
+        Vanat = spm_vol(image_in);
         Yanat = spm_read_vols(Vanat);
     catch
         disp(['Could not read NIRS.mat or anatomical image for ' int2str(iSubj) 'th subject.' ]);
@@ -323,6 +331,26 @@ for iSubj = 1:nSubj
     % helmet
     I = eye(nOptodes);
     coord_fid_opt = I(optOrder,:) * coord_fid;
+    
+    % Finally, since the probe is completely symmetrical around its main
+    % axis (relative to a rotation around it), we must use this little fix
+    % to ensure that we match the geometry correctly.
+    % This should be improved, because it is completely specific to one
+    % geometry (2 rows of detectors surrounding on row of sources)...
+    
+    %dets_height = NIRS.Cf.H.D.r.o.mm.p(:,2); % nOptodes x 3, mm
+    % Convention: the first row of detectors (1:ndets/2) is on top, the
+    % second one is below
+    % So if 1st row seems lower...
+    if sum(coord_fid_opt(nSrc+1:nSrc+floor(nDet/2),3)) < ...
+            sum(coord_fid_opt(nSrc+floor(nDet/2)+1:nSrc+2*floor(nDet/2),3))
+        % then swap the 2 rows
+        row1 = coord_fid_opt(nSrc+1:nSrc+floor(nDet/2),:);
+        coord_fid_opt(nSrc+1:nSrc+floor(nDet/2),:) = ...
+            coord_fid_opt(nSrc+floor(nDet/2)+1:nSrc+2*floor(nDet/2),:);
+        coord_fid_opt(nSrc+floor(nDet/2)+1:nSrc+2*floor(nDet/2),:) = row1;
+    end
+    
 
 %     % For displaying the optimized geometry in 3D
 %     figure, plot3(coord_fid_opt(1:nSrc,1),coord_fid_opt(1:nSrc,2),coord_fid_opt(1:nSrc,3),'or')
