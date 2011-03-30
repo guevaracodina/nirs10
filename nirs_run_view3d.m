@@ -8,9 +8,27 @@ function out = nirs_run_view3d(job)
 % Clément Bonnéry
 % 2010-06
 
-image_in = job.image_in;
-V = spm_vol(image_in{:});
-Y = spm_read_vols(V);
+
+if isempty(job.image_in{1,1})
+    try
+        if ~job.on_cortex
+            image_in = NIRS.Dt.ana.T1seg;
+        else
+            % To implement: option to display optodes on cortex ()
+            %image_in = ['c3'];
+            disp('Need to specify ''c3'' image in order to display optodes on cortex in nirs_run_view3d.');
+            image_in = NIRS.Dt.ana.T1seg;
+        end
+    catch
+        disp('Could not find a segmented image to display positions on.');
+    end
+else
+    
+    image_in = job.image_in;
+    V = spm_vol(image_in{:});
+    Y = spm_read_vols(V);
+end
+
 
 NIRSmat = job.NIRSmatSingle;
 load(NIRSmat{:});
@@ -96,7 +114,7 @@ hold off
 
 clear NIRS
 load(NIRSmat{:});
-NIRS.Cf.H.P.r.m.mm.fp =Pfp_rmm;
+NIRS.Cf.H.P.r.m.mm.fp = Pfp_rmm;
 NIRS.Cf.H.P.r.m.vx.fp = Pfp_rmv(1:3,:);
 save(NIRSmat{:},'NIRS');
 
