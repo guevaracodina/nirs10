@@ -8,4 +8,5 @@ function nirs_view3d_defaults
 global nirs10
 
 nirs10.coregNIRS.view3d1.on_cortex = 0;
+nirs10.coregNIRS.view3d1.save_figure = 1;
 

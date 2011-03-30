@@ -22,13 +22,21 @@ for Idx=1:nsubj
         try
             load(outNIRSmat{Idx});
         catch
-            disp(['Could not load NIRS.mat for subject ' int2str(Idx)]);
+            disp(['Could not load NIRS.mat for ' int2str(Idx) 'th subject.']);
         end
     end
-    if ~isempty(job.image_in{Idx,:})
-        V.fname = job.image_in{Idx,:};
+    if ~isempty(job.image_in{1,1})
+        try
+            V.fname = job.image_in{Idx,:};
+        catch
+            V.fname = NIRS.Dt.ana.T1;
+        end
     else
-        V.fname = NIRS.Dt.ana.T1;
+        try
+            V.fname = NIRS.Dt.ana.T1;
+        catch
+            disp(['Could not find anatomical image for ' int2str(Idx) 'th subject.']);
+        end
     end
     
     [dir1, ~, ~] = fileparts(V.fname);
