@@ -8,115 +8,137 @@ function out = nirs_run_view3d(job)
 % Clément Bonnéry
 % 2010-06
 
-
-if isempty(job.image_in{1,1})
+% Loop over subjects
+for iSubj=1:size(job.NIRSmat,1)
+    
+    % Load NIRS.mat
+    NIRS = [];
     try
-        if ~job.on_cortex
-            image_in = NIRS.Dt.ana.T1seg;
-        else
-            % To implement: option to display optodes on cortex ()
-            %image_in = ['c3'];
-            disp('Need to specify ''c3'' image in order to display optodes on cortex in nirs_run_view3d.');
-            image_in = NIRS.Dt.ana.T1seg;
-        end
+        load(job.NIRSmat{iSubj,1});
     catch
-        disp('Could not find a segmented image to display positions on.');
+        disp(['Could not load NIRS.mat for ' int2str(Idx) 'th subject in nirs_run_view3d.']);
     end
-else
+
+    if isempty(job.segT1_4fit{1,1})
+        try
+            if ~job.on_cortex
+                segT1_4fit = NIRS.Dt.ana.T1seg;
+            else
+                % To implement: option to display optodes on cortex
+                %try segT1_4fit = ['c3' NIRS.Dt.ana.T1];...
+                disp('Need to specify ''c3'' image in order to display optodes on cortex in nirs_run_view3d.');
+                disp('Optodes will be displayed on scalp instead.');
+                segT1_4fit = NIRS.Dt.ana.T1seg;
+            end
+        catch
+            disp(['Could not find a segmented image to display positions on for ' int2str(iSubj) 'th subject.']);
+        end
+    else
+        try
+            segT1_4fit = job.segT1_4fit{iSubj,:};
+        catch
+            segT1_4fit = NIRS.Dt.ana.T1seg;
+        end
+    end
     
-    image_in = job.image_in;
-    V = spm_vol(image_in{:});
+    V = spm_vol(segT1_4fit);
     Y = spm_read_vols(V);
-end
 
+    if isfield(NIRS.Cf.H.P.r.m.mm,'p')
+        Pp_rmm = NIRS.Cf.H.P.r.m.mm.p;% positions on head surface
+        Pp_c1_rmm = NIRS.Cf.H.P.r.m.mm.c1.p;% positions on cortex
+        Pfp_rmm = NIRS.Cf.H.P.r.m.mm.fp;% positions fitted on skin
+    end
 
-NIRSmat = job.NIRSmatSingle;
-load(NIRSmat{:});
+    NP = NIRS.Cf.H.P.N;
+    NS = NIRS.Cf.H.S.N;
+    ND = NIRS.Cf.H.D.N;
 
-if isfield(NIRS.Cf.H.P.r.m.mm,'p')
-    Pp_rmm = NIRS.Cf.H.P.r.m.mm.p;% positions on head surface
-    Pp_c1_rmm = NIRS.Cf.H.P.r.m.mm.c1.p;% positions on cortex
-    Pfp_rmm = NIRS.Cf.H.P.r.m.mm.fp;% positions fitted on skin
-end
+    % % Fitted positions (positions are fitted with respect to the scalp)
+    % jobe.NIRS = NIRS;
+    % jobe.image_in = segT1_4fit;
+    % out = nirs_fit_probe(jobe);
+    % Pfp_rmm = out{1};
 
-NP = NIRS.Cf.H.P.N;
-NS = NIRS.Cf.H.S.N;
-ND = NIRS.Cf.H.D.N;
+    % from MNI real space (mm) to MNI voxel space
+    Pp_rmv = [];
+    Pp_c1_rmv = [];
+    Pfp_rmv = [];
+    for i=1:NP
+        Pp_rmv(:,i) = V.mat\[Pp_rmm(:,i);1];
+        Pp_c1_rmv(:,i) = V.mat\[Pp_c1_rmm(:,i);1];
+        Pfp_rmv(:,i) = V.mat\[Pfp_rmm(:,i);1];
+    end
+    % return to 3D space (V.mat is (:,4))
+    Pp_rmv = Pp_rmv(1:3,:);
+    Pp_c1_rmv = Pp_c1_rmv(1:3,:);
 
-% % Fitted positions (positions are fitted with respect to the scalp)
-% jobe.NIRS = NIRS;
-% jobe.image_in = image_in;
-% out = nirs_fit_probe(jobe);
-% Pfp_rmm = out{1};
+    %% Display 3D image of the ROI with optodes pointing towards their
+    % respective directions, allowing a final check of the setup
+    % Surface de l'IRM
+    set(0,'defaultfigurevisible','on');
+    hfig_all3D = figure;
 
-% from MNI real space (mm) to MNI voxel space
-for i=1:NP
-    Pp_rmv(:,i) = V.mat\[Pp_rmm(:,i);1];
-    Pp_c1_rmv(:,i) = V.mat\[Pp_c1_rmm(:,i);1];
-    Pfp_rmv(:,i) = V.mat\[Pfp_rmm(:,i);1];
-end
-% return to 3D space (V.mat is (:,4))
-Pp_rmv = Pp_rmv(1:3,:);
-Pp_c1_rmv = Pp_c1_rmv(1:3,:);
+    patch(isosurface(smooth3(Y),4),...
+        'FaceColor',[1,.75,.65],...
+        'EdgeColor','none',...
+        'FaceAlpha',0.5);
 
-%% Display 3D image of the ROI with optodes pointing towards their
-% respective directions, allowing a final check of the setup
-% Surface de l'IRM
-set(0,'defaultfigurevisible','on');
-hfig_all3D = figure;
+    % Views adjustments
+    view(90,-90)
+    daspect([1,1,1])
+    lightangle(70,-70);
+    set(hfig_all3D,'Renderer','zbuffer');
+    lighting phong
 
-patch(isosurface(smooth3(Y),4),...
-    'FaceColor',[1,.75,.65],...
-    'EdgeColor','none',...
-    'FaceAlpha',0.5);
+    % Display optodes and their directions
+    hold on
 
-% Views adjustments
-view(90,-90)
-daspect([1,1,1])
-lightangle(70,-70);
-set(hfig_all3D,'Renderer','zbuffer');
-lighting phong
+    % adding tags
+    for Pi = 1:NP
+        if Pi<=NS
+            list{1,1} = 'r';
+            list{2,1} = 10;
+            list{3,1} = 'S#';
+        elseif (Pi>NS && Pi<=NS+ND)
+            list{1,1} = 'b';
+            list{2,1} = 2;
+            list{3,1} = 'D#';
+        elseif Pi>NS+ND
+            list{1,1} = 'g';
+            list{2,1} = 2;
+            list{3,1} = 'Q#';
+        end
 
-% Display optodes and their directions
-hold on
+        xp = Pp_rmv(2,Pi);
+        yp = Pp_rmv(1,Pi);
+        zp = Pp_rmv(3,Pi);
+        text(xp,yp,zp,[list{3,1} int2str(Pi)],'FontWeight','bold','Color',list{1,1});
 
-% adding tags
-for Pi = 1:NP
-    if Pi<=NS
-        list{1,1} = 'r';
-        list{2,1} = 10;
-        list{3,1} = 'S#';
-    elseif (Pi>NS && Pi<=NS+ND)
-        list{1,1} = 'b';
-        list{2,1} = 2;
-        list{3,1} = 'D#';
-    elseif Pi>NS+ND
-        list{1,1} = 'g';
-        list{2,1} = 2;
-        list{3,1} = 'Q#';
+        xfp = Pfp_rmv(2,Pi);
+        yfp = Pfp_rmv(1,Pi);
+        zfp = Pfp_rmv(3,Pi);
+        text(xfp,yfp,zfp,'X','FontWeight','bold','Color','black');%list{1,1}
+
+        plot3([Pp_c1_rmv(2,Pi),Pp_rmv(2,Pi)],...
+            [Pp_c1_rmv(1,Pi),Pp_rmv(1,Pi)],...
+            [Pp_c1_rmv(3,Pi),Pp_rmv(3,Pi)], 'Linewidth',list{2,1},'Color',list{1,1});
+    end
+    hold off
+
+    clear NIRS
+    load(job.NIRSmat{iSubj,:});
+    NIRS.Cf.H.P.r.m.mm.fp = Pfp_rmm;
+    NIRS.Cf.H.P.r.m.vx.fp = Pfp_rmv(1:3,:);
+    save(job.NIRSmat{iSubj,:},'NIRS');
+
+    % Save and close figure, or not, according to user-interface defined option
+    if job.save_figure
+        saveas(gcf,fullfile(NIRS.Dt.s.p,'coreg_3Dview.fig'));
+        close(gcf);
     end
     
-    xp = Pp_rmv(2,Pi);
-    yp = Pp_rmv(1,Pi);
-    zp = Pp_rmv(3,Pi);
-    text(xp,yp,zp,[list{3,1} int2str(Pi)],'FontWeight','bold','Color',list{1,1});
-    
-    xfp = Pfp_rmv(2,Pi);
-    yfp = Pfp_rmv(1,Pi);
-    zfp = Pfp_rmv(3,Pi);
-    text(xfp,yfp,zfp,'X','FontWeight','bold','Color','black');%list{1,1}
-    
-    plot3([Pp_c1_rmv(2,Pi),Pp_rmv(2,Pi)],...
-        [Pp_c1_rmv(1,Pi),Pp_rmv(1,Pi)],...
-        [Pp_c1_rmv(3,Pi),Pp_rmv(3,Pi)], 'Linewidth',list{2,1},'Color',list{1,1});
 end
-hold off
-
-clear NIRS
-load(NIRSmat{:});
-NIRS.Cf.H.P.r.m.mm.fp = Pfp_rmm;
-NIRS.Cf.H.P.r.m.vx.fp = Pfp_rmv(1:3,:);
-save(NIRSmat{:},'NIRS');
 
 out =1;
 return

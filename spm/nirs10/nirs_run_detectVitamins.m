@@ -37,18 +37,21 @@ nSubj = size(job.NIRSmat,1);
 % Loop over subjects
 for iSubj = 1:nSubj
     
+    clear NIRS Vanat Yanat
+    
     % Read anatomical image and NIRS matrix
     try    
         load(NIRSmat{iSubj});
-        if isempty(job.anatT1{iSubj})
+        if isempty(job.anatT1{1,1})
             try
                 image_in = NIRS.Dt.ana.T1;
             catch
                 disp('Could not find an anatomical image');
             end
-%         else
-%             % Store T1 file location
-%             NIRS.Dt.ana.T1 = job.anatT1{iSubj};
+        else
+            % Store T1 file location
+            NIRS.Dt.ana.T1 = job.anatT1{iSubj,:};
+            image_in = job.anatT1{iSubj,:};
         end
         Vanat = spm_vol(image_in);
         Yanat = spm_read_vols(Vanat);
@@ -61,6 +64,7 @@ for iSubj = 1:nSubj
     se_larger = strel('ball',7,7);
     
     % Fill head image (paint-bucket)
+    filledYanat = [];
     for i=1:size(Yanat,3)
         filledYanat(:,:,i) = imfill(Yanat(:,:,i),'holes');
     end
@@ -75,6 +79,7 @@ for iSubj = 1:nSubj
     % step necessary?)
     closedBW = imclose(dilatedBW,se_larger);
     % Fill remaining holes in the head
+    filledBW = [];
     for i=1:size(closedBW,3)
         filledBW(:,:,i) = imfill(closedBW(:,:,i),'holes');
     end
@@ -110,6 +115,8 @@ for iSubj = 1:nSubj
     % Identify centroid of the objects in the image (fiducials) - thank you
     % image processing toolbox!
     stats = regionprops(vitaminsBW, 'Centroid', 'Area');
+    coord_fid = [];
+    size_fid = [];
     for iFiducial=1:size(stats,1)
         coord_fid(iFiducial,:) = stats(iFiducial).Centroid(:);
         size_fid(iFiducial,:) = stats(iFiducial).Area(:);
@@ -172,6 +179,7 @@ for iSubj = 1:nSubj
     % The projection of the coordinates on this plane is given by the (vector)
     % sum of the projection on each of the vectors of the orthogonal basis,
     % i.e. Proj = (coord*basisVector/(basisVector'*basisVector)) .* basis vector
+    coord_fid_proj2D = [];
     for iOptode = 1:nOptodes
         coord_fid_proj2D(iOptode,:) =  [ (coord_fid(iOptode,:)*u1)./(u1'*u1) ...
                                        (coord_fid(iOptode,:)*u2)./(u2'*u2) ];
@@ -197,12 +205,14 @@ for iSubj = 1:nSubj
     xlim(1.5*[min(coord_helmet2D(:,1)) max(coord_helmet2D(:,1))])
     ylim(2.5*[min(coord_helmet2D(:,2)) max(coord_helmet2D(:,2))])
     saveas(hfid,'im_fid.png','png');
+    close(gcf);
     figure('Units','normalized','Position',[0.05 0.2 0.8 0.7]),
     hhelmet=plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob','MarkerSize',70,'MarkerFaceColor','b');
     xlim(1.5*[min(coord_helmet2D(:,1)) max(coord_helmet2D(:,1))])
     ylim(2.5*[min(coord_helmet2D(:,2)) max(coord_helmet2D(:,2))])
     set(gca,'Visible','off')
     saveas(hhelmet,'im_helmet.png','png');
+    close(gcf);
 
     im_fid = double(imread('im_fid.png','png'));
     im_helmet = double(imread('im_helmet.png','png'));
@@ -227,6 +237,7 @@ for iSubj = 1:nSubj
     % the best match between both images
     
     angles = 1:2:360;
+    correlation = [];
     for iTheta=1:length(angles)
         rotation = imrotate(im_fid,angles(iTheta),'bilinear','crop');
         correlation(iTheta)  =  sum(rotation(:).*im_helmet(:));
