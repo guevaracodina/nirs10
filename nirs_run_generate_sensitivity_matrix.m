@@ -73,20 +73,23 @@ for fi = 1:size(f,1)
         switch cs.alg
             case 1 % MCX
                 ms=loadmc2(f{fi,:},V_segR.dim);
+                %%% Pour MCX, pas besoin denormaliser : tout est deja fait
+                %%% !! le resultat est F la distribution de flux de la
+                %%% formule (1) de l'article Fang, Boas MCX
                 % Bonnery from Boas et al.
-                sum_Jout = sum(ms(ms<0)/cs.par.nphotons);
-                Svx = 5*5;
-                Vvx = 5*5*5;
-                msP = ms;
-                msP(msP<0)=0;
-                Yb8i_l1 = reshape(Yb8i_l1,V_segR.dim);
-                Yb8i_l2 = reshape(Yb8i_l2,V_segR.dim);
-                if Pwl==1
-                    norm_ms = (1-Svx*sum_Jout)/(Vvx*sum(sum(sum(msP.*Yb8i_l1))));
-                else
-                    norm_ms = (1-Svx*sum_Jout)/(Vvx*sum(sum(sum(msP.*Yb8i_l2))));
-                end
-                msP = msP*norm_ms;
+%                 sum_Jout = sum(ms(ms<0)/cs.par.nphotons);
+%                 Svx = 5*5;
+%                 Vvx = 5*5*5;
+%                 msP = ms;
+%                 msP(msP<0)=0;
+%                 Yb8i_l1 = reshape(Yb8i_l1,V_segR.dim);
+%                 Yb8i_l2 = reshape(Yb8i_l2,V_segR.dim);
+%                 if Pwl==1
+%                     norm_ms = (1-Svx*sum_Jout)/(Vvx*sum(sum(sum(msP.*Yb8i_l1))));
+%                 else
+%                     norm_ms = (1-Svx*sum_Jout)/(Vvx*sum(sum(sum(msP.*Yb8i_l2))));
+%                 end
+%                 msP = msP*norm_ms;
                 
             case 2 % tMCimg
                 fid=fopen(f{fi,:},'rb');
@@ -123,26 +126,26 @@ for fi = 1:size(f,1)
                         case 1 % MCX
                             md=loadmc2(fullfile(cs_dir,[Dfn Oe]),V_segR.dim);
                             % Bonnery from Boas et al.
-                            sum_Jout = sum(md(md<0)/cs.par.nphotons);
-                            Svx = 5*5;
-                            Vvx = 5*5*5;
-                            mdP = md;
-                            mdP(mdP<0)=0;
-                            Yb8i_l1 = reshape(Yb8i_l1,V_segR.dim);
-                            Yb8i_l2 = reshape(Yb8i_l2,V_segR.dim);
-                            if Pwl==1
-                                norm_md = (1-Svx*sum_Jout)/(Vvx*sum(sum(sum(mdP.*Yb8i_l1))));
-                            else
-                                norm_md = (1-Svx*sum_Jout)/(Vvx*sum(sum(sum(mdP.*Yb8i_l2))));
-                            end
-                            mdP = mdP*norm_md;
+%                             sum_Jout = sum(md(md<0)/cs.par.nphotons);
+%                             Svx = 5*5;
+%                             Vvx = 5*5*5;
+%                             mdP = md;
+%                             mdP(mdP<0)=0;
+%                             Yb8i_l1 = reshape(Yb8i_l1,V_segR.dim);
+%                             Yb8i_l2 = reshape(Yb8i_l2,V_segR.dim);
+%                             if Pwl==1
+%                                 norm_md = (1-Svx*sum_Jout)/(Vvx*sum(sum(sum(mdP.*Yb8i_l1))));
+%                             else
+%                                 norm_md = (1-Svx*sum_Jout)/(Vvx*sum(sum(sum(mdP.*Yb8i_l2))));
+%                             end
+%                             mdP = mdP*norm_md;
                             
                              % sur la moyenne des points autour... : a coder
                             phi0_S = ms(cs.Pfp_rmiv(1,Sn),cs.Pfp_rmiv(2,Sn),cs.Pfp_rmiv(3,Sn));
                             phi0_D = md(cs.Pfp_rmiv(1,D_Sn(i)),cs.Pfp_rmiv(2,D_Sn(i)),cs.Pfp_rmiv(3,D_Sn(i)));
                             
                             % Sensitivity matrix
-                            sens_sd = msP.*mdP / (1+(phi0_S + phi0_D)/2);
+                            sens_sd = ms.*md / (1+(phi0_S + phi0_D)/2);
                             sens(isd+1,:) = reshape(sens_sd,[numel(sens_sd),1]);
                             isd = isd+1;
                             C = [C c];
@@ -207,7 +210,7 @@ V = struct('fname',fullfile(cs_dir,['sens' '.nii']),...
     'mat',  V_segR.mat);
 
 V = spm_create_vol(V);
-V = spm_write_vol(V,sens_reshaped);
+V = spm_write_vol(V,log(sens_reshaped));
 %%%
 
 out = 1;
