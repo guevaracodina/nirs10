@@ -27,14 +27,14 @@ m_c1 = zeros(size(Yb8i));
 m_c1(find(Yb8i==1))=1;
 clear Yb8i;
 
-% Le systeme qu'on resoud maintenant est le suivant :
-% on est en un unique point temporel donc
+% Le systeme qu'on resout est le suivant :
+% on est en un UNIQUE POINT TEMPOREL donc
+%              ---------------------
 %
-%/ Y = X W betaWvx +epsilon_channel-noise
+%/ Y = X W betaWvx + epsilon_channel-noise
 %\ betaWvx = omega
 %
-% bien piger si on est dqns le cas :
-% (la matrice de sensitivite est le FLUX....)
+% la matrice de sensitivite donne les delta mua
 %/ Y = X W delta mua +epsilon_channel-noise
 %\ delta mua = matrice de passage de mua a Hb. omega
 %
@@ -45,7 +45,6 @@ clear Yb8i;
 % epsilon_channel-noise = bruit dans les canaux
 % omega = GOMBOUAMBA
 
-%%%%%%% attention Huppert ne prend qu'une seule longueur d'onde !!!!
 % Pairs....
 Cmc = cs.C;
 NC = length(Cmc); %Total number of measurements
@@ -136,10 +135,8 @@ switch job.ReML_method
         beta = Cq*X'*iC*Y_t0;
     case 2
         disp('peudo inverse');
-        meth = 'PInv';       
+        meth = 'PInv';
         % Clement's version
-        
-
         
         % % % % %         Ybar = sparse([Y_t0;zeros(3*size(X,2),1)]);
         % M_c1 Mask for cortex
@@ -148,19 +145,45 @@ switch job.ReML_method
         % % % % %         Xbar = sparse([log(X) log(X)*M_c1 log(X)*M_c1; sparse(1:3*size(X,2),1:3*size(X,2),ones(3*size(X,2),1),3*size(X,2),3*size(X,2))]);
         Ybar = Y_t0;
         
-        % begin SVD :                                    
+        % begin SVD :
         % Chapitre 26 : p330
         % observation noise : hatOmega plur nous Qn
         Qinv =blkdiag(Qn{1}+Qn{2}); % hatsigma = Q
         Q = inv(Qinv);
         Xbar = Q.^(1/2)*full(X*M_c1);
-        [U,S,V] = svd(Xbar');
+        
+        % custom SVD
+        XbarN = Xbar'*Xbar;
+        [v S v] = svd(XbarN,0);
+        S       = sparse(S);
+        s       = diag(S);
+        j       = find(s*length(s)/sum(s) >= U & s >= T);
+        v       = v(:,j);
+        u       = spm_en(Xbar*v);
+        S       = sqrt(S(j,j));
+        % replace in full matrices
+        %---------------------------------------------------------------------------
+        j      = length(j);
+        U      = sparse(M,j);
+        V      = sparse(N,j);
+        if j
+            U(p,:) = u;
+            V(q,:) = v;
+        end
+        
+        %%% voir les valeurs propres
+%         i=1;
+%         while S(i,i)>0 && i<=40
+%             disp([int2str(i) ' ieme valeur propre de S : ' num2str(S(i,i))])
+%             i = i+1;
+%         end
+        %%%
         Vbar = S*V';
         Xbar = Vbar;
         % end SVD
         
-
-        % Beta contient omega_space omega et beta_prior : pour Tikhonov pqs
+        
+        % Beta contient omega_space omega et beta_prior : pour Tikhonov pas
         % besoin de le definir puisque c'est nul...
         % Betabar = sparse(,,,beta_prior);
         
