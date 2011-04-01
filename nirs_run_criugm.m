@@ -106,7 +106,7 @@ for is=1:sN
          % Protocol
         if iU <= size(job.subj(1,is).protocol,1)
             % Read "multiple conditions" file (.mat)
-            load(job.subj(1,is).protocol{iU,1});
+            load(job.subj(1,is).protocol{iU,1},'-mat');
             for kk = 1:size(names, 2)
                 NIRS.Dt.fir.Sess(iU).U(kk).name = names(kk);
                 NIRS.Dt.fir.Sess(iU).U(kk).ons = onsets{kk};
