@@ -214,6 +214,7 @@ for iSubj=1:size(job.NIRSmat,1)
         else
             % Store segmented image file location
             NIRS.Dt.ana.T1seg = job.segT1_4fit{1,1};
+            fsegT1_4fit = NIRS.Dt.ana.T1seg;
         end
         
         jobe.Pp_rmm = Pp_rmm;
