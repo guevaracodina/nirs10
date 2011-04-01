@@ -30,6 +30,7 @@ for is=1:sN
         staxp = job.subj(1,is).helmet.text_brainsight{:};
         NIRS.Dt.fir.stax.n = 'Brainsight(c)';
         NIRS.Dt.fir.stax.p{1} = job.subj(1,is).helmet.text_brainsight{:};
+        helmetdone = 0;
         if ~isempty(strfind(job.subj(1,is).helmet.text_brainsight{:},'template'))
             %%% CB : etude Said.... a mettre coherent /////
             % coordinates
@@ -45,6 +46,7 @@ for is=1:sN
             else
                 helmetdone = 0;
             end
+        else
             
             % GUI for reading subject-specific setup from BrainSight file
             if ~helmetdone
@@ -66,19 +68,19 @@ for is=1:sN
         
     end   
       
-    save(fullfile(sDtp, 'NIRS.mat'),'NIRS');
+   % save(fullfile(sDtp, 'NIRS.mat'),'NIRS');
     
     NIRS = [];
     load(fullfile(sDtp, 'NIRS.mat'));   
     
-    % Read setup information from nirs file
-    % System used for acquisition
-    job1.system = job.subj(1,is).CWsystem;
-    % Read only nirs file from first session
-    job1.nirs_file = load(job.subj(1,is).nirs_files{1,1},'-mat');
-    job1.sDtp = sDtp;
-    job1.coregType = NIRS.Dt.fir.stax.n;
-    out = nirs_criugm_readtechen(job1);% get C configuration from nirs files
+% % % % % %     % Read setup information from nirs file
+% % % % % %     % System used for acquisition
+% % % % % %     job1.system = job.subj(1,is).CWsystem;
+% % % % % %     % Read only nirs file from first session
+% % % % % %     job1.nirs_file = load(job.subj(1,is).nirs_files{1,1},'-mat');
+% % % % % %     job1.sDtp = sDtp;
+% % % % % %     job1.coregType = NIRS.Dt.fir.stax.n;
+% % % % % %     out = nirs_criugm_readtechen(job1);% get C configuration from nirs files
     clear f
     
 

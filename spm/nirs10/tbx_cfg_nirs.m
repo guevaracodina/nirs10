@@ -350,7 +350,7 @@ nirs_files         = cfg_files;
 nirs_files.name    = '''^.nirs'' files'; % The displayed name
 nirs_files.tag     = 'nirs_files';       %file names
 nirs_files.filter  = 'nirs';
-nirs_files.num     = [1 Inf];     % Number of inputs required
+nirs_files.num     = [0 Inf];     % Number of inputs required
 nirs_files.help    = {'Select all the sessions sharing the same device and helmet.'}; % help text displayed
 
 protocol        = cfg_files;
