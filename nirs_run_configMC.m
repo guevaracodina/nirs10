@@ -42,8 +42,15 @@ cs.dir = [job.MC_configdir csn];
 cs.par = job.MC_parameters;
 
 if isfield(job.mcim_cfg,'mcim_in')
-    cs.seg = job.image_in{1,1};
-    cs.Pn = NIRS.Cf.H.P.n;
+    cs.seg = job.mcim_cfg.mcim_in{:};
+    roi =0;% image choisie
+    cs.Pfp_rmv = NIRS.Cs.temp.Pfp_roi_rmv;
+    cs.Pfp_rmm = NIRS.Cs.temp.Pfp_roi_rmm;
+    cs.Pp_rmm = NIRS.Cs.temp.Pp_roi_rmm;
+    cs.Pp_c1_rmm = NIRS.Cs.temp.Pp_roi_c1_rmm;
+    cs.Pkpt = NIRS.Cs.temp.Pkpt;
+    cs.NSkpt = NIRS.Cs.temp.NSkpt;
+    cs.NDkpt = NIRS.Cs.temp.NDkpt;
 else
     roi =1;
     cs.seg = NIRS.Cs.temp.segR; %ROI from temp
@@ -105,6 +112,9 @@ end
 Pfp_ancienne_rmiv = round(Pfp_ancienne_rmiv);
 %%%% VERIFIER CE QU"IL FAUT FAIRE POUR MCX, IL Y A UN SOUCIS SUR LE
 %%%% POSITIONNEMENT DES SOURCES ET DETECTEURS QUI NE SONT PAS GENERES
+%%% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+%%% POUR MCX, IL FAUT QUE LES SOURCES ET DETECTEURS SOIENT A L'INTERIEUR DU
+%%% VOLUME !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% on verifie qu'on n'a pas de pb apres le resizing
 % jobF.Pp_rmm = cs.Pp_rmm;
