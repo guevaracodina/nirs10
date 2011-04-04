@@ -105,7 +105,6 @@ for iSubj=1:size(job.NIRSmat,1)
         % FIT ROM TO RMM POSITIONS, USING FIDUCIES %
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
-        % For 
         if strcmp(NIRS.Dt.fir.stax.n,'Brainsight(c)') %%%%%%% PHILIPPE : comment tu y rentres ????
 
             %quick fix to use previously obtained coordinates in subject MNI
@@ -195,6 +194,9 @@ for iSubj=1:size(job.NIRSmat,1)
         end;
         Pp_c1_rmm = Pp_c1_rmm(1:3,:);
         
+%         % Save Normalized coordinates of optodes
+%         NIRS.Cf.H.P.w.m.mm.p = Pp_wmm;
+%         NIRS.Cf.H.P.w.m.mm.c1.p = Pp_c1_wmm;
         % Save MNI coordinates of optodes on cortex (c1)
         NIRS.Cf.H.P.r.m.mm.c1.p = Pp_c1_rmm;
         NIRS.Cf.H.P.void = Pvoid;
