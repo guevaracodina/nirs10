@@ -1304,7 +1304,7 @@ end
 % Coreg vers le template T1
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 coreg2      = cfg_exbranch;       
-coreg2.name = 'NIRScoreg';             
+coreg2.name = 'NIRScoreg2';             
 coreg2.tag  = 'coreg1'; 
 coreg2.val  = {NIRSmat DelPreviousData NewDirCopyNIRS anatT1 segT1_4fit ...
     anatT1_template fid_in_subject_MNI nasion_wMNI AL_wMNI AR_wMNI GenDataTopo};    
