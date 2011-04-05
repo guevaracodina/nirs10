@@ -212,7 +212,7 @@ for iwl = 1:size(NIRS.Cf.dev.wl,2)
     if job.MC_CUDAchoice==1
         %%% MCX en voxel /////!!!!!!!!!!!!!!!!!!!!!!!!!!
         P.p = Pfp_ancienne_rmiv;
-    elseif job.MC_CUDAcoice==2
+    elseif job.MC_CUDAchoice==2
         % MonteCarlo in a particular frame. Positions must be in mm but the
     % origin is the same as the origin of the voxel frame (these positions 
     % don't respect SPM conventions)
