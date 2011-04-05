@@ -151,10 +151,10 @@ for iSubj=1:size(job.NIRSmat,1)
         
         %%%[1] CORRIGER LES POSITIONS DE BRAINSIGHT SI NECESSAIRE
         %%% (2)enregistrer les sous dites positions
-        NIRS.Cf.H.P.r.m.mm.p(1,2) = -81;
-        NIRS.Cf.H.P.r.m.mm.p(1,7) = -80;
-        NIRS.Cf.H.P.r.m.mm.p(1,8) = -84;
-        NIRS.Cf.H.P.r.m.mm.p(1,9) = -86;
+        NIRS.Cf.H.P.r.m.mm.p(1,2) = -83;
+        NIRS.Cf.H.P.r.m.mm.p(1,7) = -82;
+        NIRS.Cf.H.P.r.m.mm.p(1,8) = -86;
+        NIRS.Cf.H.P.r.m.mm.p(1,9) = -88;
         
         %%%%%% A CHANGER
         save('Y:\cours\GBM8307\casqueSPM\NIRS.mat','NIRS');
