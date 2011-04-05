@@ -182,6 +182,7 @@ for iSubj = 1:nSubj
         outCorrected = optodesCoord_click(Yanat,'Pick SRC, reject DET',...
            round(coord_fid(toKeep,[2 1 3])),round(coord_fid(setdiff(idx,toKeep),[2 1 3])));
        coord_fid = outCorrected(:,[2 1 3]);
+       save(fullfile(subjPath,'outCorrected.mat'),'outCorrected');
     else
         coord_fid = coord_fid(toKeep,:);
     end
@@ -331,7 +332,10 @@ for iSubj = 1:nSubj
     for iOptode = 1:nOptodes-mod(nOptodes,2)
         dd = sqrt(sum((coord_fid_proj2D_rot1 - ones(nOptodes,1)*coord_helmet2D(iOptode,:)).^2,2));
         [err iFid] = min(dd);
-        optOrder1(iOptode) = iFid;
+        if ~isempty(find(optOrder1==iFid)) % if already assigned
+            [err iFid] = min(dd(setdiff(1:nOptodes-mod(nOptodes,2),iFid)));        
+        end
+       optOrder1(iOptode) = iFid;
     end
     % Pick the last one for the closest SD pair
     if mod(nOptodes,2); optOrder1(nOptodes)=setdiff(1:nOptodes,optOrder1); end
@@ -340,6 +344,9 @@ for iSubj = 1:nSubj
     for iOptode = 1:nOptodes-mod(nOptodes,2)
         dd = sqrt(sum((coord_fid_proj2D_rot2 - ones(nOptodes,1)*coord_helmet2D(iOptode,:)).^2,2));
         [err iFid] = min(dd);
+        if ~isempty(find(optOrder2==iFid)) % if already assigned
+            [err iFid] = min(dd(setdiff(1:nOptodes-mod(nOptodes,2),iFid)));        
+        end
         optOrder2(iOptode) = iFid;
     end
     % Pick the last one for the closest SD pair
@@ -349,6 +356,9 @@ for iSubj = 1:nSubj
     for iOptode = 1:nOptodes-mod(nOptodes,2)
         dd = sqrt(sum((coord_fid_proj2D_rot3 - ones(nOptodes,1)*coord_helmet2D(iOptode,:)).^2,2));
         [err iFid] = min(dd);
+        if ~isempty(find(optOrder3==iFid)) % if already assigned
+            [err iFid] = min(dd(setdiff(1:nOptodes-mod(nOptodes,2),iFid)));        
+        end
         optOrder3(iOptode) = iFid;
     end
     % Pick the last one for the closest SD pair
@@ -358,6 +368,9 @@ for iSubj = 1:nSubj
     for iOptode = 1:nOptodes-mod(nOptodes,2)
         dd = sqrt(sum((coord_fid_proj2D_rot4 - ones(nOptodes,1)*coord_helmet2D(iOptode,:)).^2,2));
         [err iFid] = min(dd);
+        if ~isempty(find(optOrder4==iFid)) % if already assigned
+            [err iFid] = min(dd(setdiff(1:nOptodes-mod(nOptodes,2),iFid)));        
+        end
         optOrder4(iOptode) = iFid;
     end
     % Pick the last one for the closest SD pair
