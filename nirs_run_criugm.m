@@ -56,33 +56,31 @@ for is=1:sN
             waitfor(fig,'BeingDeleted','On');
         end
         
-            % CB: NOUVELLE VERSION : LA partie HELMET DOIT enregistrer dans le
-    % dossier du sujet une structure NIRS_Cf qui est lue ici puis efface .
-    NIRS_Cf = load(fullfile(sDtp, 'NIRS_Cf.mat'));
-    NIRS.Cf = NIRS_Cf.NIRS.Cf;
-    clear NIRS_Cf
-    delete(fullfile(sDtp, 'NIRS_Cf.mat'));
-        
+        % CB: NOUVELLE VERSION : LA partie HELMET DOIT enregistrer dans le
+        % dossier du sujet une structure NIRS_Cf qui est lue ici puis efface .
+        NIRS_Cf = load(fullfile(sDtp, 'NIRS_Cf.mat'));
+        NIRS.Cf = NIRS_Cf.NIRS.Cf;
+        clear NIRS_Cf
+        delete(fullfile(sDtp, 'NIRS_Cf.mat'));
+
     elseif isfield(job.subj(1,is).helmet,'T1_vitamins')
         NIRS.Dt.fir.stax.n = 'T1_vitamins';
-        %read nirs file if already specified
-        %         try catch
-        
+                
     elseif isfield(job.subj(1,is).helmet,'no_helmet')
         NIRS.Dt.fir.stax.n = 'no_helmet';  
     end
     
 
-    
-    % Nirs files
-        % Read setup information from nirs file
-        % System used for acquisition
-        job1.system = job.subj(1,is).CWsystem;
-        % Read only nirs file from first session
-        job1.nirs_file = load(job.subj(1,is).nirs_files{1,1},'-mat');
-        job1.sDtp = sDtp;
-        job1.coregType = NIRS.Dt.fir.stax.n;
-        out = nirs_criugm_readtechen(job1);% get C configuration from nirs files
+    % Read setup information from nirs file
+    % System used for acquisition
+    job1.system = job.subj(1,is).CWsystem;
+    % Read only nirs file from first session
+    job1.nirs_file = load(job.subj(1,is).nirs_files{1,1},'-mat');
+    job1.sDtp = sDtp;
+    job1.coregType = NIRS.Dt.fir.stax.n;
+    job1.NIRS = NIRS;
+    % The function will update the NIRS matrix
+    NIRS = nirs_criugm_readtechen(job1);% get C configuration from nirs files
     
     NU=[];% number of session EST ON BIEN SUR QUE C EST PAS SESS ??????????? NOTATIONS PAS CONSISTANTES
     if ~strcmp(job.subj(1,is).nirs_files,''), NU = size(job.subj(1,is).nirs_files,1); end
@@ -117,9 +115,7 @@ for is=1:sN
             NIRS.Dt.fir.Sess(iU).U.dur = [];
             NIRS.Dt.fir.Sess(iU).U.P = P;
         end
-        
-        save(fullfile(sDtp, 'NIRS.mat'),'NIRS');
-        
+                
     end
     
     save(fullfile(sDtp, 'NIRS.mat'),'NIRS');
