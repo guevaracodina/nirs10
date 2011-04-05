@@ -8,12 +8,13 @@ function out = nirs_criugm_readtechen(job)
 % This is the content of the nirs file that will be used for information
 % on the experimental setup (measurement channels)
 f = job.nirs_file;
+out = 0;
 
 switch int2str(job.system) % System used for the acquisition
     case '6'
         
         sDtp = job.sDtp;
-        load(fullfile(sDtp,'NIRS.mat'));
+        NIRS = job.NIRS;
         
         % Information about CW system
         NIRS.Cf.dev.n = 'CW6';
@@ -119,7 +120,7 @@ switch int2str(job.system) % System used for the acquisition
         
 end
 
-save(fullfile(NIRS.Dt.s.p,'NIRS.mat'),'NIRS');
-out.NIRSmat{1} = fullfile(NIRS.Dt.s.p,'NIRS.mat');
+% Return updated NIRS matrix (or 0 if fail)
+out = NIRS;
 
 return
