@@ -5,6 +5,10 @@ function out = nirs_run_MCsegment(job)
 
 % Clément Bonnéry
 % 2010-06
+%%%%%%%%%%%%%%%%%%%%%% VERSION A CORRIGER : s'il y a deja un fichier
+%%%%%%%%%%%%%%%%%%%%%% segmente dans le dossierm alors pas de
+%%%%%%%%%%%%%%%%%%%%%% segmentation... IL FAUDRTAIT PLUT{OT REGARDER AVEC
+%%%%%%%%%%%%%%%%%%%%%% la presence des ci_
 
 %outVsegmented = {};
 outNIRSmat = {};

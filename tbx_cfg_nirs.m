@@ -347,11 +347,12 @@ helmet.val     = {text_brainsight};
 helmet.help    = {'If you choose a Brainsight text file, it will be used to determine all you need about sources, detectors, channels,... Otherwise, information will be extrqcted from the first file.'};
 
 nirs_files         = cfg_files;
-nirs_files.name    = '''^.nirs'' files'; % The displayed name
-nirs_files.tag     = 'nirs_files';       %file names
+nirs_files.name    = '''^.nirs'' files';
+nirs_files.tag     = 'nirs_files';
 nirs_files.filter  = 'nirs';
-nirs_files.num     = [0 Inf];     % Number of inputs required
-nirs_files.help    = {'Select all the sessions sharing the same device and helmet.'}; % help text displayed
+nirs_files.num     = [0 Inf];
+nirs_files.val{1} = {''};
+nirs_files.help    = {'Select all the sessions sharing the same device and helmet.'};
 
 protocol        = cfg_files;
 protocol.tag    = 'protocol';

@@ -18,7 +18,6 @@ for is=1:sN
     NIRS = [];
     NIRS.Dt.s.age = age;
     NIRS.Dt.s.p = sDtp;
-    UN = size(job.subj(1,is).nirs_files,1); % Number of sessions
     
     % Anatomical image
     if ~isempty(job.subj(1,is).anatT1{:})
@@ -41,14 +40,13 @@ for is=1:sN
             % CLEMENT: Vérifier Hcoregistered et TopoData (lien?)
             if ~isempty(job.subj(1,is).TopoData{:})
                 helmetdone = 1;
-                % If nirs_run_coreg has already been executed to generate once and 
+                % If nirs_run_coreg has already been executed to generate once and
                 % for all the TopoData matrix.
             else
                 helmetdone = 0;
             end
-        else
             
-            % GUI for reading subject-specific setup from BrainSight file
+        else% Reading subject-specific setup from BrainSight file
             if ~helmetdone
                 jobH.subj.sDtp = sDtp;
                 jobH.subj.helmet.staxp = staxp;
@@ -56,39 +54,38 @@ for is=1:sN
             end
             fig=findall(0,'name','Get positions from Brainsight (clbon)');
             waitfor(fig,'BeingDeleted','On');
-            
         end
+        
     elseif isfield(job.subj(1,is).helmet,'T1_vitamins')
         NIRS.Dt.fir.stax.n = 'T1_vitamins';
         %read nirs file if already specified
         %         try catch
         
     elseif isfield(job.subj(1,is).helmet,'no_helmet')
-        NIRS.Dt.fir.stax.n = 'no_helmet';
-        
-    end   
-      
-   % save(fullfile(sDtp, 'NIRS.mat'),'NIRS');
+        NIRS.Dt.fir.stax.n = 'no_helmet';  
+    end
     
-    NIRS = [];
-    load(fullfile(sDtp, 'NIRS.mat'));   
+    % CB: NOUVELLE VERSION : LA partie HELMET DOIT enregistrer dans le
+    % dossier du sujet une structure NIRS_Cf qui est lue ici puis efface .
+    NIRS_Cf = load(fullfile(sDtp, 'NIRS_Cf.mat'));
+    NIRS.Cf = NIRS_Cf.NIRS.Cf;
+    clear NIRS_Cf
+    delete(fullfile(sDtp, 'NIRS_Cf.mat'));
     
-% % % % % %     % Read setup information from nirs file
-% % % % % %     % System used for acquisition
-% % % % % %     job1.system = job.subj(1,is).CWsystem;
-% % % % % %     % Read only nirs file from first session
-% % % % % %     job1.nirs_file = load(job.subj(1,is).nirs_files{1,1},'-mat');
-% % % % % %     job1.sDtp = sDtp;
-% % % % % %     job1.coregType = NIRS.Dt.fir.stax.n;
-% % % % % %     out = nirs_criugm_readtechen(job1);% get C configuration from nirs files
-    clear f
+    % Nirs files
+    % % % % % %     % Read setup information from nirs file
+    % % % % % %     % System used for acquisition
+    % % % % % %     job1.system = job.subj(1,is).CWsystem;
+    % % % % % %     % Read only nirs file from first session
+    % % % % % %     job1.nirs_file = load(job.subj(1,is).nirs_files{1,1},'-mat');
+    % % % % % %     job1.sDtp = sDtp;
+    % % % % % %     job1.coregType = NIRS.Dt.fir.stax.n;
+    % % % % % %     out = nirs_criugm_readtechen(job1);% get C configuration from nirs files
     
-
-    
-    NIRS = [];
-    load(fullfile(sDtp, 'NIRS.mat'));    
+    NU=[];% number of session EST ON BIEN SUR QUE C EST PAS SESS ??????????? NOTATIONS PAS CONSISTANTES
+    if ~strcmp(job.subj(1,is).nirs_files,''), NU = size(job.subj(1,is).nirs_files,1); end
     % Loop over all sessions
-    for iU=1:UN % # of data files
+    for iU=1:NU % # of data files
         fp = job.subj(1,is).nirs_files(iU,1);
         %clear f
         f = load(fp{:},'-mat');
@@ -98,12 +95,11 @@ for is=1:sN
         NIRS.Dt.fir.pp(1).pre = 'readCriugm';
         NIRS.Dt.fir.pp(1).job = job;
         
-        
         %Ignore parametric modulations - cf spm_run_fmri_design.m
         P.name = 'none';
         P.h    = 0;
         
-         % Protocol
+        % Protocol
         if iU <= size(job.subj(1,is).protocol,1)
             % Read "multiple conditions" file (.mat)
             load(job.subj(1,is).protocol{iU,1},'-mat');
@@ -123,8 +119,8 @@ for is=1:sN
         save(fullfile(sDtp, 'NIRS.mat'),'NIRS');
         
     end
-
     
+    save(fullfile(sDtp, 'NIRS.mat'),'NIRS');
     outNIRSmat = [outNIRSmat; fullfile(sDtp,'NIRS.mat')];
 end
 

@@ -8,7 +8,8 @@ staxp = job.staxp;
 sDtp = job.sDtp;
 
 text_brainsight = fopen(staxp,'r'); %open the file for reading
-load(fullfile(sDtp,'NIRS.mat'));
+% load(fullfile(sDtp,'NIRS.mat')); % CB: absurde ! la matrice n'a pas
+% encore ete creee !!! (si le code brise a cet endroit : en parler avec moi)
 
 On = {};
 Sn = {};
@@ -77,7 +78,8 @@ end
 
 fclose(text_brainsight);
 
-%fill in NIRSmat
+%fill in NIRS
+NIRS=[];
 NIRS.Cf.H.O.n = On';
 NIRS.Cf.H.S.n = Sn';
 NIRS.Cf.H.D.n = Dn';
@@ -89,6 +91,7 @@ NIRS.Cf.H.S.N = size(NIRS.Cf.H.S.n,2);
 NIRS.Cf.H.D.N = size(NIRS.Cf.H.D.n,2);
 NIRS.Cf.H.P.N = NIRS.Cf.H.S.N + NIRS.Cf.H.D.N + NIRS.Cf.H.O.N;
 
-save([sDtp 'NIRS'],'NIRS');
-out.NIRSpath{1} = fullfile(sDtp,'NIRS.mat'); %why not fullfile(NIRS.subj_path,'NIRS.mat');?
+% save([sDtp 'NIRS'],'NIRS');
+out = NIRS;
+% out.NIRSpath{1} = fullfile(sDtp,'NIRS.mat'); %why not fullfile(NIRS.subj_path,'NIRS.mat');?
 return

@@ -213,20 +213,19 @@ switch lower(ui_action)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         jobRB.staxp = varargin{1,2};
         jobRB.sDtp = varargin{1,3};
-        handles.outRB = nirs_criugm_readbrainsight(jobRB);
-        
-        load(handles.outRB.NIRSpath{:});% load NIRS.mat
-        
+        handles = nirs_criugm_readbrainsight(jobRB);
+%         load(handles.outRB.NIRSpath{:});% load NIRS.mat
+        handles.sDtp = varargin{1,3};
         % raw lists of points from stereotaxic logiciel (here Brainsight)
-        handles.On = NIRS.Cf.H.O.n';% ***
-        handles.Sn = NIRS.Cf.H.S.n';
-        handles.Dn = NIRS.Cf.H.D.n';
+        handles.On = handles.Cf.H.O.n';% ***  NIRS
+        handles.Sn = handles.Cf.H.S.n';%NIRS
+        handles.Dn = handles.Cf.H.D.n';%NIRS
         % *** distinguer les deux noms si modification de la liste de gauche
         % (par exemple si on retire les points déjà selectionnés)
         % coordinates of these points
-        handles.Op_rom = NIRS.Cf.H.O.r.o.mm.p';
-        handles.Sp_rom = NIRS.Cf.H.S.r.o.mm.p';
-        handles.Dp_rom = NIRS.Cf.H.D.r.o.mm.p';
+        handles.Op_rom = handles.Cf.H.O.r.o.mm.p';%NIRS
+        handles.Sp_rom = handles.Cf.H.S.r.o.mm.p';%NIRS
+        handles.Dp_rom = handles.Cf.H.D.r.o.mm.p';%NIRS
         
         % selected points
         handles.Fn_s = {};
@@ -387,7 +386,7 @@ switch lower(ui_action)
         out =0;
         
     case 'sav'     
-        load(handles.outRB.NIRSpath{:});
+%         load(handles.outRB.NIRSpath{:});
         
         % sort Fiducials so that they respect order used in run_coreg
         %nasion
@@ -406,7 +405,8 @@ switch lower(ui_action)
         Fn_sorted_s{3,1} = handles.Fn_s(ind_AR_n,1);
         Fp_sorted_s_rom(3,:) = handles.Fp_s_rom(ind_AR,:);
 
-        %NIRS       
+        %NIRS
+        NIRS =[];
         NIRS.Cf.H.F.n = Fn_sorted_s';    % Fiducials
         NIRS.Cf.H.S.n = handles.Sn_s';   % Sources
         NIRS.Cf.H.D.n = handles.Dn_s';   % Detectors
@@ -422,7 +422,11 @@ switch lower(ui_action)
         NIRS.Cf.H.D.r.o.mm.p = cell2mat(handles.Dp_s_rom');
         NIRS.Cf.H.Q.r.o.mm.p = cell2mat(handles.Qp_s_rom');
         
-        save(handles.outRB.NIRSpath{:},'NIRS');
+%         NIRS.Cf.H.O.n = On';
+%         NIRS.Cf.H.O.r.o.mm.p = Op_rom';
+%         NIRS.Cf.H.O.N = size(NIRS.Cf.H.O.n,2);
+        
+        save(fullfile(handles.sDtp,'NIRS_Cf.mat'),'NIRS');
         out = 1;
         delete(gcf);% window is closed once the button is pushed
 end

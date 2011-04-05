@@ -194,9 +194,9 @@ for iSubj=1:size(job.NIRSmat,1)
         end;
         Pp_c1_rmm = Pp_c1_rmm(1:3,:);
         
-%         % Save Normalized coordinates of optodes
-%         NIRS.Cf.H.P.w.m.mm.p = Pp_wmm;
-%         NIRS.Cf.H.P.w.m.mm.c1.p = Pp_c1_wmm;
+        % Save Normalized coordinates of optodes
+        NIRS.Cf.H.P.w.m.mm.p = Pp_wmm;
+        NIRS.Cf.H.P.w.m.mm.c1.p = Pp_c1_wmm;
         % Save MNI coordinates of optodes on cortex (c1)
         NIRS.Cf.H.P.r.m.mm.c1.p = Pp_c1_rmm;
         NIRS.Cf.H.P.void = Pvoid;
@@ -207,6 +207,14 @@ for iSubj=1:size(job.NIRSmat,1)
         % Calculation of fitted positions on the skin surface
         % Fitted positions (positions are fitted with respect to the scalp)
         
+        %%%%%%%%%%%% CB: A RETRAVAILLER : SI ON VEUT VRAIMENT QUE CA SOIT
+        %%%%%%%%%%%% UTILE, IL FAUT POUVOIR RECUPERER CE QUI EST AFFICHE
+        %%%%%%%%%%%% SUR LE PDF DE LA NORMALISATION : en fait, lorsqu'on
+        %%%%%%%%%%%% nor;qlise on obtient une ;atrice de passage entre
+        %%%%%%%%%%%% l'image anato;ique du sujet nor;alisee et la te;plate.
+        %%%%%%%%%%%% Cette matrice peut etre utilisee ici pour faire le
+        %%%%%%%%%%%% lien entre les deux images. Mais si on a une autre
+        %%%%%%%%%%%% image que la template, ca devient impossible...
         if isempty(job.segT1_4fit{1,1})
             try
                 fsegT1_4fit = NIRS.Dt.ana.T1seg;
