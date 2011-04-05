@@ -10,6 +10,9 @@ function out = nirs_run_detectVitamins(job)
 % Michèle Desjardins
 % 2011-03
 
+% Boolean for "semi-manual"/debug mode
+manualMode = 1;
+
 % INPUTS %
 %%%%%%%%%%
 
@@ -59,49 +62,59 @@ for iSubj = 1:nSubj
         disp(['Could not read NIRS.mat or anatomical image for ' int2str(iSubj) 'th subject.' ]);
     end
     
-    % Define structuring elements
-    se =  strel('ball',5,5);
-    se_larger = strel('ball',7,7);
+    subjPath = NIRS.Dt.s.p;
+    if ~exist(fullfile(subjPath,'spots.mat'),'file')
     
-    % Fill head image (paint-bucket)
-    filledYanat = [];
-    for i=1:size(Yanat,3)
-        filledYanat(:,:,i) = imfill(Yanat(:,:,i),'holes');
+        % Define structuring elements
+        se =  strel('ball',5,5);
+        se_larger = strel('ball',7,7);
+
+        % Fill head image (paint-bucket)
+        filledYanat = [];
+        for i=1:size(Yanat,3)
+            filledYanat(:,:,i) = imfill(Yanat(:,:,i),'holes');
+        end
+
+        % Erode, then dilate with ball structuring element. This operation will
+        % preserve objects larger than the structuring element (with unmodyfied
+        % contours) but will have erased objects smaller than it.
+        erodedBW = imerode(filledYanat,se);
+        dilatedBW = imdilate(erodedBW,se);
+
+        % Close with a larger strucring element to fill in some gaps (is this
+        % step necessary?)
+        closedBW = imclose(dilatedBW,se_larger);
+        % Fill remaining holes in the head
+        filledBW = [];
+        for i=1:size(closedBW,3)
+            filledBW(:,:,i) = imfill(closedBW(:,:,i),'holes');
+        end
+
+        % We are now left with an image where the head is intact, but the
+        % smaller (fiducials & noise) features of the image have been erased.
+
+        % Transform to a binary (mask) image, using simple thresholding
+        % (improve this method?? Global thresholding using Otsu's method
+        % (greythresh) did not work here.
+
+        thresh=0.05;
+        mask = filledBW>(thresh.*max(filledBW(:)));
+        % This should be a 0/1 mask of the head with the contours unchanged 
+        % from those of the original iamge.
+
+        % Original image without fiducials - will be saved
+        Yanat_WOspots = Yanat.*mask;
+        % Image of the fiducials (with background noise) - will be used to
+        % detect the fiducials' positions
+        spots = Yanat - Yanat_WOspots;
+
+        save(fullfile(subjPath,'spots.mat'),'spots');
+    
+    else
+        load(fullfile(subjPath,'spots.mat'));
+        Yanat_WOspots = Yanat - spots;
     end
-
-    % Erode, then dilate with ball structuring element. This operation will
-    % preserve objects larger than the structuring element (with unmodyfied
-    % contours) but will have erased objects smaller than it.
-    erodedBW = imerode(filledYanat,se);
-    dilatedBW = imdilate(erodedBW,se);
     
-    % Close with a larger strucring element to fill in some gaps (is this
-    % step necessary?)
-    closedBW = imclose(dilatedBW,se_larger);
-    % Fill remaining holes in the head
-    filledBW = [];
-    for i=1:size(closedBW,3)
-        filledBW(:,:,i) = imfill(closedBW(:,:,i),'holes');
-    end
-
-    % We are now left with an image where the head is intact, but the
-    % smaller (fiducials & noise) features of the image have been erased.
-    
-    % Transform to a binary (mask) image, using simple thresholding
-    % (improve this method?? Global thresholding using Otsu's method
-    % (greythresh) did not work here.
-    
-    thresh=0.05;
-    mask = filledBW>(thresh.*max(filledBW(:)));
-    % This should be a 0/1 mask of the head with the contours unchanged 
-    % from those of the original iamge.
-
-    % Original image without fiducials - will be saved
-    Yanat_WOspots = Yanat.*mask;
-    % Image of the fiducials (with background noise) - will be used to
-    % detect the fiducials' positions
-    spots = Yanat - Yanat_WOspots;
-
     % In order to detect the fiducials, we want to isolate them from the
     % background noise. This operation will select all regional maxima
     % higher than a certain threshold (defined in % of the max intensity)
@@ -120,6 +133,14 @@ for iSubj = 1:nSubj
     for iFiducial=1:size(stats,1)
         coord_fid(iFiducial,:) = stats(iFiducial).Centroid(:);
         size_fid(iFiducial,:) = stats(iFiducial).Area(:);
+    end
+    
+    if manualMode
+        % Display for manual corrections...
+        figure, plot3(coord_fid(:,1),coord_fid(:,2),coord_fid(:,3),'or')
+        %addpath(genpath('G:\MesProgrammes\tMCimg_scripts\Scripts\PourPreparerSimuMC\New_SPMnewSegment'));
+        %optodesCoord_click(Yanat,'Verify correspondance of the optodes',...
+        %   round(coord_fid(:,[2 1 3])))
     end
     
     % Read helmet information
@@ -155,7 +176,16 @@ for iSubj = 1:nSubj
         % What to do??
     end
     
-    coord_fid = coord_fid(toKeep,:);
+    if manualMode
+        % Display for manual corrections...
+        addpath(genpath('G:\MesProgrammes\tMCimg_scripts\Scripts\PourPreparerSimuMC\New_SPMnewSegment'));
+        outCorrected = optodesCoord_click(Yanat,'Pick SRC, reject DET',...
+           round(coord_fid(toKeep,[2 1 3])),round(coord_fid(setdiff(idx,toKeep),[2 1 3])));
+       coord_fid = outCorrected(:,[2 1 3]);
+    else
+        coord_fid = coord_fid(toKeep,:);
+    end
+    
     nOptodes = size(coord_fid,1);
     
     % Project coorde_fid on a (well-chosen) 2D plane
@@ -173,7 +203,7 @@ for iSubj = 1:nSubj
     u1 = [1; 0; a1]; % 3x1
     u2 = [-a1*a2; 1+a1^2; a2];
     u1 = u1./norm(u1);
-    u2 = u2./norm(u2);
+    u2 = -u2./norm(u2);
     % (It can be shown that these 2 vectors belong to the plane and that they
     % are not only linearly independent, but also orthogonal)
     % The projection of the coordinates on this plane is given by the (vector)
@@ -188,6 +218,11 @@ for iSubj = 1:nSubj
     % Center on 0 in u1-u2 plane
     ctr_mass_fid = [mean(coord_fid_proj2D(:,1)); mean(coord_fid_proj2D(:,2))];
     coord_fid_proj2D = coord_fid_proj2D - (ctr_mass_fid*ones(1,size(coord_fid_proj2D,1)))'; 
+    
+    if manualMode
+        % Display for manual corrections...
+        figure, plot(coord_fid_proj2D(:,1),coord_fid_proj2D(:,2),'or')
+    end
     
     % Center helmet on 0 and use 2D coordinates
     ctr_mass_helmet = [mean(coord_helmet(:,1)); mean(coord_helmet(:,2)); mean(coord_helmet(:,3))];
@@ -204,18 +239,18 @@ for iSubj = 1:nSubj
     set(gca,'Visible','off')
     xlim(1.5*[min(coord_helmet2D(:,1)) max(coord_helmet2D(:,1))])
     ylim(2.5*[min(coord_helmet2D(:,2)) max(coord_helmet2D(:,2))])
-    saveas(hfid,'im_fid.png','png');
+    saveas(hfid,fullfile(subjPath,'im_fid.png'),'png');
     close(gcf);
     figure('Units','normalized','Position',[0.05 0.2 0.8 0.7]),
     hhelmet=plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob','MarkerSize',70,'MarkerFaceColor','b');
     xlim(1.5*[min(coord_helmet2D(:,1)) max(coord_helmet2D(:,1))])
     ylim(2.5*[min(coord_helmet2D(:,2)) max(coord_helmet2D(:,2))])
     set(gca,'Visible','off')
-    saveas(hhelmet,'im_helmet.png','png');
+    saveas(hhelmet,fullfile(subjPath,'im_helmet.png'),'png');
     close(gcf);
 
-    im_fid = double(imread('im_fid.png','png'));
-    im_helmet = double(imread('im_helmet.png','png'));
+    im_fid = double(imread(fullfile(subjPath,'im_fid.png'),'png'));
+    im_helmet = double(imread(fullfile(subjPath,'im_helmet.png'),'png'));
     % No need for RGB info, just want a mask where background=0 and optodes=1
     im_fid = squeeze(im_fid(:,:,1));
     im_fid2 = im_fid;
@@ -254,17 +289,25 @@ for iSubj = 1:nSubj
     mat_rot2 = [cos(theta+pi) -sin(theta+pi); sin(theta+pi) cos(theta+pi)];
     coord_fid_proj2D_rot1 = [mat_rot1 * coord_fid_proj2D']';
     coord_fid_proj2D_rot2 = [mat_rot2 * coord_fid_proj2D']';
+    % Also test for reflection around y axis
+    coord_fid_proj2D_rot3 = coord_fid_proj2D_rot1;
+    coord_fid_proj2D_rot3(:,2) = -1*coord_fid_proj2D_rot3(:,2);
+    coord_fid_proj2D_rot4 = coord_fid_proj2D_rot2;
+    coord_fid_proj2D_rot4(:,2) = -1*coord_fid_proj2D_rot4(:,2);
 
-%     figure, plot(coord_fid_projP_rot2(:,1),coord_fid_projP_rot2(:,2),'or');
-%     hold on, plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob')
-%     for iOptode=1:nOptodes
-%         hold on, 
-%         text(coord_fid2_proj_ctr_rot2(iOptode,1),...
-%             coord_fid2_proj_ctr_rot2(iOptode,2),0,['F' int2str(iOptode)],...
-%             'Color','k')
-%         text(coord_helmet2D(iOptode,1),...
-%             coord_helmet2D(iOptode,2),0,[names_helmet(iOptode,:)],...
-%             'Color','b')
+%     if manualMode
+%         names_helmet = ['S1';'S2';'S3';'S4';'D1';'D2';'D3';'D4';'D5';'D6';'D7';'D8';'D9']; 
+%         figure, plot(coord_fid_proj2D_rot3(:,1),coord_fid_proj2D_rot3(:,2),'or');
+%         hold on, plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob')
+%         for iOptode=1:nOptodes
+%             hold on, 
+%             text(coord_fid_proj2D_rot3(iOptode,1),...
+%                 coord_fid_proj2D_rot3(iOptode,2),0,['F' int2str(iOptode)],...
+%                 'Color','k')
+%             text(coord_helmet2D(iOptode,1),...
+%                 coord_helmet2D(iOptode,2),0,[names_helmet(iOptode,:)],...
+%                 'Color','b')
+%         end
 %     end
 
     % At this point, the 2D coordinates of the "theoretical" (setup) and
@@ -275,7 +318,8 @@ for iSubj = 1:nSubj
 
     % Two cases must be examined, because of the near-symmetry of the probe, 
     % its 180 degree rotation is very similar. In the end the best
-    % correspondance will reveal the right choice.
+    % correspondance will reveal the right choice. Idem for its reflection
+    % about the main axis.
 
     % Distance between each optode and the closest fiducial
     % - this is not so robust in case the probe is much deformed so that the
@@ -284,58 +328,114 @@ for iSubj = 1:nSubj
     
     % Case rotation theta
     optOrder1 = zeros(1,nOptodes);
-    for iOptode = 1:nOptodes
+    for iOptode = 1:nOptodes-mod(nOptodes,2)
         dd = sqrt(sum((coord_fid_proj2D_rot1 - ones(nOptodes,1)*coord_helmet2D(iOptode,:)).^2,2));
         [err iFid] = min(dd);
         optOrder1(iOptode) = iFid;
     end
+    % Pick the last one for the closest SD pair
+    if mod(nOptodes,2); optOrder1(nOptodes)=setdiff(1:nOptodes,optOrder1); end
     % Case rotation theta+pi
     optOrder2 = zeros(1,nOptodes);
-    for iOptode = 1:nOptodes
+    for iOptode = 1:nOptodes-mod(nOptodes,2)
         dd = sqrt(sum((coord_fid_proj2D_rot2 - ones(nOptodes,1)*coord_helmet2D(iOptode,:)).^2,2));
         [err iFid] = min(dd);
         optOrder2(iOptode) = iFid;
     end
+    % Pick the last one for the closest SD pair
+    if mod(nOptodes,2); optOrder2(nOptodes)=setdiff(1:nOptodes,optOrder2); end
+    % Case rotation theta & reflection
+    optOrder3 = zeros(1,nOptodes);
+    for iOptode = 1:nOptodes-mod(nOptodes,2)
+        dd = sqrt(sum((coord_fid_proj2D_rot3 - ones(nOptodes,1)*coord_helmet2D(iOptode,:)).^2,2));
+        [err iFid] = min(dd);
+        optOrder3(iOptode) = iFid;
+    end
+    % Pick the last one for the closest SD pair
+    if mod(nOptodes,2); optOrder3(nOptodes)=setdiff(1:nOptodes,optOrder3); end
+    % Case rotation theta+pi & reflection
+    optOrder4 = zeros(1,nOptodes);
+    for iOptode = 1:nOptodes-mod(nOptodes,2)
+        dd = sqrt(sum((coord_fid_proj2D_rot4 - ones(nOptodes,1)*coord_helmet2D(iOptode,:)).^2,2));
+        [err iFid] = min(dd);
+        optOrder4(iOptode) = iFid;
+    end
+    % Pick the last one for the closest SD pair
+    if mod(nOptodes,2); optOrder4(nOptodes)=setdiff(1:nOptodes,optOrder4); end
+    
     % Find out which of the 2 orientations yields the best match with the
     % setup helmet. Check using 2D distance.
     I = eye(nOptodes);
     coord_fid_perm1 = I(optOrder1,:)*coord_fid_proj2D_rot1;
     coord_fid_perm2 = I(optOrder2,:)*coord_fid_proj2D_rot2;
+    coord_fid_perm3 = I(optOrder3,:)*coord_fid_proj2D_rot3;
+    coord_fid_perm4 = I(optOrder4,:)*coord_fid_proj2D_rot4;
     %... find the one that corresponds best to the setup helmet
     dist1 = sum((coord_fid_perm1(:)-coord_helmet2D(:)).^2);
     dist2 = sum((coord_fid_perm2(:)-coord_helmet2D(:)).^2);
+    dist3 = sum((coord_fid_perm3(:)-coord_helmet2D(:)).^2);
+    dist4 = sum((coord_fid_perm4(:)-coord_helmet2D(:)).^2);
     
-%     % For displaying the 2 geometries in 2D
-%     names_helmet = ['S1';'S2';'S3';'S4';'D1';'D2';'D3';'D4';'D5';'D6';'D7';'D8';]; 
-%     figure, plot(coord_fid_proj2D_rot1(:,1),coord_fid_proj2D_rot1(:,2),'or');
-%     hold on, plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob')
-%     for iOptode=1:nOptodes
-%         hold on, 
-%         text(coord_fid_proj2D_rot1(iOptode,1),...
-%             coord_fid_proj2D_rot1(iOptode,2),0,['F' int2str(iOptode)],...
-%             'Color','k')
-%         text(coord_helmet2D(iOptode,1),...
-%             coord_helmet2D(iOptode,2),0,[names_helmet(iOptode,:)],...
-%             'Color','b')
-%     end
-%     figure, plot(coord_fid_proj2D_rot2(:,1),coord_fid_proj2D_rot2(:,2),'or');
-%     hold on, plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob')
-%     for iOptode=1:nOptodes
-%         hold on, 
-%         text(coord_fid_proj2D_rot2(iOptode,1),...
-%             coord_fid_proj2D_rot2(iOptode,2),0,['F' int2str(iOptode)],...
-%             'Color','k')
-%         text(coord_helmet2D(iOptode,1),...
-%             coord_helmet2D(iOptode,2),0,[names_helmet(iOptode,:)],...
-%             'Color','b')
-%     end
-
-
-    if dist1<dist2
-        optOrder = optOrder1;
-    else
-        optOrder = optOrder2;
+    if manualMode
+        % For displaying the 2 geometries in 2D
+        names_helmet = ['S1';'S2';'S3';'S4';'D1';'D2';'D3';'D4';'D5';'D6';'D7';'D8';'D9']; 
+        figure, plot(coord_fid_proj2D_rot1(:,1),coord_fid_proj2D_rot1(:,2),'or');
+        hold on, plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob')
+        for iOptode=1:nOptodes
+            hold on, 
+            text(coord_fid_proj2D_rot1(iOptode,1),...
+                coord_fid_proj2D_rot1(iOptode,2),0,['F' int2str(iOptode)],...
+                'Color','k')
+            text(coord_helmet2D(iOptode,1),...
+                coord_helmet2D(iOptode,2),0,[names_helmet(iOptode,:)],...
+                'Color','b')
+        end
+        figure, plot(coord_fid_proj2D_rot2(:,1),coord_fid_proj2D_rot2(:,2),'or');
+        hold on, plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob')
+        for iOptode=1:nOptodes
+            hold on, 
+            text(coord_fid_proj2D_rot2(iOptode,1),...
+                coord_fid_proj2D_rot2(iOptode,2),0,['F' int2str(iOptode)],...
+                'Color','k')
+            text(coord_helmet2D(iOptode,1),...
+                coord_helmet2D(iOptode,2),0,[names_helmet(iOptode,:)],...
+                'Color','b')
+        end
+        figure, plot(coord_fid_proj2D_rot3(:,1),coord_fid_proj2D_rot3(:,2),'or');
+        hold on, plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob')
+        for iOptode=1:nOptodes
+            hold on, 
+            text(coord_fid_proj2D_rot3(iOptode,1),...
+                coord_fid_proj2D_rot3(iOptode,2),0,['F' int2str(iOptode)],...
+                'Color','k')
+            text(coord_helmet2D(iOptode,1),...
+                coord_helmet2D(iOptode,2),0,[names_helmet(iOptode,:)],...
+                'Color','b')
+        end
+        figure, plot(coord_fid_proj2D_rot4(:,1),coord_fid_proj2D_rot4(:,2),'or');
+        hold on, plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob')
+        for iOptode=1:nOptodes
+            hold on, 
+            text(coord_fid_proj2D_rot4(iOptode,1),...
+                coord_fid_proj2D_rot4(iOptode,2),0,['F' int2str(iOptode)],...
+                'Color','k')
+            text(coord_helmet2D(iOptode,1),...
+                coord_helmet2D(iOptode,2),0,[names_helmet(iOptode,:)],...
+                'Color','b')
+        end
     end
+
+    optOrders{1}=optOrder1;
+    optOrders{2}=optOrder2;
+    optOrders{3}=optOrder3;
+    optOrders{4}=optOrder4;
+    [~,optIdx] = min([dist1 dist2 dist3 dist4]);
+    optOrder = optOrders{optIdx};
+%     if dist1<dist2
+%         optOrder = optOrder1;
+%     else
+%         optOrder = optOrder2;
+%     end
 
     % Now let's go back to 3D coordinates, rearranging the order of the
     % markers to match the order that was to found to match the setup
@@ -343,34 +443,38 @@ for iSubj = 1:nSubj
     I = eye(nOptodes);
     coord_fid_opt = I(optOrder,:) * coord_fid;
     
-    % Finally, since the probe is completely symmetrical around its main
+    % Finally, since the probe can be completely symmetrical around its main
     % axis (relative to a rotation around it), we must use this little fix
     % to ensure that we match the geometry correctly.
     % This should be improved, because it is completely specific to one
     % geometry (2 rows of detectors surrounding on row of sources)...
     
-    %dets_height = NIRS.Cf.H.D.r.o.mm.p(:,2); % nOptodes x 3, mm
-    % Convention: the first row of detectors (1:ndets/2) is on top, the
-    % second one is below
-    % So if 1st row seems lower...
-    if sum(coord_fid_opt(nSrc+1:nSrc+floor(nDet/2),3)) < ...
-            sum(coord_fid_opt(nSrc+floor(nDet/2)+1:nSrc+2*floor(nDet/2),3))
-        % then swap the 2 rows
-        row1 = coord_fid_opt(nSrc+1:nSrc+floor(nDet/2),:);
-        coord_fid_opt(nSrc+1:nSrc+floor(nDet/2),:) = ...
-            coord_fid_opt(nSrc+floor(nDet/2)+1:nSrc+2*floor(nDet/2),:);
-        coord_fid_opt(nSrc+floor(nDet/2)+1:nSrc+2*floor(nDet/2),:) = row1;
+    if mod(nOptodes,2)==0
+        %dets_height = NIRS.Cf.H.D.r.o.mm.p(:,2); % nOptodes x 3, mm
+        % Convention: the first row of detectors (1:ndets/2) is on top, the
+        % second one is below
+        % So if 1st row seems lower...
+        if sum(coord_fid_opt(nSrc+1:nSrc+floor(nDet/2),3)) < ...
+                sum(coord_fid_opt(nSrc+floor(nDet/2)+1:nSrc+2*floor(nDet/2),3))
+            % then swap the 2 rows
+            row1 = coord_fid_opt(nSrc+1:nSrc+floor(nDet/2),:);
+            coord_fid_opt(nSrc+1:nSrc+floor(nDet/2),:) = ...
+                coord_fid_opt(nSrc+floor(nDet/2)+1:nSrc+2*floor(nDet/2),:);
+            coord_fid_opt(nSrc+floor(nDet/2)+1:nSrc+2*floor(nDet/2),:) = row1;
+        end
     end
     
 
-%     % For displaying the optimized geometry in 3D
-%     figure, plot3(coord_fid_opt(1:nSrc,1),coord_fid_opt(1:nSrc,2),coord_fid_opt(1:nSrc,3),'or')
-%     hold on, plot3(coord_fid_opt(nSrc+1:nSrc+nDet,1),...
-%         coord_fid_opt(nSrc+1:nSrc+nDet,2),coord_fid_opt(nSrc+1:nSrc+nDet,3),'xb')
-%     for iF=1:nOptodes
-%         text(coord_fid_opt(iF,1),coord_fid_opt(iF,2),...
-%             coord_fid_opt(iF,3),['F' int2str(iF)])
-%     end
+    if manualMode
+        % For displaying the optimized geometry in 3D
+        figure, plot3(coord_fid_opt(1:nSrc,1),coord_fid_opt(1:nSrc,2),coord_fid_opt(1:nSrc,3),'or')
+        hold on, plot3(coord_fid_opt(nSrc+1:nSrc+nDet,1),...
+            coord_fid_opt(nSrc+1:nSrc+nDet,2),coord_fid_opt(nSrc+1:nSrc+nDet,3),'xb')
+        for iF=1:nOptodes
+            text(coord_fid_opt(iF,1),coord_fid_opt(iF,2),...
+                coord_fid_opt(iF,3),['F' int2str(iF)])
+        end
+    end
 
 
     % Save the results of all these computations %
