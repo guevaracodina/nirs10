@@ -1301,6 +1301,26 @@ vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Coreg vers le template T1
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+coreg2      = cfg_exbranch;       
+coreg2.name = 'NIRScoreg';             
+coreg2.tag  = 'coreg1'; 
+coreg2.val  = {NIRSmat DelPreviousData NewDirCopyNIRS anatT1 segT1_4fit ...
+    anatT1_template fid_in_subject_MNI nasion_wMNI AL_wMNI AR_wMNI GenDataTopo};    
+coreg2.prog = @nirs_run_coreg_2templateT1;  
+coreg2.vout = @nirs_cfg_vout_coreg2; 
+coreg2.help = {'Automatic coregistration.'};
+
+%make NIRS.mat available as a dependency
+function vout = nirs_cfg_vout_coreg2(job)
+vout = cfg_dep;                     
+vout.sname      = 'NIRS.mat';       
+vout.src_output = substruct('.','NIRSmat'); 
+vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Configuration for coregistration: coreg MANUAL 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -3814,7 +3834,7 @@ preprocANAT.help   = {'These modules pre-process anatomical images '
 coregNIRS        = cfg_choice; %cfg_repeat; 
 coregNIRS.name   = 'Coregister NIRS data';
 coregNIRS.tag    = 'coregNIRS';
-coregNIRS.values = {coreg1 coreg_manual1 view3d1 resize1};
+coregNIRS.values = {coreg1 coreg2 coreg_manual1 view3d1 resize1};
 coregNIRS.help   = {'These modules perform coregistration ',...
             'between NIRS and an anatomical image.'};
 
