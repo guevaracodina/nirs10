@@ -151,15 +151,15 @@ for iSubj=1:size(job.NIRSmat,1)
         
         %%%[1] CORRIGER LES POSITIONS DE BRAINSIGHT SI NECESSAIRE
         %%% (2)enregistrer les sous dites positions
-        NIRS.Cf.H.P.r.m.mm.p(1,2) = -83;
-        NIRS.Cf.H.P.r.m.mm.p(1,7) = -82;
-        NIRS.Cf.H.P.r.m.mm.p(1,8) = -86;
-        NIRS.Cf.H.P.r.m.mm.p(1,9) = -88;
+%         NIRS.Cf.H.P.r.m.mm.p(1,2) = -83;
+%         NIRS.Cf.H.P.r.m.mm.p(1,7) = -82;
+%         NIRS.Cf.H.P.r.m.mm.p(1,8) = -86;
+%         NIRS.Cf.H.P.r.m.mm.p(1,9) = -88;
         
         %%%%%% A CHANGER
-        save('Y:\cours\GBM8307\casqueSPM\NIRS.mat','NIRS');
-        clear NIRS
-        load('Y:\cours\GBM8307\casqueSPM\NIRS.mat');
+%         save('Y:\cours\GBM8307\casqueSPM\NIRS.mat','NIRS');
+%         clear NIRS
+%         load('Y:\cours\GBM8307\casqueSPM\NIRS.mat');
         
         %%% (3)appliquer la transformation inverse Q
         Pp_rmm = NIRS.Cf.H.P.r.m.mm.p;
@@ -176,10 +176,10 @@ for iSubj=1:size(job.NIRSmat,1)
         %%% (2bis) correction des optodes en dehors du volume de T1_segmented
         %%% puisque tres peu d air.......
         %%%%%% A CHANGER
-        NIRS.Cf.H.P.w.m.mm.p(2,1) = 89;
-        save('Y:\cours\GBM8307\casqueSPM\NIRS.mat','NIRS')
-        clear NIRS
-        load('Y:\cours\GBM8307\casqueSPM\NIRS.mat');
+%         NIRS.Cf.H.P.w.m.mm.p(2,1) = 89;
+%         save('Y:\cours\GBM8307\casqueSPM\NIRS.mat','NIRS')
+%         clear NIRS
+%         load('Y:\cours\GBM8307\casqueSPM\NIRS.mat');
         
         
         Pp_t1rmm = NIRS.Cf.H.P.w.m.mm.p;
@@ -191,8 +191,8 @@ for iSubj=1:size(job.NIRSmat,1)
         %%% ;[e;e r2f2rentiel et on peut approximer que c'est les memes images
         %%% Le TRUC : c'est que les positions en mm sont les memes sur la T1
         %%% template ou sur la normalisee du sujet.........
-        % fsegT1_4fit = 'D:\Users\Clément\cours\GBM8307\projet_casque\00044_segmented_T1.nii';
-        fsegT1_4fit = 'Y:\cours\GBM8307\casqueSPM\00044_segmented_T1.nii';
+        fsegT1_4fit = job.segT1_4fit{:};%'D:\Users\Clément\cours\GBM8307\projet_casque\00044_segmented_T1.nii';
+%         fsegT1_4fit = 'Y:\cours\GBM8307\casqueSPM\00044_segmented_T1.nii';
         
         jobF.NP = NP;
         jobF.Pp_rmm = Pp_t1rmm(1:3,:);
@@ -223,85 +223,8 @@ for iSubj=1:size(job.NIRSmat,1)
         NIRS.Cs.temp.NDkpt = 9;
         
 %         save('D:\Users\Clément\cours\GBM8307\casqueSPM\NIRS.mat','NIRS');
-        save('Y:\cours\GBM8307\casqueSPM\NIRS.mat','NIRS');
+%         save('Y:\cours\GBM8307\casqueSPM\NIRS.mat','NIRS');
         
-        % GENERATE TOPO DATA %
-        %%%%%%%%%%%%%%%%%%%%%%
-        
-        load(job.NIRSmat{iSubj});
-        if job.GenDataTopo
-            [pth2,~,~] = fileparts(job.NIRSmat{iSubj,1});
-            [dir1,fil1,ext1] = fileparts(NIRS.Dt.ana.T1);
-            fwT1 = fullfile(dir1,['w' fil1 ext1]);
-            NIRS.Dt.ana.fwT1 = fwT1;
-            try
-                %V0 = spm_vol(NIRS.Dt.ana.T1);
-                V = spm_vol(fwT1);
-                wT1_info.mat = V.mat;%[-1.5 0 0 79; 0 1.5 0 -113; 0 0 1.5 -51; 0 0 0 1]; %V.mat;
-                wT1_info.dim = V.dim;% [105,126,91]; %V.dim;
-                %let's use positions of optodes on cortex
-                %loop over channel ids
-                ch_MNI_vx = []; %%%% la notation serait Cp_rmv
-                %number of sources
-                Ns = NIRS.Cf.H.S.N;
-                for i=1:(size(NIRS.Cf.H.C.id,2)/2)
-                    %indices of source and detector
-                    Si = NIRS.Cf.H.C.id(2,i);
-                    Di = NIRS.Cf.H.C.id(3,i)+Ns;
-                    pos = V.mat\(Q*[(Pp_c1_rmm(:,Si)+Pp_c1_rmm(:,Di))/2;1]);
-                    
-                    ch_MNI_vx = [ch_MNI_vx pos]; %%%% la notation serait Cp_rmv
-                end
-                [rend, rendered_MNI] = render_MNI_coordinates(ch_MNI_vx, wT1_info);%%%% la notation serait Cp_rmv
-                for kk = 1:6
-                    rendered_MNI{kk}.ren = rend{kk}.ren;
-                end
-                rend_file = fullfile(pth2,'TopoData.mat');
-                save(rend_file, 'rendered_MNI');
-                NIRS.Dt.ana.rend = rend_file;
-                
-                %Viewer from NIRS_SPM
-                viewer_ON = 0;
-                if viewer_ON
-                    %rendered_MNI = varargin{1};
-                    Nch = size(rendered_MNI{1}.rchn,1);
-                    load Split
-                    for kk=2:6
-                        figure;
-                        %kk = 4; % dorsal view
-                        %brain = rend{kk}.ren;
-                        brain = rendered_MNI{kk}.ren;
-                        brain = brain.* 0.5;
-                        sbar = linspace(0, 1, 128);
-                        sbrain = ((-sbar(1) + sbar(64))/(0.5)).* brain + sbar(1);
-                        sbrain(1,1) = 1;
-                        rchn = rendered_MNI{kk}.rchn;
-                        cchn = rendered_MNI{kk}.cchn;
-                        for jj = 1:Nch
-                            if rchn(jj) ~= -1 && cchn(jj) ~= -1 %% updated 2009-02-25
-                                if rchn(jj) < 6 || cchn(jj) < 6
-                                    sbrain(rchn(jj), cchn(jj)) = 0.9; % 0.67
-                                else
-                                    sbrain(rchn(jj)-5:rchn(jj)+5, cchn(jj)-5:cchn(jj)+5) = 0.9;
-                                end
-                            end
-                        end
-                        imagesc(sbrain);
-                        colormap(split);
-                        axis image;
-                        axis off;
-                        
-                        for jj = 1:Nch
-                            if rchn(jj) ~= -1 && cchn(jj) ~= -1 %% updated 2009-02-25
-                                text(cchn(jj)-5, rchn(jj), num2str(jj), 'color', 'r');
-                            end
-                        end
-                    end
-                end
-            catch
-                disp('Could not create TopoData.mat file');
-            end
-        end
         save(job.NIRSmat{iSubj},'NIRS');
     catch
         disp(['Coregistration failed for the ' int2str(iSubj) 'th subject.']);
