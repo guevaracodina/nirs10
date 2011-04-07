@@ -71,7 +71,7 @@ for is=1:sN
     end
     
     % nirs files
-    if ~isempty(job.subj(1,is).nirs_files{:})
+    if ~isempty(job.subj(1,is).nirs_files{1,1})
         % Read setup information from nirs file
         % System used for acquisition
         job1.system = job.subj(1,is).CWsystem;
