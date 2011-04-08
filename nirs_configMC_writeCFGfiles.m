@@ -141,11 +141,11 @@ for iP = 1:NS+ND
             fprintf(fid,'%s     # volume (''uchar'' format)\n', [file, ext]);
             
             fprintf(fid,'%1.0f %3.0f %3.0f %3.0f            # x: voxel size, dim, start/end indices\n',...
-                job.parameters.voxelSize,job.dim_rmiv(1),0,job.dim_rmiv(1)-1);
+                job.parameters.voxelSize,job.dim_rmiv(1),1,job.dim_rmiv(1));
             fprintf(fid,'%1.0f %3.0f %3.0f %3.0f            # y: voxel size, dim, start/end indices\n',...
-                job.parameters.voxelSize,job.dim_rmiv(2),0,job.dim_rmiv(2)-1);
+                job.parameters.voxelSize,job.dim_rmiv(2),1,job.dim_rmiv(2));
             fprintf(fid,'%1.0f %3.0f %3.0f %3.0f            # z: voxel size, dim, start/end indices\n',...
-                job.parameters.voxelSize,job.dim_rmiv(3),0,job.dim_rmiv(3)-1);
+                job.parameters.voxelSize,job.dim_rmiv(3),1,job.dim_rmiv(3));
             fprintf(fid, '%s %s \n','5',' # num of media');
             fprintf(fid, '%3.2f %2.1f %5.4f %3.2f %s\n', ...
                 job.parameters.gmPpties([2 3 1 4]),'# GM: scat(1/mm), g, mua (1/mm), n');
