@@ -114,7 +114,8 @@ Pfp_ancienne_rmiv = round(Pfp_ancienne_rmiv);
 %%%%%%% appliquer ca sur le 8bit !!!!!!!!!
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % if job.MC_CUDAchoice==1 % MCX : sources et detecteurs doivent etre DANS
-% le volume pour tMCimg AUSSI !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% le volume 
+%%%%%%%pour tMCimg : je sais pas trop...
     jobF.Pp_rmm = cs.Pp_rmm;
     jobF.Pp_c1_rmm = cs.Pp_c1_rmm;
     jobF.NP = NP;
