@@ -6,8 +6,8 @@ try
     location = varargin{1};
     d = varargin{2};
 
-    [~, ~,ext1] = fileparts(location);
-    if strcmp(ext1,deblank('.nirs'))
+    [~, ~,ext1] = fileparts(deblank(location));
+    if strcmp(ext1,'.nirs')
         d = d';
         save(location,'d','-mat');
     else
