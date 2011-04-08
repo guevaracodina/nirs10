@@ -53,8 +53,9 @@ switch int2str(job.system) % System used for the acquisition
                     end
                 end
 
-                % Sort by wavelength, then by source number
-                Cgen_s = sortrows(Cgen,[4 2]);
+                % % Sort by channel number
+                % Cgen_s = sortrows(Cgen,[4 2]);
+                Cgen_s = sortrows(Cgen,1);
 
                 % Number of channels (pairs)
                 NIRS.Cf.H.C.N = size(Cgen_s,1); % length(Cid);
@@ -97,16 +98,19 @@ switch int2str(job.system) % System used for the acquisition
                 ml = f.SD.MeasList;       
                 % Add a column for pair ID
                 ml = [1:size(ml,1); ml']';
-                % Sort by wavelength, then source index
-                ml = sortrows(ml,[5 2]);
+                
+                % % !! DO NOT DO THIS !! KEEP ORDER OF PAIRS !!
+                % % Sort by wavelength, then source index
+                % ml = sortrows(ml,[5 2]);
+                
                 NIRS.Cf.H.C.id = ml(:,[1 2 3])'; % 3 x nChannels
                 
                 % Wavelength
                 NIRS.Cf.H.C.wl = ml(:,5)';
                 
                 % Source-detector distance (usually 2D)
-                distSD = zeros(NIRS.Cf.H.P.N,1);
-                for iC = 1:NIRS.Cf.H.P.N
+                distSD = zeros(NIRS.Cf.H.C.N,1);
+                for iC = 1:NIRS.Cf.H.C.N
                     iS = ml(iC,2);   % # source
                     iD = ml(iC,3);   % # détecteur
                     distSD(iC,1) = sqrt(sum((f.SD.SrcPos(iS,:) - f.SD.DetPos(iD,:)).^2)) ;
