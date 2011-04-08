@@ -41,7 +41,7 @@ cs.alg = job.MC_CUDAchoice;%1=MCX ; 2=tMCimg
 cs.dir = [job.MC_configdir csn];
 cs.par = job.MC_parameters;
 
-if isfield(job.mcim_cfg,'mcim_in')
+if isfield(job.mcim_cfg,'mcim_in')% image segmentee de l'anatomique de base
     cs.seg = job.mcim_cfg.mcim_in{:};
     roi =0;% image choisie
     cs.Pfp_rmv = NIRS.Cs.temp.Pfp_roi_rmv;
@@ -110,22 +110,20 @@ Pfp_ancienne_rmiv(:,i) = abs(inv_mat(7:9)').*(Pfp_ancienne_rmv(1:3,i)/parameters
 end
 
 Pfp_ancienne_rmiv = round(Pfp_ancienne_rmiv);
-%%%% VERIFIER CE QU"IL FAUT FAIRE POUR MCX, IL Y A UN SOUCIS SUR LE
-%%%% POSITIONNEMENT DES SOURCES ET DETECTEURS QUI NE SONT PAS GENERES
-%%% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-%%% POUR MCX, IL FAUT QUE LES SOURCES ET DETECTEURS SOIENT A L'INTERIEUR DU
-%%% VOLUME !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% on verifie qu'on n'a pas de pb apres le resizing
-% jobF.Pp_rmm = cs.Pp_rmm;
-% jobF.Pp_c1_rmm = cs.Pp_c1_rmm;
-% jobF.NP = NP;
-% jobF.image_in = {outRS};
-% jobF.Pfp_ancienne_rmiv = Pfp_ancienne_rmiv;
-% jobF.lby = 'configMC';
-% outF = nirs_fit_probe(jobF);
-% Pfp_ancienne_rmiv = outF{1};
-%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%% appliquer ca sur le 8bit !!!!!!!!!
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% if job.MC_CUDAchoice==1 % MCX : sources et detecteurs doivent etre DANS
+% le volume pour tMCimg AUSSI !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    jobF.Pp_rmm = cs.Pp_rmm;
+    jobF.Pp_c1_rmm = cs.Pp_c1_rmm;
+    jobF.NP = NP;
+    jobF.image_in = {outRS};
+    jobF.Pfp_ancienne_rmiv = Pfp_ancienne_rmiv;
+    jobF.lby = 'configMC';
+    outF = nirs_fit_probe(jobF);
+    Pfp_ancienne_rmiv = outF{1};
+% end
 
 % Directions
 Pd_rmm = cs.Pp_rmm - cs.Pp_c1_rmm;
@@ -211,7 +209,11 @@ for iwl = 1:size(NIRS.Cf.dev.wl,2)
     
     if job.MC_CUDAchoice==1
         %%% MCX en voxel /////!!!!!!!!!!!!!!!!!!!!!!!!!!
-        P.p = Pfp_ancienne_rmiv;
+        % comme on travaille sur les donnees sur des voxels isotropiques de
+        % 1mm, il suffit de diviser par la taille des voxels (dans le cas 
+        % ou on serait avec des voxels de taille custom, il faudrait 
+        % diviser la taille des voxels voulu par la taille courante)
+        P.p = Pfp_ancienne_rmiv;%/(parameters.voxelSize);
     elseif job.MC_CUDAchoice==2
         % MonteCarlo in a particular frame. Positions must be in mm but the
     % origin is the same as the origin of the voxel frame (these positions 
