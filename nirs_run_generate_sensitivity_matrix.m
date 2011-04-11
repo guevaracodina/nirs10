@@ -47,7 +47,7 @@ Yb8i_l2(Yb8i==3)= cs.par.csfPpties_l2(1,1);
 Yb8i_l2(Yb8i==4)= cs.par.skullPpties_l2(1,1);
 Yb8i_l2(Yb8i==5)= cs.par.scalpPpties_l2(1,1);
 
-if cs.alg==2
+if size(Yb8i_l1,1)==1%cs.alg==2
     Yb8i_l1 = Yb8i_l1';
     Yb8i_l2 = Yb8i_l2';
 end
@@ -73,6 +73,13 @@ for fi = 1:size(f,1)
         switch cs.alg
             case 1 % MCX
                 ms=loadmc2(f{fi,:},V_segR.dim);
+                % pour MCX, on obtient P(r,t) qu'il faut nomaliser avec la
+                % formule (1) de l'article de Fang (si on lit 
+                %http://mcx.sourceforge.net/cgi-bin/index.cgi?MMC/Doc/FAQ#How_do_I_interpret_MMC_s_output_data
+                % , on comprends )
+                
+                
+                
                 %%% Pour MCX, pas besoin denormaliser : tout est deja fait
                 %%% !! le resultat est F la distribution de flux de la
                 %%% formule (1) de l'article Fang, Boas MCX
