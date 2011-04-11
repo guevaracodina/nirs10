@@ -101,7 +101,7 @@ for is=1:sN
             P.h    = 0;
             
             % Protocol
-            if iU <= size(job.subj(1,is).protocol,1)
+            if ~isempty(job.subj(1,is).protocol{1,1}) && iU <= size(job.subj(1,is).protocol,1)
                 % Read "multiple conditions" file (.mat)
                 load(job.subj(1,is).protocol{iU,1},'-mat');
                 for kk = 1:size(names, 2)
@@ -116,7 +116,6 @@ for is=1:sN
                 NIRS.Dt.fir.Sess(iU).U.dur = [];
                 NIRS.Dt.fir.Sess(iU).U.P = P;
             end
-            
         end
     end
     
