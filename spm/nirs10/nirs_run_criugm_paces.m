@@ -306,7 +306,10 @@ for Idx=1:size(job.NIRSmat,1)
                         whp = hp/max(max(hp));
                         level = graythresh(whp);% Otsu
                         whp_b = im2bw(whp,level);
-                        %figure;imagesc(whp_b);title(['Heart pace: ' rDtp{f}]);
+                        % Affichage
+                        % whpR = zeros(NC,size(whp,2));
+                        % whpR([k1 k1-(NC/2)],:) = whp;
+                        % figure;imagesc(whp_b);title(['Heart pace: ' rDtp{f}]);
                         
                         % reconstruction
                         bouchetrou = hp.*whp_b;
