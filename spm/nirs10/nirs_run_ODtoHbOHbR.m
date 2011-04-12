@@ -1,6 +1,7 @@
 function out = nirs_run_ODtoHbOHbR(job)
-%filename prefix
-prefix = 'h'; %for "hemoglobin" concentrations
+
+% Filename prefix for data file containing dOD as "d" (data)
+prefix = 'h'; % for "hemoglobin" concentrations
 DelPreviousData  = job.DelPreviousData;
 try
     NewNIRSdir = job.NewDirCopyNIRS.CreateNIRSCopy.NewNIRSdir;
@@ -9,24 +10,26 @@ catch
     NewDirCopyNIRS = 0;
 end
 
+% Loop over subjects
 for Idx=1:size(job.NIRSmat,1)
-    %Load NIRS.mat information
+    % Load NIRS.mat information
     try
         NIRS = [];
         load(job.NIRSmat{Idx,1});
         
         %bl_m = job.Normalize_OD;% method to calculate baseline
         %threshold = job.threshold;%Threshold for cutting off small values of signal
-        PVF = job.PVF;% Partial volume correction factor
+        PVF = job.PVF; % Partial volume correction factor
         age = NIRS.Dt.s.age;
         fs = NIRS.Cf.dev.fs;
-        %use last step of preprocessing
+        % Perform computation on output of the last step of preprocessing
+        % that has been performed
         lst = length(NIRS.Dt.fir.pp);
         rDtp = NIRS.Dt.fir.pp(lst).p; % path for files to be processed
-        Cgp = NIRS.Cf.H.C.gp;
-        Cwl = NIRS.Cf.H.C.wl;
-        NC = NIRS.Cf.H.C.N;
-        wl = NIRS.Cf.dev.wl;
+        Cgp = NIRS.Cf.H.C.gp; % source-detector distances
+        Cwl = NIRS.Cf.H.C.wl; % channels wavelength indexes (e.g. wl #1 or #2)
+        NC = NIRS.Cf.H.C.N; % number of channels
+        wl = NIRS.Cf.dev.wl; % device wavenlengths
         
         try
             fwhm = job.nirs_lpf2.lpf_gauss2.fwhm1;
@@ -56,7 +59,7 @@ for Idx=1:size(job.NIRSmat,1)
             [exs,NIRS.Dt.pro.extcoeff_ref] = GetExtinctions(wl,1);
             
         catch
-            disp('Problem loading extinctions');
+            disp('Problem loading extinction coefficients in nirs_run_ODtoHbOHbR.');
         end
         
         %From Alexis Machado
@@ -78,8 +81,8 @@ for Idx=1:size(job.NIRSmat,1)
             %             EPF(1,Ci) = Cgp(Ci,1)*DPF(Cwl(1,Ci),1)./PVF(1,Cwl(1,Ci)); %PP??? why not ./???
         end
         
-        inv_exs = pinv(exs(:,1:2));
-        inv_exs2 = kron(inv_exs,eye(NC/size(wl,2)));
+        inv_exs = pinv(exs(:,1:2)); % size 2 x #wl
+        inv_exs2 = kron(inv_exs,eye(NC/size(wl,2))); % size #pairs*2 x #pairs*#wl
         
         %try
         %loop over data files
@@ -144,19 +147,24 @@ for Idx=1:size(job.NIRSmat,1)
             %MBLL - c consists now of HbO and HbR, even if we had more
             %than two wavelengths to begin
             c = inv_exs2 * d;
+            % size (#pairs*2 x nt) = (#pairs*2 x #pairs*#wl) x (#pairs*#wl x nt)
+            % 2 here is for 2 Hb types, HbO and HbR
             
-            % %             CB: corrige dans les lignes aui suivent
+            
+            % %             CB: corrige dans les lignes qui suivent
             % %             if isnan(c(:))
             % %                 disp(['Some elements are NaN for file ' int2str(f)]);
             % %                 NIRS.WARNING = 'Some NaN elements in data - GLMs will fail!';
             % %                 %CB: puisqu'on corrige est ce qu'on garde le WARNING ????
             % %             end
             
+            % Loop over channels and Hb types
             for iC=1:size(c,1)
                 try
                     tNaN =(1:size(c,2)).*isnan(c(iC,:));
                     tNaNo = tNaN(tNaN~=0);
-                    c(iC, tNaNo)=c(iC, tNaNo-1);
+                    % Replace by previous time point
+                    c(iC, tNaNo) = c(iC, tNaNo-1);
                     if iC==size(c,1)
                         NIRS.WARNING = 'Some NaN elements were corrected';
                     end
