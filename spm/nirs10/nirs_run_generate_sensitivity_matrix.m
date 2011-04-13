@@ -16,7 +16,6 @@ ics =1;
 while ~strcmp(cs_ldir,NIRS.Cs.n{ics})
     ics =ics+1;
 end
-% % % % ics =75;
 cs = NIRS.Cs.mcs{ics};
 
 if cs.alg==1
@@ -152,16 +151,16 @@ for fi = 1:size(f,1)
                             cntr = ceil(rayon/2);
                             phi0_S =0;
                             phi0_D =0;
-                            for i = 1:rayon
-                                phi0_S = phi0_S + ms(cs.Pfp_rmiv(1,Sn)+(i-cntr),cs.Pfp_rmiv(2,Sn)+(i-cntr),cs.Pfp_rmiv(3,Sn)+(i-cntr));
-                                phi0_D = phi0_D + md(cs.Pfp_rmiv(1,D_Sn(i))+(i-cntr),cs.Pfp_rmiv(2,D_Sn(i))+(i-cntr),cs.Pfp_rmiv(3,D_Sn(i))+(i-cntr));
+                            for ir = 1:rayon
+                                phi0_S = phi0_S + ms(cs.Pfp_rmiv(1,Sn)+(ir-cntr),cs.Pfp_rmiv(2,Sn)+(ir-cntr),cs.Pfp_rmiv(3,Sn)+(ir-cntr));
+                                phi0_D = phi0_D + md(cs.Pfp_rmiv(1,D_Sn(ir))+(ir-cntr),cs.Pfp_rmiv(2,D_Sn(ir))+(ir-cntr),cs.Pfp_rmiv(3,D_Sn(ir))+(ir-cntr));
                             end
                             
                             % Sensitivity matrix
                             sens_sd = ms.*md / (1+(phi0_S + phi0_D)/2);
                             sens(isd+1,:) = reshape(sens_sd,[numel(sens_sd),1]);
                             isd = isd+1;
-                            C = [C c];
+                            C = [C c]; % channels in the sensitivity matrix
                             
                         case 2 % tMCimg
                             fid=fopen(fullfile(cs_dir,[Dfn Oe]),'rb');
@@ -184,7 +183,7 @@ for fi = 1:size(f,1)
                             
                             msR = reshape(msP,V_segR.dim);
                             mdR = reshape(mdP,V_segR.dim);
-                            % sur la moyenne des points autour... : a coder
+                            % sur la moyenne des points autour...
                             rayon = 3;
                             cntr = ceil(rayon/2);
                             for i = 1:rayon
@@ -208,7 +207,7 @@ save(job.NIRSmat{1,1},'NIRS');
 sens_index = [C' sens];
 sensC = sortrows(sens_index);
 sensC(isnan(sensC))=0;
-disp('NaN have been corrected in sensitivity matrix');
+disp([int2str(length(isnan(sensC))) ' NaNs have been corrected in sensitivity matrix (' int2str(numel(sensC)) ' values)']);
 sens = sensC(:,2:end);
 save(fullfile(cs_dir,'sens.mat'),'sens');
 
@@ -233,6 +232,8 @@ m_c1 = zeros(size(Yb8i));
 m_c1(find(Yb8i==1))=1;
 sens_c1 = zeros(size(sens));
 
+PVE = zeros(size(sens,1),1);
+sens_sd_c1i = zeros(1,size(sens,2));
 for i=1:size(sens,1)
     sens_sd = reshape(sens(i,:),V_segR.dim);
     V = struct('fname',fullfile(cs_dir,['banane_' int2str(sensC(i,1)) '.nii']),...
@@ -247,11 +248,14 @@ for i=1:size(sens,1)
     %%%% PVE
     %partial volume effect
     %%%
+    
     for j=1:size(sens,2)
         if m_c1(j,1)==1
-            sens_sd_c1 = sens_sd;
+            sens_sd_c1i(1,j) = sens(i,j);
         end
     end
+    PVE(i,1) = length(find(sens_sd_c1i>200))/length(find(sens(i,:)>200));
+    
     V_c1 = struct('fname',fullfile(cs_dir,['banane_c1_' int2str(sensC(i,1)) '.nii']),...
         'dim',  V_segR.dim,...
         'dt',   V_segR.dt,...
@@ -259,9 +263,9 @@ for i=1:size(sens,1)
         'mat',  V_segR.mat);
     
     V_c1 = spm_create_vol(V_c1);
-    V_c1 = spm_write_vol(V_c1,sens_sd_c1);
+    V_c1 = spm_write_vol(V_c1,reshape(sens_sd_c1i,V_segR.dim));
     
 end
-
+save(fullfile(cs_dir,'PVE.mat'),'PVE');
 out = 1;
 end
