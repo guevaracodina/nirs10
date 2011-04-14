@@ -9,9 +9,7 @@ for iSubj=1:size(job.NIRSmat,1)
         NIRS = [];
         load(job.NIRSmat{iSubj,1});
         
-        % SPATIAL NORMALIZATION OF ANATOMICAL IMAGE %
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        
+        % SPATIAL NORMALIZATION OF ANATOMICAL IMAGE
         % Allow user-specified image of subject to overwrite previous
         % anatomical image in NIRS.mat; unlikely to ever happen
         if isempty(job.anatT1{1,1})
@@ -40,7 +38,6 @@ for iSubj=1:size(job.NIRSmat,1)
         if spm_existfile(fwT1)
             disp('Spatial normalisation already run - skipping');
         else
-            
             %Various options that we don't make available to the user in the GUI
             matlabbatch{1}.spm.spatial.normalise.estwrite.subj.source = {NIRS.Dt.ana.T1};
             matlabbatch{1}.spm.spatial.normalise.estwrite.subj.wtsrc = '';
@@ -62,7 +59,6 @@ for iSubj=1:size(job.NIRSmat,1)
             matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.prefix = 'w';
             
             spm_jobman('run_nogui',matlabbatch);
-            
         end
         
         %Recreate name of _sn.mat file just created by spm_normalise, and load it
@@ -90,10 +86,7 @@ for iSubj=1:size(job.NIRSmat,1)
         %Below: label with temp_ all the transposed coordinates to avoid confusion
         Q = (NIRS.Dt.ana.wT1.VG.mat/NIRS.Dt.ana.wT1.Affine)/NIRS.Dt.ana.wT1.VF.mat;
         
-        
-        % FIT ROM TO RMM POSITIONS, USING FIDUCIES %
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        
+        % FIT ROM TO RMM POSITIONS, USING FIDUCIES        
         % Positions of fiducial points
         if job.fid_in_subject_MNI
             NIRS.Cf.H.F.r.m.mm.p  = [job.nasion_wMNI' job.AL_wMNI' job.AR_wMNI'];
@@ -149,20 +142,6 @@ for iSubj=1:size(job.NIRSmat,1)
         % Save MNI coordinates of optodes
         NIRS.Cf.H.P.r.m.mm.p = Pp_rmm;
         
-        %%%[1] CORRIGER LES POSITIONS DE BRAINSIGHT SI NECESSAIRE
-        %%% (2)enregistrer les sous dites positions
-%         NIRS.Cf.H.P.r.m.mm.p(1,2) = -83;
-%         NIRS.Cf.H.P.r.m.mm.p(1,7) = -82;
-%         NIRS.Cf.H.P.r.m.mm.p(1,8) = -86;
-%         NIRS.Cf.H.P.r.m.mm.p(1,9) = -88;
-        
-        %%%%%% A CHANGER
-%         save('Y:\cours\GBM8307\casqueSPM\NIRS.mat','NIRS');
-%         clear NIRS
-%         load('Y:\cours\GBM8307\casqueSPM\NIRS.mat');
-        
-        %%% (3)appliquer la transformation inverse Q
-        Pp_rmm = NIRS.Cf.H.P.r.m.mm.p;
         % unnormalized -> normalized, for optodes
         Pp_wmm = Q * [Pp_rmm;ones(1,NP)];          %% unit : mm
         Pp_c1_wmm = projection_CS(Pp_wmm);
@@ -173,26 +152,12 @@ for iSubj=1:size(job.NIRSmat,1)
         NIRS.Cf.H.P.w.m.mm.c1.p = Pp_c1_wmm;
         NIRS.Cf.H.P.void = Pvoid;
         
-        %%% (2bis) correction des optodes en dehors du volume de T1_segmented
-        %%% puisque tres peu d air.......
-        %%%%%% A CHANGER
-%         NIRS.Cf.H.P.w.m.mm.p(2,1) = 89;
-%         save('Y:\cours\GBM8307\casqueSPM\NIRS.mat','NIRS')
-%         clear NIRS
-%         load('Y:\cours\GBM8307\casqueSPM\NIRS.mat');
-        
-        
         Pp_t1rmm = NIRS.Cf.H.P.w.m.mm.p;
         Pp_c1_t1rmm = NIRS.Cf.H.P.w.m.mm.c1.p;
         
-        %%% (4) a ce stade j'ai les bonnes positions en wmm donc sur l'image
-        %%% normalisee du sujet............................................. qui
-        %%% est ''fsegT1_4fit'' et donc sur lq te;plqtem puisau4on est dans le
-        %%% ;[e;e r2f2rentiel et on peut approximer que c'est les memes images
-        %%% Le TRUC : c'est que les positions en mm sont les memes sur la T1
-        %%% template ou sur la normalisee du sujet.........
-        fsegT1_4fit = job.segT1_4fit{:};%'D:\Users\Clément\cours\GBM8307\projet_casque\00044_segmented_T1.nii';
-%         fsegT1_4fit = 'Y:\cours\GBM8307\casqueSPM\00044_segmented_T1.nii';
+        % les positions en mm sont les memes sur la T1
+        % template ou sur la normalisee du sujet.........
+        fsegT1_4fit = job.segT1_4fit{:};
         
         jobF.NP = NP;
         jobF.Pp_rmm = Pp_t1rmm(1:3,:);
@@ -222,15 +187,12 @@ for iSubj=1:size(job.NIRSmat,1)
         NIRS.Cs.temp.NSkpt = 3;
         NIRS.Cs.temp.NDkpt = 9;
         
-%         save('D:\Users\Clément\cours\GBM8307\casqueSPM\NIRS.mat','NIRS');
-%         save('Y:\cours\GBM8307\casqueSPM\NIRS.mat','NIRS');
-        
         save(job.NIRSmat{iSubj},'NIRS');
     catch
         disp(['Coregistration failed for the ' int2str(iSubj) 'th subject.']);
     end
 end
-out.NIRSmat = job.NIRSmat;%job.NIRSmat{iSubj};
+out.NIRSmat = job.NIRSmat;
 
 
 function [s R t] = abs_orientation(x,y)
