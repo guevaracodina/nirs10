@@ -20,7 +20,13 @@ bl_m = job.Normalize_OD; % {0='Median',1='Initial Value',2='Mean'};
 group_consecutive_markers = 0; %boolean
 add_or_mult = job.add_or_mult; % {1='Additive', 0='Multiplicative'} normalization
 normalization_type = job.normalization_type; % {1='Global', 2='By bad point segments', 3='By stimuli'};
-scaling_factor = scaling_factor; % Scaling factor applied to the amplitude of all channels
+%Scaling factor, useful to rescale data, for example to view it in Brain
+%Vision Analyzer 2
+try
+    scaling_factor = job.scaling_factor; % Scaling factor applied to the amplitude of all channels
+catch
+    scaling_factor = 1;
+end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Loop over subjects
