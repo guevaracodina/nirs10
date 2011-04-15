@@ -1,11 +1,8 @@
 function out = nirs_run_generate_sensitivity_matrix(job)
 %
 %
-% Clément Bonnéry 22/03/2011 pour tMCimg
+% Clément Bonnéry 03/2011
 
-%Usage: only works with .2pt files for now
-
-%Load NIRS.mat information
 load(job.NIRSmat{1,1});
 
 f = job.outMCfiles;
@@ -31,7 +28,7 @@ b8i = cs.b8i;
 fid=fopen(b8i,'rb');
 Yb8i = fread(fid,prod(V_segR.dim),'uint8');
 fclose(fid);
-% : mua mus' ...
+% : mua mus' ... on prend les mu_a
 Yb8i_l1 = zeros(size(Yb8i));
 Yb8i_l1(Yb8i==1)= cs.par.gmPpties_l1(1,1);
 Yb8i_l1(Yb8i==2)= cs.par.wmPpties_l1(1,1);
@@ -232,7 +229,7 @@ m_c1 = zeros(size(Yb8i));
 m_c1(find(Yb8i==1))=1;
 sens_c1 = zeros(size(sens));
 
-PVE = zeros(size(sens,1),1);
+PVE = zeros(size(sens,1),2);
 sens_sd_c1i = zeros(1,size(sens,2));
 for i=1:size(sens,1)
     sens_sd = reshape(sens(i,:),V_segR.dim);
@@ -248,13 +245,13 @@ for i=1:size(sens,1)
     %%%% PVE
     %partial volume effect
     %%%
-    
     for j=1:size(sens,2)
         if m_c1(j,1)==1
             sens_sd_c1i(1,j) = sens(i,j);
         end
     end
-    PVE(i,1) = length(find(sens_sd_c1i>200))/length(find(sens(i,:)>200));
+    PVE(i,1) = sensC(i,1);
+    PVE(i,2) = length(find(sens_sd_c1i>200))/length(find(sens(i,:)>200));
     
     V_c1 = struct('fname',fullfile(cs_dir,['banane_c1_' int2str(sensC(i,1)) '.nii']),...
         'dim',  V_segR.dim,...
