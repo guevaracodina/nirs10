@@ -101,18 +101,15 @@ for iSubj=1:size(job.NIRSmat,1)
         %Below: label with temp_ all the transposed coordinates to avoid confusion
         Q = (NIRS.Dt.ana.wT1.VG.mat/NIRS.Dt.ana.wT1.Affine)/NIRS.Dt.ana.wT1.VF.mat;
         
-        
-        % FIT ROM TO RMM POSITIONS, USING FIDUCIES %
+        % FIT ROM TO RMM POSITIONS, USING FIDUCIALS %
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        
-        if strcmp(NIRS.Dt.fir.stax.n,'Brainsight(c)') %%%%%%% PHILIPPE : comment tu y rentres ????
+        if (isfield(NIRS.Dt.fir,'stax') && strcmp(NIRS.Dt.fir.stax.n,'Brainsight(c)')) ||... 
+            ~isfield(NIRS.Dt.fir,'stax')
 
-            %quick fix to use previously obtained coordinates in subject MNI
-            %coordinates
-            %fid_in_subject_MNI = 1;
-            
-            % Positions of fiducial points
+             % Positions of fiducial points
             if job.fid_in_subject_MNI
+               %quick fix to use previously obtained coordinates in subject MNI
+                %coordinates
                 NIRS.Cf.H.F.r.m.mm.p  = [job.nasion_wMNI' job.AL_wMNI' job.AR_wMNI'];
             else
                 NIRS.Cf.H.F.w.m.mm.p  = [job.nasion_wMNI' job.AL_wMNI' job.AR_wMNI'];       
