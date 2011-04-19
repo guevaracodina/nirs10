@@ -129,11 +129,11 @@ load(fullfile(p,'hbrclement1.nirs'),'-mat');
 Cok = NIRS.Cf.H.C.ok;
 t = (1:size(d,1))*0.04;
 som=zeros(size(d,1),1);
-for i=1:size(Cok,2)/2
-    som = som+d(:,Cok(1,i));
-end
-som = som/(size(Cok,2)/2);
-subplot(4,1,1);plot(t,som);hold on;
+% for i=1:size(Cok,2)/2
+%     som = som+d(:,Cok(1,i));
+% end
+% som = som/(size(Cok,2)/2);
+% subplot(4,1,1);plot(t,som);hold on;
 
 load(fullfile(p,'hbrCB40.nirs'),'-mat');
 Cok = NIRS.Cf.H.C.ok;
@@ -241,11 +241,11 @@ load(fullfile(p,'hbrLouis-Eric.nirs'),'-mat');
 Cok = NIRS.Cf.H.C.ok;
 t = (1:size(d,1))*0.04;
 som=zeros(size(d,1),1);
-for i=1:size(Cok,2)/2
-    som = som+d(:,Cok(1,i));
-end
-som = som/(size(Cok,2)/2);
-subplot(4,1,1);plot(t,som);hold on;
+% for i=1:size(Cok,2)/2
+%     som = som+d(:,Cok(1,i));
+% end
+% som = som/(size(Cok,2)/2);
+% subplot(4,1,1);plot(t,som);hold on;
 
 load(fullfile(p,'hbrLE40.nirs'),'-mat');
 Cok = NIRS.Cf.H.C.ok;
@@ -255,7 +255,7 @@ for i=1:size(Cok,2)/2
     som = som+d(:,Cok(1,i));
 end
 som = som/(size(Cok,2)/2);
-subplot(4,1,2);plot(t,som);hold on;
+subplot(3,1,1);plot(t,som);hold on;
 
 load(fullfile(p,'hbrLE60.nirs'),'-mat');
 Cok = NIRS.Cf.H.C.ok;
@@ -265,7 +265,7 @@ for i=1:size(Cok,2)/2
     som = som+d(:,Cok(1,i));
 end
 som = som/(size(Cok,2)/2);
-subplot(4,1,3);plot(t,som);hold on;
+subplot(3,1,2);plot(t,som);hold on;
 
 load(fullfile(p,'hbrLE85.nirs'),'-mat');
 Cok = NIRS.Cf.H.C.ok;
@@ -275,7 +275,7 @@ for i=1:size(Cok,2)/2
     som = som+d(:,Cok(1,i));
 end
 som = som/(size(Cok,2)/2);
-subplot(4,1,4);plot(t,som);title('LOUIS-ERIC');
+subplot(3,1,3);plot(t,som);title('LOUIS-ERIC');
 
 %%
 p ='D:\Users\Clément\Projets_CRIUGM\Donnees\Said_etude1\marjo';
