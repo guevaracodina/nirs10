@@ -123,7 +123,7 @@ for Idx=1:size(job.NIRSmat,1)
                 %nch = length(index_ch);
                 rchn = rchn(index_ch);
                 cchn = cchn(index_ch);
-                %number of regressors
+                %number of regressors (taken to be equal to that of 1st session...)
                 nr = size(SPM.xXn{1}.X,2);
                 clear contrast contrast_name
                 %negative contrasts can be treated later as to avoid a
@@ -186,6 +186,10 @@ for Idx=1:size(job.NIRSmat,1)
                     %split into HbO and HbR interpolations 
                     wl = NIRS.Cf.dev.wl;
                     %for NIRS acquisition with 2 wavelengths only
+                    % MD: it seems to me that the channels corresponding to
+                    % HbO/HbR should be fixed after the module
+                    % nirs_run_ODtoHbOHbR ? Not sure this gives the right
+                    % order....?!?
                     if wl(1) > 750
                         %first wavelength is "HbO-like"
                         ch_HbO = index_ch;

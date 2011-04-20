@@ -83,6 +83,7 @@ for Idx=1:size(job.NIRSmat,1)
         
         inv_exs = pinv(exs(:,1:2)); % size 2 x #wl
         inv_exs2 = kron(inv_exs,eye(NC/size(wl,2))); % size #pairs*2 x #pairs*#wl
+        % (number of channels NC = number of pairs x number of wavelengths)
         
         %try
         %loop over data files
