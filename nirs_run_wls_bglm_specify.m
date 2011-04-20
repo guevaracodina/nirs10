@@ -1,7 +1,8 @@
 function out = nirs_run_wls_bglm_specify(job)
-%Specify a GLM for each subject, each session and each chromophore
+% Specify a GLM for each subject, each session and each chromophore
 
-%to generate display of design matrix
+% To generate display of design matrix
+% Set some default options (for compatibility)
 try
     flag_window = job.flag_window;
 catch
@@ -18,8 +19,11 @@ catch
     filter_design_matrix = 0;
 end
 
-%Specify WLS or BGLM parameters
-meth0=job.wls_or_bglm;
+% User-specified parameters %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Choice of method used for GLM : {1=WLS,2=BGLM,3=NIRS_SPM}
+meth0 = job.wls_or_bglm;
 try 
     meth0.NIRS_SPM;
     meth1 = 3;
@@ -53,14 +57,14 @@ switch meth1
     otherwise
 end
 
-%PCA
+% PCA
 try 
     PCA = job.channel_pca;
 catch
     PCA = 0; %no PCA
 end
 
-%HPF
+% HPF
 try
     hpf_butter_freq = job.hpf_butter.hpf_butter_On.hpf_butter_freq;
     HPFbutter = 1;
@@ -69,7 +73,7 @@ catch
     hpf_butter_freq = 0;
 end
 
-%LPF
+% LPF
 try    
     lpf_butter_freq = job.lpf_butter.lpf_butter_On.lpf_butter_freq; 
     LPFbutter = 1;
@@ -78,8 +82,8 @@ catch
     lpf_butter_freq = 0;
 end
 
-%HPF
-if meth1 ==3 
+% HPF
+if meth1 == 3 
     try
         HPF = ['DCT, ' int2str(job.wls_or_bglm.NIRS_SPM.nirs_hpf.hpf_dct.hpf_dct_cutoff)];
     catch
@@ -96,7 +100,7 @@ if meth1 ==3
     end
 end
 
-%LPF
+% LPF
 if meth1 == 3
     try    
         FWHM = job.wls_or_bglm.NIRS_SPM.nirs_lpf.lpf_gauss.fwhm1;
@@ -115,24 +119,48 @@ if meth1 == 3
         end
     end
 end
-%Loop over all subjects
+
+% Loop over all subjects
 for Idx=1:size(job.NIRSmat,1)
-    %Load NIRS.mat information
+    % Load NIRS.mat information
     try
-        %Objective is to fill SPM structure
+        % Objective is to fill SPM structure
         SPM = [];
         NIRS = [];
         load(job.NIRSmat{Idx,1});
            
-        %use last step of preprocessing
+        % Perform computation on output of the last step of preprocessing
+        % that has been performed
         lst = length(NIRS.Dt.fir.pp);
         rDtp = NIRS.Dt.fir.pp(lst).p; % path for files to be processed
-        NC = NIRS.Cf.H.C.N;
-        fs = NIRS.Cf.dev.fs;
-        nsess = size(rDtp,1);
+        NC = NIRS.Cf.H.C.N; % number of channels
+        fs = NIRS.Cf.dev.fs; % sampling frequency
+        nsess = size(rDtp,1); % number of sessions
+        
+        % MD : a fix for using "resting" data;
+        % if some sessions were included in the
+        % NIRS matrix for the preprocessing steps but are not to be
+        % included in the GLM (e.g. because they relate to no experimental
+        % conditions (resting state scans)), they will be removed here...
+        % This follows the structure given to the NIRS.Dt.fir.Sess variable
+        % in the nirs_run_criugm module: when a data file was specified
+        % (NIRS.Dt.fir.pp(1).p)
+        % that is associated with no "conditions" file, the corresponding
+        % NIRS.Dt.fir.Sess(1,iSess) structure is created, but is empty.
+        for iSess = 1:nsess
+            if isempty(NIRS.Dt.fir.Sess(1,iSess).U(1,1).name) % no conditions
+                nsess = nsess-1;
+            end
+        end
+        % Potential problem : if user wanted the session to be included in
+        % the GLM but did not specify the conditions for this particular
+        % session when creating the NIRS matrix, he/she will not be
+        % prompted to manually specifiy them, and the session will be
+        % ignored/forgotten. Unlikely...
+        
 
         [dir1, fil1, ext1] = fileparts(rDtp{1,1});
-        %create directory for stats for this subject
+        % Create directory for stats for this subject
         spm_dir = fullfile(dir1,job.dir1);
         if ~exist(spm_dir,'dir'), mkdir(spm_dir); end
         %copy NIRS.mat and datafile to spm_dir, for storage only
@@ -142,12 +170,17 @@ for Idx=1:size(job.NIRSmat,1)
 %                 copyfile(rDtp{f},fullfile(spm_dir,[fil1 ext1]));
 %             end
 %         end
-        %Find onsets
+
+        % Find onsets
+        
+        % MD: I would do the contrary (if user has specified onset files
+        % when calling the module, these whould override those already in
+        % the NIRS matrix, not the contrary.)
         try
-            SPM.Sess = NIRS.Dt.fir.Sess;
+            SPM.Sess = NIRS.Dt.fir.Sess(1:nsess);
         catch
             try
-                %Ignore parametric modulations - cf spm_run_fmri_design.m
+                % Ignore parametric modulations - cf spm_run_fmri_design.m
                 P.name = 'none';
                 P.h    = 0;
                 for f=1:nsess
@@ -162,7 +195,7 @@ for Idx=1:size(job.NIRSmat,1)
                     end
                 end
             catch
-                %Could not load onset
+                % Could not load onsets
                 disp('Could not find onsets');
             end
         end
@@ -226,7 +259,7 @@ for Idx=1:size(job.NIRSmat,1)
         for f=1:nsess
             try 
                 if job.GLM_include_cardiac
-                    %heart rate regressor
+                    %Heart rate regressor
                     C = NIRS.Dt.fir.Sess(f).fR{1};
                     Cname = {'H'};
                 end
@@ -249,7 +282,7 @@ for Idx=1:size(job.NIRSmat,1)
             SPM.Sess(f).C.C    = C;
             SPM.Sess(f).C.name = Cname;
         end
-        %Number of datapoints for each session
+        % Number of datapoints for each session
         nscan = [];
         for f=1:nsess
             try
@@ -576,7 +609,7 @@ for Idx=1:size(job.NIRSmat,1)
         %location of the HbO and HbR (combined) files - note that
         %for the purpose of GLM estimation, we do not care if a channel
         %is HbO or HbR, so we can loop over all the channels
-        SPM.xY.P = NIRS.Dt.fir.pp(lst).p; 
+        SPM.xY.P = NIRS.Dt.fir.pp(lst).p(1:nsess); 
         SPM.generate_trRV = generate_trRV;
         SPM.filter_design_matrix = filter_design_matrix;
         SPM.job = job;

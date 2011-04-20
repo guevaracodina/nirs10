@@ -1,9 +1,13 @@
 function out = nirs_run_wls_bglm_estimate(job)
-%NIRS_SPM GLM estimation - first level
+% NIRS_SPM GLM estimation - first level
+
+% Which GLM to estimate {1='First', 2='All', 3='Last'} of all specified GLMs;
 which_GLM = job.NIRS_SPM_which_GLM;
-%Loop over all subjects
+
+% Loop over all subjects
 for Idx=1:size(job.NIRSmat,1)
-    %Load NIRS.mat information
+    
+    % Load NIRS.mat information
     try
         NIRS = [];
         load(job.NIRSmat{Idx,1});
@@ -11,12 +15,12 @@ for Idx=1:size(job.NIRSmat,1)
         fs = NIRS.Cf.dev.fs;
         try
             switch which_GLM
-                case 1 %first
+                case 1 % first
                     fGLM = NIRS.SPM(1);
                 case 2
-                    %need to loop
+                    % need to loop (all GLMs specified)
                     fGLM = NIRS.SPM;
-                case 3
+                case 3 % last
                     fGLM = NIRS.SPM(end);
             end
         catch
