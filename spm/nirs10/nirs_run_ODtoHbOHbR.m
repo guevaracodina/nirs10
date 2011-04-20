@@ -151,6 +151,13 @@ for Idx=1:size(job.NIRSmat,1)
             % size (#pairs*2 x nt) = (#pairs*2 x #pairs*#wl) x (#pairs*#wl x nt)
             % 2 here is for 2 Hb types, HbO and HbR
             
+            % c has structure:
+            %  [ conc_HbO_pair1(time1) conc_HbO_pair1(time2) ...;
+            %    conc_HbO_pair2(time1) conc_HbO_pair2(time2) ...;
+            %    ...
+            %    conc_HbR_pair1(time1) conc_HbR_pair1(time2) ...;
+            %    ... ];
+            
             
             % %             CB: corrige dans les lignes qui suivent
             % %             if isnan(c(:))
