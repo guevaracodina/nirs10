@@ -8,7 +8,12 @@ for iSubj=1:size(job.NIRSmat,1)
     try
         NIRS = [];
         load(job.NIRSmat{iSubj,1});
+        load(job.sd_C{:});
+        NIRS.Cf.H.C = C;
+        save(job.NIRSmat{iSubj,1},'NIRS');
         
+        NIRS=[];
+        load(job.NIRSmat{iSubj,1});
         % SPATIAL NORMALIZATION OF ANATOMICAL IMAGE
         % Allow user-specified image of subject to overwrite previous
         % anatomical image in NIRS.mat; unlikely to ever happen
@@ -137,7 +142,7 @@ for iSubj=1:size(job.NIRSmat,1)
             else
                 Pp_rmm(:,Pi) = s*R*Pp_rom(:,Pi) + t;
             end
-        end;
+        end
         
         % Save MNI coordinates of optodes
         NIRS.Cf.H.P.r.m.mm.p = Pp_rmm;
@@ -183,14 +188,97 @@ for iSubj=1:size(job.NIRSmat,1)
         NIRS.Cs.temp.Pfp_roi_rmm = Pfp_t1rmm;
         NIRS.Cs.temp.Pp_roi_rmm = Pp_t1rmm(1:3,:);
         NIRS.Cs.temp.Pp_roi_c1_rmm = Pp_c1_t1rmm(1:3,:);
-        NIRS.Cs.temp.Pkpt = [1 2 3 4 5 6 7 8 9 10 11 12];
-        NIRS.Cs.temp.NSkpt = 3;
-        NIRS.Cs.temp.NDkpt = 9;
+        NIRS.Cs.temp.Pkpt = (1:NP); % on garde tous les points
+        NIRS.Cs.temp.NSkpt = size(Sp_rom,2);
+        NIRS.Cs.temp.NDkpt = size(Dp_rom,2);
         
         save(job.NIRSmat{iSubj},'NIRS');
     catch
         disp(['Coregistration failed for the ' int2str(iSubj) 'th subject.']);
     end
+    
+    % affichage 3D
+    V = spm_vol(job.segT1_4fit{:});
+    Y = spm_read_vols(V);
+
+    if isfield(NIRS.Cf.H.P.r.m.mm,'p')
+        Pp_rmm = NIRS.Cs.temp.Pp_roi_rmm;      % positions on head surface
+        Pp_c1_rmm = NIRS.Cs.temp.Pp_roi_c1_rmm;% positions on cortex
+        Pfp_rmm = NIRS.Cs.temp.Pfp_roi_rmm;    % positions fitted on skin
+    end
+
+    NP = size(NIRS.Cs.temp.Pp_roi_rmm,2);
+    NS = NIRS.Cs.temp.NSkpt;
+    ND = NIRS.Cs.temp.NDkpt;
+
+    % from MNI real space (mm) to MNI voxel space
+    Pp_rmv = [];
+    Pp_c1_rmv = [];
+    Pfp_rmv = [];
+    for i=1:NP
+        Pp_rmv(:,i) = V.mat\[Pp_rmm(:,i);1];
+        Pp_c1_rmv(:,i) = V.mat\[Pp_c1_rmm(:,i);1];
+        Pfp_rmv(:,i) = V.mat\[Pfp_rmm(:,i);1];
+    end
+    % return to 3D space (V.mat is (:,4))
+    Pp_rmv = Pp_rmv(1:3,:);
+    Pp_c1_rmv = Pp_c1_rmv(1:3,:);
+
+    % Display 3D image of the ROI with optodes pointing towards their
+    % respective directions, allowing a final check of the setup
+    % Surface de l'IRM
+    set(0,'defaultfigurevisible','on');
+    hfig_all3D = figure;
+
+    patch(isosurface(smooth3(Y),4),...
+        'FaceColor',[1,.75,.65],...
+        'EdgeColor','none',...
+        'FaceAlpha',0.5);
+
+    % Views adjustments
+    view(90,-90)
+    daspect([1,1,1])
+    lightangle(70,-70);
+    set(hfig_all3D,'Renderer','zbuffer');
+    lighting phong
+
+    % Display optodes and their directions
+    hold on
+
+    % adding tags
+    for Pi = 1:NP
+        if Pi<=NS
+            list{1,1} = 'r';
+            list{2,1} = 10;
+            list{3,1} = 'S#';
+        elseif (Pi>NS && Pi<=NS+ND)
+            list{1,1} = 'b';
+            list{2,1} = 2;
+            list{3,1} = 'D#';
+        elseif Pi>NS+ND
+            list{1,1} = 'g';
+            list{2,1} = 2;
+            list{3,1} = 'Q#';
+        end
+
+        xp = Pp_rmv(2,Pi);
+        yp = Pp_rmv(1,Pi);
+        zp = Pp_rmv(3,Pi);
+        text(xp,yp,zp,[list{3,1} int2str(Pi)],'FontWeight','bold','Color',list{1,1});
+
+        xfp = Pfp_rmv(2,Pi);
+        yfp = Pfp_rmv(1,Pi);
+        zfp = Pfp_rmv(3,Pi);
+        text(xfp,yfp,zfp,'X','FontWeight','bold','Color','black');%list{1,1}
+
+        plot3([Pp_c1_rmv(2,Pi),Pp_rmv(2,Pi)],...
+            [Pp_c1_rmv(1,Pi),Pp_rmv(1,Pi)],...
+            [Pp_c1_rmv(3,Pi),Pp_rmv(3,Pi)], 'Linewidth',list{2,1},'Color',list{1,1});
+    end
+    hold off
+    
+    saveas(gcf,fullfile(NIRS.Dt.s.p,'coreg_3Dview.fig'));
+    close(gcf);
 end
 out.NIRSmat = job.NIRSmat;
 

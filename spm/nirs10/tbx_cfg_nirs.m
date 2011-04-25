@@ -326,7 +326,8 @@ text_brainsight.tag     = 'text_brainsight';
 text_brainsight.name    = 'Text file from Brainsight';
 text_brainsight.filter  = '.txt';
 text_brainsight.ufilter = '.*';
-text_brainsight.num     = [1 1];
+text_brainsight.num     = [0 1];
+text_brainsight.val{1} = {''};
 text_brainsight.help    = {'Select the text file from Brainsight.'};
  
 T1_vitamins           = cfg_branch; 
@@ -1303,10 +1304,18 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coreg vers le template T1
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+sd_C         = cfg_files;
+sd_C.tag     = 'sd_C';
+sd_C.name    = 'Configuration du casque';
+sd_C.ufilter = '.*';
+sd_C.val{1}  = {''};
+sd_C.num     = [0 1];
+
 coreg2      = cfg_exbranch;       
 coreg2.name = 'NIRScoreg2';             
 coreg2.tag  = 'coreg1'; 
-coreg2.val  = {NIRSmat DelPreviousData NewDirCopyNIRS anatT1 segT1_4fit ...
+coreg2.val  = {NIRSmat DelPreviousData NewDirCopyNIRS anatT1 sd_C segT1_4fit...
     anatT1_template fid_in_subject_MNI nasion_wMNI AL_wMNI AR_wMNI GenDataTopo};    
 coreg2.prog = @nirs_run_coreg_2templateT1;  
 coreg2.vout = @nirs_cfg_vout_coreg2; 

@@ -6,6 +6,7 @@ function out = nirs_resize(job)
 % Clément Bonnéry 11/2010
 
 P = job.image_in{:};
+if iscell(P), P = P{:};end
 PO_dim = job.out_dim;
 PO_dt = job.out_dt;
 PO_autonaming = job.out_autonaming;

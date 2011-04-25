@@ -94,7 +94,9 @@ for Idx=1:size(job.NIRSmat,1)
         %loop over data files
         for f=1:size(rDtp,1)
             %load data
-            d = fopen_NIR(rDtp{f},NC);
+%             d = fopen_NIR(rDtp{f},NC);
+fd =load(rDtp{f});
+d =fd.d';
             ns = size(d,2);
             % Heart Rate
             % Frequency of Mayer Waves not calculated: to be done
