@@ -53,7 +53,7 @@ if isfield(job.mcim_cfg,'mcim_in')% image segmentee de l'anatomique de base
     cs.NDkpt = NIRS.Cs.temp.NDkpt;
 else
     roi =1;
-    cs.seg = NIRS.Cs.temp.segR; %ROI from temp
+    cs.seg = NIRS.Cs.temp.segR{:}; %ROI from temp
     cs.Pfp_rmv = NIRS.Cs.temp.Pfp_roi_rmv;
     cs.Pfp_rmm = NIRS.Cs.temp.Pfp_roi_rmm;
     cs.Pp_rmm = NIRS.Cs.temp.Pp_roi_rmm;
@@ -114,16 +114,20 @@ Pfp_ancienne_rmiv = round(Pfp_ancienne_rmiv);
 %%%%%%% appliquer ca sur le 8bit !!!!!!!!!
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % if job.MC_CUDAchoice==1 % MCX : sources et detecteurs doivent etre DANS
-% le volume 
+% le volume
+%%%%%%%%%%%%%%%%%%%%
+% pour MCX, ca n'a pas d'effet... peut etre on projette pas sur la bonne
+% image!!!!!
+%%%%%%%%%%%%%%%%%%%%
 %%%%%%%pour tMCimg : je sais pas trop...
-%     jobF.Pp_rmm = cs.Pp_rmm;
-%     jobF.Pp_c1_rmm = cs.Pp_c1_rmm;
-%     jobF.NP = NP;
-%     jobF.image_in = {outRS};
-%     jobF.Pfp_ancienne_rmiv = Pfp_ancienne_rmiv;
-%     jobF.lby = 'configMC';
-%     outF = nirs_fit_probe(jobF);
-%     Pfp_ancienne_rmiv = outF{1};
+    jobF.Pp_rmm = cs.Pp_rmm;
+    jobF.Pp_c1_rmm = cs.Pp_c1_rmm;
+    jobF.NP = NP;
+    jobF.image_in = {outRS};
+    jobF.Pfp_ancienne_rmiv = Pfp_ancienne_rmiv;
+    jobF.lby = 'configMC';
+    outF = nirs_fit_probe(jobF);
+    Pfp_ancienne_rmiv = outF{1};
 % end
 
 % Directions

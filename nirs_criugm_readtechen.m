@@ -21,7 +21,7 @@ switch int2str(job.system) % System used for the acquisition
         NIRS.Cf.dev.wl = f.SD.Lambda;
         NIRS.Cf.dev.gn = f.systemInfo.gain;
         NIRS.Cf.dev.fs = 1/(f.t(2)-f.t(1));
-
+        
         % Information about the Helmet
         NIRS.Cf.H.n = f.systemInfo.SDfilenm;
         NIRS.Cf.H.p = f.systemInfo.SDfilepath;
@@ -29,13 +29,13 @@ switch int2str(job.system) % System used for the acquisition
         switch job.coregType
             
             case 'Brainsight(c)'
-        
+                
                 Cgen = zeros(0);    % [iC iS iD wl gp]
-
+                
                 Sn = NIRS.Cf.H.S.n;
                 NS = NIRS.Cf.H.S.N;
-
-                count = 1;      
+                
+                count = 1;
                 for iS =1:NS % for each source (in the BS file...)
                     Snum = Sn{1,iS};
                     Snum = Snum(2:end);
@@ -52,11 +52,15 @@ switch int2str(job.system) % System used for the acquisition
                         end
                     end
                 end
-
+                
                 % % Sort by channel number
                 % Cgen_s = sortrows(Cgen,[4 2]);
                 Cgen_s = sortrows(Cgen,1);
-
+                
+                %%%%%%%%%%%%%%%%%%%% ATTENTION, IL FAUT QUE d SOIT AUSSI
+                %%%%%%%%%%%%%%%%%%%% CHANGE SINON LES PAIRES NE
+                %%%%%%%%%%%%%%%%%%%% CORRESPONDENT PLUS.......
+                
                 % Number of channels (pairs)
                 NIRS.Cf.H.C.N = size(Cgen_s,1); % length(Cid);
                 % Measurement list: # of Pair / # of source / # of detector
@@ -65,10 +69,10 @@ switch int2str(job.system) % System used for the acquisition
                 NIRS.Cf.H.C.wl = Cgen_s(:,4)';   % Cwl;
                 % Source-detector distance (usually 2D)
                 NIRS.Cf.H.C.gp = Cgen_s(:,5)';   % Cgp;
-
-
                 
-            %case 'T1_vitamins'
+                
+                
+                %case 'T1_vitamins'
                 
             otherwise % In any other case, when no BrainSight file is provided,
                 % all the setup info is taken from the nirs file (until
@@ -95,7 +99,7 @@ switch int2str(job.system) % System used for the acquisition
                 NIRS.Cf.H.C.N = size(f.SD.MeasList,1);
                 
                 % Measurement list: # of Pair / # of source / # of detector
-                ml = f.SD.MeasList;       
+                ml = f.SD.MeasList;
                 % Add a column for pair ID
                 ml = [1:size(ml,1); ml']';
                 
@@ -119,9 +123,113 @@ switch int2str(job.system) % System used for the acquisition
                 
         end
         
+    case '5'
+        sDtp = job.sDtp;
+        NIRS = job.NIRS;
+        
+        % Information about CW system
+        NIRS.Cf.dev.n = 'CW5';
+        NIRS.Cf.dev.wl = f.SD.Lambda;
+%         NIRS.Cf.dev.gn = f.systemInfo.gain;
+        NIRS.Cf.dev.fs = 1/(f.t(2)-f.t(1));
+
+        switch job.coregType
+            
+            case 'Brainsight(c)'
+                
+                Cgen = zeros(0);    % [iC iS iD wl gp]
+                
+                Sn = NIRS.Cf.H.S.n;
+                NS = NIRS.Cf.H.S.N;
+                
+                count = 1;
+                for iS =1:NS % for each source (in the BS file...)
+                    Snum = Sn{1,iS};
+                    Snum = Snum(2:end);
+                    C_Snum(1,:) = (f.SD.MeasList(:,1)==str2num(Snum))';
+                    for i=1:size(C_Snum,2)
+                        if C_Snum(1,i)==1
+                            Cgen(count,1) = i;
+                            Cgen(count,2) = iS;
+                            Cgen(count,3) = f.SD.MeasList(i,2);
+                            Cgen(count,4) = f.SD.MeasList(i,4);
+                            % Ne devrait-on pas corriger pour la courbure ?????
+                            Cgen(count,5) = sqrt(sum((f.SD.SrcPos(iS,:) - f.SD.DetPos(Cgen(count,3),:)).^2));
+                            count = count+1;
+                        end
+                    end
+                end
+                
+                % % Sort by channel number
+                % Cgen_s = sortrows(Cgen,[4 2]);
+                Cgen_s = sortrows(Cgen,1);
+                
+                % Number of channels (pairs)
+                NIRS.Cf.H.C.N = size(Cgen_s,1); % length(Cid);
+                % Measurement list: # of Pair / # of source / # of detector
+                NIRS.Cf.H.C.id = Cgen_s(:,1:3)'; % Cid;
+                % Wavelength
+                NIRS.Cf.H.C.wl = Cgen_s(:,4)';   % Cwl;
+                % Source-detector distance (usually 2D)
+                NIRS.Cf.H.C.gp = Cgen_s(:,5)';   % Cgp;
+                
+            otherwise % In any other case, when no BrainSight file is provided,
+                % all the setup info is taken from the nirs file (until
+                % enventually some coregistration (e.g., from vitamin
+                % markers in the T1) is done).
+                
+                % Sources
+                NIRS.Cf.H.S.N = size(f.SD.SrcPos,1);
+                NIRS.Cf.H.S.r.o.mm.p = (f.SD.SrcPos*10)'; % nSrcs x 3, cm->mm
+                
+                f.SD.DetPos(3,2) =9;
+                % Detectors
+                NIRS.Cf.H.D.N = size(f.SD.DetPos,1);
+                NIRS.Cf.H.D.r.o.mm.p = (f.SD.DetPos*10)'; % nSrcs x 3, cm->mm
+                
+                % All points
+                NIRS.Cf.H.P.N = NIRS.Cf.H.S.N + NIRS.Cf.H.D.N;
+%                 NIRS.Cf.H.P.r.o.mm.p = [NIRS.Cf.H.S.r.o.mm.p NIRS.Cf.H.D.r.o.mm.p]; % nPts x 3, cm->mm
+                
+                % Channels (pairs)
+                Cgen = zeros(0);    % [iC iS iD wl gp]
+                NS = NIRS.Cf.H.S.N;
+                
+                count = 1;
+                for iS =1:NS % for each source (in the BS file...)
+                    C_Snum(1,:) = (f.ml(:,1)==iS)';
+                    for i=1:size(C_Snum,2)
+                        if C_Snum(1,i)==1
+                            Cgen(count,1) = i;
+                            Cgen(count,2) = iS;
+                            Cgen(count,3) = f.ml(i,2);
+                            Cgen(count,4) = f.ml(i,4);
+                            % Ne devrait-on pas corriger pour la courbure ?????
+                            indD = mod(i,NIRS.Cf.H.D.N);
+                            if indD==0, indD =NIRS.Cf.H.D.N; end
+                            Cgen(count,5) = sqrt(sum((f.SD.SrcPos(iS,:) - f.SD.DetPos(indD,:)).^2));
+                            count = count+1;
+                        end
+                    end
+                end
+                
+                % % Sort by channel number
+                % Cgen_s = sortrows(Cgen,[4 2]);
+                NIRS.Cf.H.C.order = Cgen(:,1)';
+                Cgen_s = sortrows(Cgen,1);
+                
+                % Number of channels (pairs)
+                NIRS.Cf.H.C.N = size(Cgen_s,1); % length(Cid);
+                % Measurement list: # of Pair / # of source / # of detector
+                NIRS.Cf.H.C.id = Cgen_s(:,1:3)'; % Cid;
+                % Wavelength
+                NIRS.Cf.H.C.wl = Cgen_s(:,4)';   % Cwl;
+                % Source-detector distance (usually 2D)
+                NIRS.Cf.H.C.gp = Cgen_s(:,5)';   % Cgp;               
+        end
+        
     otherwise
         disp('Reading of Techen file (.nirs) failed. For now only CW6 output files are supported.');
-        
 end
 
 % Return updated NIRS matrix (or 0 if fail)
