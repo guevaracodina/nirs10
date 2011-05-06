@@ -57,7 +57,7 @@ for is=1:sN
         end
         
         % CB: NOUVELLE VERSION : LA partie HELMET DOIT enregistrer dans le
-        % dossier du sujet une structure NIRS_Cf qui est lue ici puis efface .
+        % dossier du sujet une structure NIRS_Cf qui est lue ici puis effacee .
         NIRS_Cf = load(fullfile(sDtp, 'NIRS_Cf.mat'));
         NIRS.Cf = NIRS_Cf.NIRS.Cf;
         clear NIRS_Cf
