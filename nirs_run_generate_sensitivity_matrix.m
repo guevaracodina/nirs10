@@ -99,6 +99,20 @@ for fi = 1:size(f,1)
                 ms = fread(fid,V_segR.dim(1)*V_segR.dim(2)*V_segR.dim(3),'float32');
                 fclose(fid);
                 % Bonnery from Boas et al.
+%                 sum_Jout = sum(ms(ms<0)/cs.par.nphotons);
+%                 Svx = 5*5;
+%                 Vvx = 5*5*5;
+%                 [indices,~] = find(ms>0);
+%                 msP = zeros(size(ms));
+%                 msP(indices,1)=ms(indices,1);
+%                 if Pwl==1
+%                     norm_ms = (1-Svx*sum_Jout)/(Vvx*sum(msP.*Yb8i_l1));
+%                 else
+%                     norm_ms = (1-Svx*sum_Jout)/(Vvx*sum(msP.*Yb8i_l2));
+%                 end
+%                 msP = msP*norm_ms;
+                %%%% version 2
+               % ms = ms/cs.par.nphotons;
                 sum_Jout = sum(ms(ms<0)/cs.par.nphotons);
                 Svx = 5*5;
                 Vvx = 5*5*5;
@@ -106,9 +120,9 @@ for fi = 1:size(f,1)
                 msP = zeros(size(ms));
                 msP(indices,1)=ms(indices,1);
                 if Pwl==1
-                    norm_ms = (1-Svx*sum_Jout)/(Vvx*sum(msP.*Yb8i_l1));
+                    norm_ms = (1-Svx*abs(sum_Jout))/(Vvx*sum(msP.*Yb8i_l1));
                 else
-                    norm_ms = (1-Svx*sum_Jout)/(Vvx*sum(msP.*Yb8i_l2));
+                    norm_ms = (1-Svx*abs(sum_Jout))/(Vvx*sum(msP.*Yb8i_l2));
                 end
                 msP = msP*norm_ms;
         end
@@ -171,9 +185,9 @@ for fi = 1:size(f,1)
                             mdP = zeros(size(md));
                             mdP(indices,1)=md(indices,1);
                             if Pwl==1
-                                norm_md = (1-Svx*sum_Jout)/(Vvx*sum(mdP.*Yb8i_l1));
+                                norm_md = (1-Svx*abs(sum_Jout))/(Vvx*sum(mdP.*Yb8i_l1));
                             else
-                                norm_md = (1-Svx*sum_Jout)/(Vvx*sum(mdP.*Yb8i_l2));
+                                norm_md = (1-Svx*abs(sum_Jout))/(Vvx*sum(mdP.*Yb8i_l2));
                             end
                             mdP = mdP*norm_md;
                             %
@@ -181,8 +195,10 @@ for fi = 1:size(f,1)
                             msR = reshape(msP,V_segR.dim);
                             mdR = reshape(mdP,V_segR.dim);
                             % sur la moyenne des points autour...
-                            rayon = 3;
+                            rayon = 1;
                             cntr = ceil(rayon/2);
+                            phi0_S =0;
+                            phi0_D =0;
                             for i = 1:rayon
                                 phi0_S = phi0_S + msR(cs.Pfp_rmiv(1,Sn)+(i-cntr),cs.Pfp_rmiv(2,Sn)+(i-cntr),cs.Pfp_rmiv(3,Sn)+(i-cntr));
                                 phi0_D = phi0_D + mdR(cs.Pfp_rmiv(1,D_Sn(i))+(i-cntr),cs.Pfp_rmiv(2,D_Sn(i))+(i-cntr),cs.Pfp_rmiv(3,D_Sn(i))+(i-cntr));
