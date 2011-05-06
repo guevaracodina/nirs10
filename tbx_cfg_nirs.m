@@ -326,7 +326,8 @@ text_brainsight.tag     = 'text_brainsight';
 text_brainsight.name    = 'Text file from Brainsight';
 text_brainsight.filter  = '.txt';
 text_brainsight.ufilter = '.*';
-text_brainsight.num     = [1 1];
+text_brainsight.num     = [0 1];
+text_brainsight.val{1} = {''};
 text_brainsight.help    = {'Select the text file from Brainsight.'};
  
 T1_vitamins           = cfg_branch; 
