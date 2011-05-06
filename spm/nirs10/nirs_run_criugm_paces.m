@@ -64,12 +64,9 @@ heartpace_all = {};
 for Idx=1:size(job.NIRSmat,1)
     try
         NIRS = [];
-        %Load NIRS.mat information
         load(job.NIRSmat{Idx,1});
-        heartpace = {};
-        %NIRS sampling frequency
+        % % % % % % %         heartpace = {};
         fs = NIRS.Cf.dev.fs;
-        %NIRS total number of channels
         NC = NIRS.Cf.H.C.N;
         wl = NIRS.Cf.dev.wl;
         
@@ -93,10 +90,9 @@ for Idx=1:size(job.NIRSmat,1)
         rDtp = NIRS.Dt.fir.pp(lst).p; % path for files to be processed
         %loop over data files
         for f=1:size(rDtp,1)
-            %load data
-%             d = fopen_NIR(rDtp{f},NC);
-fd =load(rDtp{f});
-d =fd.d';
+            %             d = fopen_NIR(rDtp{f},NC);
+            fd =load(rDtp{f});
+            d =fd.d';
             ns = size(d,2);
             % Heart Rate
             % Frequency of Mayer Waves not calculated: to be done
@@ -105,18 +101,14 @@ d =fd.d';
             heart.from = rDtp{f};
             heart.pace = zeros(NC,ns);
             heart.nrgy = zeros(NC,ns);
-            %const1 is the window size in data points? appproximately ns/n.
-            const1 = 1/(n-1)*(ns-windo_width*fs);
             
-            % mayer_pace = zeros(floor(slab_width/2)+length(d),NC);
-            % mayer_nrgy = zeros(floor(slab_width/2)+length(d),NC);
+            const1 = 1/(n-1)*(ns-windo_width*fs);%const1 is the window size in data points : appproximately ns/n.
             
             % on repere la qualite de chaque paire en regardant si on a les battements
             % physiologiques :
             %Channels to keep:
             k1 = [];
-            %Loop over channels
-            for Ci=1:NC
+            for Ci=1:NC            %Loop over channels
                 %Only check channels corresponding to selected wavelength(s)
                 if any(NIRS.Cf.H.C.wl(Ci)== HbO_like)
                     dCi = d(Ci,:);
@@ -139,37 +131,38 @@ d =fd.d';
                         
                         heart.nrgy(Ci,Ni:Ni+slab_width) = outbeattest.heart.nrgy;
                         heart.pace(Ci,Ni:Ni+slab_width) = outbeattest.heart.pace;
-                        
-                        %         mayer_nrgy(Ni:Ni+slab_width,Ci) = outbeattest.mayer.nrgy;
-                        %         mayer_pace(Ni:Ni+slab_width,Ci) = outbeattest.mayer.pace;
                     end
                     
-                    if ex==0
-                        v = heart.pace(Ci,:);
-                        %figure; plot(v);
-                        median1 = median(v);
-                        std1 = std(v);
-                        count = 0;
-                        if MinHeartRate < median1 && median1 < MaxHeartRate && ...
-                                std1 < 2*MaxHeartStdev
-                            %keep channel
-                            %count=count+1;
-                            %channel list that we keep:
+                    if ex==0 % resting state
+                        
+
                             k1 = [k1 Ci];
-                            %clean up aberrant values
-                            %for i4=1:length(v)
-                            %if v(i4) <= MinHeartRate || v(i4) >= MaxHeartRate
-                            %quick fix, better would be to take average
-                            %value at ends of bad intervals
-                            %    v(i4) = median1;
-                            %end
-                            
-                            %end
-                            heart.pace(Ci,:) = v;
-                        else
-                            heart.pace(Ci,:) = zeros(1,ns);
-                        end
-                    else%exercice...
+
+                        
+%                         v = heart.pace(Ci,:);
+%                         median1 = median(v);
+%                         std1 = std(v);
+%                         count = 0;
+%                         if MinHeartRate < median1 && median1 < MaxHeartRate && ...
+%                                 std1 < 2*MaxHeartStdev
+%                             %keep channel
+%                             %count=count+1;
+%                             %channel list that we keep:
+%                             k1 = [k1 Ci];
+%                             %clean up aberrant values
+%                             %for i4=1:length(v)
+%                             %if v(i4) <= MinHeartRate || v(i4) >= MaxHeartRate
+%                             %quick fix, better would be to take average
+%                             %value at ends of bad intervals
+%                             %    v(i4) = median1;
+%                             %end
+%                             
+%                             %end
+%                             heart.pace(Ci,:) = v;
+%                         else
+%                             heart.pace(Ci,:) = zeros(1,ns);
+%                         end
+                    else % during exercise
                         test_C = sum(heart.pace(Ci,:)); % on a le battement ou 0 si no battementm il faut juste voir si on a assez de battement d'ou la somme
                         %%%%%%la valeur reste a fixer...automatiquement
                         if(test_C<2*10^4)%median(Cok_temp))%2.3*10^4) %Conditions for a good heart beat
@@ -305,11 +298,24 @@ d =fd.d';
                         interpxi = (1:size(hp,2));
                         reg(1:size(hp,2)) = interp1(interpx,interpY,interpxi,'linear');
                     else
+                        % on doit travailler sur les paires de HbO
+                        C_HbO =[];
+                        for Ci=1:NC            %Loop over channels
+                            %Only check channels corresponding to selected wavelength(s)
+                            if any(NIRS.Cf.H.C.wl(Ci)== HbO_like)
+                                C_HbO = [C_HbO Ci];
+                            end
+                        end
+                        %%%%%
                         whp = hp/max(max(hp));
-                        level = graythresh(whp);% Otsu
-                        whp_b = im2bw(whp,level);
+                        whp_b = zeros(size(whp));
+                        level = graythresh(whp(C_HbO,:));% Otsu
+                        whp_b(C_HbO,:) = im2bw(whp(C_HbO,:),level);
                         % Affichage
+                        % CW6 ::::::
                         % whpR = zeros(NC,size(whp,2)); whpR([k1 k1-(NC/2)],:) = whp; figure;imagesc(whpR);title(['Heart pace: ' rDtp{f}]);
+                        % CW5 ::::::
+                        % whpR = zeros(NC,size(whp,2)); whpR([k1 k1+(NC/2)],:) = whp; figure;imagesc(whpR);title(['Heart pace: ' rDtp{f}]);
                         
                         % reconstruction
                         bouchetrou = hp.*whp_b;
