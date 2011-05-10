@@ -68,25 +68,9 @@ for fi = 1:size(f,1)
         
         switch cs.alg
             case 1 % MCX
-                ms=loadmc2(f{fi,:},V_segR.dim);
-                % pour MCX, on obtient P(r,t) qu'il faut nomaliser avec la
-                % formule (1) de l'article de Fang (si on lit
-                %http://mcx.sourceforge.net/cgi-bin/index.cgi?MMC/Doc/FAQ#How_do_I_interpret_MMC_s_output_data
-                % , on comprends )
-                % Bonnery from Boas et al.
-                %                 sum_Jout = sum(ms(ms<0)/cs.par.nphotons);
-                %                 Svx = 5*5;
-                %                 Vvx = 5*5*5;
-                %                 msP = ms;
-                %                 msP(msP<0)=0;
-                %                 Yb8i_l1 = reshape(Yb8i_l1,V_segR.dim);
-                %                 Yb8i_l2 = reshape(Yb8i_l2,V_segR.dim);
-                %                 if Pwl==1
-                %                     norm_ms = (1-Svx*sum_Jout)/(Vvx*sum(sum(sum(msP.*Yb8i_l1))));
-                %                 else
-                %                     norm_ms = (1-Svx*sum_Jout)/(Vvx*sum(sum(sum(msP.*Yb8i_l2))));
-                %                 end
-                %                 msP = msP*norm_ms;
+                % already normalized (http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/README : 6.1 output files)
+                ms=loadmc2(f{fi,:},V_segR.dim,'float');
+                cw_mcx=sum(ms,4);
                 
             case 2 % tMCimg
                 fid=fopen(f{fi,:},'rb');
@@ -135,21 +119,9 @@ for fi = 1:size(f,1)
                     
                     switch cs.alg
                         case 1 % MCX
-                            md=loadmc2(fullfile(cs_dir,[Dfn Oe]),V_segR.dim);
-                            % Bonnery from Boas et al.
-                            %                             sum_Jout = sum(md(md<0)/cs.par.nphotons);
-                            %                             Svx = 5*5;
-                            %                             Vvx = 5*5*5;
-                            %                             mdP = md;
-                            %                             mdP(mdP<0)=0;
-                            %                             Yb8i_l1 = reshape(Yb8i_l1,V_segR.dim);
-                            %                             Yb8i_l2 = reshape(Yb8i_l2,V_segR.dim);
-                            %                             if Pwl==1
-                            %                                 norm_md = (1-Svx*sum_Jout)/(Vvx*sum(sum(sum(mdP.*Yb8i_l1))));
-                            %                             else
-                            %                                 norm_md = (1-Svx*sum_Jout)/(Vvx*sum(sum(sum(mdP.*Yb8i_l2))));
-                            %                             end
-                            %                             mdP = mdP*norm_md;
+                            % already normalized (http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/README : 6.1 output files)
+                            md=loadmc2(fullfile(cs_dir,[Dfn Oe]),V_segR.dim,'float');
+                            cw_md=sum(md,4);
                             
                             % sur la moyenne des points autour... : a coder
                             rayon = 3;
