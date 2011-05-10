@@ -247,7 +247,7 @@ switch WLruns
     case 2 % ON FAIT POUR CHAQUE LONGUEUR D'ONDE SEPAREMENT
         
         %% Y
-        fnirs = load(NIRS.Dt.fir.pp(1,4).p{:},'-mat');
+        fnirs = load(NIRS.Dt.fir.pp.p{:},'-mat');
         t0 =3000;% on choisit au pif un point temporel
         Y_t0 = fnirs.d(t0,Cmc)';
         
@@ -360,11 +360,11 @@ switch WLruns
                     YY = (Xbar'*Ybar);
                     clear Xbar;
                     XXLI = sparse(XX + eye(size(XX,2)));
-                    XXLIinv = XXLI \ eye(size(XXLI,1));
-                    %                     pinvXX = pinv(XX + eye(size(XX,2)));
+                    pinvXX = XXLI \ eye(size(XXLI,1));
+                        %                 pinvXX = pinv(XX + eye(size(XX,2)));
                     
                     %save the inverse
-                    save([dir_in '\pinvXX_' iwl '.mat'],'pinvXX','-v7.3');
+                     save([dir_in '\pinvXX_' iwl '.mat'],'pinvXX','-v7.3');
                     save([dir_in '\YY_' iwl '.mat'],'YY','-v7.3');
                     %free up some memory
                     clear Xbar;

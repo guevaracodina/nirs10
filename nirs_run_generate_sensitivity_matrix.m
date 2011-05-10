@@ -73,12 +73,6 @@ for fi = 1:size(f,1)
                 % formule (1) de l'article de Fang (si on lit
                 %http://mcx.sourceforge.net/cgi-bin/index.cgi?MMC/Doc/FAQ#How_do_I_interpret_MMC_s_output_data
                 % , on comprends )
-                
-                
-                
-                %%% Pour MCX, pas besoin denormaliser : tout est deja fait
-                %%% !! le resultat est F la distribution de flux de la
-                %%% formule (1) de l'article Fang, Boas MCX
                 % Bonnery from Boas et al.
                 %                 sum_Jout = sum(ms(ms<0)/cs.par.nphotons);
                 %                 Svx = 5*5;
@@ -238,12 +232,11 @@ V = struct('fname',fullfile(cs_dir,['sens' '.nii']),...
     'mat',  V_segR.mat);
 
 V = spm_create_vol(V);
-V = spm_write_vol(V,log(sens_reshaped));
+spm_write_vol(V,log(sens_reshaped));
 %%%
 
 m_c1 = zeros(size(Yb8i));
-m_c1(find(Yb8i==1))=1;
-sens_c1 = zeros(size(sens));
+m_c1(Yb8i==1)=1;
 
 PVE = zeros(size(sens,1),2);
 sens_sd_c1i = zeros(1,size(sens,2));
@@ -256,18 +249,17 @@ for i=1:size(sens,1)
         'mat',  V_segR.mat);
     
     V = spm_create_vol(V);
-    V = spm_write_vol(V,sens_sd);
+    spm_write_vol(V,sens_sd);
     
-    %%%% PVE
-    %partial volume effect
-    %%%
+    % PVE : partial volume effect, ratio of optical densities in a whole
+    % head compared to in the gray matter for the same activation
     for j=1:size(sens,2)
         if m_c1(j,1)==1
             sens_sd_c1i(1,j) = sens(i,j);
         end
     end
     PVE(i,1) = sensC(i,1);
-    PVE(i,2) = length(find(sens_sd_c1i>200))/length(find(sens(i,:)>200));
+    PVE(i,2) = sum(sens(i,:))/sum(sens_sd_c1i);%length(find(sens_sd_c1i>200))/length(find(sens(i,:)>200));
     
     V_c1 = struct('fname',fullfile(cs_dir,['banane_c1_' int2str(sensC(i,1)) '.nii']),...
         'dim',  V_segR.dim,...
@@ -276,7 +268,7 @@ for i=1:size(sens,1)
         'mat',  V_segR.mat);
     
     V_c1 = spm_create_vol(V_c1);
-    V_c1 = spm_write_vol(V_c1,reshape(sens_sd_c1i,V_segR.dim));
+    spm_write_vol(V_c1,reshape(sens_sd_c1i,V_segR.dim));
     
 end
 save(fullfile(cs_dir,'PVE.mat'),'PVE');

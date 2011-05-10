@@ -53,7 +53,10 @@ if isfield(job.mcim_cfg,'mcim_in')% image segmentee de l'anatomique de base
     cs.NDkpt = NIRS.Cs.temp.NDkpt;
 else
     roi =1;
-    cs.seg = NIRS.Cs.temp.segR{:}; %ROI from temp
+    try cs.seg = NIRS.Cs.temp.segR{:}; %ROI from temp
+    catch
+        cs.seg = NIRS.Cs.temp.segR;
+    end
     cs.Pfp_rmv = NIRS.Cs.temp.Pfp_roi_rmv;
     cs.Pfp_rmm = NIRS.Cs.temp.Pfp_roi_rmm;
     cs.Pp_rmm = NIRS.Cs.temp.Pp_roi_rmm;
