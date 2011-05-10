@@ -364,8 +364,8 @@ switch WLruns
                         %                 pinvXX = pinv(XX + eye(size(XX,2)));
                     
                     %save the inverse
-                     save([dir_in '\pinvXX_' iwl '.mat'],'pinvXX','-v7.3');
-                    save([dir_in '\YY_' iwl '.mat'],'YY','-v7.3');
+                     save([dir_in '\pinvXX_' int2str(iwl) '.mat'],'pinvXX','-v7.3');
+                    save([dir_in '\YY_' int2str(iwl) '.mat'],'YY','-v7.3');
                     %free up some memory
                     clear Xbar;
                     
