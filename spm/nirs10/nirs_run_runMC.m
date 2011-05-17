@@ -20,12 +20,8 @@ if isfield(job.MC_runCUDAchoice,'MCX1')
         if Idx == 1
             copyfile('D:\Users\Clément\MonteCarlo\mcx.exe',[dir1 '\mcx.exe']);% le premier etait mcx_dir
         end
-        tic
-%         plus r est petit, plus la simu est rapide et plus ca consomme de 
-% ressources
 %         res = system(['mcx.exe -t 2048 -T 64 -n 1e5 -f ' file2 ' -s ' file1 ' -r 10 -g 1 -U 1 -d 1 -a 0 -b 0']);
         res = system(['mcx.exe -t 4800 -T 480 -n 1e6 -f ' file2 ' -s ' file1 ' -r 400 -g 1 -U 1 -d 1 -a 0 -b 0']);
-        toc
     end
     delete([dir1 '\mcx.exe']);
     
@@ -39,6 +35,4 @@ elseif isfield(job.MC_runCUDAchoice,'tMCimg1')
         res = system(str_run);
     end
 end
-% on peut charger la matrice NIRS pour y inclure les nouveaux directory
-% !!!!
 out = fullfile(NIRS.subj_path,'NIRS.mat');
