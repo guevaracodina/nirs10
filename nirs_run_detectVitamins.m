@@ -176,15 +176,24 @@ for iSubj = 1:nSubj
         % What to do??
     end
     
-    if manualMode
-        % Display for manual corrections...
-        addpath(genpath('G:\MesProgrammes\tMCimg_scripts\Scripts\PourPreparerSimuMC\New_SPMnewSegment'));
-        outCorrected = optodesCoord_click(Yanat,'Pick SRC, reject DET',...
-           round(coord_fid(toKeep,[2 1 3])),round(coord_fid(setdiff(idx,toKeep),[2 1 3])));
-       coord_fid = outCorrected(:,[2 1 3]);
-       save(fullfile(subjPath,'outCorrected.mat'),'outCorrected');
-    else
-        coord_fid = coord_fid(toKeep,:);
+    
+    try % optodes previously manaully corrected and saved
+        load(fullfile(subjPath,'outCorrected.mat'),'outCorrected');
+    catch 
+        if manualMode % manaually correct positions that were detected automatically
+           addpath(genpath('G:\MesProgrammes\tMCimg_scripts\Scripts\PourPreparerSimuMC\New_SPMnewSegment'));
+           outCorrected = optodesCoord_click(Yanat,'Pick SRC, reject DET',...
+               round(coord_fid(toKeep,[2 1 3])),round(coord_fid(setdiff(idx,toKeep),[2 1 3])));
+           if ~isempty(outCorrected) % "OK"
+              coord_fid = outCorrected(:,[2 1 3]);
+              save(fullfile(subjPath,'outCorrected.mat'),'outCorrected');
+           else % "cancel"
+               coord_fid = coord_fid(toKeep,:);
+           end
+           
+        else % optodes detected automatically
+            coord_fid = coord_fid(toKeep,:);
+        end
     end
     
     nOptodes = size(coord_fid,1);
