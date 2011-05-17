@@ -18,7 +18,7 @@ if isfield(job.MC_runCUDAchoice,'MCX1')
         file2 = [file1 '.inp'];
         cd(dir1);
         if Idx == 1
-            copyfile('D:\Users\Clément\MonteCarlo\mcx.exe',[dir1 '\mcx.exe']);% le premier etait mcx_dir
+            copyfile([spm('Dir') '\toolbox\nirs10\mc_exe\mcx.exe'],[dir1 '\mcx.exe']);% le premier etait mcx_dir
         end
 %         res = system(['mcx.exe -t 2048 -T 64 -n 1e5 -f ' file2 ' -s ' file1 ' -r 10 -g 1 -U 1 -d 1 -a 0 -b 0']);
         res = system(['mcx.exe -t 4800 -T 480 -n 1e6 -f ' file2 ' -s ' file1 ' -r 400 -g 1 -U 1 -d 1 -a 0 -b 0']);
@@ -31,8 +31,8 @@ elseif isfield(job.MC_runCUDAchoice,'tMCimg1')
     cfg_run_cd(jobCD);
     for it = 1:size(t,1)
         t_it = t{it,1};
-        str_run = ['D:\Users\Clément\MonteCarlo\tMCimg.exe ' t_it(end-15:end-4)];
+        str_run = [[spm('Dir') 'toolbox\nirs10\mc_exe\tMCimg.exe'] t_it(end-15:end-4)];
         res = system(str_run);
     end
 end
-out = fullfile(NIRS.subj_path,'NIRS.mat');
+out = 1;%fullfile(NIRS.subj_path,'NIRS.mat');
