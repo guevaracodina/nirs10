@@ -1,22 +1,27 @@
 function out = nirs_run_configMC(job)
+% Manages the writing of the configurqtion files for either MCX or tMCimg
+% FORMAT nirs_configMC_writeCFGfiles(jobW) = nirs_run_configMC(MC_nam,NIRSmat,NewDirCopyNIRS,mcim_cfg,MC_CUDAchoice,MC_configdir,MC_parameters)
+% MC_nam         - Name of the MC simulation
+% NIRSmat        - NIRS matrix
+% NewDirCopyNIRS - New directory for NIRSmat if specified
+% mcim_cfg       - Segmented image that will be binarised
+% MC_CUDAchoice  - MC algorithm
+% MC_configdir   - directory for configuration files
+% MC_parameters  - parameters for the simulation
 %_______________________________________________________________________
-% Copyright (C) 2010 LIOM Laboratoire d'Imagerie Optique et Moléculaire
-%                    École Polytechnique de Montréal
-%______________________________________________________________________
+%
+% Either the last image from which a ROI as been taken or the selected
+% image can be processed. Whereas in the second case all the channels will 
+% be kept, in the first, the user can choose.
+% The chosen image is then transformed from anisotropic voxels space to 
+% isotropic voxels space and transformed to binary image. All the positions
+% are also corrected : the positions are first changed from mm to voxels.
+% The probe is then fitted in the rigid space with isotropic voxels.
+% Last, directions are calculated.
+%_______________________________________________________________________
+% Copyright (C) 2010 Laboratoire d'Imagerie Optique et Moleculaire
+% Clement Bonnery
 
-%Usage: Generate .bin segmentation volume (Reduce the .nii segmented volume
-%with int16 precisions on intensities to a .nii volume with uint8 precision)
-%Then generate .cfg or .inp configuration files
-
-%Note to clarify: using index nothing for anisotropic, not for interpolated, and iso
-%for isotropic
-
-% Ce que ca fait :
-% 1 : on travaille dans le domaine des voxels
-% En fait on reste dans l'espace rigide originel de l'IRM. La seule chose
-% est que l'on passe des voxels parallépipédiques aux voxels
-% isotropiques mais en gardant les mêmes orientations !!!
-% 2 : changer de uint16 a uint8
 
 load(job.NIRSmat{1,1});
 
@@ -42,8 +47,8 @@ cs.dir = [job.MC_configdir csn];
 cs.par = job.MC_parameters;
 
 if isfield(job.mcim_cfg,'mcim_in')% image segmentee de l'anatomique de base
-    cs.seg = job.mcim_cfg.mcim_in{:};
     roi =0;% image choisie
+    cs.seg = job.mcim_cfg.mcim_in{:};
     cs.Pfp_rmv = NIRS.Cs.temp.Pfp_roi_rmv;
     cs.Pfp_rmm = NIRS.Cs.temp.Pfp_roi_rmm;
     cs.Pp_rmm = NIRS.Cs.temp.Pp_roi_rmm;
@@ -149,14 +154,14 @@ cs.Pwd_rmm = Pwd_rmm;
 % 8bits .bin image
 [~,id,~] = fileparts(V_rmiv.fname);
 dim_rmiv = V_rmiv.dim;
-n = ['vol8bit_' id '.bin'];
+n_b8i = ['vol8bit_' id '.bin'];
 
 cs.segR = outRS;
-cs.b8i = fullfile(NIRS.Dt.s.p,[job.MC_configdir csn],n);
+cs.b8i = fullfile(NIRS.Dt.s.p,[job.MC_configdir csn],n_b8i);
 NIRS.Cs.mcs{i_cs} = cs;
 save(job.NIRSmat{1,1},'NIRS');
 
-fid = fopen(fullfile(NIRS.Dt.s.p,[job.MC_configdir csn],n),'wb');
+fid = fopen(fullfile(NIRS.Dt.s.p,[job.MC_configdir csn],n_b8i),'wb');
 fwrite(fid, Y8_rmiv, 'uint8');
 fclose(fid);
 
@@ -202,12 +207,8 @@ for iwl = 1:size(NIRS.Cf.dev.wl,2)
     
     %%%% attention la on est avec l'image resizee...........
     jobW.algo = job.MC_CUDAchoice;
-    jobW.n_id = n;
-    jobW.mc_dir = fullfile(NIRS.Dt.s.p,[job.MC_configdir csn]);
-    
-    jobW.n = cs.b8i;
-    
-    jobW.dim_rmiv = dim_rmiv;
+    jobW.n_b8i = n_b8i;
+    jobW.mc_dir = fullfile(NIRS.Dt.s.p,[job.MC_configdir csn]);    
     jobW.ROIlimits = [1 1 1; dim_rmiv];
     
     jobW.parameters = parameters;

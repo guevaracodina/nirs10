@@ -1,20 +1,26 @@
 function out = nirs_run_buildroi2(job)
-% GUI to build an ROI
-% Create and initialise 'Build ROI' GUI for MonteCarlo Simulations
+% Builds the smallest ROI containing all the selected source-detector pairs
+% FORMAT NIRSmat = nirs_run_buildroi2(NIRS, image_in, keepAllChannels, outputprefix)
+% NIRS            - NIRS matrix
+% image_in        - segmented image from which the ROI will be extracted
+% keepAllChannels - Channels to keep in the ROI
+% outputprefix    - Prefix of the ROI image name
+%_______________________________________________________________________
+%
+% The image will be croped with respect to the selected source-detector 
+% pairs (channels) to are to be kept for the MonteCarlo simulation. You
+% only have to enter the channels numbers for the first wavelength.
 %_______________________________________________________________________
 % Copyright (C) 2010 Laboratoire d'Imagerie Optique et Moleculaire
 
 % Clément Bonnéry
 % 2011-03
 
-% roi must contain the selected channels
 load(job.NIRSmat{:});
 
-%%%
 V = spm_vol(job.image_in{:});
 Y = spm_read_vols(V);
 [dir,name] = fileparts(V.fname);
-%%% on sauve les fibres qui sont a la surface dans la ROI
 NS = NIRS.Cf.H.S.N;
 Pfp_rmm = NIRS.Cf.H.P.r.m.mm.fp;
 Pp_rmm = NIRS.Cf.H.P.r.m.mm.p;
@@ -47,7 +53,7 @@ for i=1:size(Pfp_roi_rmm,2)
     Pfp_roi_rmvtemp(:,i) = V.mat\[Pfp_roi_rmm(:,i);1];
 end
 Pfp_roi_rmv = Pfp_roi_rmvtemp(1:3,:);
-%%% maintenant je prends les extremes
+
 bbv(1,1) = min(Pfp_roi_rmv(1,:));
 bbv(1,2) = max(Pfp_roi_rmv(1,:));
 
@@ -106,5 +112,5 @@ NIRS.Cs.temp.Pp_roi_c1_rmm = Pp_roi_c1_rmm;
 NIRS.Cs.temp.segR = fullfile(dir,[job.output_prefix,name,'.nii']);
 save(job.NIRSmat{:},'NIRS');
 
-out = 1;
+out.NIRSmat = job.NIRSmat;
 end

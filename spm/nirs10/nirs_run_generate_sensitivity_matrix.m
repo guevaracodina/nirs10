@@ -1,6 +1,19 @@
 function out = nirs_run_generate_sensitivity_matrix(job)
+% Generates sensitivity matrix from output MC simulations files (MCX or
+% tMCimg)
+% FORMAT nirs_run_generate_sensitivity_matrix(outMCfiles,NIRSmat)
+% outMCfiles - MC simulations output files (2pt or mc2)
+% NIRSmat    - NIRS matrix
+%_______________________________________________________________________
 %
-%
+% First the MC output is normalised according to Boas et al. and Fang et
+% al.
+% As some simulations may have failed the code is trying to recover all the
+% pairs. One loop is applied to sources then the paired detectors are 
+% searched.
+% After normalisation, PVE is calculated.
+%_______________________________________________________________________
+% Copyright (C) 2010 Laboratoire d'Imagerie Optique et Moleculaire
 % Clément Bonnéry 03/2011
 
 load(job.NIRSmat{1,1});
@@ -69,8 +82,10 @@ for fi = 1:size(f,1)
         switch cs.alg
             case 1 % MCX
                 % already normalized (http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/README : 6.1 output files)
-                ms=loadmc2(f{fi,:},V_segR.dim,'float');
+                 ms=loadmc2(f{fi,:},[V_segR.dim 50],'float');
+%                 ms=loadmc2(f{fi,:},V_segR.dim,'float');
                 cw_mcx=sum(ms,4);
+                ms = cw_mcx;
                 
             case 2 % tMCimg
                 fid=fopen(f{fi,:},'rb');
@@ -120,8 +135,10 @@ for fi = 1:size(f,1)
                     switch cs.alg
                         case 1 % MCX
                             % already normalized (http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/README : 6.1 output files)
-                            md=loadmc2(fullfile(cs_dir,[Dfn Oe]),V_segR.dim,'float');
-                            cw_md=sum(md,4);
+%                             md=loadmc2(fullfile(cs_dir,[Dfn Oe]),V_segR.dim,'float');
+                             md=loadmc2(fullfile(cs_dir,[Dfn Oe]),[V_segR.dim 50],'float');
+                             cw_md=sum(md,4);
+                             md = cw_mcx;
                             
                             % sur la moyenne des points autour... : a coder
                             rayon = 3;
@@ -130,9 +147,13 @@ for fi = 1:size(f,1)
                             phi0_D =0;
                             for ir = 1:rayon
                                 phi0_S = phi0_S + ms(cs.Pfp_rmiv(1,Sn)+(ir-cntr),cs.Pfp_rmiv(2,Sn)+(ir-cntr),cs.Pfp_rmiv(3,Sn)+(ir-cntr));
-                                phi0_D = phi0_D + md(cs.Pfp_rmiv(1,D_Sn(ir))+(ir-cntr),cs.Pfp_rmiv(2,D_Sn(ir))+(ir-cntr),cs.Pfp_rmiv(3,D_Sn(ir))+(ir-cntr));
+                                phi0_D = phi0_D + md(cs.Pfp_rmiv(1,D_Sn(1,i))+(ir-cntr),cs.Pfp_rmiv(2,D_Sn(1,i))+(ir-cntr),cs.Pfp_rmiv(3,D_Sn(1,i))+(ir-cntr));
                             end
+                            if isnan(phi0_S), phi0_S =0;end
+                            if isnan(phi0_D), phi0_D =0;end
                             
+                            phi0 = phi0_S + phi0_D;
+                            disp(['phi0=' int2str(phi0)]);
                             % Sensitivity matrix
                             sens_sd = ms.*md / (1+(phi0_S + phi0_D)/2);
                             sens(isd+1,:) = reshape(sens_sd,[numel(sens_sd),1]);
@@ -170,6 +191,8 @@ for fi = 1:size(f,1)
                                 phi0_D = phi0_D + mdR(cs.Pfp_rmiv(1,D_Sn(i))+(i-cntr),cs.Pfp_rmiv(2,D_Sn(i))+(i-cntr),cs.Pfp_rmiv(3,D_Sn(i))+(i-cntr));
                             end
                             % Sensitivity matrix
+                            phi0 = phi0_S + phi0_D;
+                             disp(['phi0=' int2str(phi0)]);
                             sens_sd = msP.*mdP / (1+(phi0_S + phi0_D)/2);
                             sens(isd+1,:) = sens_sd';
                             isd = isd+1;
@@ -210,8 +233,10 @@ spm_write_vol(V,log(sens_reshaped));
 m_c1 = zeros(size(Yb8i));
 m_c1(Yb8i==1)=1;
 
-PVE = zeros(size(sens,1),2);
-sens_sd_c1i = zeros(1,size(sens,2));
+% sens_sd_c1i = zeros(1,size(sens,2));
+sens_c1 =  zeros(size(sens));
+sens_reshaped_c1 =  zeros(size(sens_reshaped));
+
 for i=1:size(sens,1)
     sens_sd = reshape(sens(i,:),V_segR.dim);
     V = struct('fname',fullfile(cs_dir,['banane_' int2str(sensC(i,1)) '.nii']),...
@@ -223,15 +248,21 @@ for i=1:size(sens,1)
     V = spm_create_vol(V);
     spm_write_vol(V,sens_sd);
     
-    % PVE : partial volume effect, ratio of optical densities in a whole
-    % head compared to in the gray matter for the same activation
     for j=1:size(sens,2)
         if m_c1(j,1)==1
-            sens_sd_c1i(1,j) = sens(i,j);
+%             sens_sd_c1i(1,j) = sens(i,j);
+            sens_c1(i,j) = sens(i,j);
         end
     end
-    PVE(i,1) = sensC(i,1);
-    PVE(i,2) = sum(sens(i,:))/sum(sens_sd_c1i);%length(find(sens_sd_c1i>200))/length(find(sens(i,:)>200));
+    sens_reshaped_c1 = sens_reshaped_c1 + reshape(sens_c1(i,:),V_segR.dim);
+    
+        % PVE : partial volume effect, ratio of optical densities in a whole
+    % head compared to in the gray matter for the same activation
+%     PVE = sens_reshaped/sens_reshaped_c1;
+%     PVE = zeros(size(sens,1),2);
+
+%     PVE(i,1) = sensC(i,1);
+     PVE(i,:) = sens(i,:)/sens_c1(i,:);
     
     V_c1 = struct('fname',fullfile(cs_dir,['banane_c1_' int2str(sensC(i,1)) '.nii']),...
         'dim',  V_segR.dim,...
@@ -240,9 +271,18 @@ for i=1:size(sens,1)
         'mat',  V_segR.mat);
     
     V_c1 = spm_create_vol(V_c1);
-    spm_write_vol(V_c1,reshape(sens_sd_c1i,V_segR.dim));
+    spm_write_vol(V_c1,reshape(sens_c1(i,:),V_segR.dim));%sens_sd_c1i,V_segR.dim));
     
 end
-save(fullfile(cs_dir,'PVE.mat'),'PVE');
+
+V_pve = struct('fname',fullfile(cs_dir,'PVE.nii'),...
+        'dim',  V_segR.dim,...
+        'dt',   V_segR.dt,...
+        'pinfo',V_segR.pinfo,...
+        'mat',  V_segR.mat);
+    
+    V_pve = spm_create_vol(V_pve);
+    spm_write_vol(V_pve,PVE);
+    
 out = 1;
 end

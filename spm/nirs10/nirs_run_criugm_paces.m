@@ -90,9 +90,12 @@ for Idx=1:size(job.NIRSmat,1)
         rDtp = NIRS.Dt.fir.pp(lst).p; % path for files to be processed
         %loop over data files
         for f=1:size(rDtp,1)
-            %             d = fopen_NIR(rDtp{f},NC);
-            fd =load(rDtp{f});
-            d =fd.d';
+            if strcmp(NIRS.Cf.dev.n,'CW6')
+                d = fopen_NIR(rDtp{f},NC);
+            elseif strcmp(NIRS.Cf.dev.n,'CW5')
+                fd =load(rDtp{f});
+                d =fd.d';
+            end
             ns = size(d,2);
             % Heart Rate
             % Frequency of Mayer Waves not calculated: to be done
@@ -135,33 +138,33 @@ for Idx=1:size(job.NIRSmat,1)
                     
                     if ex==0 % resting state
                         
-
-                            k1 = [k1 Ci];
-
                         
-%                         v = heart.pace(Ci,:);
-%                         median1 = median(v);
-%                         std1 = std(v);
-%                         count = 0;
-%                         if MinHeartRate < median1 && median1 < MaxHeartRate && ...
-%                                 std1 < 2*MaxHeartStdev
-%                             %keep channel
-%                             %count=count+1;
-%                             %channel list that we keep:
-%                             k1 = [k1 Ci];
-%                             %clean up aberrant values
-%                             %for i4=1:length(v)
-%                             %if v(i4) <= MinHeartRate || v(i4) >= MaxHeartRate
-%                             %quick fix, better would be to take average
-%                             %value at ends of bad intervals
-%                             %    v(i4) = median1;
-%                             %end
-%                             
-%                             %end
-%                             heart.pace(Ci,:) = v;
-%                         else
-%                             heart.pace(Ci,:) = zeros(1,ns);
-%                         end
+                        k1 = [k1 Ci];
+                        
+                        
+                        %                         v = heart.pace(Ci,:);
+                        %                         median1 = median(v);
+                        %                         std1 = std(v);
+                        %                         count = 0;
+                        %                         if MinHeartRate < median1 && median1 < MaxHeartRate && ...
+                        %                                 std1 < 2*MaxHeartStdev
+                        %                             %keep channel
+                        %                             %count=count+1;
+                        %                             %channel list that we keep:
+                        %                             k1 = [k1 Ci];
+                        %                             %clean up aberrant values
+                        %                             %for i4=1:length(v)
+                        %                             %if v(i4) <= MinHeartRate || v(i4) >= MaxHeartRate
+                        %                             %quick fix, better would be to take average
+                        %                             %value at ends of bad intervals
+                        %                             %    v(i4) = median1;
+                        %                             %end
+                        %
+                        %                             %end
+                        %                             heart.pace(Ci,:) = v;
+                        %                         else
+                        %                             heart.pace(Ci,:) = zeros(1,ns);
+                        %                         end
                     else % during exercise
                         test_C = sum(heart.pace(Ci,:)); % on a le battement ou 0 si no battementm il faut juste voir si on a assez de battement d'ou la somme
                         %%%%%%la valeur reste a fixer...automatiquement
@@ -311,11 +314,13 @@ for Idx=1:size(job.NIRSmat,1)
                         whp_b = zeros(size(whp));
                         level = graythresh(whp(C_HbO,:));% Otsu
                         whp_b(C_HbO,:) = im2bw(whp(C_HbO,:),level);
-                        % Affichage
-                        % CW6 ::::::
-                        % whpR = zeros(NC,size(whp,2)); whpR([k1 k1-(NC/2)],:) = whp; figure;imagesc(whpR);title(['Heart pace: ' rDtp{f}]);
-                        % CW5 ::::::
-                        % whpR = zeros(NC,size(whp,2)); whpR([k1 k1+(NC/2)],:) = whp; figure;imagesc(whpR);title(['Heart pace: ' rDtp{f}]);
+                        
+                        % Affichage du resultat
+                        if strcmp(NIRS.Cf.dev.n,'CW6')
+                            whpR = zeros(NC,size(whp,2)); whpR([k1 k1-(NC/2)],:) = whp; figure;imagesc(whpR);title(['Heart pace: ' rDtp{f}]);
+                        elseif strcmp(NIRS.Cf.dev.n,'CW5')
+                            whpR = zeros(NC,size(whp,2)); whpR([k1 k1+(NC/2)],:) = whp; figure;imagesc(whpR);title(['Heart pace: ' rDtp{f}]);
+                        end
                         
                         % reconstruction
                         bouchetrou = hp.*whp_b;

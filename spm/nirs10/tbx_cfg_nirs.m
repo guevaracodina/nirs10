@@ -337,14 +337,14 @@ T1_vitamins.help      = {'The helmet will be read in future module from T1 image
 no_helmet = cfg_branch; 
 no_helmet.name      = 'No helmet information';
 no_helmet.tag       = 'no_helmet';
-no_helmet.help      = {'No helmet information available. Some modules won''t work properly.'};
+no_helmet.help      = {'Helmet informations will be extracted from ''.nirs'' file.'};
 
 helmet         = cfg_choice;
 helmet.tag     = 'helmet';
 helmet.name    = 'Helmet';
 helmet.values = {text_brainsight T1_vitamins no_helmet};
 helmet.val     = {text_brainsight};
-helmet.help    = {'If you choose a Brainsight text file, it will be used to determine all you need about sources, detectors, channels,... Otherwise, information will be extrqcted from the first file.'};
+helmet.help    = {'If you choose a Brainsight text file, it will be used to determine all you need about sources, detectors and other points of interest.'};
 
 nirs_files         = cfg_files;
 nirs_files.name    = '''^.nirs'' files';
@@ -391,10 +391,13 @@ CWsystem.help = {'Help'};
 baseline_method = cfg_menu;
 baseline_method.tag  = 'baseline_method';
 baseline_method.name = 'Method to calculate Baseline';
-baseline_method.labels = {'Median','Initial Value','Mean'};
-baseline_method.values = {0,1,2};
+baseline_method.labels = {'Median','Initial Value','Mean','Baseline window'};
+baseline_method.values = {0,1,2,3};
 baseline_method.def  = @(val)nirs_get_defaults('readNIRS.criugm1.baseline_method', val{:});
-baseline_method.help = {'Help'};
+baseline_method.help = {'Median takes the median of all the points in the ''.nirs'' file.'
+    'Initial Value takes the first value in the ''.nirs'' file.'
+    'Mean takes the mean of all the points in the ''.nirs'' file.'
+    'Baseline window allows you to run the above method on a selected window of timeof the ''.nirs'' file. NOT YET IMPLEMENTED !!'}';
 
 subj_path         = cfg_files;
 subj_path.tag     = 'subj_path';
@@ -1005,7 +1008,7 @@ buildroi1.tag  = 'buildroi1';
 buildroi1.name = 'Set vertices and build ROI';
 buildroi1.val  = {NIRSmat keepAllChannels image_in output_prefix};
 buildroi1.prog = @nirs_run_buildroi2;
-buildroi1.help = {'Define region of interest.'};
+buildroi1.help = {'Define region of interest containing all the selected channels. Please only enter the channels numbers for the first wavelength.'};
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Configuration for MC segmentation: MCsegment   
