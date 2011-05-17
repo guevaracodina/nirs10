@@ -258,11 +258,11 @@ switch WLruns
         Xmc = Kmat.sens;
         NCdemi = size(Xmc,1)/2;
         %         X = sparse([[Xmc(1:NCdemi,:)*415.5 Xmc(1:NCdemi,:)*2141.8];[Xmc(NCdemi+1:end,:)*1008.0 Xmc(NCdemi+1:end,:)*778.0]]);
-        Xwl{1} = sparse([Xmc(1:NCdemi,:)*415.5 Xmc(1:NCdemi,:)*2141.8]);
-        Xwl{2} = sparse([Xmc(NCdemi+1:end,:)*1008.0 Xmc(NCdemi+1:end,:)*778.0]);
+        Xwlt{1} = sparse([Xmc(1:NCdemi,:)*415.5 Xmc(1:NCdemi,:)*2141.8]);
+        Xwlt{2} = sparse([Xmc(NCdemi+1:end,:)*1008.0 Xmc(NCdemi+1:end,:)*778.0]);
         
         for iwl=1:2
-            Xwl = Xwl{iwl};
+            Xwl = Xwlt{1,iwl};
             
             %% Qn : Covariance pour la longueur d'onde
             lst=(1:NCdemi);
@@ -354,7 +354,7 @@ switch WLruns
                     %%%%%% place de pinv...
                     %%% si l'on voulais prendre en compte les covariances, se rapporter
                     %%% au fichier TeX :
-                    clear M_c1 M_c1_wl W X Xmc Yb8i_c1 Yb8i_c5 beta_prior m_c1
+%                     clear M_c1 M_c1_wl W X Xmc Yb8i_c1 Yb8i_c5 beta_prior m_c1
                     alpha =1;
                     XX =Xbar'*Xbar;
                     YY = (Xbar'*Ybar);
