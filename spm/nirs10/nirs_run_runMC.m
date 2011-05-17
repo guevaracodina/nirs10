@@ -4,6 +4,24 @@ function out = nirs_run_runMC(job)
 %                    École Polytechnique de Montréal
 %_______________________________________________________________________
 
+load(job.NIRSmat{1,1});
+
+%%%%%%%% meme code que generate sensitivity matrix
+try
+    f = job.MC_runCUDAchoice.MCX1.MCXconfigFiles;
+catch
+    disp('a coder')
+end
+cs_dir =  fileparts(f{1,:});
+cs_ldir = cs_dir(max(strfind(cs_dir,'\'))+9:end);
+
+ics =1;
+while ~strcmp(cs_ldir,NIRS.Cs.n{ics})
+    ics =ics+1;
+end
+cs = NIRS.Cs.mcs{ics};
+%%%%%%%%
+
 %Simulate MCX
 if isfield(job.MC_runCUDAchoice,'MCX1')
     t = job.MC_runCUDAchoice.MCX1.MCXconfigFiles;
@@ -21,7 +39,7 @@ if isfield(job.MC_runCUDAchoice,'MCX1')
             copyfile([spm('Dir') '\toolbox\nirs10\mc_exe\mcx.exe'],[dir1 '\mcx.exe']);% le premier etait mcx_dir
         end
 %         res = system(['mcx.exe -t 2048 -T 64 -n 1e5 -f ' file2 ' -s ' file1 ' -r 10 -g 1 -U 1 -d 1 -a 0 -b 0']);
-        res = system(['mcx.exe -t 4800 -T 480 -n 1e6 -f ' file2 ' -s ' file1 ' -r 400 -g 1 -U 1 -d 1 -a 0 -b 0']);
+        res = system(['mcx.exe -t 4800 -T 480 -n ' cs.par.nphotons ' -f ' file2 ' -s ' file1 ' -r 400 -g 1 -U 1 -d 1 -a 0 -b 0']);
     end
     delete([dir1 '\mcx.exe']);
     

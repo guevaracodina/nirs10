@@ -388,6 +388,14 @@ CWsystem.help = {'Help'};
 % NIRSsessions.num     = [1 Inf];
 % NIRSsessions.help = {'Enter all the data you want to process for the selected subject. These data must be sorted by helmet and device. Create as many sets as the number of different configurations.'};
 
+boldmask        = cfg_files;
+boldmask.tag    = 'boldmask';
+boldmask.name   = 'BOLD mask';
+boldmask.filter = '.mat';
+boldmask.num    = [0 Inf];
+boldmask.val{1} = {''};
+boldmask.help   = {'Help'};
+
 baseline_method = cfg_menu;
 baseline_method.tag  = 'baseline_method';
 baseline_method.name = 'Method to calculate Baseline';
@@ -410,7 +418,7 @@ subj_path.num     = [1 1];
 subj         = cfg_branch;
 subj.tag     = 'subj';
 subj.name    = 'Subject';
-subj.val     = {age1 subj_path anatT1 helmet TopoData CWsystem protocol nirs_files baseline_method};
+subj.val     = {age1 subj_path anatT1 helmet CWsystem nirs_files protocol TopoData boldmask baseline_method};
 subj.help    = {'Subject'};
 
 generic2         = cfg_repeat;
@@ -2426,7 +2434,7 @@ MC_runCUDAchoice.help   = {['Choose method of Monte Carlo simulation. ',...
 runMC1      = cfg_exbranch;      
 runMC1.name = 'Run Monte Carlo simulation';           
 runMC1.tag  = 'runMC1';
-runMC1.val  = {MC_runCUDAchoice}; 
+runMC1.val  = {NIRSmat MC_runCUDAchoice}; 
 runMC1.prog = @nirs_run_runMC;  
 runMC1.vout = @nirs_cfg_vout_runMC; 
 runMC1.help = {'Run Monte Carlo simulation.'};

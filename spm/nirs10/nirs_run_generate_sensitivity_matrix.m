@@ -82,8 +82,14 @@ for fi = 1:size(f,1)
         switch cs.alg
             case 1 % MCX
                 % already normalized (http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/README : 6.1 output files)
-                 ms=loadmc2(f{fi,:},[V_segR.dim 50],'float');
-%                 ms=loadmc2(f{fi,:},V_segR.dim,'float');
+                try
+                    deltat = cs.numTimeGates;
+                    deltaT = cs.deltaT;
+                catch
+                    deltat = 10*1e-10;
+                    deltaT = 1e-10;
+                end
+                 ms=loadmc2(f{fi,:},[V_segR.dim deltat/deltaT],'float');
                 cw_mcx=sum(ms,4);
                 ms = cw_mcx;
                 
@@ -136,7 +142,7 @@ for fi = 1:size(f,1)
                         case 1 % MCX
                             % already normalized (http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/README : 6.1 output files)
 %                             md=loadmc2(fullfile(cs_dir,[Dfn Oe]),V_segR.dim,'float');
-                             md=loadmc2(fullfile(cs_dir,[Dfn Oe]),[V_segR.dim 50],'float');
+                             md=loadmc2(fullfile(cs_dir,[Dfn Oe]),[V_segR.dim deltat/deltaT],'float');
                              cw_md=sum(md,4);
                              md = cw_mcx;
                             
@@ -262,7 +268,7 @@ for i=1:size(sens,1)
 %     PVE = zeros(size(sens,1),2);
 
 %     PVE(i,1) = sensC(i,1);
-     PVE(i,:) = sens(i,:)/sens_c1(i,:);
+     PVE(i,:) = sens(i,:)./sens_c1(i,:);
     
     V_c1 = struct('fname',fullfile(cs_dir,['banane_c1_' int2str(sensC(i,1)) '.nii']),...
         'dim',  V_segR.dim,...

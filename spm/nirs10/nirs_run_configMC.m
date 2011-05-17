@@ -158,6 +158,10 @@ n_b8i = ['vol8bit_' id '.bin'];
 
 cs.segR = outRS;
 cs.b8i = fullfile(NIRS.Dt.s.p,[job.MC_configdir csn],n_b8i);
+
+cs.numTimeGates = job.MC_parameters.numTimeGates;
+cs.deltaT = job.MC_parameters.deltaT;
+
 NIRS.Cs.mcs{i_cs} = cs;
 save(job.NIRSmat{1,1},'NIRS');
 
