@@ -24,6 +24,11 @@ for is=1:sN
         NIRS.Dt.ana.T1 = job.subj(1,is).anatT1{:};
     end
     
+    % BOLD mask
+    if ~isempty(job.subj(1,is).boldmask{:})
+        NIRS.Cm.bold = job.subj(1,is).boldmask{:};
+    end
+    
     % Helmet
     if isfield(job.subj(1,is).helmet,'text_brainsight')
         staxp = job.subj(1,is).helmet.text_brainsight{:};

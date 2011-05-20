@@ -83,8 +83,10 @@ for fi = 1:size(f,1)
             case 1 % MCX
                 % already normalized (http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/README : 6.1 output files)
                 try
-                    deltat = cs.numTimeGates;
-                    deltaT = cs.deltaT;
+%                     deltat = cs.numTimeGates;
+%                     deltaT = cs.deltaT;
+deltat =10;
+deltaT =1;
                 catch
                     deltat = 10*1e-10;
                     deltaT = 1e-10;
@@ -268,7 +270,7 @@ for i=1:size(sens,1)
 %     PVE = zeros(size(sens,1),2);
 
 %     PVE(i,1) = sensC(i,1);
-     PVE(i,:) = sens(i,:)./sens_c1(i,:);
+%      PVE(i,:) = sens(i,:)./sens_c1(i,:);
     
     V_c1 = struct('fname',fullfile(cs_dir,['banane_c1_' int2str(sensC(i,1)) '.nii']),...
         'dim',  V_segR.dim,...
@@ -281,14 +283,14 @@ for i=1:size(sens,1)
     
 end
 
-V_pve = struct('fname',fullfile(cs_dir,'PVE.nii'),...
-        'dim',  V_segR.dim,...
-        'dt',   V_segR.dt,...
-        'pinfo',V_segR.pinfo,...
-        'mat',  V_segR.mat);
-    
-    V_pve = spm_create_vol(V_pve);
-    spm_write_vol(V_pve,PVE);
+% V_pve = struct('fname',fullfile(cs_dir,'PVE.nii'),...
+%         'dim',  V_segR.dim,...
+%         'dt',   V_segR.dt,...
+%         'pinfo',V_segR.pinfo,...
+%         'mat',  V_segR.mat);
+%     
+%     V_pve = spm_create_vol(V_pve);
+%     spm_write_vol(V_pve,PVE);
     
 out = 1;
 end
