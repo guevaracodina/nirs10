@@ -179,10 +179,13 @@ for iSubj = 1:nSubj
     
     try % optodes previously manaully corrected and saved
         load(fullfile(subjPath,'outCorrected.mat'),'outCorrected');
+        coord_fid = outCorrected(:,[2 1 3]);
     catch 
         if manualMode % manaually correct positions that were detected automatically
            addpath(genpath('G:\MesProgrammes\tMCimg_scripts\Scripts\PourPreparerSimuMC\New_SPMnewSegment'));
-           outCorrected = optodesCoord_click(Yanat,'Pick SRC, reject DET',...
+           idxSubjID = strfind(subjPath,'P2S');
+           subjID = subjPath(idxSubjID:idxSubjID+4);
+           outCorrected = optodesCoord_click(Yanat,[subjID '. Left: Keep, Right: Reject'],...
                round(coord_fid(toKeep,[2 1 3])),round(coord_fid(setdiff(idx,toKeep),[2 1 3])));
            if ~isempty(outCorrected) % "OK"
               coord_fid = outCorrected(:,[2 1 3]);
@@ -341,8 +344,13 @@ for iSubj = 1:nSubj
     for iOptode = 1:nOptodes-mod(nOptodes,2)
         dd = sqrt(sum((coord_fid_proj2D_rot1 - ones(nOptodes,1)*coord_helmet2D(iOptode,:)).^2,2));
         [err iFid] = min(dd);
-        if ~isempty(find(optOrder1==iFid)) % if already assigned
-            [err iFid] = min(dd(setdiff(1:nOptodes-mod(nOptodes,2),iFid)));        
+        iFid2 = [];
+        while ~isempty(find(optOrder1==iFid)) % if already assigned
+            iFid2 = [iFid2 iFid];
+            iFidDiff = setdiff(1:nOptodes-mod(nOptodes,2),iFid2);
+            ddDiff = dd(iFidDiff);
+            [err idxFid] = min(ddDiff); 
+            iFid = iFidDiff(idxFid);
         end
        optOrder1(iOptode) = iFid;
     end
@@ -353,8 +361,13 @@ for iSubj = 1:nSubj
     for iOptode = 1:nOptodes-mod(nOptodes,2)
         dd = sqrt(sum((coord_fid_proj2D_rot2 - ones(nOptodes,1)*coord_helmet2D(iOptode,:)).^2,2));
         [err iFid] = min(dd);
-        if ~isempty(find(optOrder2==iFid)) % if already assigned
-            [err iFid] = min(dd(setdiff(1:nOptodes-mod(nOptodes,2),iFid)));        
+        iFid2 = [];
+        while ~isempty(find(optOrder2==iFid)) % if already assigned
+            iFid2 = [iFid2 iFid];
+            iFidDiff = setdiff(1:nOptodes-mod(nOptodes,2),iFid2);
+            ddDiff = dd(iFidDiff);
+            [err idxFid] = min(ddDiff); 
+            iFid = iFidDiff(idxFid);
         end
         optOrder2(iOptode) = iFid;
     end
@@ -365,8 +378,13 @@ for iSubj = 1:nSubj
     for iOptode = 1:nOptodes-mod(nOptodes,2)
         dd = sqrt(sum((coord_fid_proj2D_rot3 - ones(nOptodes,1)*coord_helmet2D(iOptode,:)).^2,2));
         [err iFid] = min(dd);
-        if ~isempty(find(optOrder3==iFid)) % if already assigned
-            [err iFid] = min(dd(setdiff(1:nOptodes-mod(nOptodes,2),iFid)));        
+        iFid2 = [];
+        while ~isempty(find(optOrder3==iFid)) % if already assigned
+            iFid2 = [iFid2 iFid];
+            iFidDiff = setdiff(1:nOptodes-mod(nOptodes,2),iFid2);
+            ddDiff = dd(iFidDiff);
+            [err idxFid] = min(ddDiff); 
+            iFid = iFidDiff(idxFid);
         end
         optOrder3(iOptode) = iFid;
     end
@@ -377,8 +395,13 @@ for iSubj = 1:nSubj
     for iOptode = 1:nOptodes-mod(nOptodes,2)
         dd = sqrt(sum((coord_fid_proj2D_rot4 - ones(nOptodes,1)*coord_helmet2D(iOptode,:)).^2,2));
         [err iFid] = min(dd);
-        if ~isempty(find(optOrder4==iFid)) % if already assigned
-            [err iFid] = min(dd(setdiff(1:nOptodes-mod(nOptodes,2),iFid)));        
+        iFid2 = [];
+        while ~isempty(find(optOrder4==iFid)) % if already assigned
+            iFid2 = [iFid2 iFid];
+            iFidDiff = setdiff(1:nOptodes-mod(nOptodes,2),iFid2);
+            ddDiff = dd(iFidDiff);
+            [err idxFid] = min(ddDiff); 
+            iFid = iFidDiff(idxFid);
         end
         optOrder4(iOptode) = iFid;
     end
