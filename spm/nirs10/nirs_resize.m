@@ -10,7 +10,7 @@ if iscell(P), P = P{:};end
 PO_dim = job.out_dim;
 PO_dt = job.out_dt;
 PO_autonaming = job.out_autonaming;
-PO_prefix = job.out_prefix;
+try PO_prefix = job.out_prefix; catch, end
 PO_dir = job.out_dir;
 
 V = spm_vol(P);
