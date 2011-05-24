@@ -2579,6 +2579,22 @@ end
 % sensmat.num     = [1 1];     % Number of inputs required
 % sensmat.help    = {'Select sensitivity matrix for this subject.'}; % help t
 
+temp_pts       = cfg_entry; 
+temp_pts.name    = 'Point temporel de l''inversion'; % The displayed name
+temp_pts.tag     = 'temp_pts';       %file names
+temp_pts.strtype = 'r';  
+temp_pts.num     = [1 Inf];     % Number of inputs required 
+% temp_pts.def = @(val)nirs_get_defaults('configMC1.nphotons', val{:});
+temp_pts.help    = {'Input time point.'}; 
+             
+sens_vxsize= cfg_entry; 
+sens_vxsize.name    = 'Voxel size in sensitivity matrix'; % The displayed name
+sens_vxsize.tag     = 'sens_vxsize';       %file names
+sens_vxsize.strtype = 'r';  
+sens_vxsize.num     = [1 1];     % Number of inputs required 
+% sens_vxsize.def = @(val)nirs_get_defaults('configMC1.nphotons', val{:});
+sens_vxsize.help    = {'Input time point.'}; 
+
 anat_segT1         = cfg_files; %Select MC segmented volume for this subject
 anat_segT1.name    = 'Anatomical segmented image'; % The displayed name
 anat_segT1.tag     = 'anat_segT1';       %file names
@@ -2618,11 +2634,19 @@ ReML_method.values    = {0,1,2};
 ReML_method.val       = {0};
 ReML_method.help      = {'Choose ReML reconstruction method.'};
 
+WLruns = cfg_menu;
+WLruns.name      = 'Runs';
+WLruns.tag       = 'WLruns';
+WLruns.labels    = {'One' 'Each WL separately'};
+WLruns.values    = {1,2};
+WLruns.val       = {1};
+WLruns.help      = {''};
+
 % Executable Branch
 ReMLreconstruct1      = cfg_exbranch;       
 ReMLreconstruct1.name = '3D NIRS data ReML reconstruction';             
 ReMLreconstruct1.tag  = 'ReMLreconstruct1';
-ReMLreconstruct1.val  = {NIRSmat dir_in ReML_method};   
+ReMLreconstruct1.val  = {NIRSmat temp_pts dir_in sens_vxsize ReML_method WLruns};   
 ReMLreconstruct1.prog = @nirs_run_ReMLreconstruct;  
 ReMLreconstruct1.vout = @nirs_cfg_vout_ReMLreconstruct; 
 ReMLreconstruct1.help = {'Run 3D NIRS data reconstruction.'};
@@ -2635,6 +2659,31 @@ vout.src_output = substruct('.','NIRSmat');
 vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+outreconstruct_Hb      = cfg_files;
+outreconstruct_Hb.name    = 'Select Hb output files';
+outreconstruct_Hb.tag     = 'outreconstruct_Hb';
+outreconstruct_Hb.ufilter = {'.nii'};    
+outreconstruct_Hb.num     = [1 Inf];     
+outreconstruct_Hb.help    = {'.'};
+
+% Executable Branch
+checkreconstruct1      = cfg_exbranch;       
+checkreconstruct1.name = 'Check reconstruction';             
+checkreconstruct1.tag  = 'checkreconstruct1';
+checkreconstruct1.val  = {outreconstruct_Hb};   
+checkreconstruct1.prog = @nirs_run_checkreconstruct;  
+checkreconstruct1.vout = @nirs_cfg_vout_checkreconstruct; 
+checkreconstruct1.help = {'Check reconstruction.'};
+
+%make NIRS.mat available as a dependency
+function vout = nirs_cfg_vout_checkreconstruct(job)
+vout = cfg_dep;                     
+vout.sname      = 'NIRS.mat';       
+vout.src_output = substruct('.','NIRSmat'); 
+vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % General Linear Model Specification
@@ -5277,7 +5326,7 @@ preprocessNIRS.help   = {'These modules preprocess NIRS data: '
 model_reconstruct    = cfg_choice; %cfg_repeat;
 model_reconstruct.name   = '3D Reconstruction of NIRS data';
 model_reconstruct.tag    = 'model_reconstruct';
-model_reconstruct.values = {tikhonov1 ReMLreconstruct1};
+model_reconstruct.values = {tikhonov1 ReMLreconstruct1 checkreconstruct1};
 model_reconstruct.help   = {'3D Reconstruction of NIRS data.'};
 
 %module 9
