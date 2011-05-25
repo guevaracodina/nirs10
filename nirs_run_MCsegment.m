@@ -43,8 +43,8 @@ for Idx=1:nsubj
         end
     end
     
-    [dir1, ~, ~] = fileparts(V.fname);
-    tmpf = spm_select('List',dir1,'_segmented_');
+    [dir1, file1, ~] = fileparts(V.fname);
+    tmpf = spm_select('List',dir1,['_segmented_' file1]);
     if ~isempty(tmpf)
         %         NIRS.Cs.mcs.seg = tmpf(1,:);
         %MC Segmentation already done, skipping
