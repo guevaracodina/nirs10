@@ -2626,7 +2626,7 @@ dir_in.ufilter = '.*';
 dir_in.num     = [1 1];
 dir_in.help    = {'Select the MonteCarlo simulation output directory.'};
 
-ReML_method          = cfg_menu;
+ReML_method           = cfg_menu;
 ReML_method.name      = 'ReML method';
 ReML_method.tag       = 'ReML_method';
 ReML_method.labels    = {'Huppert' 'SPM' 'Tikhonov'};
@@ -2634,7 +2634,7 @@ ReML_method.values    = {0,1,2};
 ReML_method.val       = {0};
 ReML_method.help      = {'Choose ReML reconstruction method.'};
 
-WLruns = cfg_menu;
+WLruns           = cfg_menu;
 WLruns.name      = 'Runs';
 WLruns.tag       = 'WLruns';
 WLruns.labels    = {'One' 'Each WL separately'};
@@ -2642,11 +2642,19 @@ WLruns.values    = {1,2};
 WLruns.val       = {1};
 WLruns.help      = {''};
 
+beta_wtd           = cfg_menu;
+beta_wtd.name      = 'Beta : mua or Hbs';
+beta_wtd.tag       = 'beta_wtd';
+beta_wtd.labels    = {'mua' 'hbs'};
+beta_wtd.values    = {1,2};
+beta_wtd.val       = {1};
+beta_wtd.help      = {'Choose Delta mua or Delta[HbO] and Delta[HBR]'};
+
 % Executable Branch
 ReMLreconstruct1      = cfg_exbranch;       
 ReMLreconstruct1.name = '3D NIRS data ReML reconstruction';             
 ReMLreconstruct1.tag  = 'ReMLreconstruct1';
-ReMLreconstruct1.val  = {NIRSmat temp_pts dir_in sens_vxsize ReML_method WLruns};   
+ReMLreconstruct1.val  = {NIRSmat beta_wtd temp_pts dir_in sens_vxsize ReML_method WLruns};   
 ReMLreconstruct1.prog = @nirs_run_ReMLreconstruct;  
 ReMLreconstruct1.vout = @nirs_cfg_vout_ReMLreconstruct; 
 ReMLreconstruct1.help = {'Run 3D NIRS data reconstruction.'};
