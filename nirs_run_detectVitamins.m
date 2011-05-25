@@ -12,6 +12,9 @@ function out = nirs_run_detectVitamins(job)
 
 % Boolean for "semi-manual"/debug mode
 manualMode = 1;
+% Boolean for when the semi-automatic coregistration failed and one just
+% wants to manually define the order of the optodes
+wrongWhenAutomatic = 1;
 
 % INPUTS %
 %%%%%%%%%%
@@ -246,268 +249,352 @@ for iSubj = 1:nSubj
     % first find the right orientation, using some manipulations of the
     % images of the coordinates
     
-    % Plot 2 geometries, then save as images and load them
-    figure('Units','normalized','Position',[0.05 0.2 0.8 0.7]),
-    hfid=plot(coord_fid_proj2D(:,1),coord_fid_proj2D(:,2),'ok','MarkerSize',70,'MarkerFaceColor','k');
-    set(gca,'Visible','off')
-    xlim(1.5*[min(coord_helmet2D(:,1)) max(coord_helmet2D(:,1))])
-    ylim(2.5*[min(coord_helmet2D(:,2)) max(coord_helmet2D(:,2))])
-    saveas(hfid,fullfile(subjPath,'im_fid.png'),'png');
-    close(gcf);
-    figure('Units','normalized','Position',[0.05 0.2 0.8 0.7]),
-    hhelmet=plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob','MarkerSize',70,'MarkerFaceColor','b');
-    xlim(1.5*[min(coord_helmet2D(:,1)) max(coord_helmet2D(:,1))])
-    ylim(2.5*[min(coord_helmet2D(:,2)) max(coord_helmet2D(:,2))])
-    set(gca,'Visible','off')
-    saveas(hhelmet,fullfile(subjPath,'im_helmet.png'),'png');
-    close(gcf);
-
-    im_fid = double(imread(fullfile(subjPath,'im_fid.png'),'png'));
-    im_helmet = double(imread(fullfile(subjPath,'im_helmet.png'),'png'));
-    % No need for RGB info, just want a mask where background=0 and optodes=1
-    im_fid = squeeze(im_fid(:,:,1));
-    im_fid2 = im_fid;
-    im_fid2(im_fid<max(im_fid(:)/2)) = 1; % optodes
-    im_fid2(im_fid>=max(im_fid(:)/2)) = 0; % background
-    im_helmet = squeeze(im_helmet(:,:,1));
-    im_helmet2 = im_helmet;
-    im_helmet2(im_helmet<max(im_helmet(:)/2)) = 1; % optodes
-    im_helmet2(im_helmet>=max(im_helmet(:)/2)) = 0; % background
-    % Crop borders (where was the figure background around the axes)
-    lim1 = round(0.1*size(im_helmet,1));
-    lim2 = round(0.1*size(im_helmet,2));
-    im_helmet = im_helmet2(lim1:end-lim1,lim2:end-lim2);
-    im_fid = im_fid2(lim1:end-lim1,lim2:end-lim2);
-    clear im_fid2 im_helmet2
-    
-    % We now have 2 images of 2D probes and want to match their orientation
-    % by testing all possible rotations and choosing the one that yields
-    % the best match between both images
-    
-    angles = 1:2:360;
-    correlation = [];
-    for iTheta=1:length(angles)
-        rotation = imrotate(im_fid,angles(iTheta),'bilinear','crop');
-        correlation(iTheta)  =  sum(rotation(:).*im_helmet(:));
-    end
-    [cmax imax] = max(correlation);
-    theta = angles(imax);
-    %figure,imagesc(im_helmet)
-    %figure,imagesc(imrotate(im_fid,theta,'bilinear','crop'))
-
-    % The orientation of the coordinates will be either the angle found or
-    % 180+it (it is almost symmetrical along the main axis). 
-    theta = theta*pi/180;
-    mat_rot1 = [cos(theta) -sin(theta); sin(theta) cos(theta)];
-    mat_rot2 = [cos(theta+pi) -sin(theta+pi); sin(theta+pi) cos(theta+pi)];
-    coord_fid_proj2D_rot1 = [mat_rot1 * coord_fid_proj2D']';
-    coord_fid_proj2D_rot2 = [mat_rot2 * coord_fid_proj2D']';
-    % Also test for reflection around y axis
-    coord_fid_proj2D_rot3 = coord_fid_proj2D_rot1;
-    coord_fid_proj2D_rot3(:,2) = -1*coord_fid_proj2D_rot3(:,2);
-    coord_fid_proj2D_rot4 = coord_fid_proj2D_rot2;
-    coord_fid_proj2D_rot4(:,2) = -1*coord_fid_proj2D_rot4(:,2);
-
-%     if manualMode
-%         names_helmet = ['S1';'S2';'S3';'S4';'D1';'D2';'D3';'D4';'D5';'D6';'D7';'D8';'D9']; 
-%         figure, plot(coord_fid_proj2D_rot3(:,1),coord_fid_proj2D_rot3(:,2),'or');
-%         hold on, plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob')
-%         for iOptode=1:nOptodes
-%             hold on, 
-%             text(coord_fid_proj2D_rot3(iOptode,1),...
-%                 coord_fid_proj2D_rot3(iOptode,2),0,['F' int2str(iOptode)],...
-%                 'Color','k')
-%             text(coord_helmet2D(iOptode,1),...
-%                 coord_helmet2D(iOptode,2),0,[names_helmet(iOptode,:)],...
-%                 'Color','b')
-%         end
-%     end
-
-    % At this point, the 2D coordinates of the "theoretical" (setup) and
-    % "experimental" (vitamins) helmets should be in relatively good
-    % correspondance, and what remains to be done is to match each vitamin with
-    % the right optode (of which we know the "names" from the setup
-    % information). 
-
-    % Two cases must be examined, because of the near-symmetry of the probe, 
-    % its 180 degree rotation is very similar. In the end the best
-    % correspondance will reveal the right choice. Idem for its reflection
-    % about the main axis.
-
-    % Distance between each optode and the closest fiducial
-    % - this is not so robust in case the probe is much deformed so that the
-    % 2D-projected coordinates do not closely match the setup helmet (or if the
-    % SD distances in it are very small, similar in scale to that of ). Eventually find a fix...
-    
-    % Case rotation theta
-    optOrder1 = zeros(1,nOptodes);
-    for iOptode = 1:nOptodes-mod(nOptodes,2)
-        dd = sqrt(sum((coord_fid_proj2D_rot1 - ones(nOptodes,1)*coord_helmet2D(iOptode,:)).^2,2));
-        [err iFid] = min(dd);
-        iFid2 = [];
-        while ~isempty(find(optOrder1==iFid)) % if already assigned
-            iFid2 = [iFid2 iFid];
-            iFidDiff = setdiff(1:nOptodes-mod(nOptodes,2),iFid2);
-            ddDiff = dd(iFidDiff);
-            [err idxFid] = min(ddDiff); 
-            iFid = iFidDiff(idxFid);
-        end
-       optOrder1(iOptode) = iFid;
-    end
-    % Pick the last one for the closest SD pair
-    if mod(nOptodes,2); optOrder1(nOptodes)=setdiff(1:nOptodes,optOrder1); end
-    % Case rotation theta+pi
-    optOrder2 = zeros(1,nOptodes);
-    for iOptode = 1:nOptodes-mod(nOptodes,2)
-        dd = sqrt(sum((coord_fid_proj2D_rot2 - ones(nOptodes,1)*coord_helmet2D(iOptode,:)).^2,2));
-        [err iFid] = min(dd);
-        iFid2 = [];
-        while ~isempty(find(optOrder2==iFid)) % if already assigned
-            iFid2 = [iFid2 iFid];
-            iFidDiff = setdiff(1:nOptodes-mod(nOptodes,2),iFid2);
-            ddDiff = dd(iFidDiff);
-            [err idxFid] = min(ddDiff); 
-            iFid = iFidDiff(idxFid);
-        end
-        optOrder2(iOptode) = iFid;
-    end
-    % Pick the last one for the closest SD pair
-    if mod(nOptodes,2); optOrder2(nOptodes)=setdiff(1:nOptodes,optOrder2); end
-    % Case rotation theta & reflection
-    optOrder3 = zeros(1,nOptodes);
-    for iOptode = 1:nOptodes-mod(nOptodes,2)
-        dd = sqrt(sum((coord_fid_proj2D_rot3 - ones(nOptodes,1)*coord_helmet2D(iOptode,:)).^2,2));
-        [err iFid] = min(dd);
-        iFid2 = [];
-        while ~isempty(find(optOrder3==iFid)) % if already assigned
-            iFid2 = [iFid2 iFid];
-            iFidDiff = setdiff(1:nOptodes-mod(nOptodes,2),iFid2);
-            ddDiff = dd(iFidDiff);
-            [err idxFid] = min(ddDiff); 
-            iFid = iFidDiff(idxFid);
-        end
-        optOrder3(iOptode) = iFid;
-    end
-    % Pick the last one for the closest SD pair
-    if mod(nOptodes,2); optOrder3(nOptodes)=setdiff(1:nOptodes,optOrder3); end
-    % Case rotation theta+pi & reflection
-    optOrder4 = zeros(1,nOptodes);
-    for iOptode = 1:nOptodes-mod(nOptodes,2)
-        dd = sqrt(sum((coord_fid_proj2D_rot4 - ones(nOptodes,1)*coord_helmet2D(iOptode,:)).^2,2));
-        [err iFid] = min(dd);
-        iFid2 = [];
-        while ~isempty(find(optOrder4==iFid)) % if already assigned
-            iFid2 = [iFid2 iFid];
-            iFidDiff = setdiff(1:nOptodes-mod(nOptodes,2),iFid2);
-            ddDiff = dd(iFidDiff);
-            [err idxFid] = min(ddDiff); 
-            iFid = iFidDiff(idxFid);
-        end
-        optOrder4(iOptode) = iFid;
-    end
-    % Pick the last one for the closest SD pair
-    if mod(nOptodes,2); optOrder4(nOptodes)=setdiff(1:nOptodes,optOrder4); end
-    
-    % Find out which of the 2 orientations yields the best match with the
-    % setup helmet. Check using 2D distance.
-    I = eye(nOptodes);
-    coord_fid_perm1 = I(optOrder1,:)*coord_fid_proj2D_rot1;
-    coord_fid_perm2 = I(optOrder2,:)*coord_fid_proj2D_rot2;
-    coord_fid_perm3 = I(optOrder3,:)*coord_fid_proj2D_rot3;
-    coord_fid_perm4 = I(optOrder4,:)*coord_fid_proj2D_rot4;
-    %... find the one that corresponds best to the setup helmet
-    dist1 = sum((coord_fid_perm1(:)-coord_helmet2D(:)).^2);
-    dist2 = sum((coord_fid_perm2(:)-coord_helmet2D(:)).^2);
-    dist3 = sum((coord_fid_perm3(:)-coord_helmet2D(:)).^2);
-    dist4 = sum((coord_fid_perm4(:)-coord_helmet2D(:)).^2);
-    
-    if manualMode
-        % For displaying the 2 geometries in 2D
-        names_helmet = ['S1';'S2';'S3';'S4';'D1';'D2';'D3';'D4';'D5';'D6';'D7';'D8';'D9']; 
-        figure, plot(coord_fid_proj2D_rot1(:,1),coord_fid_proj2D_rot1(:,2),'or');
-        hold on, plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob')
+    % Fix for when semi-automatic coregistration failed...
+    if wrongWhenAutomatic
+        % Then we will plot the projected 2D geometry and prompt the user
+        % to enter the optimal order in the command window... (lazier and
+        % less clean than a GUI but this situation should not arise
+        % too often...)
+        figure('Units','normalized','Position',[0.05 0.2 0.8 0.7]),
+        plot(coord_fid_proj2D(:,1),coord_fid_proj2D(:,2),'ok','MarkerSize',50,'MarkerFaceColor','k');
+        hold on;
         for iOptode=1:nOptodes
-            hold on, 
-            text(coord_fid_proj2D_rot1(iOptode,1),...
-                coord_fid_proj2D_rot1(iOptode,2),0,['F' int2str(iOptode)],...
-                'Color','k')
-            text(coord_helmet2D(iOptode,1),...
-                coord_helmet2D(iOptode,2),0,[names_helmet(iOptode,:)],...
-                'Color','b')
+                hold on, 
+                text(coord_fid_proj2D(iOptode,1),...
+                    coord_fid_proj2D(iOptode,2),0,['F' int2str(iOptode)],...
+                    'Color','r','FontWeight','bold','FontSize',14)
         end
-        figure, plot(coord_fid_proj2D_rot2(:,1),coord_fid_proj2D_rot2(:,2),'or');
-        hold on, plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob')
-        for iOptode=1:nOptodes
-            hold on, 
-            text(coord_fid_proj2D_rot2(iOptode,1),...
-                coord_fid_proj2D_rot2(iOptode,2),0,['F' int2str(iOptode)],...
-                'Color','k')
-            text(coord_helmet2D(iOptode,1),...
-                coord_helmet2D(iOptode,2),0,[names_helmet(iOptode,:)],...
-                'Color','b')
+        %set(gca,'Visible','off')
+        xlim(1.5*[min(coord_helmet2D(:,1)) max(coord_helmet2D(:,1))])
+        ylim(2.5*[min(coord_helmet2D(:,2)) max(coord_helmet2D(:,2))])
+        idxSubjID = strfind(subjPath,'P2S');
+        subjID = subjPath(idxSubjID:idxSubjID+4);
+        title({[subjID ': Manual coregistration'];...
+            'Go to Matlab Command Window and type in the numbers of the fiducials';...
+            'in the image in the order that corresponds to S1-4, then D1-8 or 9, ';...
+            'in square brackets.      Example: [13 9 6 2 11 10 7 1 12 8 5 4 3]'})
+        optOrder = [];
+        while (length(optOrder)~=13) || (sum(sort(optOrder,'ascend')-[1:nOptodes])~=0)
+            optOrder = input(['Type in the numbers of the fiducials\n' ...
+                'in the image in the order that corresponds to S1-4,\n then D1-8 or 9, ' ...
+                'in square brackets. \n     Example: [13 9 6 2 11 10 7 1 12 8 5 4 3] :\n' ...
+                ' (or enter "0" to abort) \n\n']);
+            if length(optOrder)==1 && optOrder==0
+                optOrder = 1:nOptodes;
+                break;
+            end
         end
-        figure, plot(coord_fid_proj2D_rot3(:,1),coord_fid_proj2D_rot3(:,2),'or');
-        hold on, plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob')
-        for iOptode=1:nOptodes
-            hold on, 
-            text(coord_fid_proj2D_rot3(iOptode,1),...
-                coord_fid_proj2D_rot3(iOptode,2),0,['F' int2str(iOptode)],...
-                'Color','k')
-            text(coord_helmet2D(iOptode,1),...
-                coord_helmet2D(iOptode,2),0,[names_helmet(iOptode,:)],...
-                'Color','b')
-        end
-        figure, plot(coord_fid_proj2D_rot4(:,1),coord_fid_proj2D_rot4(:,2),'or');
-        hold on, plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob')
-        for iOptode=1:nOptodes
-            hold on, 
-            text(coord_fid_proj2D_rot4(iOptode,1),...
-                coord_fid_proj2D_rot4(iOptode,2),0,['F' int2str(iOptode)],...
-                'Color','k')
-            text(coord_helmet2D(iOptode,1),...
-                coord_helmet2D(iOptode,2),0,[names_helmet(iOptode,:)],...
-                'Color','b')
-        end
-    end
+        % Now let's go back to 3D coordinates, rearranging the order of the
+        % markers to match the order that was to found to match the setup
+        % helmet
+        I = eye(nOptodes);
+        coord_fid_opt = I(optOrder,:) * coord_fid;
 
-    optOrders{1}=optOrder1;
-    optOrders{2}=optOrder2;
-    optOrders{3}=optOrder3;
-    optOrders{4}=optOrder4;
-    [~,optIdx] = min([dist1 dist2 dist3 dist4]);
-    optOrder = optOrders{optIdx};
-%     if dist1<dist2
-%         optOrder = optOrder1;
-%     else
-%         optOrder = optOrder2;
-%     end
+        %close(gcf);    
+        
+    % Normal semi-automatic coregistration    
+    else
 
-    % Now let's go back to 3D coordinates, rearranging the order of the
-    % markers to match the order that was to found to match the setup
-    % helmet
-    I = eye(nOptodes);
-    coord_fid_opt = I(optOrder,:) * coord_fid;
-    
-    % Finally, since the probe can be completely symmetrical around its main
-    % axis (relative to a rotation around it), we must use this little fix
-    % to ensure that we match the geometry correctly.
-    % This should be improved, because it is completely specific to one
-    % geometry (2 rows of detectors surrounding on row of sources)...
-    
-    if mod(nOptodes,2)==0
-        %dets_height = NIRS.Cf.H.D.r.o.mm.p(:,2); % nOptodes x 3, mm
-        % Convention: the first row of detectors (1:ndets/2) is on top, the
-        % second one is below
-        % So if 1st row seems lower...
-        if sum(coord_fid_opt(nSrc+1:nSrc+floor(nDet/2),3)) < ...
-                sum(coord_fid_opt(nSrc+floor(nDet/2)+1:nSrc+2*floor(nDet/2),3))
-            % then swap the 2 rows
-            row1 = coord_fid_opt(nSrc+1:nSrc+floor(nDet/2),:);
-            coord_fid_opt(nSrc+1:nSrc+floor(nDet/2),:) = ...
-                coord_fid_opt(nSrc+floor(nDet/2)+1:nSrc+2*floor(nDet/2),:);
-            coord_fid_opt(nSrc+floor(nDet/2)+1:nSrc+2*floor(nDet/2),:) = row1;
+
+        % Plot 2 geometries, then save as images and load them
+        figure('Units','normalized','Position',[0.05 0.2 0.8 0.7]),
+        hfid=plot(coord_fid_proj2D(:,1),coord_fid_proj2D(:,2),'ok','MarkerSize',70,'MarkerFaceColor','k');
+        set(gca,'Visible','off')
+        xlim(1.5*[min(coord_helmet2D(:,1)) max(coord_helmet2D(:,1))])
+        ylim(2.5*[min(coord_helmet2D(:,2)) max(coord_helmet2D(:,2))])
+        saveas(hfid,fullfile(subjPath,'im_fid.png'),'png');
+        close(gcf);
+        figure('Units','normalized','Position',[0.05 0.2 0.8 0.7]),
+        hhelmet=plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob','MarkerSize',70,'MarkerFaceColor','b');
+        xlim(1.5*[min(coord_helmet2D(:,1)) max(coord_helmet2D(:,1))])
+        ylim(2.5*[min(coord_helmet2D(:,2)) max(coord_helmet2D(:,2))])
+        set(gca,'Visible','off')
+        saveas(hhelmet,fullfile(subjPath,'im_helmet.png'),'png');
+        close(gcf);
+
+        im_fid = double(imread(fullfile(subjPath,'im_fid.png'),'png'));
+        im_helmet = double(imread(fullfile(subjPath,'im_helmet.png'),'png'));
+        % No need for RGB info, just want a mask where background=0 and optodes=1
+        im_fid = squeeze(im_fid(:,:,1));
+        im_fid2 = im_fid;
+        im_fid2(im_fid<max(im_fid(:)/2)) = 1; % optodes
+        im_fid2(im_fid>=max(im_fid(:)/2)) = 0; % background
+        im_helmet = squeeze(im_helmet(:,:,1));
+        im_helmet2 = im_helmet;
+        im_helmet2(im_helmet<max(im_helmet(:)/2)) = 1; % optodes
+        im_helmet2(im_helmet>=max(im_helmet(:)/2)) = 0; % background
+        % Crop borders (where was the figure background around the axes)
+        lim1 = round(0.1*size(im_helmet,1));
+        lim2 = round(0.1*size(im_helmet,2));
+        im_helmet = im_helmet2(lim1:end-lim1,lim2:end-lim2);
+        im_fid = im_fid2(lim1:end-lim1,lim2:end-lim2);
+        clear im_fid2 im_helmet2
+
+        % We now have 2 images of 2D probes and want to match their orientation
+        % by testing all possible rotations and choosing the one that yields
+        % the best match between both images
+
+        angles = 1:2:360;
+        correlation = [];
+        for iTheta=1:length(angles)
+            rotation = imrotate(im_fid,angles(iTheta),'bilinear','crop');
+            correlation(iTheta)  =  sum(rotation(:).*im_helmet(:));
         end
+        [cmax imax] = max(correlation);
+        theta = angles(imax);
+        %figure,imagesc(im_helmet)
+        %figure,imagesc(imrotate(im_fid,theta,'bilinear','crop'))
+
+        % The orientation of the coordinates will be either the angle found or
+        % 180+it (it is almost symmetrical along the main axis). 
+        theta = theta*pi/180;
+        mat_rot1 = [cos(theta) -sin(theta); sin(theta) cos(theta)];
+        mat_rot2 = [cos(theta+pi) -sin(theta+pi); sin(theta+pi) cos(theta+pi)];
+        coord_fid_proj2D_rot1 = [mat_rot1 * coord_fid_proj2D']';
+        coord_fid_proj2D_rot2 = [mat_rot2 * coord_fid_proj2D']';
+        % Also test for reflection around y axis
+        coord_fid_proj2D_rot3 = coord_fid_proj2D_rot1;
+        coord_fid_proj2D_rot3(:,2) = -1*coord_fid_proj2D_rot3(:,2);
+        coord_fid_proj2D_rot4 = coord_fid_proj2D_rot2;
+        coord_fid_proj2D_rot4(:,2) = -1*coord_fid_proj2D_rot4(:,2);
+
+    %     if manualMode
+    %         names_helmet = ['S1';'S2';'S3';'S4';'D1';'D2';'D3';'D4';'D5';'D6';'D7';'D8';'D9']; 
+    %         figure, plot(coord_fid_proj2D_rot3(:,1),coord_fid_proj2D_rot3(:,2),'or');
+    %         hold on, plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob')
+    %         for iOptode=1:nOptodes
+    %             hold on, 
+    %             text(coord_fid_proj2D_rot3(iOptode,1),...
+    %                 coord_fid_proj2D_rot3(iOptode,2),0,['F' int2str(iOptode)],...
+    %                 'Color','k')
+    %             text(coord_helmet2D(iOptode,1),...
+    %                 coord_helmet2D(iOptode,2),0,[names_helmet(iOptode,:)],...
+    %                 'Color','b')
+    %         end
+    %     end
+
+        % At this point, the 2D coordinates of the "theoretical" (setup) and
+        % "experimental" (vitamins) helmets should be in relatively good
+        % correspondance, and what remains to be done is to match each vitamin with
+        % the right optode (of which we know the "names" from the setup
+        % information). 
+
+        % Two cases must be examined, because of the near-symmetry of the probe, 
+        % its 180 degree rotation is very similar. In the end the best
+        % correspondance will reveal the right choice. Idem for its reflection
+        % about the main axis.
+
+        % Distance between each optode and the closest fiducial
+        % - this is not so robust in case the probe is much deformed so that the
+        % 2D-projected coordinates do not closely match the setup helmet (or if the
+        % SD distances in it are very small, similar in scale to that of ). Eventually find a fix...
+
+        % Case rotation theta
+        optOrder1 = zeros(1,nOptodes);
+        for iOptode = 1:nOptodes-mod(nOptodes,2)
+            dd = sqrt(sum((coord_fid_proj2D_rot1 - ones(nOptodes,1)*coord_helmet2D(iOptode,:)).^2,2));
+            [err iFid] = min(dd);
+            iFid2 = [];
+            while ~isempty(find(optOrder1==iFid)) % if already assigned
+                iFid2 = [iFid2 iFid];
+                iFidDiff = setdiff(1:nOptodes-mod(nOptodes,2),iFid2);
+                ddDiff = dd(iFidDiff);
+                [err idxFid] = min(ddDiff); 
+                iFid = iFidDiff(idxFid);
+            end
+           optOrder1(iOptode) = iFid;
+        end
+        % Pick the last one for the closest SD pair
+        if mod(nOptodes,2); optOrder1(nOptodes)=setdiff(1:nOptodes,optOrder1); end
+        % Case rotation theta+pi
+        optOrder2 = zeros(1,nOptodes);
+        for iOptode = 1:nOptodes-mod(nOptodes,2)
+            dd = sqrt(sum((coord_fid_proj2D_rot2 - ones(nOptodes,1)*coord_helmet2D(iOptode,:)).^2,2));
+            [err iFid] = min(dd);
+            iFid2 = [];
+            while ~isempty(find(optOrder2==iFid)) % if already assigned
+                iFid2 = [iFid2 iFid];
+                iFidDiff = setdiff(1:nOptodes-mod(nOptodes,2),iFid2);
+                ddDiff = dd(iFidDiff);
+                [err idxFid] = min(ddDiff); 
+                iFid = iFidDiff(idxFid);
+            end
+            optOrder2(iOptode) = iFid;
+        end
+        % Pick the last one for the closest SD pair
+        if mod(nOptodes,2); optOrder2(nOptodes)=setdiff(1:nOptodes,optOrder2); end
+        % Case rotation theta & reflection
+        optOrder3 = zeros(1,nOptodes);
+        for iOptode = 1:nOptodes-mod(nOptodes,2)
+            dd = sqrt(sum((coord_fid_proj2D_rot3 - ones(nOptodes,1)*coord_helmet2D(iOptode,:)).^2,2));
+            [err iFid] = min(dd);
+            iFid2 = [];
+            while ~isempty(find(optOrder3==iFid)) % if already assigned
+                iFid2 = [iFid2 iFid];
+                iFidDiff = setdiff(1:nOptodes-mod(nOptodes,2),iFid2);
+                ddDiff = dd(iFidDiff);
+                [err idxFid] = min(ddDiff); 
+                iFid = iFidDiff(idxFid);
+            end
+            optOrder3(iOptode) = iFid;
+        end
+        % Pick the last one for the closest SD pair
+        if mod(nOptodes,2); optOrder3(nOptodes)=setdiff(1:nOptodes,optOrder3); end
+        % Case rotation theta+pi & reflection
+        optOrder4 = zeros(1,nOptodes);
+        for iOptode = 1:nOptodes-mod(nOptodes,2)
+            dd = sqrt(sum((coord_fid_proj2D_rot4 - ones(nOptodes,1)*coord_helmet2D(iOptode,:)).^2,2));
+            [err iFid] = min(dd);
+            iFid2 = [];
+            while ~isempty(find(optOrder4==iFid)) % if already assigned
+                iFid2 = [iFid2 iFid];
+                iFidDiff = setdiff(1:nOptodes-mod(nOptodes,2),iFid2);
+                ddDiff = dd(iFidDiff);
+                [err idxFid] = min(ddDiff); 
+                iFid = iFidDiff(idxFid);
+            end
+            optOrder4(iOptode) = iFid;
+        end
+        % Pick the last one for the closest SD pair
+        if mod(nOptodes,2); optOrder4(nOptodes)=setdiff(1:nOptodes,optOrder4); end
+
+        % Find out which of the 2 orientations yields the best match with the
+        % setup helmet. Check using 2D distance.
+        I = eye(nOptodes);
+        coord_fid_perm1 = I(optOrder1,:)*coord_fid_proj2D_rot1;
+        coord_fid_perm2 = I(optOrder2,:)*coord_fid_proj2D_rot2;
+        coord_fid_perm3 = I(optOrder3,:)*coord_fid_proj2D_rot3;
+        coord_fid_perm4 = I(optOrder4,:)*coord_fid_proj2D_rot4;
+        %... find the one that corresponds best to the setup helmet
+        dist1 = sum((coord_fid_perm1(:)-coord_helmet2D(:)).^2);
+        dist2 = sum((coord_fid_perm2(:)-coord_helmet2D(:)).^2);
+        dist3 = sum((coord_fid_perm3(:)-coord_helmet2D(:)).^2);
+        dist4 = sum((coord_fid_perm4(:)-coord_helmet2D(:)).^2);
+
+        if manualMode
+            % For displaying the 2 geometries in 2D
+            names_helmet = ['S1';'S2';'S3';'S4';'D1';'D2';'D3';'D4';'D5';'D6';'D7';'D8';'D9']; 
+            figure, plot(coord_fid_proj2D_rot1(:,1),coord_fid_proj2D_rot1(:,2),'or');
+            hold on, plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob')
+            for iOptode=1:nOptodes
+                hold on, 
+                text(coord_fid_proj2D_rot1(iOptode,1),...
+                    coord_fid_proj2D_rot1(iOptode,2),0,['F' int2str(iOptode)],...
+                    'Color','k')
+                text(coord_helmet2D(iOptode,1),...
+                    coord_helmet2D(iOptode,2),0,[names_helmet(iOptode,:)],...
+                    'Color','b')
+            end
+            figure, plot(coord_fid_proj2D_rot2(:,1),coord_fid_proj2D_rot2(:,2),'or');
+            hold on, plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob')
+            for iOptode=1:nOptodes
+                hold on, 
+                text(coord_fid_proj2D_rot2(iOptode,1),...
+                    coord_fid_proj2D_rot2(iOptode,2),0,['F' int2str(iOptode)],...
+                    'Color','k')
+                text(coord_helmet2D(iOptode,1),...
+                    coord_helmet2D(iOptode,2),0,[names_helmet(iOptode,:)],...
+                    'Color','b')
+            end
+            figure, plot(coord_fid_proj2D_rot3(:,1),coord_fid_proj2D_rot3(:,2),'or');
+            hold on, plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob')
+            for iOptode=1:nOptodes
+                hold on, 
+                text(coord_fid_proj2D_rot3(iOptode,1),...
+                    coord_fid_proj2D_rot3(iOptode,2),0,['F' int2str(iOptode)],...
+                    'Color','k')
+                text(coord_helmet2D(iOptode,1),...
+                    coord_helmet2D(iOptode,2),0,[names_helmet(iOptode,:)],...
+                    'Color','b')
+            end
+            figure, plot(coord_fid_proj2D_rot4(:,1),coord_fid_proj2D_rot4(:,2),'or');
+            hold on, plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob')
+            for iOptode=1:nOptodes
+                hold on, 
+                text(coord_fid_proj2D_rot4(iOptode,1),...
+                    coord_fid_proj2D_rot4(iOptode,2),0,['F' int2str(iOptode)],...
+                    'Color','k')
+                text(coord_helmet2D(iOptode,1),...
+                    coord_helmet2D(iOptode,2),0,[names_helmet(iOptode,:)],...
+                    'Color','b')
+            end
+        end
+
+        optOrders{1}=optOrder1;
+        optOrders{2}=optOrder2;
+        optOrders{3}=optOrder3;
+        optOrders{4}=optOrder4;
+        [~,optIdx] = min([dist1 dist2 dist3 dist4]);
+        optOrder = optOrders{optIdx};
+    %     if dist1<dist2
+    %         optOrder = optOrder1;
+    %     else
+    %         optOrder = optOrder2;
+    %     end
+        % Now let's go back to 3D coordinates, rearranging the order of the
+        % markers to match the order that was to found to match the setup
+        % helmet
+        I = eye(nOptodes);
+        coord_fid_opt = I(optOrder,:) * coord_fid;
+        
+        
+        % Last "security" fixes
+        % This should be improved, because it is completely specific to one
+        % geometry (2 rows of detectors surrounding on row of sources 
+        % and in some cases + 1 detector (#13))...
+
+        % 1) For 12 optodes
+        % Finally, since the probe can be completely symmetrical around its main
+        % axis (relative to a rotation around it), we must use this little fix
+        % to ensure that we match the geometry correctly.
+        if mod(nOptodes,2)==0
+            %dets_height = NIRS.Cf.H.D.r.o.mm.p(:,2); % nOptodes x 3, mm
+            % Convention: the first row of detectors (1:ndets/2) is on top, the
+            % second one is below
+            % So if 1st row seems lower...
+            if sum(coord_fid_opt(nSrc+1:nSrc+floor(nDet/2),3)) < ...
+                    sum(coord_fid_opt(nSrc+floor(nDet/2)+1:nSrc+2*floor(nDet/2),3))
+                % then swap the 2 rows
+                row1 = coord_fid_opt(nSrc+1:nSrc+floor(nDet/2),:);
+                coord_fid_opt(nSrc+1:nSrc+floor(nDet/2),:) = ...
+                    coord_fid_opt(nSrc+floor(nDet/2)+1:nSrc+2*floor(nDet/2),:);
+                coord_fid_opt(nSrc+floor(nDet/2)+1:nSrc+2*floor(nDet/2),:) = row1;
+            end
+
+        % For 13 optodes : optode #13 must be closest to 3,4,10,12 in 
+        % optiomized gemotry. If not, go back and choose another one of the 4
+        % possible rotations...
+        else
+            % If three out the four optodes #3,4,10,12 are not among the
+            % closest to #13, we will try another configuration
+            check = 0;
+            nOrder = 0;
+            temp = coord_fid_opt;
+            while check < 3
+                if nOrder > 4
+                    % Return to original order... but warning!
+                    coord_fid_opt = temp;
+                    idxSubjID = strfind(subjPath,'P2S');
+                    subjID = subjPath(idxSubjID:idxSubjID+4);
+                    disp(['Warning: potential error in coregistration for subject ' subjID]);
+                    break; % no infinite loops!!
+                end              
+                nOrder = nOrder + 1;
+                coord_fid_opt = I(optOrders{nOrder},:) * coord_fid;
+                dist_to_last_opt = sum(coord_fid_opt -...
+                    ones(size(coord_fid_opt),1)*coord_fid_opt(end,:),2); % nOptodes x 1
+                [nothing,order_close_to_13] = sort(dist_to_last_opt,'ascend');
+                four_closest = order_close_to_13(2:5); % closest one is #13 itself
+                check = length(find(four_closest==3))+length(find(four_closest==4))+...
+                    length(find(four_closest==10))+length(find(four_closest==12));                      
+            end 
+
+        end
+        
     end
+    
+    
+    
     
 
     if manualMode
