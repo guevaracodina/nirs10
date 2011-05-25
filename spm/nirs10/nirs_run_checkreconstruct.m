@@ -4,11 +4,13 @@ function out = nirs_run_checkreconstruct(job)
 % Copyright (C) 2010 Laboratoire d'Imagerie Optique et Moleculaire
 % Clement Bonnery
 
-load(job.NIRSmat);
+
 out_Hbs = job.outreconstruct_Hb;
 
-dec_DHbO = zeros(1,size(out_Hbs,1));
-dec_DHbR = zeros(1,size(out_Hbs,1));
+load(job.NIRSmat{:});
+fnirs = load(NIRS.Dt.fir.pp.p{:},'-mat');
+dec_DHbO = zeros(1,length(fnirs.d));
+dec_DHbR = zeros(1,length(fnirs.d));
 
 for iHbs =1:size(out_Hbs,1)
     f = out_Hbs{iHbs,1};
@@ -17,11 +19,12 @@ for iHbs =1:size(out_Hbs,1)
     
     [~,name,~] = fileparts(f);
     sep =strfind(name,'_');
-    timee =name(sep(2)+2:sep(3)-1);
+    timee =str2num(name(sep(2)+2:sep(3)-1));
     if ~isempty(strfind(name,'HbO'))
-        dec_DHbO(1,timee) = Y(5,4,7);
+        
+        dec_DHbO(1,timee:timee+25) = Y(6,1,3);
     else
-        dec_DHbR(1,timee) = Y(5,4,7);
+        dec_DHbR(1,timee:timee+25) = Y(6,1,3);
     end
 end
 figure;

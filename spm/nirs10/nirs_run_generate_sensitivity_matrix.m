@@ -100,7 +100,7 @@ deltaT =1;
                 ms = fread(fid,V_segR.dim(1)*V_segR.dim(2)*V_segR.dim(3),'float32');
                 fclose(fid);
                 % Bonnery from Boas et al.
-%                 sum_Jout = sum(ms(ms<0)/cs.par.nphotons);
+%                 sum_Jout = sum(ms(ms<0)/(cs.par.nphotons*10));
 %                 Svx = 5*5;
 %                 Vvx = 5*5*5;
 %                 [indices,~] = find(ms>0);
@@ -113,8 +113,8 @@ deltaT =1;
 %                 end
 %                 msP = msP*norm_ms;
                 %%%% version 2
-               % ms = ms/cs.par.nphotons;
-                sum_Jout = sum(ms(ms<0)/cs.par.nphotons);
+               % ms = ms/(cs.par.nphotons*10);
+                sum_Jout = sum(ms(ms<0)/(cs.par.nphotons*10));
                 Svx = 5*5;
                 Vvx = 5*5*5;
                 [indices,~] = find(ms>0);
@@ -173,7 +173,7 @@ deltaT =1;
                             md = fread(fid,V_segR.dim(1)*V_segR.dim(2)*V_segR.dim(3),'float32');
                             fclose(fid);
                             % Bonnery from Boas et al.
-                            sum_Jout = sum(md(md<0)/cs.par.nphotons);
+                            sum_Jout = sum(md(md<0)/(cs.par.nphotons*10));
                             Svx = 5*5;
                             Vvx = 5*5*5;
                             [indices,~] = find(md>0);
