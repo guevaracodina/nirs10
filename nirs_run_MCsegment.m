@@ -72,11 +72,10 @@ for Idx=1:nsubj
     %if ~isempty(tmpf)
     if spm_existfile(fullfile(dir1,[output_prefix,'_segmented_',file1,'.nii']))
         %         NIRS.Cs.mcs.seg = tmpf(1,:);
-        %MC Segmentation already done, skipping
-        disp(['MC Segment already run for file ' NIRS.Dt.ana.T1seg ' - skipping.'])
-        
+        %MC Segmentation already done, skipping     
         if NIRSok
             NIRS.Dt.ana.T1seg = fullfile(dir1,[output_prefix,'_segmented_',file1,'.nii']);
+            disp(['MC Segment already run for file ' NIRS.Dt.ana.T1seg ' - skipping.'])
             save(outNIRSmat{Idx},'NIRS');
         end
         
