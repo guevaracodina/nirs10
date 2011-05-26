@@ -12,10 +12,10 @@ function out = nirs_run_detectVitamins(job)
 % 2011-03
 
 % Boolean for "semi-manual"/debug mode
-manualMode = 1;
+manualMode = 0;
 % Boolean for when the semi-automatic coregistration failed and one just
 % wants to manually define the order of the optodes
-wrongWhenAutomatic = 1;
+wrongWhenAutomatic = 0;
 
 % INPUTS %
 %%%%%%%%%%
@@ -43,6 +43,23 @@ nSubj = size(job.NIRSmat,1);
 
 % Loop over subjects
 for iSubj = 1:nSubj
+    temp = wrongWhenAutomatic;
+    if iSubj==40 || iSubj==41 || iSubj==43 || iSubj==44
+        wrongWhenAutomatic = 1;
+%         % P2S40:
+%         [13 9 6 2 11 10 7 1 12 8 5 4 3]
+%         % P2S41:
+%         [13 9 7 4 11 10 6 1 12 8 5 2 3]
+%         % P2S42:
+%         [13 10 7 2 11 9 5 1 12 8 6 4 3]
+%         % P2S43:
+%         [13 9 6 2 11 10 7 1 12 8 5 4 3]
+%         % P2S44:
+%         [13 9 6 2 12 10 7 3 11 8 5 4 1]
+
+    else
+        wrongWhenAutomatic = temp;
+    end
     
     clear NIRS Vanat Yanat
     
@@ -562,16 +579,17 @@ for iSubj = 1:nSubj
                 coord_fid_opt(nSrc+floor(nDet/2)+1:nSrc+2*floor(nDet/2),:) = row1;
             end
 
-        % For 13 optodes : optode #13 must be closest to 3,4,10,12 in 
+        % For 13 optodes : optode #13 must be closest to 3,4,11 in 
         % optiomized gemotry. If not, go back and choose another one of the 4
         % possible rotations...
         else
-            % If three out the four optodes #3,4,10,12 are not among the
+            % If the three optodes #3,4,11 are not the
             % closest to #13, we will try another configuration
             check = 0;
             nOrder = 0;
             temp = coord_fid_opt;
             while check < 3
+                nOrder = nOrder + 1;
                 if nOrder > 4
                     % Return to original order... but warning!
                     coord_fid_opt = temp;
@@ -580,14 +598,13 @@ for iSubj = 1:nSubj
                     disp(['Warning: potential error in coregistration for subject ' subjID]);
                     break; % no infinite loops!!
                 end              
-                nOrder = nOrder + 1;
                 coord_fid_opt = I(optOrders{nOrder},:) * coord_fid;
-                dist_to_last_opt = sum(coord_fid_opt -...
-                    ones(size(coord_fid_opt),1)*coord_fid_opt(end,:),2); % nOptodes x 1
+                dist_to_last_opt = sum(abs(coord_fid_opt -...
+                    ones(size(coord_fid_opt),1)*coord_fid_opt(end,:)),2); % nOptodes x 1
                 [nothing,order_close_to_13] = sort(dist_to_last_opt,'ascend');
-                four_closest = order_close_to_13(2:5); % closest one is #13 itself
-                check = length(find(four_closest==3))+length(find(four_closest==4))+...
-                    length(find(four_closest==10))+length(find(four_closest==12));                      
+                three_closest = order_close_to_13(2:4); % closest one is #13 itself
+                check = length(find(three_closest==3))+length(find(three_closest==4))+...
+                    length(find(three_closest==11));                      
             end 
 
         end
