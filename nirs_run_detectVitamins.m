@@ -3,7 +3,8 @@ function out = nirs_run_detectVitamins(job)
 % (e.g. marking the positions of the optodes) on an MRI anatomical image.
 % The positions are detected and saved in the NIRS.mat matrix, and the 
 % the markers are erased from the anatomical image (a copy of the original
-% image is saved).
+% image is saved). The name of this new "cleaned" anatomical image is also
+% saved in the nirs matrix in place of the original image.
 %_______________________________________________________________________
 % Copyright (C) 2010 Laboratoire d'Imagerie Optique et Moleculaire
 %
