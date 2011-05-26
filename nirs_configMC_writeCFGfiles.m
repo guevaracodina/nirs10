@@ -132,12 +132,12 @@ for iP = 1:NS+ND
             fprintf(fid,'%12.0f             # total photon (not used)\n', job.parameters.nphotons);
             fprintf(fid,'%12.0f            # RNG seed, negative to generate\n', job.parameters.seed);
             fprintf(fid,'%.1f %.1f %.1f              # source position (mm)\n',...
-                Pp_rmiv(2,iP), Pp_rmiv(1,iP), Pp_rmiv(3,iP));
+                Pp_rmiv(1,iP), Pp_rmiv(2,iP), Pp_rmiv(3,iP));
             fprintf(fid,'%.3f %.3f %.3f                # initial directional vector\n',...
-                Pwd_rmiv(2,iP), Pwd_rmiv(1,iP), Pwd_rmiv(3,iP));
+                Pwd_rmiv(1,iP), Pwd_rmiv(2,iP), Pwd_rmiv(3,iP));
             %end_time =  job.parameters.numTimeGates*job.parameters.deltaT;
             %fprintf(fid,'%s %2.2e %1.2e   # time-gates(s): start, end, step\n','0.00e-9', end_time, job.parameters.deltaT);
-            fprintf(fid,'%s %s %s   # time-gates(s): start, end, step\n', '0','1e-9','1e-10');
+            fprintf(fid,'%s %s %s   # time-gates(s): start, end, step\n', '0','1e-9','1e-9');
             %[~,file,ext] = fileparts(job.n);%%% le .bin
             fprintf(fid,'%s     # volume (''uchar'' format)\n', job.n_b8i);%[file, ext]);
             
