@@ -19,7 +19,7 @@ cd(dir1);
 % Check if was run already
 if spm_existfile(['c1' fil ext(1:end)]) || ...
         spm_existfile(['c1' fil ext(1:end-2)])
-    disp('New Segment already run -- skipping');    
+    disp(['In folder ' dir1 ', New Segment already run -- skipping']);    
 
 else
     
@@ -84,7 +84,7 @@ else
         spm_jobman('run',matlabbatch);
     
     catch
-        disp(flog,'New Segment failed to run');
+        disp(['In folder ' dir1 ', New Segment failed to run.']);
     
     end
 end
