@@ -91,7 +91,7 @@ clear NIRS
 V_rmiv = spm_vol(outRS);
 Y_rmiv = spm_read_vols(V_rmiv);
 
-% % % % % % % % % % % % % % % % %%%%%% attention on inverse JAMAIS !!!!!!!!!!!!!!!!!!!!!!!!!
+% % % % % % % % % % % % % % % % %%%%%% attention on N'inverse JAMAIS !!!!!!!!!!!!!!!!!!!!!!!!!
 % % % % % % % % % % % % % % % % if job.MC_CUDAchoice==1
 % % % % % % % % % % % % % % % % %     Y_rmiv=permute(Y_rmiv,[2,1,3]);
 % % % % % % % % % % % % % % % % elseif job.MC_CUDAchoice==3

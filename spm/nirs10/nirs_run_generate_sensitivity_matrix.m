@@ -20,7 +20,7 @@ load(job.NIRSmat{1,1});
 
 f = job.outMCfiles;
 cs_dir =  fileparts(f{1,:});
-cs_ldir = cs_dir(max(strfind(cs_dir,'\'))+9:end);
+cs_ldir = cs_dir(max(strfind(cs_dir,'\'))+(length('MCconfig')+1):end);
 
 ics =1;
 while ~strcmp(cs_ldir,NIRS.Cs.n{ics})
@@ -91,10 +91,10 @@ deltaT =1;
                     deltat = 10*1e-10;
                     deltaT = 1e-10;
                 end
-%                 ms=loadmc2(f{fi,:},[V_segR.dim deltat/deltaT],'float');
-%                 cw_mcx=sum(ms,4);
-%                 ms = cw_mcx;
-                ms=loadmc2(f{fi,:},V_segR.dim,'float');
+                ms=loadmc2(f{fi,:},[V_segR.dim deltat/deltaT],'float');
+                cw_mcx=sum(ms,4);
+                ms = cw_mcx;
+%                 ms=loadmc2(f{fi,:},V_segR.dim,'float');
                 
             case 2 % tMCimg
                 fid=fopen(f{fi,:},'rb');
@@ -144,10 +144,10 @@ deltaT =1;
                     switch cs.alg
                         case 1 % MCX
                             % already normalized (http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/README : 6.1 output files)
-                             md=loadmc2(fullfile(cs_dir,[Dfn Oe]),V_segR.dim,'float');
-%                              md=loadmc2(fullfile(cs_dir,[Dfn Oe]),[V_segR.dim deltat/deltaT],'float');
-%                              cw_md=sum(md,4);
-%                              md = cw_mcx;
+%                              md=loadmc2(fullfile(cs_dir,[Dfn Oe]),V_segR.dim,'float');
+                             md=loadmc2(fullfile(cs_dir,[Dfn Oe]),[V_segR.dim deltat/deltaT],'float');
+                             cw_md=sum(md,4);
+                             md = cw_mcx;
                             
                             % sur la moyenne des points autour... : a coder
                             rayon = 3;
@@ -231,12 +231,26 @@ save(fullfile(cs_dir,'sensReshaped.mat'),'sens_reshaped');
 %%% a mettre en option
 V = struct('fname',fullfile(cs_dir,['sens' '.nii']),...
     'dim',  V_segR.dim,...
-    'dt',   V_segR.dt,...
+    'dt',   [16,0],...
     'pinfo',V_segR.pinfo,...
     'mat',  V_segR.mat);
 
 V = spm_create_vol(V);
 spm_write_vol(V,log(sens_reshaped));
+V1 = struct('fname',fullfile(cs_dir,['ms1' '.nii']),...
+    'dim',  V_segR.dim,...
+    'dt',   [16,0],...
+    'pinfo',V_segR.pinfo,...
+    'mat',  V_segR.mat);
+V1 = spm_create_vol(V1);
+spm_write_vol(V1,log(ms));
+V2 = struct('fname',fullfile(cs_dir,['md1' '.nii']),...
+    'dim',  V_segR.dim,...
+    'dt',   [16,0],...
+    'pinfo',V_segR.pinfo,...
+    'mat',  V_segR.mat);
+V2 = spm_create_vol(V2);
+spm_write_vol(V2,log(md));
 %%%
 
 m_c1 = zeros(size(Yb8i));
