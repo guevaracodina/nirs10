@@ -49,7 +49,7 @@ for iSubj=1:size(job.NIRSmat,1)
         [dirT1, fil, ext] = fileparts(NIRS.Dt.ana.T1);
         fwT1 = [dirT1 filesep 'w' fil ext(1:4)];
         if spm_existfile(fwT1)
-            disp('Spatial normalisation already run - skipping');
+            disp(['Spatial normalisation already run in file ' fwT1 ' - skipping']);
         else
         
             %Various options that we don't make available to the user in the GUI
