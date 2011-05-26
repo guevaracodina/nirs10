@@ -91,9 +91,10 @@ deltaT =1;
                     deltat = 10*1e-10;
                     deltaT = 1e-10;
                 end
-                 ms=loadmc2(f{fi,:},[V_segR.dim deltat/deltaT],'float');
-                cw_mcx=sum(ms,4);
-                ms = cw_mcx;
+%                 ms=loadmc2(f{fi,:},[V_segR.dim deltat/deltaT],'float');
+%                 cw_mcx=sum(ms,4);
+%                 ms = cw_mcx;
+                ms=loadmc2(f{fi,:},V_segR.dim,'float');
                 
             case 2 % tMCimg
                 fid=fopen(f{fi,:},'rb');
@@ -143,10 +144,10 @@ deltaT =1;
                     switch cs.alg
                         case 1 % MCX
                             % already normalized (http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/README : 6.1 output files)
-%                             md=loadmc2(fullfile(cs_dir,[Dfn Oe]),V_segR.dim,'float');
-                             md=loadmc2(fullfile(cs_dir,[Dfn Oe]),[V_segR.dim deltat/deltaT],'float');
-                             cw_md=sum(md,4);
-                             md = cw_mcx;
+                             md=loadmc2(fullfile(cs_dir,[Dfn Oe]),V_segR.dim,'float');
+%                              md=loadmc2(fullfile(cs_dir,[Dfn Oe]),[V_segR.dim deltat/deltaT],'float');
+%                              cw_md=sum(md,4);
+%                              md = cw_mcx;
                             
                             % sur la moyenne des points autour... : a coder
                             rayon = 3;

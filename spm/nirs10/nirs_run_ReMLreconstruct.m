@@ -105,6 +105,9 @@ for itp=1:length(job.temp_pts)
     switch job.WLruns
         case 1 % ON FAIT POUR LES 2 LONGUEURs D'ONDE
             tic
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % ATTENTION IL VA FALLOIR CHOISIR LE FICHIER RECONSTRUIT
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %%% Y %%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             fnirs = load(NIRS.Dt.fir.pp.p{:},'-mat');
             Y_t0 = fnirs.d(job.temp_pts(itp),C_cs)';
@@ -138,14 +141,6 @@ for itp=1:length(job.temp_pts)
             Xmc = Xmc_cm;
             clear Xmc_cm Vmc Ymc
             
-            NC2mi = NC_cs/2;
-            
-            switch beta_wtd
-                case 1%'mua'
-                    X = sparse(Xmc);
-                case 2%'hbs'
-                    X = sparse([[Xmc(1:NC2mi,:)*415.5 Xmc(1:NC2mi,:)*2141.8];[Xmc(NC2mi+1:end,:)*1008.0 Xmc(NC2mi+1:end,:)*778.0]]);
-            end
             
             %% Qn : Covariance pour les longueurs d'onde
             lst=(1:NC_cs);
@@ -189,14 +184,32 @@ for itp=1:length(job.temp_pts)
                     disp('peudo inverse');
                     meth = 'PInv';
                     
+                    NC2mi = NC_cs/2;
+                    
+                    % on resoud pour chaque longueur d'onde separement
+                    Dmua_l1 = zeros(NC2mi,1);
+                    Dmua_l2 = zeros(NC2mi,1);
+                    
+                    
+                    X_l1 = sparse(Xmc(1:NC2mi,:));
+                    X_l2 = sparse(Xmc(NC2mi+1:end,:));
+                    
+                    
+                    if beta_wtd==2%'hbs'
+                        ext1 = GetExtinctions(NIRS.Cf.dev.wl(1,1));
+                        ext_l1_HbO = ext1(1,1);
+                        ext_l1_HbR = ext1(1,2);
+                        
+                        ext2 = GetExtinctions(NIRS.Cf.dev.wl(1,2));
+                        ext_l2_HbO = ext2(1,1);
+                        ext_l2_HbR = ext2(1,2);
+                        
+                        
+                    end
+                    
                     % % % % %         Ybar = sparse([Y_t0;zeros(3*size(X,2),1)]);
                     % M_c1 Mask for cortex
-                    switch beta_wtd
-                        case 1%'mua'
-                            M_c1_wl = [m_c1+m_c5];
-                        case 2%'hbs'
-                            M_c1_wl = [m_c1+m_c5 m_c1+m_c5];
-                    end
+                    M_c1_wl = [m_c1+m_c5 m_c1+m_c5];
                     
                     M_c1 = sparse(diag(M_c1_wl));
                     % % % % %         Xbar = sparse([log(X) log(X)*M_c1 log(X)*M_c1; sparse(1:3*size(X,2),1:3*size(X,2),ones(3*size(X,2),1),3*size(X,2),3*size(X,2))]);
@@ -244,7 +257,9 @@ for itp=1:length(job.temp_pts)
             %Now, display the results
             switch beta_wtd
                 case 1%'mua'
-                    beta_3d = reshape(full(beta),VsegRR.dim);
+                    beta_4d = reshape(full(beta),[VsegRR.dim 2]);
+                    beta690 = beta_4d(:,:,:,1);
+                    beta830 = beta_4d(:,:,:,2);
                     
                     disp('_____________________________________________________________________')
                     disp('NIRS10 : temps de calcul pour la simulation :')
@@ -252,13 +267,22 @@ for itp=1:length(job.temp_pts)
                     disp('_____________________________________________________________________')
                     
                     % creation de nii :
-                    V_M = struct('fname',fullfile(dir_in,['Dmua_' meth '_t' int2str(job.temp_pts(itp)) '_Wlruns' int2str(job.WLruns) '.nii']),...
+                    V690 = struct('fname',fullfile(dir_in,['Dmua690_' meth '_t' int2str(job.temp_pts(itp)) '_Wlruns' int2str(job.WLruns) '.nii']),...
                         'dim',  VsegRR.dim,...
                         'dt',   VsegRR.dt,...
                         'pinfo',VsegRR.pinfo,...
                         'mat',  VsegRR.mat);
-                    V_M = spm_create_vol(V_M);
-                    spm_write_vol(V_M, beta_3d);
+                    V690 = spm_create_vol(V690);
+                    spm_write_vol(V690, beta690);
+                    
+                    V830 = struct('fname',fullfile(dir_in,['Dmua830_' meth '_t' int2str(job.temp_pts(itp)) '_Wlruns' int2str(job.WLruns) '.nii']),...
+                        'dim',  VsegRR.dim,...
+                        'dt',   VsegRR.dt,...
+                        'pinfo',VsegRR.pinfo,...
+                        'mat',  VsegRR.mat);
+                    V830 = spm_create_vol(V830);
+                    spm_write_vol(V830, beta830);
+                    
                 case 2%'hbs'
                     beta_4d = reshape(full(beta),[VsegRR.dim 2]);
                     beta_HbO = beta_4d(:,:,:,1);
@@ -480,30 +504,30 @@ for itp=1:length(job.temp_pts)
                 beta_HbR = beta_4d(:,:,:,2);
             end
     end
-% % % % % % % % % % % %     delocalise a cause du choix entre mua et hbs
-% % % % % % % % % % % %     disp('_____________________________________________________________________')
-% % % % % % % % % % % %     disp('NIRS10 : temps de calcul pour la simulation :')
-% % % % % % % % % % % %     toc
-% % % % % % % % % % % %     disp('_____________________________________________________________________')
-% % % % % % % % % % % %     
-% % % % % % % % % % % %     % creation de nii :
-% % % % % % % % % % % %     V_O = struct('fname',fullfile(dir_in,['D[HbO]_' meth '_t' int2str(job.temp_pts(itp)) '_Wlruns' int2str(job.WLruns) '.nii']),...
-% % % % % % % % % % % %         'dim',  VsegRR.dim,...
-% % % % % % % % % % % %         'dt',   VsegRR.dt,...
-% % % % % % % % % % % %         'pinfo',VsegRR.pinfo,...
-% % % % % % % % % % % %         'mat',  VsegRR.mat);
-% % % % % % % % % % % %     
-% % % % % % % % % % % %     V_O = spm_create_vol(V_O);
-% % % % % % % % % % % %     spm_write_vol(V_O, beta_HbO);
-% % % % % % % % % % % %     
-% % % % % % % % % % % %     V_R = struct('fname',fullfile(dir_in,['D[HbR]_' meth '_t' int2str(job.temp_pts(itp)) '_Wlruns' int2str(job.WLruns) '.nii']),...
-% % % % % % % % % % % %         'dim',  VsegRR.dim,...
-% % % % % % % % % % % %         'dt',   VsegRR.dt,...
-% % % % % % % % % % % %         'pinfo',VsegRR.pinfo,...
-% % % % % % % % % % % %         'mat',  VsegRR.mat);
-% % % % % % % % % % % %     
-% % % % % % % % % % % %     V_R = spm_create_vol(V_R);
-% % % % % % % % % % % %     spm_write_vol(V_R, beta_HbR);
+    % % % % % % % % % % % %     delocalise a cause du choix entre mua et hbs
+    % % % % % % % % % % % %     disp('_____________________________________________________________________')
+    % % % % % % % % % % % %     disp('NIRS10 : temps de calcul pour la simulation :')
+    % % % % % % % % % % % %     toc
+    % % % % % % % % % % % %     disp('_____________________________________________________________________')
+    % % % % % % % % % % % %
+    % % % % % % % % % % % %     % creation de nii :
+    % % % % % % % % % % % %     V_O = struct('fname',fullfile(dir_in,['D[HbO]_' meth '_t' int2str(job.temp_pts(itp)) '_Wlruns' int2str(job.WLruns) '.nii']),...
+    % % % % % % % % % % % %         'dim',  VsegRR.dim,...
+    % % % % % % % % % % % %         'dt',   VsegRR.dt,...
+    % % % % % % % % % % % %         'pinfo',VsegRR.pinfo,...
+    % % % % % % % % % % % %         'mat',  VsegRR.mat);
+    % % % % % % % % % % % %
+    % % % % % % % % % % % %     V_O = spm_create_vol(V_O);
+    % % % % % % % % % % % %     spm_write_vol(V_O, beta_HbO);
+    % % % % % % % % % % % %
+    % % % % % % % % % % % %     V_R = struct('fname',fullfile(dir_in,['D[HbR]_' meth '_t' int2str(job.temp_pts(itp)) '_Wlruns' int2str(job.WLruns) '.nii']),...
+    % % % % % % % % % % % %         'dim',  VsegRR.dim,...
+    % % % % % % % % % % % %         'dt',   VsegRR.dt,...
+    % % % % % % % % % % % %         'pinfo',VsegRR.pinfo,...
+    % % % % % % % % % % % %         'mat',  VsegRR.mat);
+    % % % % % % % % % % % %
+    % % % % % % % % % % % %     V_R = spm_create_vol(V_R);
+    % % % % % % % % % % % %     spm_write_vol(V_R, beta_HbR);
     
     % superpositions : on cree des images semi transparentes rouges ou bleues
     % sur les anatomiques (VOIR CHECKREG + CLIC DROIT)
