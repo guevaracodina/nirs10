@@ -16,6 +16,9 @@ manualMode = 0;
 % Boolean for when the semi-automatic coregistration failed and one just
 % wants to manually define the order of the optodes
 wrongWhenAutomatic = 0;
+% Boolean for an exception... always leave =0 except for P2S24 & P2S27.
+% Sorry about that.
+needFixForMissingVit = 1;
 
 % INPUTS %
 %%%%%%%%%%
@@ -43,9 +46,26 @@ nSubj = size(job.NIRSmat,1);
 
 % Loop over subjects
 for iSubj = 1:nSubj
+    
+    % Exeception.......
+    temp = needFixForMissingVit;
+    if iSubj==24 || iSubj==27
+        needFixForMissingVit = 1;
+    else
+        needFixForMissingVit = temp;
+    end
+    
+    if needFixForMissingVit
+        fix_coreg_missing_vitamin(fileparts(NIRSmat{iSubj}));
+        
+    % Use the normal code    
+    else
+    
     temp = wrongWhenAutomatic;
-    if iSubj==40 || iSubj==41 || iSubj==43 || iSubj==44
-        wrongWhenAutomatic = 1;
+    if iSubj==21 || ...% iSubj==24 || iSubj==27 || ...
+            iSubj==40 || iSubj==41 || iSubj==43 || iSubj==44
+        %wrongWhenAutomatic = 1;
+        
 %         % P2S40:
 %         [13 9 6 2 11 10 7 1 12 8 5 4 3]
 %         % P2S41:
@@ -648,7 +668,10 @@ for iSubj = 1:nSubj
     save(NIRSmat{iSubj},'NIRS');
     spm_write_vol(Vanat_WOspots, Yanat_WOspots);
     
+    end  % end if needFixForMissingVit
 end
+
+
 
 % Updated NIRS matrix is made available as a dependency
 out.NIRSmat = NIRSmat;
