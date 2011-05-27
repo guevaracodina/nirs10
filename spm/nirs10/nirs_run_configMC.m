@@ -18,6 +18,9 @@ function out = nirs_run_configMC(job)
 % are also corrected : the positions are first changed from mm to voxels.
 % The probe is then fitted in the rigid space with isotropic voxels.
 % Last, directions are calculated.
+%
+% BEWARE : directions must be in voxel space (one must apply rotations on 
+% directions calculated in mm). They must point towards the brain.
 %_______________________________________________________________________
 % Copyright (C) 2010 Laboratoire d'Imagerie Optique et Moleculaire
 % Clement Bonnery
