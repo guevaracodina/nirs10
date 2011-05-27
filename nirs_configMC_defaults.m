@@ -8,7 +8,7 @@ function nirs_configMC_defaults
 global nirs10
 
 nirs10.configMC1.MC_CUDAchoice = 1;
-nirs10.configMC1.MC_configdir = 'MCconfig';
+nirs10.configMC1.MC_configdir = 'MC'; %no longer used
 
 nirs10.configMC1.mcim_in = 0;
 
