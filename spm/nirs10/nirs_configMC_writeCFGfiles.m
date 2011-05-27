@@ -12,7 +12,7 @@ function out = nirs_configMC_writeCFGfiles(job)
 % Pvoid      - void points
 %_______________________________________________________________________
 %
-% Write each line to the file...
+% Write each line in the config files...
 %_______________________________________________________________________
 % Copyright (C) 2010 Laboratoire d'Imagerie Optique et Moleculaire
 
