@@ -32,6 +32,10 @@ for Idx=1:size(job.NIRSmat,1)
     try
         NIRS = [];
         load(job.NIRSmat{Idx,1});
+        
+        if ~isfield(NIRS,'Cs')
+            NIRS.Cs ={};
+        end
 
         if isfield(NIRS.Cs,'mcs')
             i_cs = size(NIRS.Cs.mcs,2)+1;
@@ -92,7 +96,9 @@ for Idx=1:size(job.NIRSmat,1)
         jobRS.out_dt = 'same';
         jobRS.out_autonaming = 0;
         jobRS.out_prefix = 'prefix';
-        outRS =nirs_resize(jobRS);
+%         outRS =nirs_resize(jobRS);
+        
+        outRS = cs.seg;
 
         clear NIRS
 
@@ -234,7 +240,7 @@ for Idx=1:size(job.NIRSmat,1)
                 % 1mm, il suffit de diviser par la taille des voxels (dans le cas 
                 % ou on serait avec des voxels de taille custom, il faudrait 
                 % diviser la taille des voxels voulu par la taille courante)
-                P.p = Pfp_ancienne_rmiv;%/(parameters.voxelSize);
+                P.p =Pfp_ancienne_rmiv;%/(parameters.voxelSize); DEFINITIFFFFFF
             elseif job.MC_CUDAchoice==2
                 % MonteCarlo in a particular frame. Positions must be in mm but the
             % origin is the same as the origin of the voxel frame (these positions 

@@ -1,4 +1,9 @@
 function out = nirs_run_runMC(job)
+% si on a la meme origine pour les voxels et les mm, on peut avoir 1 1 1 et
+% ca marche. Le code colle la source sur un voxel touchant la tete et il
+% lance la simulation
+%
+% 
 %_______________________________________________________________________
 % Copyright (C) 2010 LIOM Laboratoire d'Imagerie Optique et Moléculaire
 %                    École Polytechnique de Montréal
@@ -36,6 +41,7 @@ for Idx=1:size(job.NIRSmat,1)
         else
             cs_dir = dir2;
         end
+        %%%%%attention errreur !!!!!
         cs_ldir = cs_dir(max(strfind(cs_dir,'\'))+(length('MC')+1):end);
         
         ics =1;
@@ -44,7 +50,7 @@ for Idx=1:size(job.NIRSmat,1)
         end
         cs = NIRS.Cs.mcs{ics};
         %%%%%%%%
-        
+
         %Simulate MCX
         if isfield(job.MC_runCUDAchoice,'MCX1')
             
