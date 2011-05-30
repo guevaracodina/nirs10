@@ -22,7 +22,7 @@ if ~isempty(job.image_in{:})
     V = spm_vol(job.image_in{:});
     Y = spm_read_vols(V);
 else
-    V = spm_vol(NIRS.Dt.ana.T1seg{:});
+    V = spm_vol(NIRS.Dt.ana.T1seg);
     Y = spm_read_vols(V);
 end
 [dir,name] = fileparts(V.fname);
