@@ -96,9 +96,8 @@ for Idx=1:size(job.NIRSmat,1)
         jobRS.out_dt = 'same';
         jobRS.out_autonaming = 0;
         jobRS.out_prefix = 'prefix';
-%         outRS =nirs_resize(jobRS);
+         outRS =nirs_resize(jobRS);
         
-        outRS = cs.seg;
 
         clear NIRS
 
