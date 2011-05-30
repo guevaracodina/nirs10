@@ -989,17 +989,9 @@ image_in.name    = 'Image';
 image_in.help    = {'Select the image to be processed. ROI will be selected in this image. Other stuff made with the image saved...'};
 image_in.filter  = 'image';
 image_in.ufilter = '.*';
-image_in.num     = [1 1];
+image_in.val{1} = {''};
+image_in.num     = [0 1];
 
-% 
-% crop_image      = cfg_menu;
-% crop_image.tag  = 'crop_image';
-% crop_image.name = 'Crop image';
-% crop_image.labels = {'Yes','No'};
-% crop_image.values = {1,0};
-% crop_image.def  = @(val)nirs_get_defaults('preprocANAT.buildroi1.crop_image', val{:});
-% crop_image.help = {'Help'};
-    
 %_______________________________________________________________________
 output_prefix         = cfg_entry;
 output_prefix.name    = 'Prefix of the output image';
