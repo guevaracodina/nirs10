@@ -30,7 +30,7 @@ for Idx=1:size(job.NIRSmat,1)
             ics =ics+1;
         end
         cs = NIRS.Cs.mcs{ics};
-        try, MCX_g = NIRS.Cs.mcs{ics}.MCX_g; end
+        try MCX_g = NIRS.Cs.mcs{ics}.MCX_g; catch, MCX_g =1; end
         if cs.alg==1
             Oe='.mc2';
         elseif cs.alg==2

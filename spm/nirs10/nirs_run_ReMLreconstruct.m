@@ -74,8 +74,8 @@ for Idx=1:size(job.NIRSmat,1)
         % Cwl=[];
         % Cwl = [Cwl NIRS.Cf.H.C.wl(Cmc)];
         % wl = unique(Cwl);
-        t =(200:280);
-        job.temp_pts = t/0.04;
+% % % % % %         t =(200:280);
+% % % % % %         job.temp_pts = t/0.04;
 
         
         daate = strrep(datestr(now),':','-');
