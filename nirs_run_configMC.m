@@ -49,8 +49,6 @@ for Idx=1:size(job.NIRSmat,1)
             csn = job.MC_nam;
         end
 
-
-
         % cs current simulation
         cs.alg = job.MC_CUDAchoice;%1=MCX ; 2=tMCimg
         cs.dir = [job.MC_configdir csn];
@@ -100,22 +98,12 @@ for Idx=1:size(job.NIRSmat,1)
         jobRS.out_dt = 'same';
         jobRS.out_autonaming = 0;
         jobRS.out_prefix = 'prefix';
-         outRS =nirs_resize(jobRS);
-        
+         outRS =nirs_resize(jobRS);     
 
         clear NIRS
 
         V_rmiv = spm_vol(outRS);
         Y_rmiv = spm_read_vols(V_rmiv);
-
-        % % % % % % % % % % % % % % % % %%%%%% attention on N'inverse JAMAIS !!!!!!!!!!!!!!!!!!!!!!!!!
-        % % % % % % % % % % % % % % % % if job.MC_CUDAchoice==1
-        % % % % % % % % % % % % % % % % %     Y_rmiv=permute(Y_rmiv,[2,1,3]);
-        % % % % % % % % % % % % % % % % elseif job.MC_CUDAchoice==3
-        % % % % % % % % % % % % % % % %     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % % % % % % % % % % % % % % % %     % IL FAUT FAIRE DEUX CHEMINS CAR POUR UN IL FAUT INVERSER MAIS PAS POUR L AUTRE
-        % % % % % % % % % % % % % % % %     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % % % % % % % % % % % % % % % % end
         Y8_rmiv = uint8(Y_rmiv);
 
         load(job.NIRSmat{1,1});
@@ -124,7 +112,6 @@ for Idx=1:size(job.NIRSmat,1)
         V = spm_vol(cs.seg);
         % dim = V.dim;% on est ici avec l'ancienne image qui permet d'obtenir les bonnes positions en voxels
         inv_mat = spm_imatrix(V.mat);
-        % scalings = diag(inv_mat(7:9));
 
         % Transform also P positions and directions
         NP = size(cs.Pfp_rmv,2);
@@ -254,6 +241,7 @@ for Idx=1:size(job.NIRSmat,1)
             for i=1:size(cs.Pwd_rmm,2)
                 Pwd_rmiv(:,i) = V_rmiv.mat(1:3,1:3)\cs.Pwd_rmm(:,i);           
             end
+            P.Pkpt = cs.Pkpt;
             P.wd = -Pwd_rmiv(1:3,:); %to point toward the inside of brain
             P.r = [Sr' Dr' zeros(1,NP -(cs.NSkpt+cs.NDkpt))];
             jobW.P =P;
