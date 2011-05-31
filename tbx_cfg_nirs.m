@@ -92,7 +92,7 @@ anatT1.help    = {'Optional, can be specified in MC Segment, or earlier '
     'and be available in NIRS.mat structure.'
     'Select raw anatomical image(s) for the subject(s). '
     'If several subjects, the images '
-    'must be in the same order as the NIRS.mat structures.'}'; 
+    'must be in the same order as the NIRS.mat structures.'}';
 
 subj         = cfg_branch;
 subj.tag     = 'subj';
@@ -1006,10 +1006,18 @@ output_prefix.help    = {'You can choose to give a particular prefix to the ',..
 %_______________________________________________________________________
 buildroi1      = cfg_exbranch;
 buildroi1.tag  = 'buildroi1';
-buildroi1.name = 'Set vertices and build ROI';
-buildroi1.val  = {NIRSmat keepAllChannels image_in output_prefix};
+buildroi1.name = 'Build ROI';
+buildroi1.val  = {NIRSmat NewDirCopyNIRS keepAllChannels image_in output_prefix};
 buildroi1.prog = @nirs_run_buildroi2;
+buildroi1.vout = @nirs_cfg_vout_buildroi1;
 buildroi1.help = {'Define region of interest containing all the selected channels. Please only enter the channels numbers for the first wavelength.'};
+
+function vout = nirs_cfg_vout_buildroi1(job)
+vout = cfg_dep;                     
+vout.sname      = 'NIRS.mat';       
+vout.src_output = substruct('.','NIRSmat'); 
+vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Configuration for MC segmentation: MCsegment   

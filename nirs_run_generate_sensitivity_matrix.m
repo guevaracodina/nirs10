@@ -21,14 +21,19 @@ for Idx=1:size(job.NIRSmat,1)
         NIRS = [];
         load(job.NIRSmat{Idx,1});
 
-        f = job.outMCfiles;
-        cs_dir =  fileparts(f{1,:});
-        cs_ldir = cs_dir(max(strfind(cs_dir,'\'))+(length('MC')+1):end);
-
-        ics =1;
-        while ~strcmp(cs_ldir,NIRS.Cs.n{ics})
-            ics =ics+1;
+        if ~isempty(job.outMCfiles)
+            f = job.outMCfiles;
+            cs_dir =  fileparts(f{1,:});
+            cs_ldir = cs_dir(max(strfind(cs_dir,'\'))+(length('MC')+1):end);
+            
+            ics =1;
+            while ~strcmp(cs_ldir,NIRS.Cs.n{ics})
+                ics =ics+1;
+            end
+        else
+            ics = length(NIRS.Cs.n);
         end
+        
         cs = NIRS.Cs.mcs{ics};
         try MCX_g = NIRS.Cs.mcs{ics}.MCX_g; catch, MCX_g =1; end
         if cs.alg==1
@@ -97,13 +102,12 @@ for Idx=1:size(job.NIRSmat,1)
                     % already normalized (http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/README : 6.1 output files)
                     numgates = min(cs.numTimeGates,MCX_g);
 
-                    ms=loadmc2(f{fiS,:},[V_segR.dim numgates],'float');
+                    ms=loadmc2(fS{fiS,:},[V_segR.dim numgates],'float');
                     cw_mcx=sum(ms,4);
                     ms = cw_mcx;
-                    %                 ms=loadmc2(f{fi,:},V_segR.dim,'float');
 
                 case 2 % tMCimg
-                    fid=fopen(f{fiS,:},'rb');
+                    fid=fopen(fS{fiS,:},'rb');
                     ms = fread(fid,V_segR.dim(1)*V_segR.dim(2)*V_segR.dim(3),'float32');
                     fclose(fid);
                     % Bonnery from Boas et al.
@@ -159,7 +163,7 @@ for Idx=1:size(job.NIRSmat,1)
                                 % boule autour de la position du point P
                                 vxr = 3;%voxel radius
                                 ms_N = ms(cs.Pfp_rmiv(1,Sn)-vxr:cs.Pfp_rmiv(1,Sn)+vxr,cs.Pfp_rmiv(2,Sn)-vxr:cs.Pfp_rmiv(2,Sn)+vxr,cs.Pfp_rmiv(3,Sn)-vxr:cs.Pfp_rmiv(3,Sn)+vxr);
-                                md_N = ms(cs.Pfp_rmiv(1,NS+D_Sn(i))-vxr:cs.Pfp_rmiv(1,NS+D_Sn(i))+vxr,cs.Pfp_rmiv(2,NS+D_Sn(i))-vxr:cs.Pfp_rmiv(2,NS+D_Sn(i))+vxr,cs.Pfp_rmiv(3,NS+D_Sn(i))-vxr:cs.Pfp_rmiv(3,NS+D_Sn(i))+vxr);
+                                md_N = md(cs.Pfp_rmiv(1,NS+D_Sn(i))-vxr:cs.Pfp_rmiv(1,NS+D_Sn(i))+vxr,cs.Pfp_rmiv(2,NS+D_Sn(i))-vxr:cs.Pfp_rmiv(2,NS+D_Sn(i))+vxr,cs.Pfp_rmiv(3,NS+D_Sn(i))-vxr:cs.Pfp_rmiv(3,NS+D_Sn(i))+vxr);
 
                                 phi0_S = max(ms_N(:));
                                 phi0_D = max(md_N(:));

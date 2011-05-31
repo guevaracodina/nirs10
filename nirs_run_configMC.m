@@ -49,9 +49,7 @@ for Idx=1:size(job.NIRSmat,1)
             csn = job.MC_nam;
         end
 
-        if ~exist(fullfile(NIRS.Dt.s.p,[job.MC_configdir csn]),'dir')%Directory for configuration files
-            mkdir(fullfile(NIRS.Dt.s.p,[job.MC_configdir csn]));
-        end
+
 
         % cs current simulation
         cs.alg = job.MC_CUDAchoice;%1=MCX ; 2=tMCimg
@@ -61,6 +59,7 @@ for Idx=1:size(job.NIRSmat,1)
         if isfield(job.mcim_cfg,'mcim_in')% image segmentee de l'anatomique de base
             roi =0;% image choisie
             cs.seg = job.mcim_cfg.mcim_in{:};
+            disp('cs.p = ');
             cs.Pfp_rmv = NIRS.Cs.temp.Pfp_roi_rmv;
             cs.Pfp_rmm = NIRS.Cs.temp.Pfp_roi_rmm;
             cs.Pp_rmm = NIRS.Cs.temp.Pp_roi_rmm;
@@ -74,6 +73,7 @@ for Idx=1:size(job.NIRSmat,1)
             catch
                 cs.seg = NIRS.Cs.temp.segR;
             end
+            cs.p = cs.seg(1:max(strfind(cs.seg,'\'))-1);
             cs.Pfp_rmv = NIRS.Cs.temp.Pfp_roi_rmv;
             cs.Pfp_rmm = NIRS.Cs.temp.Pfp_roi_rmm;
             cs.Pp_rmm = NIRS.Cs.temp.Pp_roi_rmm;
@@ -81,6 +81,10 @@ for Idx=1:size(job.NIRSmat,1)
             cs.Pkpt = NIRS.Cs.temp.Pkpt;
             cs.NSkpt = NIRS.Cs.temp.NSkpt;
             cs.NDkpt = NIRS.Cs.temp.NDkpt;
+        end
+        
+        if ~exist(fullfile(cs.p,[job.MC_configdir csn]),'dir')%Directory for configuration files
+            mkdir(fullfile(cs.p,[job.MC_configdir csn]));
         end
 
         NIRS.Cs.mcs{i_cs} = cs;
@@ -90,7 +94,7 @@ for Idx=1:size(job.NIRSmat,1)
         parameters.voxelSize = job.MC_parameters.voxelSize;
         % transform image from anisotropic voxels space to isotropic voxels space
         jobRS.image_in = {cs.seg};
-        jobRS.out_dir = fullfile(NIRS.Dt.s.p,[job.MC_configdir csn]);
+        jobRS.out_dir = fullfile(cs.p,[job.MC_configdir csn]);
         jobRS.out_dim = [1 1 1];
         jobRS.out_vxsize = parameters.voxelSize;
         jobRS.out_dt = 'same';
@@ -170,7 +174,7 @@ for Idx=1:size(job.NIRSmat,1)
         n_b8i = ['vol8bit_' id '.bin'];
 
         cs.segR = outRS;
-        cs.b8i = fullfile(NIRS.Dt.s.p,[job.MC_configdir csn],n_b8i);
+        cs.b8i = fullfile(cs.p,[job.MC_configdir csn],n_b8i);
 
         cs.numTimeGates = job.MC_parameters.numTimeGates;
         cs.deltaT = job.MC_parameters.deltaT;
@@ -178,7 +182,7 @@ for Idx=1:size(job.NIRSmat,1)
         NIRS.Cs.mcs{i_cs} = cs;
         save(job.NIRSmat{1,1},'NIRS');
 
-        fid = fopen(fullfile(NIRS.Dt.s.p,[job.MC_configdir csn],n_b8i),'wb');
+        fid = fopen(fullfile(cs.p,[job.MC_configdir csn],n_b8i),'wb');
         fwrite(fid, Y8_rmiv, 'uint8');
         fclose(fid);
 
@@ -225,7 +229,7 @@ for Idx=1:size(job.NIRSmat,1)
             %%%% attention la on est avec l'image resizee...........
             jobW.algo = job.MC_CUDAchoice;
             jobW.n_b8i = n_b8i;
-            jobW.mc_dir = fullfile(NIRS.Dt.s.p,[job.MC_configdir csn]);    
+            jobW.mc_dir = fullfile(cs.p,[job.MC_configdir csn]);    
             jobW.ROIlimits = [1 1 1; dim_rmiv];
 
             jobW.parameters = parameters;
@@ -257,7 +261,7 @@ for Idx=1:size(job.NIRSmat,1)
 
             out_void = nirs_configMC_writeCFGfiles(jobW);
         end
-        newNIRSlocation = fullfile(NIRS.Dt.s.p,[job.MC_configdir csn],'NIRS.mat');
+        newNIRSlocation = fullfile(cs.p,[job.MC_configdir csn],'NIRS.mat');
         save(newNIRSlocation,'NIRS');
         job.NIRSmat{Idx,1} = newNIRSlocation;
     catch exception

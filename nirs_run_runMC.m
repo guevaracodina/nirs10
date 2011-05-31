@@ -42,8 +42,12 @@ for Idx=1:size(job.NIRSmat,1)
             cs_dir = dir2;
         end
         %%%%%attention errreur !!!!!
-        cs_ldir = cs_dir(max(strfind(cs_dir,'\'))+(length('MC')+1):end);
-        
+        if strcmp(cs_dir(max(strfind(cs_dir,'\'))+1:max(strfind(cs_dir,'\'))+3),'roi')
+            seps = strfind(cs_dir,'\');
+            cs_ldir = cs_dir(max(seps(1:end-1))+(length('MC')+1):max(seps)-1);
+        else
+            cs_ldir = cs_dir(max(strfind(cs_dir,'\'))+(length('MC')+1):end);
+        end
         ics =1;
         while ~strcmp(cs_ldir,NIRS.Cs.n{ics})
             ics =ics+1;
