@@ -15,6 +15,7 @@ function out = nirs_run_generate_sensitivity_matrix(job)
 %_______________________________________________________________________
 % Copyright (C) 2010 Laboratoire d'Imagerie Optique et Moleculaire
 % Clément Bonnéry 03/2011
+
 for Idx=1:size(job.NIRSmat,1)
     %Load NIRS.mat information
     try
@@ -76,6 +77,9 @@ for Idx=1:size(job.NIRSmat,1)
         NfD = 0;
         NfS = 0;
         isd =0; % count of lignes in sensitivity matrix
+        
+        Skpt = cs.Pkpt(1:cs.NSkpt);
+        Dkpt = cs.Pkpt(cs.NSkpt+1:cs.NSkpt+cs.NDkpt)-8;
 
         %%%%%%%%%%
         for fi = 1:size(f,1)
@@ -102,9 +106,8 @@ for Idx=1:size(job.NIRSmat,1)
                     % already normalized (http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/README : 6.1 output files)
                     numgates = min(cs.numTimeGates,MCX_g);
 
-                    ms=loadmc2(fS{fiS,:},[V_segR.dim numgates],'float');
-                    cw_mcx=sum(ms,4);
-                    ms = cw_mcx;
+                    ms4=loadmc2(fS{fiS,:},[V_segR.dim numgates],'float');
+                    ms=sum(ms4,4);
 
                 case 2 % tMCimg
                     fid=fopen(fS{fiS,:},'rb');
@@ -151,23 +154,29 @@ for Idx=1:size(job.NIRSmat,1)
                         c = find(Cid(2,:)== Sn & Cid(3,:)==D_Sn(i) & Cwl==Pwl);
                         disp(['Sn=' int2str(Sn) ' et D_Sn=[' int2str(D_Sn) '] et wl=' int2str(Pwl) ' , DONC : ' int2str(c)]);
 
+                        D_Pktp = NS+sum((1:length(Dkpt)).*(Dkpt==D_Sn(i)));
+                        S_Pkpt = sum((1:length(Skpt)).*(Skpt==Sn));
                         switch cs.alg
                             case 1 % MCX
                                 % already normalized (http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/README : 6.1 output files)
-                                %                              md=loadmc2(fullfile(cs_dir,[Dfn Oe]),V_segR.dim,'float');
-                                md=loadmc2(fullfile(cs_dir,[Dfn Oe]),[V_segR.dim numgates],'float');
-                                cw_md=sum(md,4);
-                                md = cw_mcx;
+                                md4=loadmc2(fullfile(cs_dir,[Dfn Oe]),[V_segR.dim numgates],'float');
+                                md=sum(md4,4);
 
                                 %%% calcul de phi0
                                 % boule autour de la position du point P
                                 vxr = 3;%voxel radius
-                                ms_N = ms(cs.Pfp_rmiv(1,Sn)-vxr:cs.Pfp_rmiv(1,Sn)+vxr,cs.Pfp_rmiv(2,Sn)-vxr:cs.Pfp_rmiv(2,Sn)+vxr,cs.Pfp_rmiv(3,Sn)-vxr:cs.Pfp_rmiv(3,Sn)+vxr);
-                                md_N = md(cs.Pfp_rmiv(1,NS+D_Sn(i))-vxr:cs.Pfp_rmiv(1,NS+D_Sn(i))+vxr,cs.Pfp_rmiv(2,NS+D_Sn(i))-vxr:cs.Pfp_rmiv(2,NS+D_Sn(i))+vxr,cs.Pfp_rmiv(3,NS+D_Sn(i))-vxr:cs.Pfp_rmiv(3,NS+D_Sn(i))+vxr);
+                                
+                                ms_N = ms(min(cs.Pfp_rmiv(1,S_Pkpt)-vxr,1):max(cs.Pfp_rmiv(1,S_Pkpt)+vxr,size(ms,1)),...
+                                    min(cs.Pfp_rmiv(2,S_Pkpt)-vxr,1):max(cs.Pfp_rmiv(2,S_Pkpt)+vxr,size(ms,2)),...
+                                    min(cs.Pfp_rmiv(3,S_Pkpt)-vxr,1):max(cs.Pfp_rmiv(3,S_Pkpt)+vxr,size(ms,3)));
+                                
+                                md_N = md(min(cs.Pfp_rmiv(1,D_Pktp)-vxr,1):max(cs.Pfp_rmiv(1,D_Pktp)+vxr,size(md,1)),...
+                                    min(cs.Pfp_rmiv(2,D_Pktp)-vxr,1):max(cs.Pfp_rmiv(2,D_Pktp)+vxr,size(md,2)),...
+                                    min(cs.Pfp_rmiv(3,D_Pktp)-vxr,1):max(cs.Pfp_rmiv(3,D_Pktp)+vxr,size(md,3)));
 
                                 phi0_S = max(ms_N(:));
                                 phi0_D = max(md_N(:));
-                                disp(['phi0=' int2str((phi0_S + phi0_D)/2)]);
+                                
                                 % Sensitivity matrix
                                 sens_sd = ms.*md / ((phi0_S + phi0_D)/2);
                                 sens(isd+1,:) = reshape(sens_sd,[numel(sens_sd),1]);
@@ -238,20 +247,20 @@ for Idx=1:size(job.NIRSmat,1)
 
         V = spm_create_vol(V);
         spm_write_vol(V,log(sens_reshaped));
-        V1 = struct('fname',fullfile(cs_dir,['ms1' '.nii']),...
-            'dim',  V_segR.dim,...
-            'dt',   [16,0],...
-            'pinfo',V_segR.pinfo,...
-            'mat',  V_segR.mat);
-        V1 = spm_create_vol(V1);
-        spm_write_vol(V1,log(ms));
-        V2 = struct('fname',fullfile(cs_dir,['md1' '.nii']),...
-            'dim',  V_segR.dim,...
-            'dt',   [16,0],...
-            'pinfo',V_segR.pinfo,...
-            'mat',  V_segR.mat);
-        V2 = spm_create_vol(V2);
-        spm_write_vol(V2,log(md));
+%         V1 = struct('fname',fullfile(cs_dir,['ms1' '.nii']),...
+%             'dim',  V_segR.dim,...
+%             'dt',   [16,0],...
+%             'pinfo',V_segR.pinfo,...
+%             'mat',  V_segR.mat);
+%         V1 = spm_create_vol(V1);
+%         spm_write_vol(V1,log(ms));
+%         V2 = struct('fname',fullfile(cs_dir,['md1' '.nii']),...
+%             'dim',  V_segR.dim,...
+%             'dt',   [16,0],...
+%             'pinfo',V_segR.pinfo,...
+%             'mat',  V_segR.mat);
+%         V2 = spm_create_vol(V2);
+%         spm_write_vol(V2,log(md));
         %%%
 
         m_c1 = zeros(size(Yb8i));
@@ -280,14 +289,14 @@ for Idx=1:size(job.NIRSmat,1)
             end
             sens_reshaped_c1 = sens_reshaped_c1 + reshape(sens_c1(i,:),V_segR.dim);
 
-            V_c1 = struct('fname',fullfile(cs_dir,['banane_c1_' int2str(sensC(i,1)) '.nii']),...
-                'dim',  V_segR.dim,...
-                'dt',   V_segR.dt,...
-                'pinfo',V_segR.pinfo,...
-                'mat',  V_segR.mat);
-
-            V_c1 = spm_create_vol(V_c1);
-            spm_write_vol(V_c1,reshape(sens_c1(i,:),V_segR.dim));%sens_sd_c1i,V_segR.dim));
+%             V_c1 = struct('fname',fullfile(cs_dir,['banane_c1_' int2str(sensC(i,1)) '.nii']),...
+%                 'dim',  V_segR.dim,...
+%                 'dt',   V_segR.dt,...
+%                 'pinfo',V_segR.pinfo,...
+%                 'mat',  V_segR.mat);
+% 
+%             V_c1 = spm_create_vol(V_c1);
+%             spm_write_vol(V_c1,reshape(sens_c1(i,:),V_segR.dim));%sens_sd_c1i,V_segR.dim));
 
         end
         save(job.NIRSmat{Idx,1},'NIRS');       
