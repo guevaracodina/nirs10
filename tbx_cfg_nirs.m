@@ -2613,35 +2613,8 @@ vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%Configuration: 3D reconstruction -- Tikhonov
+%Reconstructions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% Executable Branch
-tikhonov1      = cfg_exbranch;       
-tikhonov1.name = 'Tikhonov inversion';             
-tikhonov1.tag  = 'tikhonov1';
-tikhonov1.val  = {NIRSmat}; 
-tikhonov1.prog = @nirs_run_inverse_tikhonov;  
-tikhonov1.vout = @nirs_cfg_vout_inverse_tikhonov; 
-tikhonov1.help = {'Invert using Tikhonov.'};
-
-function vout = nirs_cfg_vout_inverse_tikhonov(job)
-vout = cfg_dep;                     
-vout.sname      = 'NIRS.mat';       
-vout.src_output = substruct('.','NIRSmat'); 
-vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
-end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%Configuration: 3D reconstruction -- ReML reconstruction
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% sensmat         = cfg_files; %Select sensitivity matrix for this subject
-% sensmat.name    = 'Sensitivity Matrix'; % The displayed name
-% sensmat.tag     = 'sensmat';       %file names
-% sensmat.filter  = 'nii';
-% sensmat.num     = [1 1];     % Number of inputs required
-% sensmat.help    = {'Select sensitivity matrix for this subject.'}; % help t
 
 temp_pts       = cfg_entry; 
 temp_pts.name    = 'Point temporel de l''inversion'; % The displayed name
@@ -2690,14 +2663,6 @@ dir_in.ufilter = '.*';
 dir_in.num     = [1 1];
 dir_in.help    = {'Select the MonteCarlo simulation output directory.'};
 
-ReML_method           = cfg_menu;
-ReML_method.name      = 'ReML method';
-ReML_method.tag       = 'ReML_method';
-ReML_method.labels    = {'Huppert' 'SPM' 'Tikhonov'};
-ReML_method.values    = {0,1,2};
-ReML_method.val       = {0};
-ReML_method.help      = {'Choose ReML reconstruction method.'};
-
 WLruns           = cfg_menu;
 WLruns.name      = 'Runs';
 WLruns.tag       = 'WLruns';
@@ -2713,6 +2678,59 @@ beta_wtd.labels    = {'mua' 'hbs'};
 beta_wtd.values    = {1,2};
 beta_wtd.val       = {1};
 beta_wtd.help      = {'Choose Delta mua or Delta[HbO] and Delta[HBR]'};
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Configuration: 3D reconstruction -- Tikhonov
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+alpha         = cfg_entry; 
+alpha.name    = 'Hyperparameter';
+alpha.tag     = 'alpha';
+alpha.strtype = 'r';  
+alpha.num     = [1 1];
+alpha.val     = {1};
+alpha.help    = {'Tunes the model :'
+    'If small, the solution favors minimizing the residual error with the measured data.'
+    'If large, the solution is biased towards matching the prior (no activity).'}';
+
+tikh_method           = cfg_menu;
+tikh_method.name      = 'Tikhonov regularization method';
+tikh_method.tag       = 'tikh_method';
+tikh_method.labels    = {'a l''ancienne !' 'Tikhonov' 'Extended Tikhonov' 'Simple Bayesian Interpretation'};
+tikh_method.values    = {0,1,2,3};
+tikh_method.val       = {1};
+tikh_method.help      = {'Choose Tikhonov regularization reconstruction method (all taken from Hierarchical Bayesian regularization of reconstructions for diffuse optical tomography using multiple priors, Huppert).'
+    '-- a l''ancienne is the first method working (false but kept to be able to compare results)'
+    '-- Tikhonov is the simplest method of regularization'
+    '-- Extended Tikhonov uses Li et al. model'
+    '-- Simple Bayesian Interpretation uses covariances for the norms.'
+    }';
+
+% Executable Branch
+tikhonov1      = cfg_exbranch;       
+tikhonov1.name = 'Tikhonov inversion';             
+tikhonov1.tag  = 'tikhonov1';
+tikhonov1.val  = {NIRSmat NewDirCopyNIRS temp_pts dir_in sens_vxsize tikh_method alpha}; 
+tikhonov1.prog = @nirs_run_inverse_tikhonov;  
+tikhonov1.vout = @nirs_cfg_vout_inverse_tikhonov; 
+tikhonov1.help = {'Invert using Tikhonov.'};
+
+function vout = nirs_cfg_vout_inverse_tikhonov(job)
+vout = cfg_dep;                     
+vout.sname      = 'NIRS.mat';       
+vout.src_output = substruct('.','NIRSmat'); 
+vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Configuration: 3D reconstruction -- ReML reconstruction
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ReML_method           = cfg_menu;
+ReML_method.name      = 'ReML method';
+ReML_method.tag       = 'ReML_method';
+ReML_method.labels    = {'Huppert' 'SPM'};
+ReML_method.values    = {0,1};
+ReML_method.val       = {0};
+ReML_method.help      = {'Choose ReML reconstruction method.'};
 
 % Executable Branch
 ReMLreconstruct1      = cfg_exbranch;       
