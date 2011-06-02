@@ -3,7 +3,7 @@ function out = nirs_run_checkreconstruct(job)
 %_______________________________________________________________________
 % Copyright (C) 2010 Laboratoire d'Imagerie Optique et Moleculaire
 % Clement Bonnery
-Kas =1;
+Kas =3;
 switch Kas
     case 3
         out_Hbs = job.outreconstruct_Hb;
@@ -120,9 +120,9 @@ switch Kas
             timee =str2num(name(sep(2)+2:end));
             if ~isempty(strfind(name,'HbO'))
                 
-                dec_DHbO(1,timee:timee+25) = Y(9,11,18);
+                dec_DHbO(1,timee:timee+25) = Y(13,7,8);
             else
-                dec_DHbR(1,timee:timee+25) = Y(9,11,18);
+                dec_DHbR(1,timee:timee+25) = Y(13,7,8);
             end
         end
         figure;
