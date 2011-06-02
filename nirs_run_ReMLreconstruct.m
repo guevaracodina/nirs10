@@ -14,8 +14,8 @@ function out = nirs_run_ReMLreconstruct(job)
 % \  0  /   \     0           1     /            \       -beta0        /
 %
 % Y(t0)                 = instant t0 dans le fichier .nirs
-% Xsens                 = matrice sensitivite avec un point temporel
-% [ext]                 = matrice des coefficients d extinctions
+% Xsens                 = matrice sensitivite en un unique point temporel
+% [ext]                 = matrice des coefficients d extinction
 % epsilon_channel-noise = bruit dans les canaux
 % omega (notre beta !)  = effet du paradigme
 
@@ -101,7 +101,6 @@ for Idx=1:size(job.NIRSmat,1)
             Xmc_cm(Ci,:) = reshape(Ymc,[1 prod(Vmc.dim)]);
         end
         % Xmc : matrice de sensitivite retaille avec des plus gros voxels !
-        % 
         Xmc = Xmc_cm;
         clear Xmc_cm Vmc Ymc sens
         Nvx = size(Xmc,2);
@@ -115,34 +114,38 @@ for Idx=1:size(job.NIRSmat,1)
         
         ext1 = GetExtinctions(NIRS.Cf.dev.wl(1,1));
         ext2 = GetExtinctions(NIRS.Cf.dev.wl(1,2));
-        E = [ext1(1,1) ext1(1,2) ; ext2(1,1) ext2(1,2)];
       
         for ifnirs=1:size(NIRS.Dt.fir.pp,2)         
             fnirs = load(NIRS.Dt.fir.pp.p{1,ifnirs},'-mat');
+            
+            %%% X %%% une matrice par session
+            Xsens = sparse([Xwl{1} zeros(size(Xwl{1}));zeros(size(Xwl{1})) Xwl{2}]);
+            E11 = sparse(ext1(1,1)*eye(Nvx));
+            E12 = sparse(ext1(1,2)*eye(Nvx));
+            E21 = sparse(ext2(1,1)*eye(Nvx));
+            E22 = sparse(ext2(1,2)*eye(Nvx));
+            Egrande = sparse([E11 E12 ; E21 E22]);
+            X = Xsens*Egrande;
+            
+            %%% covariances %%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % Qn : Covariance du bruit de mesure
+            % huppert_direct_2008 : (section 3.6 p 12) The initial seed of R was calculated from linear regression of the data with the temporal basis.
+            for idx=1:size(NIRS.Cf.dev.wl,2) % over the wavelengths
+                lst=(1:NC_cs/2)+NC_cs/2*(idx-1);
+                Qn{idx}=sparse(lst,lst,ones(size(lst)),NC_cs,NC_cs);
+            end
+            %  Qp : Covariance components for the parameters (4 total- 2 per HbO/HbR {layer 1; layer II})
+            Qp{1}=sparse(Y_c5,Y_c5,ones(length(Y_c5),1),2*Nvx,2*Nvx);  %Skin layer- HbO
+            Qp{2}=sparse(Y_c1,Y_c1,ones(length(Y_c1),1),2*Nvx,2*Nvx);  %Brain layer- HbO
+            Qp{3}=sparse(Y_c5,Y_c5,ones(length(Y_c5),1),2*Nvx,2*Nvx);  %Skin layer- HbR
+            Qp{4}=sparse(Y_c1,Y_c1,ones(length(Y_c1),1),2*Nvx,2*Nvx);  %Brain layer- HbR
+            Qp{5}=sparse(1:Nvx,1:Nvx,-ones(Nvx,1),2*Nvx,2*Nvx);%quantifie la covariance entre HbO et HbR dans chacun des voxels
             
             for itp=1:length(job.temp_pts)
                 disp(['current : ' int2str(job.temp_pts(itp))])
                 %%% Y %%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 Y_t0 = fnirs.d(job.temp_pts(itp),C_cs)';
               
-                %%% covariances %%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                % Qn : Covariance du bruit de mesure
-                for idx=1:size(NIRS.Cf.dev.wl,2) %loop over number of wavelengths
-                    lst=(1:NC_cs/2)+NC_cs/2*(idx-1);%find(NIRS.Cf.dev.wl(1,idx)==idx); %List of all wavelength <idx>
-                    Qn{idx}=sparse(lst,lst,ones(size(lst)),NC_cs,NC_cs);
-                end
-%                 lst=(1:NC2mi);
-%                 Qn=sparse(lst,lst,ones(size(lst)),NC2mi,NC2mi);
-                %  Qp : Covariance components for the parameters (4 total- 2 per HbO/HbR {layer 1; layer II})
-                Qp{1}=sparse(Y_c5,Y_c5,ones(length(Y_c5),1),2*Nvx,2*Nvx);  %Skin layer- HbO
-                Qp{2}=sparse(Y_c1,Y_c1,ones(length(Y_c1),1),2*Nvx,2*Nvx);  %Brain layer- HbO
-                Qp{3}=sparse(Y_c5,Y_c5,ones(length(Y_c5),1),2*Nvx,2*Nvx);  %Skin layer- HbR
-                Qp{4}=sparse(Y_c1,Y_c1,ones(length(Y_c1),1),2*Nvx,2*Nvx);  %Brain layer- HbR
-                
-                Xsens = sparse([Xwl{1} Xwl{2};Xwl{1} Xwl{2}]);
-                Egrande = sparse([ext1(1,1)*eye(Nvx) ext1(1,2)*eye(Nvx) ; ext2(1,1)*eye(Nvx) ext2(1,2)*eye(Nvx)]);
-                X = Xsens*Egrande;
-                
                 switch job.ReML_method
                     case 0
                         disp('code Huppert');
@@ -160,7 +163,7 @@ for Idx=1:size(job.NIRSmat,1)
                         meth = 'SPM';
                         
                         %%% Y %%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                Y_t0 = fnirs.d(job.temp_pts(itp),C_cs)';
+                        Y_t0 = fnirs.d(job.temp_pts(itp),C_cs)';
          
                         %Set up the extended covariance model by concatinating the measurement
                         %and parameter noise terms

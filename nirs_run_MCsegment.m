@@ -302,6 +302,11 @@ for Idx=1:nsubj
             Ysegmented(Ysegmented==11) = 1;
 
             disp(['Remaining rebel voxels after processing : ',int2str(rebel_count_processed)]);
+            
+            % calcul des covariances des voxels (voir Diffuse optical tomography with a priori anatomical information, Guven, 2005)
+            % on calcule l ecart type pour l'ense;ble des voxels
+            % appartenant a une couche
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% A CODER %
 
             % save of nifti image :
             Vsegmented = struct('fname',fullfile(dir,[output_prefix,'_segmented_',name,'.nii']),...
@@ -312,7 +317,6 @@ for Idx=1:nsubj
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %%%%%%% pinfo(1,1) doit etre egal a 1...
             Vsegmented.pinfo(1,1)=1;
-            %Vsegmented =
             spm_write_vol(Vsegmented, Ysegmented);
 
             spm_progress_bar('Set',50);
