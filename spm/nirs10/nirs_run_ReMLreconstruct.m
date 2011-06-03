@@ -19,6 +19,11 @@ function out = nirs_run_ReMLreconstruct(job)
 % epsilon_channel-noise = bruit dans les canaux
 % omega (notre beta !)  = effet du paradigme
 
+%%%% lire le BOLD du contraste correspondant et prevoir d'enregistrer sous
+%%%% differents noms em fonction du contrates puisqu apres il faudra
+%%%% continuer avec le GLM et le meme contraste
+
+
 for Idx=1:size(job.NIRSmat,1)
     
     try
@@ -114,6 +119,26 @@ for Idx=1:size(job.NIRSmat,1)
         
         ext1 = GetExtinctions(NIRS.Cf.dev.wl(1,1));
         ext2 = GetExtinctions(NIRS.Cf.dev.wl(1,2));
+%         %%% Matrice epsilons (coefficients d'extcintion) %%%
+%         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%         % Coefficients d'extinction selon Ted Huppert's HOMer (GetExtinctions.m)
+%         % à, respectivement, 690 (ligne1, HbO HbR) et 830 (ligne2, HbO HbR)
+%         
+%         % [ Lamda1-HbO  Lambda1-HbR  (690=lambda1 avec le CW6)
+%         %   Lambda2-HbO Lambda2-HbR] (830=lambda2 avec le CW6)
+%         % size : nLambda x nHb (2x2)
+%         
+%         % source : http://omlc.ogi.edu/spectra/hemoglobin/summary.html (au 22
+%         % juillet 2008)
+%         if lambda(1)==830 && lambda(1)==690
+%             coeff_ext = [ 974  693.04 ;   % POUR DONNÉES PRISES AVEC LE CW5
+%                 276  2051.96  ] .* 2.303 ./1e6; % en cm^-1 / (umol/L).
+%         elseif lambda(1)==690 && lambda(1)==830
+%             coeff_ext = [ 276  2051.96 ;   % POUR DONNÉES PRISES AVEC LE CW6
+%                 974  693.04  ] .* 2.303 ./1e6; % en cm^-1 / (umol/L).
+%             % Le facteur 2.303 permet d'obtenir des coefficients d'absorption
+%             % mu_a lorsqu'on mutliplie par la concentration en umol/L (toujours
+%             % selon le site des données compilées par Scott Prahl!)
       
         for ifnirs=1:size(NIRS.Dt.fir.pp,2)         
             fnirs = load(NIRS.Dt.fir.pp.p{1,ifnirs},'-mat');
@@ -135,12 +160,18 @@ for Idx=1:size(job.NIRSmat,1)
                 Qn{idx}=sparse(lst,lst,ones(size(lst)),NC_cs,NC_cs);
             end
             %  Qp : Covariance components for the parameters (4 total- 2 per HbO/HbR {layer 1; layer II})
-            Qp{1}=sparse(Y_c5,Y_c5,ones(length(Y_c5),1),2*Nvx,2*Nvx);  %Skin layer- HbO
-            Qp{2}=sparse(Y_c1,Y_c1,ones(length(Y_c1),1),2*Nvx,2*Nvx);  %Brain layer- HbO
-            Qp{3}=sparse(Y_c5,Y_c5,ones(length(Y_c5),1),2*Nvx,2*Nvx);  %Skin layer- HbR
-            Qp{4}=sparse(Y_c1,Y_c1,ones(length(Y_c1),1),2*Nvx,2*Nvx);  %Brain layer- HbR
-            Qp{5}=sparse(1:Nvx,1:Nvx,-ones(Nvx,1),2*Nvx,2*Nvx);%quantifie la covariance entre HbO et HbR dans chacun des voxels
-            
+            Qp{1}=sparse(Y_c5,Y_c5,ones(length(Y_c5),1),2*Nvx,2*Nvx);         %Skin layer- HbO % Prior knowledge of location of ROI (eq 22 huppert_hierarchical_2010)
+            Qp{2}=sparse(Y_c1,Y_c1,ones(length(Y_c1),1),2*Nvx,2*Nvx);         %Brain layer- HbO
+            Qp{3}=sparse(Nvx+Y_c5,Nvx+Y_c5,ones(length(Y_c5),1),2*Nvx,2*Nvx); %Skin layer- HbR
+            Qp{4}=sparse(Nvx+Y_c1,Nvx+Y_c1,ones(length(Y_c1),1),2*Nvx,2*Nvx); %Brain layer- HbR
+            Qp{5}=sparse(1:Nvx,1:Nvx,-ones(Nvx,1),2*Nvx,2*Nvx);               % Quantifie la covariance entre HbO et HbR dans chacun des voxels
+            if ~isempty(job.subj(1,is).boldmask{:})                           % BOLD
+                %Qp{6}=sparse(1);
+            elseif ~isfield(NIRS.Cm,'bold')
+                %'NIRS.Cm.bold'
+                %Qp{6}=sparse();
+            end
+
             for itp=1:length(job.temp_pts)
                 disp(['current : ' int2str(job.temp_pts(itp))])
                 %%% Y %%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
