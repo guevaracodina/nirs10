@@ -2214,6 +2214,34 @@ vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%4.8 Calculate partial volume effect
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+dir_in         = cfg_files;
+dir_in.tag     = 'dir_in';
+dir_in.name    = 'MonteCarlo output directory';
+dir_in.filter = 'dir';
+dir_in.ufilter = '.*';
+dir_in.num     = [1 1];
+dir_in.help    = {'Select the MonteCarlo simulation output directory.'};
+
+% Executable Branch
+calculatePVE1      = cfg_exbranch;       
+calculatePVE1.name = 'Calculate Partial Volume Effect';             
+calculatePVE1.tag  = 'calculatePVE1'; 
+calculatePVE1.val  = {NIRSmat DelPreviousData NewDirCopyNIRS dir_in}; 
+calculatePVE1.prog = @nirs_run_calculatePVE;  
+calculatePVE1.vout = @nirs_cfg_vout_calculatePVE; 
+calculatePVE1.help = {'Calculate Partial Volume Effect'};
+
+function vout = nirs_cfg_vout_calculatePVE(job)
+vout = cfg_dep;                     
+vout.sname      = 'NIRS.mat';       
+vout.src_output = substruct('.','NIRSmat'); 
+vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Configure input files for Monte Carlo simulation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -2719,14 +2747,6 @@ priors.tag  = 'priors';
 priors.val  = {anat_segT1 hb_relative_evolution};
 priors.help = {'Choose priors you want to use for the reconstruction.'};
 
-dir_in         = cfg_files;
-dir_in.tag     = 'dir_in';
-dir_in.name    = 'MonteCarlo output directory';
-dir_in.filter = 'dir';
-dir_in.ufilter = '.*';
-dir_in.num     = [1 1];
-dir_in.help    = {'Select the MonteCarlo simulation output directory.'};
-
 WLruns           = cfg_menu;
 WLruns.name      = 'Runs';
 WLruns.tag       = 'WLruns';
@@ -2795,6 +2815,8 @@ ReML_method.labels    = {'Huppert' 'SPM'};
 ReML_method.values    = {0,1};
 ReML_method.val       = {0};
 ReML_method.help      = {'Choose ReML reconstruction method.'};
+
+%%%%%%%%%%%%%BOLD
 
 % Executable Branch
 ReMLreconstruct1      = cfg_exbranch;       
@@ -5524,7 +5546,7 @@ preprocessNIRS        = cfg_choice;
 preprocessNIRS.name   = 'Preprocess NIRS data';
 preprocessNIRS.tag    = 'preprocessNIRS';
 preprocessNIRS.values = {remove_chn_stdev criugm_paces1  ...
-         mark_movement normalize_baseline ODtoHbOHbR generate_vhdr_vmrk}; %mark_negative HPF_LPF
+         mark_movement normalize_baseline ODtoHbOHbR generate_vhdr_vmrk calculatePVE1}; %mark_negative HPF_LPF
 preprocessNIRS.help   = {'These modules preprocess NIRS data: '
     'heart rate check, '
     'downsampling, removal of bad channels, filters.'}';

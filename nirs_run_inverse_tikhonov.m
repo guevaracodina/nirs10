@@ -101,10 +101,36 @@ for Idx=1:size(job.NIRSmat,1)
         
         ext1 = GetExtinctions(NIRS.Cf.dev.wl(1,1));
         ext2 = GetExtinctions(NIRS.Cf.dev.wl(1,2));
+        %%% Matrice epsilons (coefficients d'extcintion) %%%
+%         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%         % Coefficients d'extinction selon Ted Huppert's HOMer (GetExtinctions.m)
+%         % à, respectivement, 690 (ligne1, HbO HbR) et 830 (ligne2, HbO HbR)
+%         
+%         % [ Lamda1-HbO  Lambda1-HbR  (690=lambda1 avec le CW6)
+%         %   Lambda2-HbO Lambda2-HbR] (830=lambda2 avec le CW6)
+%         % size : nLambda x nHb (2x2)
+%         
+%         % source : http://omlc.ogi.edu/spectra/hemoglobin/summary.html (au 22
+%         % juillet 2008)
+%         if lambda(1)==830 && lambda(1)==690
+%             coeff_ext = [ 974  693.04 ;   % POUR DONNÉES PRISES AVEC LE CW5
+%                 276  2051.96  ] .* 2.303 ./1e6; % en cm^-1 / (umol/L).
+%         elseif lambda(1)==690 && lambda(1)==830
+%             coeff_ext = [ 276  2051.96 ;   % POUR DONNÉES PRISES AVEC LE CW6
+%                 974  693.04  ] .* 2.303 ./1e6; % en cm^-1 / (umol/L).
+%             % Le facteur 2.303 permet d'obtenir des coefficients d'absorption
+%             % mu_a lorsqu'on mutliplie par la concentration en umol/L (toujours
+%             % selon le site des données compilées par Scott Prahl!)
         E = [ext1(1,1) ext1(1,2) ; ext2(1,1) ext2(1,2)];
         iE = inv(E);
         
         alpha =job.alpha;
+        
+        % X
+        Xwl{1} = sparse(Xmc(1:NC2mi,:));
+        Xwl{2} = sparse(Xmc(NC2mi+1:end,:));
+                
+        Msk = sparse(diag(m_c1+m_c5)); % M Mask for cortex and skin
         
         for ifnirs=1:size(NIRS.Dt.fir.pp,2)
             fnirs = load(NIRS.Dt.fir.pp.p{1,ifnirs},'-mat');
@@ -120,13 +146,7 @@ for Idx=1:size(job.NIRSmat,1)
                 % Dmua
                 Dmua{1} = zeros(Nvx,1);
                 Dmua{2} = zeros(Nvx,1);
-                
-                % X
-                Xwl{1} = sparse(Xmc(1:NC2mi,:));
-                Xwl{2} = sparse(Xmc(NC2mi+1:end,:));
-                
-                Msk = sparse(diag(m_c1+m_c5)); % M Mask for cortex and skin
-                
+            
                 switch job.tikh_method
                     case 0 % Tikhonov regularization : ancienne version
                         disp('Methode a l''ancienne')
@@ -155,8 +175,9 @@ for Idx=1:size(job.NIRSmat,1)
                             XXLI = sparse(XX + alpha*eye(size(XX,2))); % eq.19 huppert_2010_hierarchical
                             Dmua{iwl} = XXLI \ YY;
                         end
-                    case 2 % Li et al extended Tikhonov regularization (est ce que ca a de l interet alors qu il va falloir trouver deux hyperparametres)
-                    case 3 % Tikhonov ameliore
+                    case 2 % avec wavelets...
+                    case 3 % Li et al extended Tikhonov regularization (est ce que ca a de l interet alors qu il va falloir trouver deux hyperparametres)
+                    case 4 % Tikhonov ameliore
                         % Interpretation bayesienne simple (regularization de Tikhonov avec des valeurs de covariances non nulles)
                         %                                 % Beta contient omega_space omega et beta_prior : pour Tikhonov pas
                         %                                 % besoin de le definir puisque c'est nul...
