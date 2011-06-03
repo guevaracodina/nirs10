@@ -909,13 +909,77 @@ voltAddStim.labels = {
 voltAddStim.values = {1, 2};
 voltAddStim.val = {1};
 
+testGamma         = cfg_menu;
+testGamma.tag     = 'testGamma';
+testGamma.name    = 'Use Gamma function';
+testGamma.help    = {
+                'Use gamma function or canonical HRF for test'
+                'Note that canonical HRF is leads to lower estimability due to the undershoot'}';
+testGamma.labels = {
+               'Gamma Function'
+               'Canonical HRF'
+                }';
+testGamma.values = {1, 2};
+testGamma.val = {1};
+
+testFilterX         = cfg_menu;
+testFilterX.tag     = 'testFilterX';
+testFilterX.name    = 'Filter design matrix';
+testFilterX.help    = {
+                'Filter design matrix prior to calculating power of protocol'}';
+testFilterX.labels = {
+               'Filter On'
+               'Filter Off'
+                }';
+testFilterX.values = {1, 0};
+testFilterX.val = {1};
+
+testFilterData         = cfg_menu;
+testFilterData.tag     = 'testFilterData';
+testFilterData.name    = 'Filter data';
+testFilterData.help    = {
+                'Filter data channels prior to calculating power of baseline'}';
+testFilterData.labels = {
+               'Filter On'
+               'Filter Off'
+                }';
+testFilterData.values = {1, 0};
+testFilterData.val = {1};
+
+testStdvsPower        = cfg_menu;
+testStdvsPower.tag     = 'testStdvsPower';
+testStdvsPower.name    = 'Normalization choice';
+testStdvsPower.help    = {
+                'Normalize added protocol based on channel standard deviation or power'
+                'Either option should give the same result...'}';
+testStdvsPower.labels = {
+               'Standard deviation'
+               '(square root of) Power'
+                }';
+testStdvsPower.values = {1, 0};
+testStdvsPower.val = {1};
+
+
+testBfNorm        = cfg_menu;
+testBfNorm.tag     = 'testBfNorm';
+testBfNorm.name    = 'Further Normalization choice';
+testBfNorm.help    = {
+                'Normalize further by rescaling both 1st and 2nd Volterra by the max value of the 1st Volterra'}';
+testBfNorm.labels = {
+               'Normalize'
+               'Do not Normalize'
+                }';
+testBfNorm.values = {1, 0};
+testBfNorm.val = {0};
+
 % Executable Branch
 addTestStimuli      = cfg_exbranch;       
 addTestStimuli.name = 'Add Stimuli with HRFs for testing';             
 addTestStimuli.tag  = 'addTestStimuli'; 
 addTestStimuli.val  = {NIRSmat DelPreviousData NewDirCopyNIRS testStimulusName testStimuliNumber ...
                 testSessionNumber testWavelength testAmplitudeTarget ...
-                voltAddStim testAmplitude2 keepAllChannels testChannels testDupChannels testPType};   
+                voltAddStim testAmplitude2 keepAllChannels testChannels testDupChannels testPType ...
+                testGamma testFilterX testFilterData testStdvsPower testBfNorm};   
 addTestStimuli.prog = @nirs_run_addTestStimuli;  
 addTestStimuli.vout = @nirs_cfg_vout_addTestStimuli; 
 addTestStimuli.help = {'Module to add stimuli convoluted with HRFs for'
@@ -3426,10 +3490,27 @@ colorbar_min.num     = [1 1];
 colorbar_min.val     = {2};
 colorbar_min.help    = {'Enter minimum value for colorbar'}; 
 
+
+colorbar_max2         = cfg_entry; 
+colorbar_max2.name    = 'Colorbar maximum value';
+colorbar_max2.tag     = 'colorbar_max2';       
+colorbar_max2.strtype = 'r';
+colorbar_max2.num     = [1 1];
+colorbar_max2.val     = {-2};
+colorbar_max2.help    = {'Enter maximum value for colorbar for negative maps'}; 
+
+colorbar_min2         = cfg_entry; 
+colorbar_min2.name    = 'Colorbar minimum value';
+colorbar_min2.tag     = 'colorbar_min2';       
+colorbar_min2.strtype = 'r';
+colorbar_min2.num     = [1 1];
+colorbar_min2.val     = {-5};
+colorbar_min2.help    = {'Enter minimum value for colorbar for negative maps'}; 
+
 colorbar_override      = cfg_branch;
 colorbar_override.name      = 'Override colorbar';
 colorbar_override.tag       = 'colorbar_override';
-colorbar_override.val       = {colorbar_min colorbar_max}; 
+colorbar_override.val       = {colorbar_min colorbar_max colorbar_min2 colorbar_max2}; 
 colorbar_override.help      = {'Override colorbar.'};
 
 colorbar_default      = cfg_branch;
@@ -3453,6 +3534,23 @@ GenerateInverted.labels = {'Yes','No'};
 GenerateInverted.values = {1,0};
 GenerateInverted.val = {1};
 GenerateInverted.help = {'Generate contrasts for inverted responses.'};
+
+GroupColorbars      = cfg_menu;
+GroupColorbars.tag  = 'GroupColorbars';
+GroupColorbars.name = 'Group or separate colorbars';
+GroupColorbars.labels = {'Group','Separate'};
+GroupColorbars.values = {1,0};
+GroupColorbars.val = {0};
+GroupColorbars.help = {'When considering deactivations (inverted responses),'
+    'This allows displaying one (group) or two (separate) colorbars'}';
+
+SmallFigures      = cfg_menu;
+SmallFigures.tag  = 'SmallFigures';
+SmallFigures.name = 'Large or small figures';
+SmallFigures.labels = {'Large','Small'};
+SmallFigures.values = {0,1};
+SmallFigures.val = {0};
+SmallFigures.help = {'Write to disk large or small (compressed) figures.'}';
 
 ProcessContrastsBySession      = cfg_menu;
 ProcessContrastsBySession.tag  = 'ProcessContrastsBySession';
@@ -3889,14 +3987,32 @@ consess.num     = [0 Inf];
 %%%%%%%%%%%%
 % end - from spm_cfg_con 
 %%%%%%%%%%%
+output_unc      = cfg_menu;
+output_unc.tag  = 'output_unc';
+output_unc.name = 'Output unc. figures';
+output_unc.labels = {'Yes','No'};
+output_unc.values = {1,0};
+output_unc.val = {0};
+output_unc.help = {'Output figures that are uncorrected against false positives.'}';
+
+write_neg_pos      = cfg_menu;
+write_neg_pos.tag  = 'write_neg_pos';
+write_neg_pos.name = 'Write neg/pos separate contrasts';
+write_neg_pos.labels = {'Yes', 'No'};
+write_neg_pos.values = {1,0};
+write_neg_pos.val    = {0};
+write_neg_pos.help = {'If generating negative contrasts, whether to output '
+    'separate maps for negative and positive contrasts and for both, '
+    'or only the maps with both contrasts' }';
 
 % Executable Branch
 liom_contrast      = cfg_exbranch;      
 liom_contrast.name = 'Liom Contrast Calculations';            
 liom_contrast.tag  = 'liom_contrast';
 liom_contrast.val  = {NIRSmat view liom_contrast_struct consess ...
-    ProcessContrastsBySession GenerateInverted contrast_p_value ...
-    contrast_figures override_colorbar figures_visible GroupFiguresIntoSubplots TopoData}; 
+    ProcessContrastsBySession GenerateInverted GroupColorbars contrast_p_value ...
+    contrast_figures override_colorbar figures_visible GroupFiguresIntoSubplots ...
+    output_unc SmallFigures write_neg_pos TopoData}; 
 liom_contrast.prog = @nirs_run_liom_contrast;  
 liom_contrast.vout = @nirs_cfg_vout_liom_contrast; 
 liom_contrast.help = {'Liom Contrast Calculations.'};
@@ -4950,7 +5066,8 @@ liom_group      = cfg_exbranch;
 liom_group.name = 'Liom Group Model Estimation';             
 liom_group.tag  = 'liom_group'; 
 liom_group.val  = {NIRSmat FFX_or_RFX contrast_figures contrast_p_value ...
-        GenerateInverted override_colorbar figures_visible GroupFiguresIntoSubplots}; % factorial_design}; 
+        GenerateInverted GroupColorbars override_colorbar figures_visible ...
+        GroupFiguresIntoSubplots output_unc SmallFigures write_neg_pos}; % factorial_design}; 
 liom_group.prog = @nirs_run_liom_group;  
 liom_group.vout = @nirs_cfg_vout_liom_group; 
 liom_group.help = {'Liom Group level model estimation.'};

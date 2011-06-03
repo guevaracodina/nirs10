@@ -41,7 +41,9 @@ catch
     generate_trRV = 1;
 end
 %Option only used to search for a bug; correct option to use is 
-%always filter_design_matrix = 0;
+%always filter_design_matrix = 0; -- This comment seems incorrect now --
+%filter_design_matrix = 1 is required now to eliminate the bias when using
+%the Butterworth high pass filter prior to the GLM
 try 
     filter_design_matrix = job.filter_design_matrix;
 catch
@@ -337,6 +339,9 @@ for Idx=1:size(job.NIRSmat,1)
             bf      = SPM.xBF.bf;
         catch
             SPM.xBF = spm_get_bf(SPM.xBF);
+            if size(SPM.xBF.bf,1) == 1 || size(SPM.xBF.bf,2) == 1 
+                SPM.xBF.bf = SPM.xBF.bf/sum(SPM.xBF.bf); %normalize
+            end
             bf      = SPM.xBF.bf;
         end
 
