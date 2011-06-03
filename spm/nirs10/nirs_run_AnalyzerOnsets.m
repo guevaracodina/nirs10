@@ -64,146 +64,152 @@ for Idx=1:nsubj
         if ~new_onset_files          
             t = NIRS.Dt.fir.rons;
         end
-        for i3=1:size(t,1)          
-            if NIRSok
-                d = fopen_NIR(rDtp{i3},NC);
-                dp_NIRS1 = size(d,2);
-                clear d
-            end
-                  
+        for i3=1:size(t,1)
+            clear names onsets durations
             [dir1 fil1 ext1] = fileparts(t{i3});
-            file = fullfile(dir1, [fil1 ext1]);
-            fp = fopen(file,'r');
-
-            %Extract frequency information from first line
-            temp = fgetl(fp);
-            i1 = findstr(':',temp); i2 = findstr('ms',temp);
-            %Delta t between points in seconds
-            dt = str2double(temp(i1(2)+1:i2-1))/1000;
-
-            %find first Scan Start -- ignore onsets that would arrive before the
-            %first Scan Start
-            while ~feof(fp)
-                temp = fgetl(fp);
-                indx = findstr('Scan Start',temp);
-                if ~isempty(indx)
-                    indx = findstr(',',temp);
-                    start_scan = dt*str2double(temp(indx(2):indx(3)));
-                    break
+            if strcmp(ext1,'.mat')                
+                load(t{i3});
+            else
+                if NIRSok
+                    d = fopen_NIR(rDtp{i3},NC);
+                    dp_NIRS1 = size(d,2);
+                    clear d
                 end
-            end
 
-            %Boolean to keep track if TR calculation has been done
-            TRdone = 0;
-            %Counters for pulse and movement markers
-            iR = 0;
-            iMVT = 0;
-            %vectors for pulse and movement regressors
-            vR = [];
-            vMVT = [];
-            %Number of types of onsets
-            NTonset = 0;
-            names = {};
-            onsets = {};
-            durations = {};
-            %counter of onsets
-            k = {};
 
-            while ~feof(fp)
-                temp = fgetl(fp); 
-                if ~TRdone
-                    %find next Scan Start
+                file = fullfile(dir1, [fil1 ext1]);
+                fp = fopen(file,'r');
+
+                %Extract frequency information from first line
+                temp = fgetl(fp);
+                i1 = findstr(':',temp); i2 = findstr('ms',temp);
+                %Delta t between points in seconds
+                dt = str2double(temp(i1(2)+1:i2-1))/1000;
+
+                %find first Scan Start -- ignore onsets that would arrive before the
+                %first Scan Start
+                while ~feof(fp)
+                    temp = fgetl(fp);
                     indx = findstr('Scan Start',temp);
                     if ~isempty(indx)
                         indx = findstr(',',temp);
-                        next_start_scan = dt*str2double(temp(indx(2):indx(3)));
-                        TR_temp = next_start_scan - start_scan;
-                        if TR_temp > 0
-                            TR = TR_temp;
-                            TRdone = 1;
-                        end
-                    end    
+                        start_scan = dt*str2double(temp(indx(2):indx(3)));
+                        break
+                    end
                 end
-                indx = findstr(',',temp);
-                tag = strtrim(temp(indx(1)+1:indx(2)-1));
-                if ~strcmpi(tag,'Scan Start') && ~strcmpi(tag,'mvt') && ~strncmp(tag,'R',1) ...
-                         && ~strcmpi(tag,'Bad Interval') && ~strncmp(tag,'B',1) && ~strncmpi(tag,'CS',2) ...
-                         && (~strncmp(tag,'S',1) || strncmpi(tag,'Spk',3) || strncmpi(tag,'SWD',3)) && ~strncmp(tag,'T',1)...
-                         && (~strcmp(tag,rem_onsets{1})) ...
-                         && (~strcmp(tag,rem_onsets{2})) ...
-                         && (~strcmp(tag,rem_onsets{3})) ...
-                         && (~strcmp(tag,rem_onsets{4})) ...
-                         && (~strcmp(tag,rem_onsets{5})) ...
-                         && (~strcmp(tag,rem_onsets{6}))
-                 %Possible new onset
-                    not_found = 1; %true
-                    for i=1:NTonset
-                        %check whether onset is one of those already found
-                        if strcmpi(names{i},tag) %case insensitive
-                            not_found = 0; %found
-                            k{i} = k{i}+1; %#ok<*AGROW>                
-                            onsets{i}(k{i}) = str2double(temp(indx(2):indx(3)))*dt-start_scan;
-                            durations{i}(k{i}) = dt*(str2double(temp(indx(3):indx(4)))-1); %subtract 1 so point onsets have zero duration
-                            break
+
+                %Boolean to keep track if TR calculation has been done
+                TRdone = 0;
+                %Counters for pulse and movement markers
+                iR = 0;
+                iMVT = 0;
+                %vectors for pulse and movement regressors
+                vR = [];
+                vMVT = [];
+                %Number of types of onsets
+                NTonset = 0;
+                names = {};
+                onsets = {};
+                durations = {};
+                %counter of onsets
+                k = {};
+
+                while ~feof(fp)
+                    temp = fgetl(fp); 
+                    if ~TRdone
+                        %find next Scan Start
+                        indx = findstr('Scan Start',temp);
+                        if ~isempty(indx)
+                            indx = findstr(',',temp);
+                            next_start_scan = dt*str2double(temp(indx(2):indx(3)));
+                            TR_temp = next_start_scan - start_scan;
+                            if TR_temp > 0
+                                TR = TR_temp;
+                                TRdone = 1;
+                            end
+                        end    
+                    end
+                    indx = findstr(',',temp);
+                    tag = strtrim(temp(indx(1)+1:indx(2)-1));
+                    if ~strcmpi(tag,'Scan Start') && ~strcmpi(tag,'mvt') && ~strncmp(tag,'R',1) ...
+                             && ~strcmpi(tag,'Bad Interval') && ~strncmp(tag,'B',1) && ~strncmpi(tag,'CS',2) ...
+                             && (~strncmp(tag,'S',1) || strncmpi(tag,'Spk',3) || strncmpi(tag,'SWD',3)) && ~strncmp(tag,'T',1)...
+                             && (~strcmp(tag,rem_onsets{1})) ...
+                             && (~strcmp(tag,rem_onsets{2})) ...
+                             && (~strcmp(tag,rem_onsets{3})) ...
+                             && (~strcmp(tag,rem_onsets{4})) ...
+                             && (~strcmp(tag,rem_onsets{5})) ...
+                             && (~strcmp(tag,rem_onsets{6}))
+                     %Possible new onset
+                        not_found = 1; %true
+                        for i=1:NTonset
+                            %check whether onset is one of those already found
+                            if strcmpi(names{i},tag) %case insensitive
+                                not_found = 0; %found
+                                k{i} = k{i}+1; %#ok<*AGROW>                
+                                onsets{i}(k{i}) = str2double(temp(indx(2):indx(3)))*dt-start_scan;
+                                durations{i}(k{i}) = dt*(str2double(temp(indx(3):indx(4)))-1); %subtract 1 so point onsets have zero duration
+                                break
+                            end
                         end
-                    end
-                    if not_found
-                        %new type of onset
-                        NTonset = NTonset + 1;
-                        k{NTonset} = 1;  
-                        names{NTonset} = tag;
-                        onsets{NTonset}(k{NTonset}) = str2double(temp(indx(2):indx(3)))*dt-start_scan;
-                        durations{NTonset}(k{NTonset}) = dt*(str2double(temp(indx(3):indx(4)))-1); %subtract 1 so point onsets have zero duration                   
-                    end
-                else
-                    %Look for movement or pulse markers
-                    if strncmp(tag,'R',1) %pulse
-                        iR = iR + 1;
-                        %Time of pulse
-                        vR(iR) =  str2double(temp(indx(2):indx(3)))*dt-start_scan;
+                        if not_found
+                            %new type of onset
+                            NTonset = NTonset + 1;
+                            k{NTonset} = 1;  
+                            names{NTonset} = tag;
+                            onsets{NTonset}(k{NTonset}) = str2double(temp(indx(2):indx(3)))*dt-start_scan;
+                            durations{NTonset}(k{NTonset}) = dt*(str2double(temp(indx(3):indx(4)))-1); %subtract 1 so point onsets have zero duration                   
+                        end
+                    else
+                        %Look for movement or pulse markers
+                        if strncmp(tag,'R',1) %pulse
+                            iR = iR + 1;
+                            %Time of pulse
+                            vR(iR) =  str2double(temp(indx(2):indx(3)))*dt-start_scan;
 
+                        end
+                        if strncmp(tag,'mvt',1) %movement
+                            iMVT = iMVT + 1;
+                            %Start time of movement
+                            vMVT(iMVT) = str2double(temp(indx(2):indx(3)))*dt-start_scan;
+                            %Durations
+                            dMVT(iMVT) = dt*(str2double(temp(indx(3):indx(4)))-1);
+                        end            
                     end
-                    if strncmp(tag,'mvt',1) %movement
-                        iMVT = iMVT + 1;
-                        %Start time of movement
-                        vMVT(iMVT) = str2double(temp(indx(2):indx(3)))*dt-start_scan;
-                        %Durations
-                        dMVT(iMVT) = dt*(str2double(temp(indx(3):indx(4)))-1);
-                    end            
                 end
-            end
 
-            fclose(fp);
+                fclose(fp);
 
-            %Save as .mat
-            %fOnset = fullfile(dir1,[fil1 '.mat']);
-            %No longer required to save onsets separately - better
-            %accounted for in NIRS.mat
-            %save(fOnset,'names','onsets','durations')
-            %write heart R peaks
-            %fRpeaks = fullfile(dir1,[fil1 '_Rpeaks.mat']);
-            %save(fRpeaks,'vR')
-            try
-                %Calculate pulse regressor
-                %if ~isempty(dp_NIRS1) && ~isempty(freq_NIRS1)
-                lpi = linspace(0,dp_NIRS1/freq_NIRS1,dp_NIRS1); %*res_factor);
+                %Save as .mat
+                %fOnset = fullfile(dir1,[fil1 '.mat']);
+                %No longer required to save onsets separately - better
+                %accounted for in NIRS.mat
+                %save(fOnset,'names','onsets','durations')
+                %write heart R peaks
+                %fRpeaks = fullfile(dir1,[fil1 '_Rpeaks.mat']);
+                %save(fRpeaks,'vR')
+                try
+                    %Calculate pulse regressor
+                    %if ~isempty(dp_NIRS1) && ~isempty(freq_NIRS1)
+                    lpi = linspace(0,dp_NIRS1/freq_NIRS1,dp_NIRS1); %*res_factor);
 
-                dvR = diff(vR);
-                vRi = interp1(vR(2:end),dvR,lpi,'spline');
-                %derivative of pulse rate - too noisy
-                %ddvR = diff(dvR);
-                %vRi2 = interp1(vR(2:end-1),ddvR,lpi,'spline');
+                    dvR = diff(vR);
+                    vRi = interp1(vR(2:end),dvR,lpi,'spline');
+                    %derivative of pulse rate - too noisy
+                    %ddvR = diff(dvR);
+                    %vRi2 = interp1(vR(2:end-1),ddvR,lpi,'spline');
 
-                %Calculate movement regressors - to be done, not clear precisely what
-                %to do
+                    %Calculate movement regressors - to be done, not clear precisely what
+                    %to do
 
-                %Save
-                %fRegress = fullfile(dir1,['rp_' fil1 '.txt']);
-                %subtract the mean
-                %vRi = vRi - mean(vRi); %PP not required: will be done by spm_detrend
-                fR = 60./vRi'; % vRi2']; %cardiac frequency in heart beats per minute, as a column vector
-                %save(fRegress,'fR','-ascii');
-            catch 
+                    %Save
+                    %fRegress = fullfile(dir1,['rp_' fil1 '.txt']);
+                    %subtract the mean
+                    %vRi = vRi - mean(vRi); %PP not required: will be done by spm_detrend
+                    fR = 60./vRi'; % vRi2']; %cardiac frequency in heart beats per minute, as a column vector
+                    %save(fRegress,'fR','-ascii');
+                catch 
+                end
             end
             if NIRSok
                 U = [];
@@ -216,8 +222,10 @@ for Idx=1:nsubj
                     U(kk).P = P;
                 end
                 NIRS.Dt.fir.Sess(i3).U = U;
+                try
                 NIRS.Dt.fir.Sess(i3).vR = {vR};
                 NIRS.Dt.fir.Sess(i3).fR = {fR};
+                end
                 save(job.NIRSmat_optional{Idx,1},'NIRS'); 
             end
         end

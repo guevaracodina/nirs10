@@ -10,6 +10,21 @@ Cu = [];
 %Run simple group level analysis as a one sample t-test
 FFX = job.FFX_or_RFX;
 p_value = job.contrast_p_value;
+try
+    GroupColorbars = job.GroupColorbars;
+catch
+    GroupColorbars = 0;
+end
+try
+    SmallFigures = job.SmallFigures;
+catch
+    SmallFigures = 0;
+end
+try
+    write_neg_pos = job.write_neg_pos;
+catch
+    write_neg_pos = 0;
+end
 %Booleans to choose which figures to write to disk, if any
 switch job.contrast_figures
     case 0
@@ -28,9 +43,16 @@ end
 try
     cbar.c_min = job.override_colorbar.colorbar_override.colorbar_min;
     cbar.c_max = job.override_colorbar.colorbar_override.colorbar_max;
+    cbar.c_min2 = job.override_colorbar.colorbar_override.colorbar_min2;
+    cbar.c_max2 = job.override_colorbar.colorbar_override.colorbar_max2;
     cbar.colorbar_override = 1;
 catch
     cbar.colorbar_override = 0;
+end
+try %not used currently as false positives correction not implemented yet
+    output_unc = 1; %job.output_unc;
+catch
+    output_unc = 1;
 end
 try 
     switch job.figures_visible
@@ -77,10 +99,14 @@ if FFX || size(job.NIRSmat,1)==1
             Z.gen_fig = gen_fig;
             Z.gen_tiff = gen_tiff;
             Z.p_value = p_value;
+            Z.GroupColorbars = GroupColorbars;
             Z.dir1 = dir1;
             Z.cbar = cbar;
             Z.GInv = GInv;
             Z.GFIS = GFIS;
+            Z.output_unc = output_unc;
+            Z.SmallFigures = SmallFigures;
+            Z.write_neg_pos = write_neg_pos;
             %Z.fh0P = [];
             %Z.fh0N = [];
 
@@ -260,10 +286,21 @@ if FFX || size(job.NIRSmat,1)==1
                         end
                         %save assembled figures
                         if GFIS
-                            save_assembled_figures(Z,W,Pu,'Pos','unc',0);
+                            if Z.write_neg_pos || ~GInv
+                                save_assembled_figures(Z,W,Pu,'Pos','unc',0);
+                            else
+                                try close(Pu); end
+                            end
                             if GInv
-                                save_assembled_figures(Z,W,Nu,'Neg','unc',0);
+                                if Z.write_neg_pos
+                                    save_assembled_figures(Z,W,Nu,'Neg','unc',0);
+                                else
+                                    try close(Nu); end
+                                end
                                 save_assembled_figures(Z,W,Cu,'','unc',0);
+                            else
+                                try close(Nu); end
+                                try close(Cu); end
                             end
                         end                         
                     end
@@ -314,11 +351,14 @@ else
     Z.gen_fig = gen_fig;
     Z.gen_tiff = gen_tiff;
     Z.p_value = p_value;
+    Z.GroupColorbars = GroupColorbars;
     Z.dir1 = dir1;
     Z.cbar = cbar;
     Z.GInv = GInv;
     Z.GFIS = GFIS;
-                        
+    Z.output_unc = output_unc;
+    Z.SmallFigures = SmallFigures;
+    Z.write_neg_pos = write_neg_pos;                    
     try
         %Big loop over views 
         for v1=1:6
@@ -480,13 +520,24 @@ else
                         end
                     end
                 end
-                if GFIS 
-                    save_assembled_figures(Z,W,Pu,'Pos','unc',0);
-                    if GInv
-                        save_assembled_figures(Z,W,Nu,'Neg','unc',0);
-                        save_assembled_figures(Z,W,Cu,'','unc',0);
+                if GFIS
+                    if Z.write_neg_pos || ~GInv
+                        save_assembled_figures(Z,W,Pu,'Pos','unc',0);
+                    else
+                        try close(Pu); end
                     end
-                end 
+                    if GInv
+                        if Z.write_neg_pos
+                            save_assembled_figures(Z,W,Nu,'Neg','unc',0);
+                        else
+                            try close(Nu); end
+                        end
+                        save_assembled_figures(Z,W,Cu,'','unc',0);
+                    else
+                        try close(Nu); end
+                        try close(Cu); end
+                    end
+                end
             end %if view_estimated
         end %end for v1
         TOPO.xCon = xCon; %would not work if new contrasts are later added 

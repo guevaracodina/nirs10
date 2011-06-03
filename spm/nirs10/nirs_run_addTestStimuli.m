@@ -7,9 +7,41 @@ function out = nirs_run_addTestStimuli(job)
 %Here NIRS.mat in the pipeline will be replaced by a new one in a new
 %location
 outNIRSmat = {};
+try
+    switch job.testGamma
+        case 1
+            GammaOn = 1;
+        case 2
+            GammaOn = 0;
+    end
+catch
+    GammaOn = 1; %Use Gamma function rather than canonical HRF
+end
+try 
+    filter_data = job.testFilterData;
+catch
+    filter_data = 1;
+end
+try 
+    filter_X = job.testFilterX;
+catch
+    filter_X = 1;
+end
+try 
+    calculate_bf_norm = job.testBfNorm;
+catch
+    calculate_bf_norm = 0;
+end
+try
+    std_or_power = job.testStdvsPower;
+catch
+    std_or_power = 1;
+end
+normalize_impulse_area_to_unity = 0;
 
+save_all_data = 0; %To save data for figures: spikes simulated, response with and without noise
 %Ensure reproducibility of results by resetting the random seed
-  
+set_baseline_to_zero = 0;  
 for Idx=1:size(job.NIRSmat,1)
 
     %Load NIRS.mat information
@@ -118,17 +150,28 @@ for Idx=1:size(job.NIRSmat,1)
         ns = size(d,2);
         %frequency
         fs = NIRS.Cf.dev.fs; 
-        
-             
-        
+                           
         %now repeat with more time precision to calculate bf
         xBF.T = 10;
         xBF.dt = 1/(fs*xBF.T); % - time bin length {seconds}
-        xBF.name = 'hrf'; %description of basis functions specified            
+        if GammaOn
+            xBF.name = 'Gamma functions';
+            xBF.length = 16;
+            xBF.order  = 1;
+        else
+            xBF.name = 'hrf'; %description of basis functions specified      
+        end
         xBF = spm_get_bf(xBF);
+        if normalize_impulse_area_to_unity
+            %unit impulse
+            xBF.bf = xBF.bf/(xBF.dt*sum(xBF.bf));
+        else
+            %unit area
+            xBF.bf = xBF.bf/sum(xBF.bf); %normalize
+        end
         bf  = xBF.bf;
+        
         %factor to normalize bf to 1
-        calculate_bf_norm = 1;
         if calculate_bf_norm 
             %fill SPM's xBF structure from spm_get_bf %fill SPM's U structure from spm_get_ons
             SPM = [];
@@ -161,17 +204,16 @@ for Idx=1:size(job.NIRSmat,1)
                 X = X((0:(ns - 1))*SPM.xBF.T + SPM.xBF.T0 + 32,:);
             end
 
-            % and orthogonalise (within trial type)
-            %--------------------------------------
-            for i = 1:length(Fc)
-                X(:,Fc(i).i) = spm_orth(X(:,Fc(i).i));
-            end 
-            bf_norm = 1/max(X(:,1));
+%             % and orthogonalise (within trial type)
+%             %--------------------------------------
+%             for i = 1:length(Fc)
+%                 X(:,Fc(i).i) = spm_orth(X(:,Fc(i).i));
+%             end 
+            bf_norm = 1/max(X(:,1)); %For more precision, could additionally
+            %filter X before calculating bf_norm, but will be a small
+            %effect
         end
         
-        
-        
-
         if tp 
             %Block paradigm type
             %interval length
@@ -284,15 +326,14 @@ for Idx=1:size(job.NIRSmat,1)
             X = X((0:(ns - 1))*SPM.xBF.T + SPM.xBF.T0 + 32,:);
         end
 
-        % and orthogonalise (within trial type)
-        %--------------------------------------
-        for i = 1:length(Fc) %This does not orthogonalize the Volterras
-            X(:,Fc(i).i) = spm_orth(X(:,Fc(i).i));
-        end
+%         % and orthogonalise (within trial type)
+%         %--------------------------------------
+%         for i = 1:length(Fc) %This does not orthogonalize the Volterras
+%             X(:,Fc(i).i) = spm_orth(X(:,Fc(i).i));
+%         end
 
         %X = X(33:end,:);
         
-        filter_X = 1;
         NIRS.Dt.fir.filter_X = filter_X;
         if filter_X
             %LPF
@@ -305,6 +346,8 @@ for Idx=1:size(job.NIRSmat,1)
                     fX1=filtfilt(fb,fa,X(:,1));
                 case 2
                     fX1=filtfilt(fb,fa,X(:,1)+tb*X(:,2)); 
+                    FX1 = filtfilt(fb,fa,X(:,1));
+                    FX2 = filtfilt(fb,fa,X(:,2));
             end
             %HPF
             cutoff=0.01; 
@@ -326,7 +369,14 @@ for Idx=1:size(job.NIRSmat,1)
         %Assumes that first column is the canonical HRF
         m1 = mean(fX1);
         NIRS.Dt.fir.Ep = sum((fX1-m1).^2)/ns; %length(fX1);
-          
+        %Various options - should all be chosen except calculate_bf_norm
+        %and normalize_impulse_area_to_unity
+        NIRS.Dt.fir.filter_data = filter_data;
+        NIRS.Dt.fir.calculate_bf_norm = calculate_bf_norm; 
+        NIRS.Dt.fir.GammaOn = GammaOn; 
+        NIRS.Dt.fir.filter_X = filter_X;
+        NIRS.Dt.fir.std_or_power = std_or_power;
+        NIRS.Dt.fir.normalize_impulse_area_to_unity = normalize_impulse_area_to_unity;
         %rescale X by channel:
         for Cidx=1:length(chn)
             %take absolute value of median, or sign of response is
@@ -337,8 +387,6 @@ for Idx=1:size(job.NIRSmat,1)
             %calculate power of baseline
             
             %filter raw data to calculate power between two frequencies
-            filter_data = 1;
-            NIRS.Dt.fir.filter_data = filter_data;
             if filter_data
                 %LPF
                 cutoff=0.0667; %SPM.xX.lpf_butter_freq; %0.666; %Hz, or 1.5s
@@ -354,6 +402,9 @@ for Idx=1:size(job.NIRSmat,1)
                 tdc=filtfilt(fb,fa,tdc);
                 m1 = mean(tdc);
                 NIRS.Dt.fir.Eb(Cidx) = sum((tdc-m1).^2)/ns;
+                if Cidx==1
+                    stdc = tdc;
+                end
             else
                 tdc = dc(Cidx,:);
                 m1 = mean(dc(Cidx,:));
@@ -366,23 +417,28 @@ for Idx=1:size(job.NIRSmat,1)
                     a2 = ta(Cidx);
                 else
                     a2 = ta;
-                end
-                
+                end                
                 %Boolean - for testing
-                std_or_power = 1;
                 if std_or_power
                     if filter_data
                         m = std(tdc);  
-                        %a = a2*m/std(fX1);
-                        a = a2*m*bf_norm; %
                     else
                         m = std(dc(Cidx,:)); 
-                        a = a2*m*bf_norm;
-                    end 
+                    end
+                    %a = a2*m/std(fX1);    
+                    if calculate_bf_norm
+                        a = a2*m*bf_norm; 
+                    else
+                        a = a2*m; 
+                    end                                       
                     NIRS.Dt.fir.SNR(Cidx) = 10*log10(a^2*NIRS.Dt.fir.Ep/NIRS.Dt.fir.Eb(Cidx));                        
                 else
                     m = NIRS.Dt.fir.Eb(Cidx)/NIRS.Dt.fir.Ep;
-                    a = a2*m^(0.5)*bf_norm;
+                    if calculate_bf_norm
+                        a = a2*m^(0.5)*bf_norm;
+                    else
+                        a = a2*m^(0.5);
+                    end
                     NIRS.Dt.fir.SNR(Cidx) = 10*log10(a2); 
                 end
                 NIRS.Dt.fir.a(Cidx) = a;
@@ -406,8 +462,13 @@ for Idx=1:size(job.NIRSmat,1)
             %a = 100; for a test...
             %dc(Cidx,:) = zeros(size(dc(Cidx,:)));
             switch volt
-                case 1                    
-                    d(chn(Cidx),:) = dc(Cidx,:)+X'*a; 
+                case 1 
+                    if ~set_baseline_to_zero                        
+                        d(chn(Cidx),:) = dc(Cidx,:)+X'*a; 
+                    else
+                        d(chn(Cidx),:) = X'*a;
+                        d_copy(chn(Cidx),:) = zeros(size(d_copy(chn(Cidx),:)));
+                    end                     
                 case 2                    
                     if length(tb)>1
                         b = tb(Cidx); %relative weight of 2nd Volterra regressor to the first
@@ -416,7 +477,12 @@ for Idx=1:size(job.NIRSmat,1)
                     end
                     NIRS.Dt.fir.b = b;
                     a = [a b*a]; 
-                    d(chn(Cidx),:) = dc(Cidx,:)+a*(X'); 
+                    if ~set_baseline_to_zero                        
+                        d(chn(Cidx),:) = dc(Cidx,:)+a*(X'); 
+                    else
+                        d(chn(Cidx),:) = a*(X'); 
+                        d_copy(chn(Cidx),:) = zeros(size(d_copy(chn(Cidx),:)));
+                    end
             end               
         end %end for Cidx
         %[dir1 fil1 ext1] = fileparts(NIRS.Dt.fir.raw.p{ts,:});
@@ -433,7 +499,20 @@ for Idx=1:size(job.NIRSmat,1)
                 d = [d; d_copy];
             end
         end
-    
+        if save_all_data %careful, may not work if first index not chosen
+            Z = [];
+            Z.d = d(1,:); %data with response
+            Z.n = d_copy(1,:); %data without response = noise
+            Z.U = U; %Onsets
+            Z.X = X; %Design matrix
+            Z.f = stdc; %filtered data
+            Z.fX1 = fX1; %filtered combined regressors
+            try
+            Z.FX1 = FX1; %filtered first Volterra
+            Z.FX2 = FX2; %filtered second Volterra
+            save('All_data_for_figure','Z');
+            end
+        end
         %save
         testp = fullfile(dir1,tname);
         if ~exist(testp,'dir'), mkdir(testp); end

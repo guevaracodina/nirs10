@@ -23,7 +23,21 @@ views_to_run = job.view;
 contrast_data = job.contrast_data;
 
 %Options
-
+try
+    GroupColorbars = job.GroupColorbars;
+catch
+    GroupColorbars = 0;
+end
+try
+    SmallFigures = job.SmallFigures;
+catch
+    SmallFigures = 0;
+end
+try
+    write_neg_pos = job.write_neg_pos;
+catch
+    write_neg_pos = 0;
+end
 %When there are two or more sessions
 %1: contrasts defined over more than 1 session are ignored
 %0: contrasts defined over only 1 session are processed with full design
@@ -43,9 +57,16 @@ end
 try
     cbar.c_min = job.override_colorbar.colorbar_override.colorbar_min;
     cbar.c_max = job.override_colorbar.colorbar_override.colorbar_max;
+    cbar.c_min2 = job.override_colorbar.colorbar_override.colorbar_min2;
+    cbar.c_max2 = job.override_colorbar.colorbar_override.colorbar_max2;
     cbar.colorbar_override = 1;
 catch
     cbar.colorbar_override = 0;
+end
+try 
+    output_unc = job.output_unc;
+catch
+    output_unc = 0;
 end
 %
 try
@@ -129,10 +150,14 @@ for Idx=1:size(job.NIRSmat,1)
         Z.gen_fig = gen_fig;
         Z.gen_tiff = gen_tiff;
         Z.p_value = p_value;
+        Z.GroupColorbars = GroupColorbars;
         Z.dir1 = dir1;
         Z.cbar = cbar;
         Z.GInv = GInv;
         Z.GFIS = GFIS;
+        Z.output_unc = output_unc;
+        Z.SmallFigures = SmallFigures;
+        Z.write_neg_pos = write_neg_pos;
 %         Z.fh0Pt = [];
 %         Z.fh0Pu = [];
 %         Z.fh0Nt = [];
@@ -568,7 +593,6 @@ for Idx=1:size(job.NIRSmat,1)
                     %xCon = SSxCon;
                     %loop over sessions        
                     for f1=1:length(SPM.xXn)
-
                         if GFIS                      
                             Pt = figure('Visible',cbar.visible,'Name',['A_tube_' ...
                                 num2str(p_value) '_S' int2str(f1) '_Pos'],'NumberTitle','off');
@@ -841,9 +865,11 @@ for c1=1:nC
 %     end
     %uncorrected - if we generate inverted responses, or HbO or HbT
     if GInv || strcmp(hb,'HbO') || strcmp(hb,'HbT')
-        DF = nirs_draw_figure(2,F,W,Z); %DF: draw figure structure: handles to figure, axes and colorbar        
-        %copy figure structure
-        if GFIS, [Pu,Nu,Cu] = nirs_copy_figure(Pu,Nu,Cu,DF,CF,c1,hb,1,tstr); end      
+        if Z.output_unc
+            DF = nirs_draw_figure(2,F,W,Z); %DF: draw figure structure: handles to figure, axes and colorbar        
+            %copy figure structure
+            if GFIS, [Pu,Nu,Cu] = nirs_copy_figure(Pu,Nu,Cu,DF,CF,c1,hb,1,tstr); end   
+        end
         %tube formula corrected for Tstats - or Bonferroni for Fstats
         %if tstr == 'T' %only for Tstats for now
         DF = nirs_draw_figure(3,F,W,Z); 
@@ -858,8 +884,10 @@ for c1=1:nC
     F.contrast_info = [filestr '_Neg' xCon(c1).name];
     F.contrast_info_for_fig = [filestr_fig ' Neg' xCon(c1).name];
     if GInv || strcmp(hb,'HbR')
-        DF = nirs_draw_figure(2,F,W,Z);  
-        if GFIS, [Pu,Nu,Cu] = nirs_copy_figure(Pu,Nu,Cu,DF,CF,c1,hb,0,tstr); end
+        if Z.output_unc
+            DF = nirs_draw_figure(2,F,W,Z);  
+            if GFIS, [Pu,Nu,Cu] = nirs_copy_figure(Pu,Nu,Cu,DF,CF,c1,hb,0,tstr); end
+        end
         DF = nirs_draw_figure(3,F,W,Z); 
         if GFIS, [Pt,Nt,Ct] = nirs_copy_figure(Pt,Nt,Ct,DF,CF,c1,hb,0,tstr); end
     end
@@ -945,13 +973,35 @@ end
 
 try %works for both group and single sessions    
     if GFIS 
-        save_assembled_figures(Z,W,Pt,'Pos','tube',f1);
-        save_assembled_figures(Z,W,Pu,'Pos','unc',f1);
+        if Z.write_neg_pos || ~GInv
+            save_assembled_figures(Z,W,Pt,'Pos','tube',f1);
+            if Z.output_unc
+                save_assembled_figures(Z,W,Pu,'Pos','unc',f1);
+            else
+                try close(Pu); end
+            end
+        else
+            try close(Pt); end
+            try close(Pu); end
+        end
         if GInv
-            save_assembled_figures(Z,W,Nt,'Neg','tube',f1);
-            save_assembled_figures(Z,W,Nu,'Neg','unc',f1);
+            if Z.write_neg_pos
+                save_assembled_figures(Z,W,Nt,'Neg','tube',f1);
+                if Z.output_unc
+                    save_assembled_figures(Z,W,Nu,'Neg','unc',f1);
+                else
+                    try close(Nu); end
+                end
+            else
+                try close(Nt); end
+                try close(Nu); end
+            end
             save_assembled_figures(Z,W,Ct,'','tube',f1);
-            save_assembled_figures(Z,W,Cu,'','unc',f1);
+            if Z.output_unc
+                save_assembled_figures(Z,W,Cu,'','unc',f1);
+            else
+                try close(Cu); end
+            end
         end
     end
 end

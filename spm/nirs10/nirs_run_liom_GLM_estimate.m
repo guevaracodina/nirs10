@@ -248,8 +248,19 @@ for Idx=1:size(job.NIRSmat,1)
                         %filtered data less estimated beta times filtered design
                         %matrix
                         sigma = std(Y- (tSPM.xX.X(:,1)*tSPM.xX.beta(1,:) + tSPM.xX.X(:,2)*tSPM.xX.beta(2,:)),0,1);
-                        tSPM.xX.a2 = (tSPM.xX.beta(1,:) ./ sigma)/4.7506; %norm_bf = 4.7506 = 1/max(X(:,1)) for a protocol with only one spike
-
+                        if strcmp(SPM.xBF.name,'Gamma Functions')
+                            if NIRS.Dt.fir.calculate_bf_norm
+                                tSPM.xX.a2 = (tSPM.xX.beta(1,:) ./ sigma)/4.4631; 
+                            else
+                                tSPM.xX.a2 = (tSPM.xX.beta(1,:) ./ sigma);
+                            end
+                        else %For canonical HRF
+                            if NIRS.Dt.fir.calculate_bf_norm
+                                tSPM.xX.a2 = (tSPM.xX.beta(1,:) ./ sigma)/4.7506; 
+                            else
+                                tSPM.xX.a2 = (tSPM.xX.beta(1,:) ./ sigma); 
+                            end %norm_bf = 4.7506 = 1/max(X(:,1)) for a protocol with only one spike
+                        end
                         tSPM.xX.b  = tSPM.xX.beta(2,:) ./ tSPM.xX.beta(1,:);
                     end
                     %Add piece of SPM to the whole SPM 
