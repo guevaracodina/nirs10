@@ -27,7 +27,7 @@ function out = nirs_run_calculatePVE(job)
 % optiques modifiées à partir de celles de GM)
 %_________________________________________________________________________
 % Clément Bonnéry June 2011 : intégration à NIRS10 du code de Michèle
-% Desjardins computeDirectProblem.m
+% Desjardins computeDirectProblem.m (pour tMCimg)
 
 V0 = 0.05; % venous blood volume fraction
 OEF0 = 1-0.6975; % baseline oxygen extraction fraction
