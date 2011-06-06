@@ -101,26 +101,6 @@ for Idx=1:size(job.NIRSmat,1)
         
         ext1 = GetExtinctions(NIRS.Cf.dev.wl(1,1));
         ext2 = GetExtinctions(NIRS.Cf.dev.wl(1,2));
-        %%% Matrice epsilons (coefficients d'extcintion) %%%
-%         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%         % Coefficients d'extinction selon Ted Huppert's HOMer (GetExtinctions.m)
-%         % à, respectivement, 690 (ligne1, HbO HbR) et 830 (ligne2, HbO HbR)
-%         
-%         % [ Lamda1-HbO  Lambda1-HbR  (690=lambda1 avec le CW6)
-%         %   Lambda2-HbO Lambda2-HbR] (830=lambda2 avec le CW6)
-%         % size : nLambda x nHb (2x2)
-%         
-%         % source : http://omlc.ogi.edu/spectra/hemoglobin/summary.html (au 22
-%         % juillet 2008)
-%         if lambda(1)==830 && lambda(1)==690
-%             coeff_ext = [ 974  693.04 ;   % POUR DONNÉES PRISES AVEC LE CW5
-%                 276  2051.96  ] .* 2.303 ./1e6; % en cm^-1 / (umol/L).
-%         elseif lambda(1)==690 && lambda(1)==830
-%             coeff_ext = [ 276  2051.96 ;   % POUR DONNÉES PRISES AVEC LE CW6
-%                 974  693.04  ] .* 2.303 ./1e6; % en cm^-1 / (umol/L).
-%             % Le facteur 2.303 permet d'obtenir des coefficients d'absorption
-%             % mu_a lorsqu'on mutliplie par la concentration en umol/L (toujours
-%             % selon le site des données compilées par Scott Prahl!)
         E = [ext1(1,1) ext1(1,2) ; ext2(1,1) ext2(1,2)];
         iE = inv(E);
         
