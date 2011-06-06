@@ -19,7 +19,7 @@ else
     %Load/read job
     LoopJob = load(t(:));
     NIRSmat = LoopJob.matlabbatch{1}.spm.tools.nirs10.readOnsets.addTestStimuli.NIRSmat;
-    [dir1,~,~] = fileparts(NIRSmat{1});
+    [dir1,dummy,dummy2] = fileparts(NIRSmat{1});
     dir1 = [dir1 filesep dir_dataSPM];
     %dir1 = ['W:\epiNIRSj\epi127SD' filesep dir_dataSPM]; 
     for ROCiter=1:n

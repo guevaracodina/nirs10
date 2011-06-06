@@ -57,7 +57,7 @@ for Idx=1:nSubj
     try
         NIRS = [];
         load(job.NIRSmat{Idx,1});
-        [dir0,~,~] = fileparts(job.NIRSmat{Idx,1});
+        [dir0,dummy,dummy2] = fileparts(job.NIRSmat{Idx,1});
         dir1 = [dir0 filesep dir_dataSPM];
         
         %loop over jobs

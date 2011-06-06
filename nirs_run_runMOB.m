@@ -18,7 +18,7 @@ for is=1:sN
     data = cell2mat(filemat(11:end,:));
     textdata = filemat(1:10,1);
     Te = 33.3*10^(-3);
-    [dir, name, ~] = fileparts(job.subj(1,is).acc_file{:});
+    [dir, name, dummy] = fileparts(job.subj(1,is).acc_file{:});
     % acc_file = job.acc_file{:};
     % load(acc_file,'csv');
     save([dir '\' name '.mat'], '-mat', 'data', 'Te', 'textdata');

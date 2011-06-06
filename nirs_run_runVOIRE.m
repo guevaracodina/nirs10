@@ -42,7 +42,7 @@ try
     %loop over data files
     for f=1:size(rDtp,1)
         c = fopen_NIR(rDtp{f});
-        [~,fil1,~] = fileparts(rDtp{f});
+        [dummy,fil1,dummy2] = fileparts(rDtp{f});
         
 % % %         % pour chaque fichier, on cree les onsets
 % % %         %- on a deux conditions

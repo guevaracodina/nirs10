@@ -51,7 +51,7 @@ rY = interp3(xi1,yi1,zi1,Y,xf1,yf1,zf1,'nearest');
 if PO_autonaming==0
     PO_prefix = [int2str(dimf(1,1)) 'x' int2str(dimf(1,2)) 'x' int2str(dimf(1,3)) '_'];
 end
-[~,nam,ext] = fileparts(V.fname);
+[dummy,nam,ext] = fileparts(V.fname);
 rV.fname = fullfile(PO_dir,[PO_prefix nam ext]);
 
 switch PO_dt

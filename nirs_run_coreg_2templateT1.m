@@ -33,7 +33,7 @@ for iSubj=1:size(job.NIRSmat,1)
             if spm_existfile(tmpf)
                 NIRS.Dt.ana.tT1 = tmpf;
             else
-                [DirSPM,~,~] = fileparts(which('spm'));
+                [DirSPM,dummy,dummy2] = fileparts(which('spm'));
                 NIRS.Dt.ana.tT1 = fullfile(DirSPM,'templates','T1.nii');
             end
         end

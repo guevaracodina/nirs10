@@ -10,7 +10,7 @@ for Idx=1:nSubj
     try
         NIRS = [];
         load(job.NIRSmat{Idx,1});
-        [dir1,~,~] = fileparts(job.NIRSmat{Idx,1});
+        [dir1,dummy,dummy2] = fileparts(job.NIRSmat{Idx,1});
         %x = findstr(filesep,dir1);
         %dirROC = dir1(1:x(end));
         

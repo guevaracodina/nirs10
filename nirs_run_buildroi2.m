@@ -28,7 +28,7 @@ for Idx=1:size(job.NIRSmat,1)
     try
         NIRS = [];
         load(job.NIRSmat{Idx,1});
-        [dir0,~,~] = fileparts(job.NIRSmat{Idx,1});
+        [dir0,dummy,dummy2] = fileparts(job.NIRSmat{Idx,1});
         
         if ~isempty(job.image_in{:})
             V = spm_vol(job.image_in{:});

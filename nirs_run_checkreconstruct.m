@@ -15,12 +15,12 @@ switch Kas
             Y = spm_read_vols(V);
             
             if iHbs==1
-                [dirr,~,~] = fileparts(f);
+                [dirr,dummy,dummy2] = fileparts(f);
                 Y_t_O = zeros([size(Y) size(out_Hbs,1)/2]);
                 Y_t_R = zeros([size(Y) size(out_Hbs,1)/2]);
             end
             
-            [~,name,~] = fileparts(f);
+            [dummy,name,dummy2] = fileparts(f);
             sep =strfind(name,'_');
             %             timee =str2num(name(sep(2)+2:sep(3)-1));
             timee =str2num(name(sep(2)+2:end));
@@ -114,7 +114,7 @@ switch Kas
             V = spm_vol(f);
             Y = spm_read_vols(V);
             
-            [~,name,~] = fileparts(f);
+            [dummy,name,dummy2] = fileparts(f);
             sep =strfind(name,'_');
             %             timee =str2num(name(sep(2)+2:sep(3)-1));
             timee =str2num(name(sep(2)+2:end));
@@ -144,7 +144,7 @@ switch Kas
             V = spm_vol(f);
             Y = spm_read_vols(V);
             
-            [~,name,~] = fileparts(f);
+            [dummy,name,dummy2] = fileparts(f);
             sep =strfind(name,'_');
             timee =str2num(name(sep(2)+2:sep(3)-1));
             

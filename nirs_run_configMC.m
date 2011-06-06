@@ -156,7 +156,7 @@ for Idx=1:size(job.NIRSmat,1)
         cs.Pwd_rmm = Pwd_rmm;
 
         % 8bits .bin image
-        [~,id,~] = fileparts(V_rmiv.fname);
+        [dummy,id,dummy2] = fileparts(V_rmiv.fname);
         dim_rmiv = V_rmiv.dim;
         n_b8i = ['vol8bit_' id '.bin'];
 

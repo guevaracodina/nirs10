@@ -38,7 +38,7 @@ d_Norm_zM=d_Norm -1;                                                            
 c = d_Norm_zM(:,channels)'* d_Norm_zM(:,channels);
 
 %single value decomposition  X = U*S*V' (reels V'=V*(adjoint) #voir conjugate transpose sur wiki)
-[~,S,V] = svd(c);
+[dummy,S,V] = svd(c);
                                                                                 % U: matrice carre nb_channels by nb_channels  
                                                                                 % S:nb_channels by nb_channels 
                                                                                 % V:nb_channels by nb_channels 

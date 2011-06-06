@@ -67,7 +67,7 @@ for Idx=1:nsubj
     gaussfilt_sdev = job.process_image.gaussfilt_sdev;
     
     % Check if already run
-    [dir1, file1, ~] = fileparts(V.fname);
+    [dir1, file1, dummy] = fileparts(V.fname);
     %tmpf = spm_select('List',dir1,['_segmented_' file1]);
     %if ~isempty(tmpf)
     if spm_existfile(fullfile(dir1,[output_prefix,'_segmented_',file1,'.nii']))
@@ -176,7 +176,7 @@ for Idx=1:nsubj
             Ysegmented = zeros(size(Y5m));
 
             % Give the number of layers each voxel belongs to (between 0 and 2)
-            [~,belongs2n_V] = spm_imcalc_ui([fullfile(dir,['processed_c1',name,'.nii']);...
+            [dummy,belongs2n_V] = spm_imcalc_ui([fullfile(dir,['processed_c1',name,'.nii']);...
                 fullfile(dir,['processed_c2',name,'.nii']);...
                 fullfile(dir,['processed_c3',name,'.nii']);...
                 fullfile(dir,['processed_c4',name,'.nii']);
@@ -263,7 +263,7 @@ for Idx=1:nsubj
                     for i_value =1:6
                         rebel_value_count(i_value) = size(find(nbrhood==(i_value-1)),1);
                     end
-                    [~,layer] = max(rebel_value_count);
+                    [dummy,layer] = max(rebel_value_count);
                     layer = layer-1;
                     % if layer ==0 hence air, then values from the
                     % NewSegment layers are used
@@ -273,7 +273,7 @@ for Idx=1:nsubj
                         v_c3 = Y3(i,posAlpha(j),posAleph(j));
                         v_c4 = Y4m(i,posAlpha(j),posAleph(j));
                         v_c5 = Y5m(i,posAlpha(j),posAleph(j));
-                        [~,layer] = max([v_c1,v_c2,v_c3,v_c4,v_c5]);
+                        [dummy,layer] = max([v_c1,v_c2,v_c3,v_c4,v_c5]);
                         Ysegmented(i,posAlpha(j),posAleph(j)) = layer;
                     else
                         Ysegmented(i,posAlpha(j),posAleph(j)) = layer;
@@ -284,7 +284,7 @@ for Idx=1:nsubj
             disp(['Remaining rebel voxels before processing : ',int2str(rebel_count)]);
             rebel_count_processed = 0;
             for i=1+rebel_surrounding:size(Ysegmented,1)-rebel_surrounding
-                [posAlpha,~]=find(squeeze(head_shadow_Y(i,:,:))>=rebel_thresh_hs & squeeze(Ysegmented(i,:,:))==0);
+                [posAlpha,dummy]=find(squeeze(head_shadow_Y(i,:,:))>=rebel_thresh_hs & squeeze(Ysegmented(i,:,:))==0);
                 rebel_count_processed = rebel_count_processed +  size(posAlpha,1);
             end
 

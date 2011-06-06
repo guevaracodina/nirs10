@@ -83,7 +83,7 @@ for Idx=1:size(job.NIRSmat,1)
 
         %%%%%%%%%%
         for fi = 1:size(f,1)
-            [~,fn,~] = fileparts(f{fi,:});
+            [dummy,fn,dummy2] = fileparts(f{fi,:});
 
             if strcmp(fn(1:1),'D')% stores all ''D_No.._...nm.2pt'' files in a list
                 fD{NfD+1,:} = f{fi,:};
@@ -98,8 +98,8 @@ for Idx=1:size(job.NIRSmat,1)
         NS = NfS/2;
 
         for fiS = 1:NfS
-            [~,fSn,~] = fileparts(fS{fiS,:});
-            [~,Pwl] = find(wl==str2double(fSn(8:10)));
+            [dummy,fSn,dummy2] = fileparts(fS{fiS,:});
+            [dummy,Pwl] = find(wl==str2double(fSn(8:10)));
             Sn = str2double(fSn(5:6));
             switch cs.alg
                 case 1 % MCX
@@ -145,7 +145,7 @@ for Idx=1:size(job.NIRSmat,1)
             D_Sn =  unique(Cid(3,Cid(2,:)== Sn));% Detectors seeing source Sn
             for i = 1:size(D_Sn,2)% overview of detectors seen by source thanks to Cid
                 for j = 1:NfD% only if detector has been selected by user...
-                    [~,fD_n,~] = fileparts(fD{j,:});
+                    [dummy,fD_n,dummy2] = fileparts(fD{j,:});
 
                     if D_Sn(1,i) < 10, Ds_Sn = ['0' int2str(D_Sn(1,i))]; else Ds_Sn = int2str(D_Sn(1,i));end
                     Dfn = ['D_No' Ds_Sn '_' int2str(wl(Pwl)) 'nm'];
@@ -191,7 +191,7 @@ for Idx=1:size(job.NIRSmat,1)
                                 sum_Jout = sum(md(md<0)/(cs.par.nphotons*10));
                                 Svx = 5*5;
                                 Vvx = 5*5*5;
-                                [indices,~] = find(md>0);
+                                [indices,dummy] = find(md>0);
                                 mdP = zeros(size(md));
                                 mdP(indices,1)=md(indices,1);
                                 if Pwl==1
