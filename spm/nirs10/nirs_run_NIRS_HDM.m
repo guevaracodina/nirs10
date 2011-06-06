@@ -146,7 +146,7 @@ switch modal
         disp('Questions regarding ASL');
         [hReg_ASL,xSPM_ASL,SPM] = spm_results_ui('Setup',xSPM);
 
-        [~,Q_ASL] = max(xSPM_ASL.Z); 
+        [dummy,Q_ASL] = max(xSPM_ASL.Z); 
         xyz_ASL = xSPM_ASL.XYZ(:,Q_ASL);
         xSPM_ASL.xY.xyz = xyz_ASL;   
         [xyzmm,d] = spm_XYZreg('SetCoords',xSPM_ASL.XYZmm(:,Q_ASL),hReg_ASL);
@@ -299,7 +299,7 @@ end
 
 switch modal
     case 1
-        [~,Q_BOLD] = max(xSPM_BOLD.Z);
+        [dummy,Q_BOLD] = max(xSPM_BOLD.Z);
     case 2
         Q_BOLD = spm_XYZreg('FindXYZ',xyz_ASL,xSPM_BOLD.XYZ);
         if isempty(Q_BOLD) 
@@ -468,7 +468,7 @@ M.TE    = TE;
 
 % nonlinear system identification
 %--------------------------------------------------------------------------
-[Ep,Cp,~,~,K1,K2,M0,M1] = spm_nlsi(M,U,Y);
+[Ep,Cp,dummy,dummy2,K1,K2,M0,M1] = spm_nlsi(M,U,Y);
 
 %-display results
 %==========================================================================
@@ -495,7 +495,7 @@ switch job.Model_Choice
         C     = diag(Cp(7:end,7:end));
 end
 
-[~, j] = max(abs(P));
+[dummy, j] = max(abs(P));
 spm_barh(P,C)
 axis square
 title({'stimulus efficacy'; 'with 90% confidence intervals'},'FontSize',10)
@@ -628,7 +628,7 @@ end
 
 % Volterra kernels of states
 %--------------------------------------------------------------------------
-[~,H1] = spm_kernels(M0,M1,M.N,M.dt);
+[dummy,H1] = spm_kernels(M0,M1,M.N,M.dt);
 
 subplot(3,2,2)
 if plot_algebraic_CMRO2

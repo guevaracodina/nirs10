@@ -562,7 +562,7 @@ for iSubj = 1:nSubj
         optOrders{2}=optOrder2;
         optOrders{3}=optOrder3;
         optOrders{4}=optOrder4;
-        [~,optIdx] = min([dist1 dist2 dist3 dist4]);
+        [dummy,optIdx] = min([dist1 dist2 dist3 dist4]);
         optOrder = optOrders{optIdx};
     %     if dist1<dist2
     %         optOrder = optOrder1;

@@ -10,7 +10,7 @@ native_space = [1 0]; %for Dartel: [1 1]
 %Warped tissue: none
 warped_tissue = [0 0]; %for VBM (and Dartel?): [1 1]
 
-[DirSPM,~,~] = fileparts(which('spm')); 
+[DirSPM,dummy,dummy2] = fileparts(which('spm')); 
 
 % Go to anatomical image directory
 [dir1 fil ext] = fileparts(f);

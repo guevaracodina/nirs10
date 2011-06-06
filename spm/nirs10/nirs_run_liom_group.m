@@ -541,7 +541,7 @@ else
             end %if view_estimated
         end %end for v1
         TOPO.xCon = xCon; %would not work if new contrasts are later added 
-        [dir0,~,~] = fileparts(job.NIRSmat{1});
+        [dir0,dummy,dummy2] = fileparts(job.NIRSmat{1});
         %store in same directory as first subject
         ftopo = fullfile(dir0,'TOPO.mat');
         save(ftopo,'TOPO');

@@ -195,9 +195,10 @@ for Idx=1:size(job.NIRSmat,1)
             end
         end
         %Adding confound regressors 
-        C = [];
-        Cname = {};        
+       
         for f=1:nsess
+            C = [];
+            Cname = {};
             try 
                 if job.GLM_include_cardiac
                     %heart rate regressor
@@ -228,7 +229,7 @@ for Idx=1:size(job.NIRSmat,1)
                     IX2 = intersect(IXmin,IXmax);
                     %need to sort again
                     tHbO = fullHbO(IX2);
-                    [~, IX3] = sort(tHbO);
+                    [dummy, IX3] = sort(tHbO);
                     %Keep up to NumChConfounds
                     try
                         IX3 = IX3(1:NumChConfounds);
@@ -244,11 +245,36 @@ for Idx=1:size(job.NIRSmat,1)
                     %get data for that session
                     d = fopen_NIR(rDtp{f,1},NC);
                     d_conf = d(HbOIX4,:);
-                    for j1=1:length(HbOIX3)
+                    
+                    for j1=1:length(HbOIX4)
                         C = [C d_conf(j1,:)'];
                         Cname = [Cname {['C' int2str(j1)]}];
                     end 
                     NIRSconfounds.NumChConfoundsActual = length(HbOIX4);
+                    %Create and save a new data set excluding these
+                    %channels for HbO and HbR
+                    %generate list of kept channels
+                    ch_keep = 1:NC;
+                    kept_ch = ones(1,NC);
+                    kept_ch(HbOIX4) = 0; 
+                    if HbO_like == 1
+                        kept_ch(HbOIX4+NC/2) = 0;
+                    else
+                        kept_ch(HbOIX4-NC/2) = 0;
+                    end  
+                    ch_keep = ch_keep(logical(kept_ch));
+                    [dir3, fil3, ext3] = fileparts(rDtp{f,1});
+                    new_name = fullfile(spm_dir,[fil3 ext3]);
+                    d_kept = d(ch_keep,:);
+                    fwrite_NIR(new_name,d_kept);
+                    %add outfile name to NIRS
+                    if f == 1
+                        lst = lst+1;
+                        NIRS.Dt.fir.pp(lst).pre = 'Stat - Remove Channels';
+                        NIRS.Dt.fir.pp(lst).job = job;
+                    end
+                    NIRS.Dt.fir.pp(lst).p{f,1} = new_name;
+                    NIRS.Dt.fir.pp(lst).kept{f,1} = ch_keep; %kept channels
                 end
             catch
                 try 
@@ -614,6 +640,15 @@ for Idx=1:size(job.NIRSmat,1)
     end
     %NIRS is now modified - it includes a link to the GLM   
     newNIRSlocation = fullfile(spm_dir,'NIRS.mat');
+    if NIRSconfoundsOn        
+        %update NIRS matrix
+        NIRS.Cf.H.C.N = length(ch_keep);
+        try NIRS.Cf.H.C.n = NIRS.Cf.H.C.n(ch_keep); end
+        try NIRS.Cf.H.C.id = NIRS.Cf.H.C.id(:,ch_keep); end
+        try NIRS.Cf.H.C.wl = NIRS.Cf.H.C.wl(ch_keep); end 
+        try NIRS.Cf.H.C.gp = NIRS.Cf.H.C.gp(ch_keep); end
+        try NIRS.Cf.H.C.ok = NIRS.Cf.H.C.ok(ch_keep); end         
+    end
     save(newNIRSlocation,'NIRS');
     job.NIRSmat{Idx,1} = newNIRSlocation;   
 end

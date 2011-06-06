@@ -27,7 +27,7 @@ for Idx=1:size(job.NIRSmat,1)
     try
         NIRS = [];
         load(job.NIRSmat{Idx,1});
-        [dir0,~,~] = fileparts(job.NIRSmat{Idx,1});
+        [dir0,dummy,dummy2] = fileparts(job.NIRSmat{Idx,1});
         if NewDirCopyNIRS
             dir2 = [dir0 filesep NewNIRSdir];
             if ~exist(dir2,'dir'), mkdir(dir2); end;
@@ -58,14 +58,14 @@ for Idx=1:size(job.NIRSmat,1)
         %Simulate MCX
         if isfield(job.MC_runCUDAchoice,'MCX1')
             
-            [t,~] = spm_select('FPList',cs_dir,'.inp');
+            [t,dummy] = spm_select('FPList',cs_dir,'.inp');
             %run MCX
             if MCtestOneChannel             
                 t = t(1,:); %This gives one detector, but also need at least one source, with the same wavelength, for the one channel
             end
             J = job.MC_runCUDAchoice.MCX1;
             for k1=1:size(t,1)
-                [dir1,file1,~] = fileparts(t(k1,:));
+                [dir1,file1,dummy] = fileparts(t(k1,:));
                 file2 = [file1 '.inp'];
                 cd(dir1);
         

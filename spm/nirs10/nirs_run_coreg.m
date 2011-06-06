@@ -41,7 +41,7 @@ for iSubj=1:size(job.NIRSmat,1)
             if spm_existfile(tmpf)
                 NIRS.Dt.ana.tT1 = tmpf;
             else
-                [DirSPM,~,~] = fileparts(which('spm'));
+                [DirSPM,dummy,dummy2] = fileparts(which('spm'));
                 NIRS.Dt.ana.tT1 = fullfile(DirSPM,'templates','T1.nii');
             end
         end
@@ -251,7 +251,7 @@ for iSubj=1:size(job.NIRSmat,1)
         
         load(job.NIRSmat{iSubj});
         if job.GenDataTopo
-            [pth2,~,~] = fileparts(job.NIRSmat{iSubj,1});
+            [pth2,dummy,dummy2] = fileparts(job.NIRSmat{iSubj,1});
             [dir1,fil1,ext1] = fileparts(NIRS.Dt.ana.T1);
             fwT1 = fullfile(dir1,['w' fil1 ext1]);
             NIRS.Dt.ana.fwT1 = fwT1;

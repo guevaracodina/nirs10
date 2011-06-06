@@ -8,7 +8,7 @@ try
     if length(varargin) >= 2
         NC = varargin{2};
     end
-    [~,~,ext1] = fileparts(deblank(location));
+    [dummy,dummy2,ext1] = fileparts(deblank(location));
     if strcmp(ext1,'.nirs')
         load(location,'-mat');
         d = d';

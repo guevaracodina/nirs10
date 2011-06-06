@@ -174,7 +174,7 @@ for ch = 1:n_ch
     bias_t = waveletcdf97(c_Full,-decJ);
     bias_t = bias_t(dm_left+1:end-dm_right);
     try
-        [~ , ~, res_t] = ...
+        [dummy1 , dummy2, res_t] = ...
             regress(Yo(:,ch)-bias_t, Xo);
     catch
         dY = Yo(:,ch)-bias_t;
@@ -195,7 +195,7 @@ for ch = 1:n_ch
     % sorting along the magnitude of wavelet coef. of trend
     % small coef. will be removed if MDL value gets small
     n_Prev = sum(L(1:index_L-1));
-    [~, ind] = sort(abs(c_Full(n_Prev+1:n_Full)),'ascend');
+    [dummy, ind] = sort(abs(c_Full(n_Prev+1:n_Full)),'ascend');
     
     for dcoef = 1:(L(index_L)-1)  % delete of coef.
         n0 = n_Full - dcoef;
@@ -222,7 +222,7 @@ for ch = 1:n_ch
         bias_t = waveletcdf97(biasCoef,-decJ);
         bias_t = bias_t(dm_left+1:end-dm_right);
         try
-            [~ , ~, res_t] = ...
+            [dummy , dummy2, res_t] = ...
                 regress(Yo(:,ch)-bias_t, Xo);
         catch
             dY = Yo(:,ch)-bias_t;
@@ -234,7 +234,7 @@ for ch = 1:n_ch
             n0*sum(-log2(P(1:n0)));        % Prior
         MDLwn(1+dcoef) = term1 + term2;
     end
-    [~, minwn] = min(MDLwn);
+    [dummy, minwn] = min(MDLwn);
     MDLS(1,ch) = MDLwn(minwn);  % save MDL value
     dNum(1,ch) = minwn-1;       % save # of deletion
 end
@@ -282,7 +282,7 @@ for ch = 1:n_ch
     else
         % sorting
         n_Prev = sum(L(1:index_L-1));
-        [~, ind] = sort(abs(c_Full(n_Prev+1:n_Full)),'ascend');
+        [dummy, ind] = sort(abs(c_Full(n_Prev+1:n_Full)),'ascend');
         
         % # of deletion
         dcoef = dNum(minPos,ch);
