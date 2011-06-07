@@ -57,7 +57,7 @@ for is=1:sN
                 jobH.subj.helmet.staxp = staxp;
                 outH = nirs_criugm_getHelmet(jobH); % get helmet configuration (S,D,P,Q) from Brainsight
             end
-            fig=findall(0,'name','Get positions from Brainsight (clbon)');
+            fig=gcf; %findall(0,'name','Get positions from Brainsight (clbon)');
             waitfor(fig,'BeingDeleted','On');
         end
         
