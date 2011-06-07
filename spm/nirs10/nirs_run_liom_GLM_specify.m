@@ -251,6 +251,7 @@ for Idx=1:size(job.NIRSmat,1)
                         Cname = [Cname {['C' int2str(j1)]}];
                     end 
                     NIRSconfounds.NumChConfoundsActual = length(HbOIX4);
+                    NIRSconfounds.Ch_removed = HbOIX4;
                     %Create and save a new data set excluding these
                     %channels for HbO and HbR
                     %generate list of kept channels
@@ -270,7 +271,7 @@ for Idx=1:size(job.NIRSmat,1)
                     %add outfile name to NIRS
                     if f == 1
                         lst = lst+1;
-                        NIRS.Dt.fir.pp(lst).pre = 'Stat - Remove Channels';
+                        NIRS.Dt.fir.pp(lst).pre = 'Stat - Removed Channels';
                         NIRS.Dt.fir.pp(lst).job = job;
                     end
                     NIRS.Dt.fir.pp(lst).p{f,1} = new_name;

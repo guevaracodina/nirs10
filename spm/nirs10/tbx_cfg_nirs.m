@@ -3483,7 +3483,7 @@ contrast_figures.tag  = 'contrast_figures';
 contrast_figures.name = 'Generate figures';
 contrast_figures.labels = {'No','Both .fig and .tiff','Only .fig','Only .tiff'};
 contrast_figures.values = {0,1,2,3};
-contrast_figures.val = {0};
+contrast_figures.val = {3};
 contrast_figures.help = {'Generate contrast figures. '
     'Note .fig colorbar is incorrect - it is not saved properly by Matlab.'
     'Use .tiff to view colorbar for t-stat.'}';
@@ -3571,7 +3571,7 @@ SmallFigures.tag  = 'SmallFigures';
 SmallFigures.name = 'Large or small figures';
 SmallFigures.labels = {'Large','Small'};
 SmallFigures.values = {0,1};
-SmallFigures.val = {0};
+SmallFigures.val = {1};
 SmallFigures.help = {'Write to disk large or small (compressed) figures.'}';
 
 ProcessContrastsBySession      = cfg_menu;

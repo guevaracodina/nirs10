@@ -197,7 +197,8 @@ if FFX || size(job.NIRSmat,1)==1
                         %Loop over chromophores
                         for h1=1:3 %including HbT
                             hb = get_chromophore(h1);
-                            for c1=1:nC  
+                            for c1=1:nC
+                                try
                                 %Skip F contrasts for now
                                 if xCon(c1).STAT == 'T'
                                     %fill in cbeta and ccov_beta                            
@@ -281,6 +282,9 @@ if FFX || size(job.NIRSmat,1)==1
                                         try, DF = nirs_draw_figure(4,F,W,Z); end
                                         try, if GFIS, [Pu,Nu,Cu] = nirs_copy_figure(Pu,Nu,Cu,DF,CF,c1,hb,0,F.tstr); end; end
                                     end
+                                end
+                                catch
+                                    disp(['Problem with a specific contrast ' int2str(c1) ' and chromophore ' hb ' for view ' int2str(v1)]);
                                 end
                             end
                         end
@@ -442,7 +446,8 @@ else
                 for h1=1:3 %exclude HbT for now
                     hb = get_chromophore(h1);
                     %Loop over contrasts
-                    for c1=1:nC   
+                    for c1=1:nC  
+                        try
                         %fill in cbeta and ccov_beta   
                         %Loop over subjects
                         for f1=1:ns 
@@ -517,6 +522,9 @@ else
                             F.hb = hb;
                             DF = nirs_draw_figure(4,F,W,Z);
                             if GFIS, [Pu,Nu,Cu] = nirs_copy_figure(Pu,Nu,Cu,DF,CF,c1,hb,0,F.tstr); end
+                        end
+                        catch
+                            disp(['Problem with a specific contrast ' int2str(c1) ' and chromophore ' hb ' for view ' int2str(v1)]);
                         end
                     end
                 end
