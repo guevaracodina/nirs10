@@ -522,6 +522,7 @@ for iSubj=1:size(job.NIRSmat,1)
                 end
                 
                 % ----------------------------------------------------------------------- %
+                %[dir1,fil1,ext1] = fileparts(NIRS.Dt.s.p);
                 if NewDirCopyNIRS
                     dir2 = [dir1 filesep NewNIRSdir];
                     if ~exist(dir2,'dir'), mkdir(dir2); end;
@@ -540,8 +541,7 @@ for iSubj=1:size(job.NIRSmat,1)
                     save(job.NIRSmat{Idx,1},'NIRS');
                 end
                 catch
-                    disp(['Conversion of optical intensities to hemoglobin ',...
-                        'concentrations failed for subject ' int2str(Idx)]);
+                    disp(['Calculus of PVE failed for subject ' int2str(Idx)]);
         end
     end
     out.NIRSmat = job.NIRSmat;

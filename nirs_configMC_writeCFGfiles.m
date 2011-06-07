@@ -148,7 +148,7 @@ for iP = 1:NS+ND
                 job.parameters.voxelSize,job.ROIlimits(2,2),1,job.ROIlimits(2,2));
             fprintf(fid,'%1.0f %3.0f %3.0f %3.0f            # z: voxel size, dim, start/end indices\n',...
                 job.parameters.voxelSize,job.ROIlimits(2,3),1,job.ROIlimits(2,3));
-            fprintf(fid, '%s %s \n','5',' # num of media');
+            fprintf(fid, '%s %s \n','6',' # num of media'); %%%%%% a changer /////////
             fprintf(fid, '%3.2f %2.1f %5.4f %3.2f %s\n', ...
                 job.parameters.gmPpties([2 3 1 4]),'# GM: scat(1/mm), g, mua (1/mm), n');
             fprintf(fid, '%3.2f %2.1f %5.4f %3.2f %s\n', ...
@@ -159,6 +159,10 @@ for iP = 1:NS+ND
                 job.parameters.skullPpties([2 3 1 4]),'# Skull: scat(1/mm), g, mua (1/mm), n');
             fprintf(fid, '%3.2f %2.1f %5.4f %3.2f %s\n', ...
                 job.parameters.scalpPpties([2 3 1 4]),'# Scalp: scat(1/mm), g, mua (1/mm), n');
+            if isfield(job.parameters,'perturbationPpties')
+                fprintf(fid, '%3.2f %2.1f %5.4f %3.2f %s\n', ...
+                job.parameters.perturbationPpties([2 3 1 4]),'# Perturbation: scat(1/mm), g, mua (1/mm), n');
+            end
             
             % Detectors (all other optodes)
             Rp_rmiv = Pp_rmiv(:,[1:iP-1 iP+1:NS+ND]);

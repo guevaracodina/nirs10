@@ -57,7 +57,7 @@ for Idx=1:size(job.NIRSmat,1)
         if isfield(job.mcim_cfg,'mcim_in')% image segmentee de l'anatomique de base
             roi =0;% image choisie
             cs.seg = job.mcim_cfg.mcim_in{:};
-            disp('cs.p = ');
+            cs.p = cs.seg(1:max(strfind(cs.seg,'\'))-1);
             cs.Pfp_rmv = NIRS.Cs.temp.Pfp_roi_rmv;
             cs.Pfp_rmm = NIRS.Cs.temp.Pfp_roi_rmm;
             cs.Pp_rmm = NIRS.Cs.temp.Pp_roi_rmm;

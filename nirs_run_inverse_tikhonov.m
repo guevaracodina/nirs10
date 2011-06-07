@@ -123,6 +123,12 @@ for Idx=1:size(job.NIRSmat,1)
                 Y_to{1} = Y_t0(1:NC2mi,1);
                 Y_to{2} = Y_t0(NC2mi+1:end,1);
                 
+                %%%% test fantome
+                Yt0 = load('Yt0.nirs','-mat');
+Y_to{1} = Yt0.Yt0(1:5,1);
+Y_to{2} = Yt0.Yt0(6:10,1);
+%%%%
+                
                 % Dmua
                 Dmua{1} = zeros(Nvx,1);
                 Dmua{2} = zeros(Nvx,1);

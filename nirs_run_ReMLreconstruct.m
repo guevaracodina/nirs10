@@ -165,12 +165,12 @@ for Idx=1:size(job.NIRSmat,1)
             Qp{3}=sparse(Nvx+Y_c5,Nvx+Y_c5,ones(length(Y_c5),1),2*Nvx,2*Nvx); %Skin layer- HbR
             Qp{4}=sparse(Nvx+Y_c1,Nvx+Y_c1,ones(length(Y_c1),1),2*Nvx,2*Nvx); %Brain layer- HbR
             Qp{5}=sparse(1:Nvx,1:Nvx,-ones(Nvx,1),2*Nvx,2*Nvx);               % Quantifie la covariance entre HbO et HbR dans chacun des voxels
-            if ~isempty(job.subj(1,is).boldmask{:})                           % BOLD
-                %Qp{6}=sparse(1);
-            elseif ~isfield(NIRS.Cm,'bold')
-                %'NIRS.Cm.bold'
-                %Qp{6}=sparse();
-            end
+%             if ~isempty(job.subj(1,is).boldmask{:})                           % BOLD
+%                 %Qp{6}=sparse(1);
+%             elseif ~isfield(NIRS.Cm,'bold')
+%                 %'NIRS.Cm.bold'
+%                 %Qp{6}=sparse();
+%             end
 
             for itp=1:length(job.temp_pts)
                 disp(['current : ' int2str(job.temp_pts(itp))])
