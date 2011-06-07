@@ -651,7 +651,7 @@ for Idx=1:size(job.NIRSmat,1)
         try TOPO.xX = SPM.xX; end
         TOPO.xCon = xCon; %would not work if new contrasts are later added 
         TOPO.SSxCon = SSxCon;
-        save(ftopo,'TOPO');
+        save(ftopo,'TOPO','-v7.3'); %file can be large
     catch
         disp(['Could not create contrasts for subject' int2str(Idx)]);
     end
