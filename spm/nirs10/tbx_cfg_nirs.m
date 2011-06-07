@@ -305,6 +305,30 @@ end
 %Configuration for IUGM (Techen CW5 [UNF] or CW6 [LESCA])
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%path structure
+T1_outpath         = cfg_entry; %path
+T1_outpath.name    = 'path for anatomical files';
+T1_outpath.tag     = 'T1_path';       
+T1_outpath.strtype = 's';
+T1_outpath.num     = [1 Inf];     
+T1_outpath.def     = @(val)nirs_get_defaults('readNIRS.boxy1.config_path.T1_path', val{:}); 
+T1_outpath.help    = {'Path for T1 file: should be something like ..\T1\ (omit backslashes)'}; 
+
+%path structure
+output_path         = cfg_entry; %path
+output_path.name    = 'path for .nir output files';
+output_path.tag     = 'output_path';       
+output_path.strtype = 's';
+output_path.num     = [1 Inf];     
+output_path.def     = @(val)nirs_get_defaults('readNIRS.boxy1.config_path.output_path', val{:}); 
+output_path.help    = {'Path for .nir output files: should be something like ..\dataSPM\ (omit backslashes)'}; 
+
+config_path         = cfg_branch;
+config_path.tag     = 'config_path';
+config_path.name    = 'Path Configuration options';
+config_path.val     = {prj_path T1_path output_path}; 
+config_path.help    = {''};
+
 TopoData        = cfg_files;
 TopoData.tag    = 'TopoData';
 TopoData.name   = 'TopoData';
@@ -328,6 +352,16 @@ text_brainsight.filter  = '.txt';
 text_brainsight.ufilter = '.*';
 text_brainsight.num     = [1 1];
 text_brainsight.help    = {'Select the text file from Brainsight.'};
+
+allSD_autosave         = cfg_menu;
+allSD_autosave.name    = 'Select all sources and detectors';
+allSD_autosave.tag     = 'allSD_autosave';
+allSD_autosave.labels = {'Yes' 'No'};
+allSD_autosave.values = {1,0};
+allSD_autosave.val     = {0};
+allSD_autosave.help    = {'ONLY with the choice : Text file from Brainsight !'
+    'If No, you have to choose points and click on Save button'
+    'If Yes, all sources and all detectors are selected (use for group analysis).'}';
  
 T1_vitamins           = cfg_branch; 
 T1_vitamins.name      = 'Vitamins markers on T1';
@@ -374,20 +408,6 @@ CWsystem.values = {5,6};
 CWsystem.def  = @(val)nirs_get_defaults('readNIRS.criugm1.CWsystem', val{:});
 CWsystem.help = {'Help'};
 
-% dataset      = cfg_branch;
-% dataset.tag  = 'dataset';
-% dataset.name = 'Data set';
-% dataset.val  = {nirs_file helmet CWsystem};
-% dataset.help = {'A data set is a set whose ''.nirs'' files (NIRS raw data files) shares the same Helmet and CW device.'};
-
-% NIRSsessions         = cfg_repeat;
-% NIRSsessions.tag     = 'NIRSsessions';
-% NIRSsessions.name    = 'NIRS sessions';
-% NIRSsessions.help    = {'Help'};
-% NIRSsessions.values  = {nirs_files};
-% NIRSsessions.num     = [1 Inf];
-% NIRSsessions.help = {'Enter all the data you want to process for the selected subject. These data must be sorted by helmet and device. Create as many sets as the number of different configurations.'};
-
 boldmask        = cfg_files;
 boldmask.tag    = 'boldmask';
 boldmask.name   = 'BOLD mask';
@@ -419,7 +439,7 @@ subj_path.num     = [1 1];
 subj         = cfg_branch;
 subj.tag     = 'subj';
 subj.name    = 'Subject';
-subj.val     = {age1 subj_path anatT1 helmet CWsystem nirs_files protocol TopoData boldmask baseline_method};
+subj.val     = {age1 subj_path anatT1 helmet allSD_autosave CWsystem nirs_files protocol TopoData boldmask};
 subj.help    = {'Subject'};
 
 generic2         = cfg_repeat;

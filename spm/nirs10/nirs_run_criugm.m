@@ -52,13 +52,19 @@ for is=1:sN
             end
             
         else% Reading subject-specific setup from BrainSight file
-            if ~helmetdone
+            if ~job.subj(1,is).allSD_autosave % if group analysis you may want to run all the subjects without having to confirm at each time...
+                if ~helmetdone
+                    jobH.subj.sDtp = sDtp;
+                    jobH.subj.helmet.staxp = staxp;
+                    nirs_criugm_getHelmet(jobH); % get helmet configuration (S,D,P,Q) from Brainsight
+                end
+                fig=gcf; %findall(0,'name','Get positions from Brainsight (clbon)');
+                waitfor(fig,'BeingDeleted','On');
+            else % all sources and all detectors are selected
                 jobH.subj.sDtp = sDtp;
                 jobH.subj.helmet.staxp = staxp;
-                outH = nirs_criugm_getHelmet(jobH); % get helmet configuration (S,D,P,Q) from Brainsight
+                nirs_criugm_getHelmet_allSD_autosave(jobH);
             end
-            fig=gcf; %findall(0,'name','Get positions from Brainsight (clbon)');
-            waitfor(fig,'BeingDeleted','On');
         end
         
         % CB: NOUVELLE VERSION : LA partie HELMET DOIT enregistrer dans le
@@ -97,7 +103,7 @@ for is=1:sN
             f = load(fp{:},'-mat');
             
             NIRS.Dt.fir.pp(1).p{iU,1} = fp{:};
-            NIRS.Dt.fir.pp(1).m{iU,1} = job.subj(1,is).baseline_method;
+            % ON ne melange pas les inputs des codes !!!            NIRS.Dt.fir.pp(1).m{iU,1} = job.subj(1,is).baseline_method;
             NIRS.Dt.fir.pp(1).pre = 'readCriugm';
             NIRS.Dt.fir.pp(1).job = job;
             
