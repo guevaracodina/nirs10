@@ -227,15 +227,48 @@ switch lower(ui_action)
         handles.Sp_rom = handles.Cf.H.S.r.o.mm.p';%NIRS
         handles.Dp_rom = handles.Cf.H.D.r.o.mm.p';%NIRS
         
+        %%% extract Nasion, LeftEar, RightEar
+        ind_nasion = strcmp(handles.Cf.H.O.n','Nasion');
+        ind_nasion_n = sum(ind_nasion.*(1:length(handles.Cf.H.O.n'))');
+        ind_AL = strcmp(handles.Cf.H.O.n','LeftEar');
+        ind_AL_n = sum(ind_AL.*(1:length(handles.Cf.H.O.n'))');
+        ind_AR = strcmp(handles.Cf.H.O.n','RightEar');
+        ind_AR_n = sum(ind_AR.*(1:length(handles.Cf.H.O.n'))');
+        
         % selected points
-        handles.Fn_s = {};
-        handles.Sn_s = {};
-        handles.Dn_s = {};
+%         handles.Fn_s = {};
+%         handles.Sn_s = {};
+%         handles.Dn_s = {};
+%         handles.Qn_s = {};
+        %pre-selected points
+        handles.Fn_s{1,1} = handles.Cf.H.O.n{1,ind_nasion_n};
+        handles.Fn_s{2,1} = handles.Cf.H.O.n{1,ind_AL_n};
+        handles.Fn_s{3,1} = handles.Cf.H.O.n{1,ind_AR_n};
+        
+        handles.Sn_s = handles.Cf.H.S.n';
+        handles.Dn_s = handles.Cf.H.D.n';
         handles.Qn_s = {};
+        
         % coordinates of these selected points
-        handles.Fp_s_rom = {};
-        handles.Sp_s_rom = {};
-        handles.Dp_s_rom = {};
+%         handles.Fp_s_rom = {};
+%         handles.Sp_s_rom = {};
+%         handles.Dp_s_rom = {};
+%         handles.Qp_s_rom = {};
+        % coordinates of these pre-selected points
+        handles.Fp_s_rom{1,1} = handles.Cf.H.O.r.o.mm.p{1,ind_nasion};
+        handles.Fp_s_rom{1,2} = handles.Cf.H.O.r.o.mm.p{2,ind_nasion};
+        handles.Fp_s_rom{1,3} = handles.Cf.H.O.r.o.mm.p{3,ind_nasion};
+            
+        handles.Fp_s_rom{2,1} = handles.Cf.H.O.r.o.mm.p{1,ind_AL};
+        handles.Fp_s_rom{2,2} = handles.Cf.H.O.r.o.mm.p{2,ind_AL};
+        handles.Fp_s_rom{2,3} = handles.Cf.H.O.r.o.mm.p{3,ind_AL};
+        
+        handles.Fp_s_rom{3,1} = handles.Cf.H.O.r.o.mm.p{1,ind_AR};
+        handles.Fp_s_rom{3,2} = handles.Cf.H.O.r.o.mm.p{2,ind_AR};
+        handles.Fp_s_rom{3,3} = handles.Cf.H.O.r.o.mm.p{3,ind_AR};
+        
+        handles.Sp_s_rom = handles.Cf.H.S.r.o.mm.p';
+        handles.Dp_s_rom = handles.Cf.H.D.r.o.mm.p';
         handles.Qp_s_rom = {};
         out =0;
         

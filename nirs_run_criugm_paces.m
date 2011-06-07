@@ -137,11 +137,7 @@ for Idx=1:size(job.NIRSmat,1)
                     end
                     
                     if ex==0 % resting state
-                        
-                        
                         k1 = [k1 Ci];
-                        
-                        
                         %                         v = heart.pace(Ci,:);
                         %                         median1 = median(v);
                         %                         std1 = std(v);
@@ -178,7 +174,9 @@ for Idx=1:size(job.NIRSmat,1)
                 end %end if any
             end
             
-            
+            %%% a cause du fait qu'on recupere le numero de la ligne et
+            %%% qu'ensuite on complete, on inverse l'ordre des longueurs
+            %%% d'ondes... DANGEUREUX, non ???
             k2 = k1;
             %only valid if detection was done on first wavelength only
             %if detect_wavelength == 1
@@ -277,10 +275,9 @@ for Idx=1:size(job.NIRSmat,1)
                 NIRS.Dt.fir.Sess(f).cdCor = corr(diff(fR),diff(cR));
             catch
             end
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %             heartpace  = [heartpace; outheartfile]; %cb: vide, est ce qu'on supprime ???
             
-            
+            %%%%%%% ici, je rebidouille pour pouvoir revenir dans le bon
+            %%%%%%% ordre....
             heart_regressor=1;
             if heart_regressor
                 % Attention deux pb
@@ -309,12 +306,14 @@ for Idx=1:size(job.NIRSmat,1)
                                 C_HbO = [C_HbO Ci];
                             end
                         end
+                        
                         %%%%%
                         whp = hp/max(max(hp));
                         whp_b = zeros(size(whp));
-                        level = graythresh(whp(C_HbO,:));% Otsu
-                        whp_b(C_HbO,:) = im2bw(whp(C_HbO,:),level);
                         
+                        %%% attention : a partir de cette ligne, on
+                        %%% travaille avec l'ordre des lignes correspondant
+                        %%% a celui des canaux mais pas avant.....
                         % Affichage du resultat
                         if strcmp(NIRS.Cf.dev.n,'CW6')
                             whpR = zeros(NC,size(whp,2)); whpR([k1 k1-(NC/2)],:) = whp; figure;imagesc(whpR);title(['Heart pace: ' rDtp{f}]);
@@ -322,8 +321,11 @@ for Idx=1:size(job.NIRSmat,1)
                             whpR = zeros(NC,size(whp,2)); whpR([k1 k1+(NC/2)],:) = whp; figure;imagesc(whpR);title(['Heart pace: ' rDtp{f}]);
                         end
                         
+                        level = graythresh(whpR(C_HbO,:));% Otsu
+                        whp_b(C_HbO,:) = im2bw(whpR(C_HbO,:),level);
+                        
                         % reconstruction
-                        bouchetrou = hp.*whp_b;
+                        bouchetrou = whpR.*whp_b;
                         testq = sum(whp_b,2);
                         [val,canal] =max(testq);
                         reg = bouchetrou(canal,:);
@@ -380,6 +382,12 @@ for Idx=1:size(job.NIRSmat,1)
                         end
                     end
                 catch
+                end
+                if sum(abs(diff(reg)))==0 %cst alors il faut eviter //////
+                    interpx  =[1 size(hp,2)];
+                    interpY  = [60 65];
+                    interpxi = (1:size(hp,2));
+                    reg(1:size(hp,2)) = interp1(interpx,interpY,interpxi,'linear');
                 end
                 NIRS.Dt.fir.Sess(f).fR{1} = reg';
                 save(job.NIRSmat{Idx,1},'NIRS');
