@@ -109,7 +109,7 @@ for Idx=1:size(job.NIRSmat,1)
         % X
         Xwl{1} = sparse(Xmc(1:NC2mi,:));
         Xwl{2} = sparse(Xmc(NC2mi+1:end,:));
-                
+        
         Msk = sparse(diag(m_c1+m_c5)); % M Mask for cortex and skin
         
         for ifnirs=1:size(NIRS.Dt.fir.pp,2)
@@ -119,23 +119,24 @@ for Idx=1:size(job.NIRSmat,1)
                 disp(['current : ' int2str(job.temp_pts(itp))])
                 
                 % Y
-                Y_t0 = fnirs.d(job.temp_pts(itp),C_cs)';
-                Y_to{1} = Y_t0(1:NC2mi,1);
-                Y_to{2} = Y_t0(NC2mi+1:end,1);
+                %                 Y_t0 = fnirs.d(job.temp_pts(itp),C_cs)';
+                %                 Y_to{1} = Y_t0(1:NC2mi,1);
+                %                 Y_to{2} = Y_t0(NC2mi+1:end,1);
                 
                 %%%% test fantome
                 Yt0 = load('Yt0.nirs','-mat');
-Y_to{1} = Yt0.Yt0(1:5,1);
-Y_to{2} = Yt0.Yt0(6:10,1);
-%%%%
+                Y_to{1} = Yt0.Yt0(1:5,1);
+                Y_to{2} = Yt0.Yt0(6:10,1);
+                %%%%
                 
                 % Dmua
                 Dmua{1} = zeros(Nvx,1);
                 Dmua{2} = zeros(Nvx,1);
-            
+                
                 switch job.tikh_method
                     case 0 % Tikhonov regularization : ancienne version
                         disp('Methode a l''ancienne')
+                        meth ='anci';
                         for iwl=1:2
                             Ybar = Y_to{1,iwl};
                             X = Xwl{1,iwl};

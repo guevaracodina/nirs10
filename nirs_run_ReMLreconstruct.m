@@ -175,8 +175,9 @@ for Idx=1:size(job.NIRSmat,1)
             for itp=1:length(job.temp_pts)
                 disp(['current : ' int2str(job.temp_pts(itp))])
                 %%% Y %%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                Y_t0 = fnirs.d(job.temp_pts(itp),C_cs)';
-              
+%                 Y_t0 = fnirs.d(job.temp_pts(itp),C_cs)';
+              Yt0 = load('Yt0.nirs','-mat');
+              Y_t0 = Yt0.Yt0;
                 switch job.ReML_method
                     case 0
                         disp('code Huppert');
@@ -194,7 +195,7 @@ for Idx=1:size(job.NIRSmat,1)
                         meth = 'SPM';
                         
                         %%% Y %%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                        Y_t0 = fnirs.d(job.temp_pts(itp),C_cs)';
+%                         Y_t0 = fnirs.d(job.temp_pts(itp),C_cs)';
          
                         %Set up the extended covariance model by concatinating the measurement
                         %and parameter noise terms
