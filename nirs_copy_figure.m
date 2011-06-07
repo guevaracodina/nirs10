@@ -1,5 +1,6 @@
 function [fh0P,fh0N,fh0C] = nirs_copy_figure(fh0P,fh0N,fh0C,DF,CF,c1,hb,Inv,tstr)
 %Begin with no colorbars
+load split
 cbar1 = 0; cbar2 = 0;
 if ~isempty(DF) %&& DF.GroupColorbars %Separated colorbars too far from working -- just skip
     try
@@ -15,6 +16,7 @@ if ~isempty(DF) %&& DF.GroupColorbars %Separated colorbars too far from working 
                 hc1_max = DF.hc1_max;
             end
             split1 = DF.split1;
+            %split1 = split;
         end
         tick_number = DF.tick_number-2;
         fontsize_choice = DF.fontsize_choice-5;
@@ -105,8 +107,8 @@ if ~isempty(DF) %&& DF.GroupColorbars %Separated colorbars too far from working 
             end
             set(fh1,'CurrentAxes',ax1);
             copyobj(allchild(ax1),axNew);
-            colormap(split1)
-
+            colormap(split)
+            %colormap(split1)
             axis(axNew, 'off')
             axis(axNew, 'image')
             axis(axNew, 'ij') %otherwise bottom and up are inverted
