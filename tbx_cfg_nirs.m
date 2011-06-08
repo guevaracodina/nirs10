@@ -305,30 +305,6 @@ end
 %Configuration for IUGM (Techen CW5 [UNF] or CW6 [LESCA])
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%path structure
-T1_outpath         = cfg_entry; %path
-T1_outpath.name    = 'path for anatomical files';
-T1_outpath.tag     = 'T1_path';       
-T1_outpath.strtype = 's';
-T1_outpath.num     = [1 Inf];     
-T1_outpath.def     = @(val)nirs_get_defaults('readNIRS.boxy1.config_path.T1_path', val{:}); 
-T1_outpath.help    = {'Path for T1 file: should be something like ..\T1\ (omit backslashes)'}; 
-
-%path structure
-output_path         = cfg_entry; %path
-output_path.name    = 'path for .nir output files';
-output_path.tag     = 'output_path';       
-output_path.strtype = 's';
-output_path.num     = [1 Inf];     
-output_path.def     = @(val)nirs_get_defaults('readNIRS.boxy1.config_path.output_path', val{:}); 
-output_path.help    = {'Path for .nir output files: should be something like ..\dataSPM\ (omit backslashes)'}; 
-
-config_path         = cfg_branch;
-config_path.tag     = 'config_path';
-config_path.name    = 'Path Configuration options';
-config_path.val     = {prj_path T1_path output_path}; 
-config_path.help    = {''};
-
 TopoData        = cfg_files;
 TopoData.tag    = 'TopoData';
 TopoData.name   = 'TopoData';
@@ -428,18 +404,55 @@ baseline_method.help = {'Median takes the median of all the points in the ''.nir
     'Mean takes the mean of all the points in the ''.nirs'' file.'
     'Baseline window allows you to run the above method on a selected window of timeof the ''.nirs'' file. NOT YET IMPLEMENTED !!'}';
 
-subj_path         = cfg_files;
-subj_path.tag     = 'subj_path';
-subj_path.name    = 'Subject Directory';
-subj_path.help    = {'Select a directory where the NIRS matrix will be written.'};
-subj_path.filter = 'dir';
-subj_path.ufilter = '.*';
-subj_path.num     = [1 1];
+% subj_path         = cfg_files;
+% subj_path.tag     = 'subj_path';
+% subj_path.name    = 'Subject Directory';
+% subj_path.help    = {'Select the subject directory where all the output of NIRS10 will be written.'};
+% subj_path.filter  = 'dir';
+% subj_path.ufilter = '.*';
+% subj_path.num     = [1 1];
+
+subj_id         = cfg_entry;
+subj_id.tag     = 'subj_id';
+subj_id.name    = 'Subject ID';
+subj_id.strtype = 's';
+subj_id.num     = [1 Inf];
+subj_id.val     = {}; 
+subj_id.help    = {'.'};
+
+choose_path         = cfg_entry;
+choose_path.tag     = 'choose_path';
+choose_path.name    = 'Path for study being created';
+choose_path.strtype = 's';
+choose_path.num     = [1 Inf];
+choose_path.val     = {}; 
+choose_path.help    = {'.'};
+
+existing_study        = cfg_files;
+existing_study.tag     = 'existing_study';
+existing_study.name    = 'Existing study';
+existing_study.filter  = 'dir';
+existing_study.ufilter = '.*';
+existing_study.num     = [1 1];
+existing_study.help    = {'Choose directory where you want to put your study. If the directory does not exist you must create it then choose it in the batch.'};
+
+study_cfg           = cfg_choice;
+study_cfg.name      = 'Study configuration';
+study_cfg.tag       = 'study_cfg';
+study_cfg.values    = {existing_study choose_path};%choose_path
+study_cfg.val       = {existing_study}; 
+study_cfg.help      = {'Choose the study the subject belongs to or specify a path (entire name should look like .\study_name).'}; 
+
+% config_path2         = cfg_branch;
+% config_path2.tag     = 'config_path2';
+% config_path2.name    = 'Path Configuration options';
+% config_path2.val     = {study_cfg}; 
+% config_path2.help    = {''};
 
 subj         = cfg_branch;
 subj.tag     = 'subj';
 subj.name    = 'Subject';
-subj.val     = {age1 subj_path anatT1 helmet allSD_autosave CWsystem nirs_files protocol TopoData boldmask};
+subj.val     = {subj_id age1 anatT1 helmet allSD_autosave CWsystem nirs_files protocol TopoData boldmask};%config_path2
 subj.help    = {'Subject'};
 
 generic2         = cfg_repeat;
@@ -454,7 +467,7 @@ generic2.num     = [1 Inf];
 criugm1      = cfg_exbranch;
 criugm1.name = 'Read and format CRIUGM data';
 criugm1.tag  = 'criugm1';
-criugm1.val  = {generic2};
+criugm1.val  = {study_cfg generic2};
 criugm1.prog = @nirs_run_criugm;
 criugm1.vout = @nirs_cfg_vout_criugm;
 criugm1.help = {'Help'};

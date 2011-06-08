@@ -8,6 +8,11 @@ function out = nirs_run_criugm(job)
 
 outNIRSmat ={};
 
+% Study configuration
+if isfield(job.study_cfg,'choose_path')
+    mkdir(job.study_cfg.choose_path);
+end
+
 % Loop over all subjects
 sN = size(job.subj,2);
 for is=1:sN
@@ -18,9 +23,15 @@ for is=1:sN
     NIRS = [];
     NIRS.Dt.s.age = age;
     NIRS.Dt.s.p = sDtp;
+    % makedir if needed
+%     exist(,'dir')
     
     % Anatomical image
     if ~isempty(job.subj(1,is).anatT1{:})
+        [ana,ana_nam] = fileparts(job.subj(1,is).anatT1{:});
+        if ~strcmp([sDtp '\T1'],ana) %%%%% a changer en ana, a terme !!!!!
+             copyfile(job.subj(1,is).anatT1{:},[sDtp '\T1\' ana_nam]);
+        end
         NIRS.Dt.ana.T1 = job.subj(1,is).anatT1{:};
     end
     
@@ -100,7 +111,7 @@ for is=1:sN
         for iU=1:NU % # of data files
             fp = job.subj(1,is).nirs_files(iU,1);
             %clear f
-            f = load(fp{:},'-mat');
+%             f = load(fp{:},'-mat');
             
             NIRS.Dt.fir.pp(1).p{iU,1} = fp{:};
             % ON ne melange pas les inputs des codes !!!            NIRS.Dt.fir.pp(1).m{iU,1} = job.subj(1,is).baseline_method;
