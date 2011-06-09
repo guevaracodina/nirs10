@@ -20,17 +20,32 @@ end
 sN = size(job.subj,2);
 for is=1:sN
     age = job.subj(1,is).age1;
-    sDtp = fullfile(study_p,job.subj(1,is).subj_id);
+    
+    if isfield(job.subj(1,is),'subj_id')
+        s_id = str2double(job.subj(1,is).subj_id);
+        if s_id < 10,
+            str0 = '00';
+        else
+            if s_id < 100
+                str0 = '0';
+            else
+                str0 = '';
+            end
+        end
+        sDtp = fullfile(study_p,['S' str0 int2str(s_id)]);
+    end
     
     % Reinitialize NIRS matrix for each subject
     NIRS = [];
     NIRS.Dt.s.age = age;
     NIRS.Dt.s.p = sDtp;
     % on ecrase tout sujet deja existant
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    if exist(sDtp,'dir')==7, rmdir(sDtp,'s'); end
     mkdir(sDtp);
     mkdir(fullfile(sDtp,'T1'));
     mkdir(fullfile(sDtp,'fir'));
-       
+              
     % BOLD mask
     if ~isempty(job.subj(1,is).boldmask{:})
         NIRS.Cm.bold = job.subj(1,is).boldmask{:};
@@ -83,9 +98,9 @@ for is=1:sN
     
     % Anatomical image
     if ~isempty(job.subj(1,is).anatT1{:})
-        [ana,ana_nam] = fileparts(job.subj(1,is).anatT1{:});
+        [ana,ana_nam,ana_ext] = fileparts(job.subj(1,is).anatT1{:});
         if ~strcmp(fullfile(sDtp,'T1'),ana) %%%%% a changer en ana, a terme !!!!!
-            copyfile(job.subj(1,is).anatT1{:},fullfile(sDtp,'T1',ana_nam));
+            copyfile(job.subj(1,is).anatT1{:},fullfile(sDtp,'T1',[ana_nam ana_ext]));
         end
         NIRS.Dt.ana.T1 = job.subj(1,is).anatT1{:};
     end
