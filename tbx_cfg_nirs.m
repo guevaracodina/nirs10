@@ -329,30 +329,38 @@ text_brainsight.ufilter = '.*';
 text_brainsight.num     = [1 1];
 text_brainsight.help    = {'Select the text file from Brainsight.'};
 
-allSD_autosave         = cfg_menu;
-allSD_autosave.name    = 'Select all sources and detectors';
-allSD_autosave.tag     = 'allSD_autosave';
+allSD_autosave        = cfg_menu;
+allSD_autosave.name   = 'Select all sources and detectors';
+allSD_autosave.tag    = 'allSD_autosave';
 allSD_autosave.labels = {'Yes' 'No'};
 allSD_autosave.values = {1,0};
-allSD_autosave.val     = {0};
-allSD_autosave.help    = {'ONLY with the choice : Text file from Brainsight !'
+allSD_autosave.val    = {0};
+allSD_autosave.help   = {'ONLY with the choice : Text file from Brainsight !'
     'If No, you have to choose points and click on Save button'
     'If Yes, all sources and all detectors are selected (use for group analysis).'}';
  
-T1_vitamins           = cfg_branch; 
-T1_vitamins.name      = 'Vitamins markers on T1';
-T1_vitamins.tag       = 'T1_vitamins';
-T1_vitamins.help      = {'The helmet will be read in future module from T1 image and positions of vitamins in the image.'};
+T1_vitamins      = cfg_branch; 
+T1_vitamins.name = 'Vitamins markers on T1';
+T1_vitamins.tag  = 'T1_vitamins';
+T1_vitamins.help = {'The helmet will be read in future module from T1 image and positions of vitamins in the image.'};
 
-no_helmet = cfg_branch; 
-no_helmet.name      = 'No helmet information';
-no_helmet.tag       = 'no_helmet';
-no_helmet.help      = {'Helmet informations will be extracted from ''.nirs'' file.'};
+no_helmet      = cfg_branch; 
+no_helmet.name = 'No helmet information';
+no_helmet.tag  = 'no_helmet';
+no_helmet.help = {'Helmet informations will be extracted from ''.nirs'' file.'};
+
+custom         = cfg_files;
+custom.tag     = 'custom';
+custom.name    = 'Custom informations';
+custom.help = {'You only have ''.nirs'' files but you need to have a good topographic position of the fibers linked to sources and detectors. The template will be selected as T1 image by default. Choose here the directory containing Hcoregistered and TopoData (coregistration won''t need to be done)'};
+custom.filter  = 'dir';
+custom.ufilter = '.*';
+custom.num     = [1 1];
 
 helmet         = cfg_choice;
 helmet.tag     = 'helmet';
 helmet.name    = 'Helmet';
-helmet.values = {text_brainsight T1_vitamins no_helmet};
+helmet.values = {text_brainsight T1_vitamins no_helmet custom};
 helmet.val     = {text_brainsight};
 helmet.help    = {'If you choose a Brainsight text file, it will be used to determine all you need about sources, detectors and other points of interest.'};
 
@@ -393,25 +401,6 @@ boldmask.num    = [0 Inf];
 boldmask.val{1} = {''};
 boldmask.help   = {'Help'};
 
-baseline_method = cfg_menu;
-baseline_method.tag  = 'baseline_method';
-baseline_method.name = 'Method to calculate Baseline';
-baseline_method.labels = {'Median','Initial Value','Mean','Baseline window'};
-baseline_method.values = {0,1,2,3};
-baseline_method.def  = @(val)nirs_get_defaults('readNIRS.criugm1.baseline_method', val{:});
-baseline_method.help = {'Median takes the median of all the points in the ''.nirs'' file.'
-    'Initial Value takes the first value in the ''.nirs'' file.'
-    'Mean takes the mean of all the points in the ''.nirs'' file.'
-    'Baseline window allows you to run the above method on a selected window of timeof the ''.nirs'' file. NOT YET IMPLEMENTED !!'}';
-
-% subj_path         = cfg_files;
-% subj_path.tag     = 'subj_path';
-% subj_path.name    = 'Subject Directory';
-% subj_path.help    = {'Select the subject directory where all the output of NIRS10 will be written.'};
-% subj_path.filter  = 'dir';
-% subj_path.ufilter = '.*';
-% subj_path.num     = [1 1];
-
 subj_id         = cfg_entry;
 subj_id.tag     = 'subj_id';
 subj_id.name    = 'Subject ID';
@@ -436,23 +425,23 @@ existing_study.ufilter = '.*';
 existing_study.num     = [1 1];
 existing_study.help    = {'Choose directory where you want to put your study. If the directory does not exist you must create it then choose it in the batch.'};
 
-study_cfg           = cfg_choice;
-study_cfg.name      = 'Study configuration';
-study_cfg.tag       = 'study_cfg';
-study_cfg.values    = {existing_study choose_path};%choose_path
-study_cfg.val       = {existing_study}; 
-study_cfg.help      = {'Choose the study the subject belongs to or specify a path (entire name should look like .\study_name).'}; 
+study_path           = cfg_choice;
+study_path.name      = 'Study path configuration';
+study_path.tag       = 'study_path';
+study_path.values    = {existing_study choose_path};%choose_path
+study_path.val       = {existing_study}; 
+study_path.help      = {'Choose the study the subject belongs to or specify a path (entire name should look like .\study_name).'}; 
 
-% config_path2         = cfg_branch;
-% config_path2.tag     = 'config_path2';
-% config_path2.name    = 'Path Configuration options';
-% config_path2.val     = {study_cfg}; 
-% config_path2.help    = {''};
+study_cfg         = cfg_branch;
+study_cfg.tag     = 'study_cfg';
+study_cfg.name    = 'Study configuration';
+study_cfg.val     = {study_path protocol}; 
+study_cfg.help    = {''};
 
 subj         = cfg_branch;
 subj.tag     = 'subj';
 subj.name    = 'Subject';
-subj.val     = {subj_id age1 anatT1 helmet allSD_autosave CWsystem nirs_files protocol TopoData boldmask};%config_path2
+subj.val     = {subj_id age1 anatT1 helmet allSD_autosave CWsystem nirs_files TopoData boldmask};%config_path2
 subj.help    = {'Subject'};
 
 generic2         = cfg_repeat;

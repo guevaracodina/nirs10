@@ -1,12 +1,11 @@
 function out = nirs_criugm_readtechen(job)
+% This is the content of the nirs file that will be used for information
+% on the experimental setup (measurement channels)
 %_______________________________________________________________________
 % Copyright (C) 2010 LIOM Laboratoire d'Imagerie Optique et Moléculaire
 %                    École Polytechnique de Montréal
 %______________________________________________________________________
 
-
-% This is the content of the nirs file that will be used for information
-% on the experimental setup (measurement channels)
 f = job.nirs_file;
 out = 0;
 

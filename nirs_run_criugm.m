@@ -10,72 +10,49 @@ outNIRSmat ={};
 
 % Study configuration
 if isfield(job.study_cfg,'choose_path')
-    mkdir(job.study_cfg.choose_path);
+    mkdir(job.study_cfg.study_path.choose_path{:});
+    study_p = job.study_cfg.study_path.choose_path{:};
+else
+    study_p = job.study_cfg.study_path.existing_study{:};
 end
 
 % Loop over all subjects
 sN = size(job.subj,2);
 for is=1:sN
     age = job.subj(1,is).age1;
-    sDtp = job.subj(1,is).subj_path{:};
+    sDtp = fullfile(study_p,job.subj(1,is).subj_id);
     
     % Reinitialize NIRS matrix for each subject
     NIRS = [];
     NIRS.Dt.s.age = age;
     NIRS.Dt.s.p = sDtp;
-    % makedir if needed
-%     exist(,'dir')
-    
-    % Anatomical image
-    if ~isempty(job.subj(1,is).anatT1{:})
-        [ana,ana_nam] = fileparts(job.subj(1,is).anatT1{:});
-        if ~strcmp([sDtp '\T1'],ana) %%%%% a changer en ana, a terme !!!!!
-             copyfile(job.subj(1,is).anatT1{:},[sDtp '\T1\' ana_nam]);
-        end
-        NIRS.Dt.ana.T1 = job.subj(1,is).anatT1{:};
-    end
-    
+    % on ecrase tout sujet deja existant
+    mkdir(sDtp);
+    mkdir(fullfile(sDtp,'T1'));
+    mkdir(fullfile(sDtp,'fir'));
+       
     % BOLD mask
     if ~isempty(job.subj(1,is).boldmask{:})
         NIRS.Cm.bold = job.subj(1,is).boldmask{:};
     end
     
     % Helmet
-    if isfield(job.subj(1,is).helmet,'text_brainsight')
+    if isfield(job.subj(1,is).helmet,'text_brainsight')% Reading subject-specific setup from BrainSight file
         staxp = job.subj(1,is).helmet.text_brainsight{:};
         NIRS.Dt.fir.stax.n = 'Brainsight(c)';
         NIRS.Dt.fir.stax.p{1} = job.subj(1,is).helmet.text_brainsight{:};
-        helmetdone = 0;
-        if ~isempty(strfind(job.subj(1,is).helmet.text_brainsight{:},'template'))
-            %%% CB : etude Said.... a mettre coherent /////
-            % coordinates
-            load(fullfile(fileparts(which('nirs10')),'nirs10_templates','Hcoregistered.mat'));
-            NIRS.Cf.H = Hcoregistered;
+        
+        if ~job.subj(1,is).allSD_autosave % if group analysis you may want to run all the subjects without having to confirm at each time...
+            jobH.subj.sDtp = sDtp;
+            jobH.subj.helmet.staxp = staxp;
+            nirs_criugm_getHelmet(jobH); % get helmet configuration (S,D,P,Q) from Brainsight
             
-            % Topo Data
-            % CLEMENT: Vérifier Hcoregistered et TopoData (lien?)
-            if ~isempty(job.subj(1,is).TopoData{:})
-                helmetdone = 1;
-                % If nirs_run_coreg has already been executed to generate once and
-                % for all the TopoData matrix.
-            else
-                helmetdone = 0;
-            end
-            
-        else% Reading subject-specific setup from BrainSight file
-            if ~job.subj(1,is).allSD_autosave % if group analysis you may want to run all the subjects without having to confirm at each time...
-                if ~helmetdone
-                    jobH.subj.sDtp = sDtp;
-                    jobH.subj.helmet.staxp = staxp;
-                    nirs_criugm_getHelmet(jobH); % get helmet configuration (S,D,P,Q) from Brainsight
-                end
-                fig=gcf; %findall(0,'name','Get positions from Brainsight (clbon)');
-                waitfor(fig,'BeingDeleted','On');
-            else % all sources and all detectors are selected
-                jobH.subj.sDtp = sDtp;
-                jobH.subj.helmet.staxp = staxp;
-                nirs_criugm_getHelmet_allSD_autosave(jobH);
-            end
+            fig=gcf; %findall(0,'name','Get positions from Brainsight (%%%%%)');
+            waitfor(fig,'BeingDeleted','On');
+        else % all sources and all detectors are selected
+            jobH.subj.sDtp = sDtp;
+            jobH.subj.helmet.staxp = staxp;
+            nirs_criugm_getHelmet_allSD_autosave(jobH);
         end
         
         % CB: NOUVELLE VERSION : LA partie HELMET DOIT enregistrer dans le
@@ -90,15 +67,42 @@ for is=1:sN
         
     elseif isfield(job.subj(1,is).helmet,'no_helmet')
         NIRS.Dt.fir.stax.n = 'no_helmet';
+        
+    elseif  isfield(job.subj(1,is).helmet,'custom')
+        NIRS.Dt.fir.stax.n = 'custom';
+        % H : NIRS.Cf.H already done, just have to save it in the NIRS.mat
+        load(fullfile(job.subj(1,is).helmet.custom{:},'Hcoregistered.mat'));
+        NIRS.Cf.H = Hcoregistered;
+        % Topo Data : nirs_run_coreg has already been executed to generate
+        % once and for all the subjects the TopoData matrix.
+        NIRS.Dt.ana.rend = fullfile(job.subj(1,is).helmet.custom{:},'TopoData.mat');
+        % save template T1 as ana T1
+        anatT1 = fullfile(fileparts(which('spm')),'templates','T1.nii');
+        job.subj(1,is).anatT1 = {anatT1};
+    end
+    
+    % Anatomical image
+    if ~isempty(job.subj(1,is).anatT1{:})
+        [ana,ana_nam] = fileparts(job.subj(1,is).anatT1{:});
+        if ~strcmp(fullfile(sDtp,'T1'),ana) %%%%% a changer en ana, a terme !!!!!
+            copyfile(job.subj(1,is).anatT1{:},fullfile(sDtp,'T1',ana_nam));
+        end
+        NIRS.Dt.ana.T1 = job.subj(1,is).anatT1{:};
     end
     
     % nirs files
     if ~isempty(job.subj(1,is).nirs_files{1,1})
+        
+        for fi=1:size(job.subj(1,is).nirs_files,1)
+            [dummy1,namef,extf] = fileparts(job.subj(1,is).nirs_files{fi,:});
+            nirs_files{fi,:} = fullfile(sDtp,'fir',[namef extf]); 
+            copyfile(job.subj(1,is).nirs_files{fi,:},nirs_files{fi,:});
+        end
         % Read setup information from nirs file
         % System used for acquisition
         job1.system = job.subj(1,is).CWsystem;
         % Read only nirs file from first session
-        job1.nirs_file = load(job.subj(1,is).nirs_files{1,1},'-mat');
+        job1.nirs_file = load(nirs_files{1,1},'-mat');
         job1.sDtp = sDtp;
         job1.coregType = NIRS.Dt.fir.stax.n;
         job1.NIRS = NIRS;
@@ -106,12 +110,12 @@ for is=1:sN
         NIRS = nirs_criugm_readtechen(job1);% get C configuration from nirs files
         
         NU=[];% number of session EST ON BIEN SUR QUE C EST PAS SESS ??????????? NOTATIONS PAS CONSISTANTES
-        if ~strcmp(job.subj(1,is).nirs_files,''), NU = size(job.subj(1,is).nirs_files,1); end
+        if ~strcmp(nirs_files,''), NU = size(nirs_files,1); end
         % Loop over all sessions
         for iU=1:NU % # of data files
-            fp = job.subj(1,is).nirs_files(iU,1);
+            fp = nirs_files(iU,1);
             %clear f
-%             f = load(fp{:},'-mat');
+            %             f = load(fp{:},'-mat');
             
             NIRS.Dt.fir.pp(1).p{iU,1} = fp{:};
             % ON ne melange pas les inputs des codes !!!            NIRS.Dt.fir.pp(1).m{iU,1} = job.subj(1,is).baseline_method;
@@ -123,9 +127,9 @@ for is=1:sN
             P.h    = 0;
             
             % Protocol
-            if ~isempty(job.subj(1,is).protocol{1,1}) && iU <= size(job.subj(1,is).protocol,1)
+            if ~isempty(job.study_cfg.protocol{1,1}) && iU <= size(job.study_cfg.protocol,1)
                 % Read "multiple conditions" file (.mat)
-                load(job.subj(1,is).protocol{iU,1},'-mat');
+                load(job.study_cfg.protocol{iU,1},'-mat');
                 for kk = 1:size(names, 2)
                     NIRS.Dt.fir.Sess(iU).U(kk).name = names(kk);
                     NIRS.Dt.fir.Sess(iU).U(kk).ons = onsets{kk};
