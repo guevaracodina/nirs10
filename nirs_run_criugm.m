@@ -102,7 +102,7 @@ for is=1:sN
         if ~strcmp(fullfile(sDtp,'T1'),ana) %%%%% a changer en ana, a terme !!!!!
             copyfile(job.subj(1,is).anatT1{:},fullfile(sDtp,'T1',[ana_nam ana_ext]));
         end
-        NIRS.Dt.ana.T1 = job.subj(1,is).anatT1{:};
+        NIRS.Dt.ana.T1 = fullfile(sDtp,'T1',[ana_nam ana_ext]);
     end
     
     % nirs files
