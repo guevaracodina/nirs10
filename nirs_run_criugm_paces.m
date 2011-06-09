@@ -201,15 +201,18 @@ for Idx=1:size(job.NIRSmat,1)
                 %shrink the data to keep only desired channels
                 d = d(first_k2,:);
                 heart.nrgy = heart.nrgy(first_k2,:);
+                heartfRpace = heart.pace(k2,:);
                 heart.pace = heart.pace(first_k2,:);
             end
             
             %output a heart rate per minute
             heart.pace = 60* heart.pace;
+            heartfRpace = 60*heartfRpace;
             %last entry is zero - replace by previous entry
             % cb: pk  ?? moi j'ai pas ce probleme. Peut etre a regler au
             % niveau anterieur...
             heart.pace(:,end) = heart.pace(:,end-1);
+            heartfRpace(:,end) = heartfRpace(:,end-1);
             
             % % % % % %             est ce qu'on en a vraiment besoin puisqu'on
             % conserve tout dans heart ??????
@@ -278,6 +281,10 @@ for Idx=1:size(job.NIRSmat,1)
             
             %%%%%%% ici, je rebidouille pour pouvoir revenir dans le bon
             %%%%%%% ordre....
+            
+            %%% ATTENTION : dna la partie regresseur, on ne tient plus
+            %%% compte de savoir si les paires sont les memes pour toutes
+            %%% les sessions car seul compte d'obtenir un bon regresseur
             heart_regressor=1;
             if heart_regressor
                 % Attention deux pb
@@ -290,7 +297,7 @@ for Idx=1:size(job.NIRSmat,1)
                 %--- on cherche le fichier du rythme qui correspond au fichier de
                 %donnees
                 try
-                    hp = heart.pace;
+                    hp = heartfRpace;
                     if sum(sum(hp))==0
                         % arbitraire
                         interpx  =[1 size(hp,2)];
@@ -316,9 +323,9 @@ for Idx=1:size(job.NIRSmat,1)
                         %%% a celui des canaux mais pas avant.....
                         % Affichage du resultat
                         if strcmp(NIRS.Cf.dev.n,'CW6')
-                            whpR = zeros(NC,size(whp,2)); whpR([k1 k1-(NC/2)],:) = whp; figure;imagesc(whpR);title(['Heart pace: ' rDtp{f}]);
+                            whpR = zeros(NC,size(whp,2)); whpR([k1 k1-(NC/2)],:) = whp; %figure;imagesc(whpR);title(['Heart pace: ' rDtp{f}]);
                         elseif strcmp(NIRS.Cf.dev.n,'CW5')
-                            whpR = zeros(NC,size(whp,2)); whpR([k1 k1+(NC/2)],:) = whp; figure;imagesc(whpR);title(['Heart pace: ' rDtp{f}]);
+                            whpR = zeros(NC,size(whp,2)); whpR([k1 k1+(NC/2)],:) = whp; %figure;imagesc(whpR);title(['Heart pace: ' rDtp{f}]);
                         end
                         
                         level = graythresh(whpR(C_HbO,:));% Otsu
