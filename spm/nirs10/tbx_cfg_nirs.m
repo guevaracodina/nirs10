@@ -1380,12 +1380,50 @@ GenDataTopo.def    = @(val)nirs_get_defaults('coregNIRS.coreg1.GenDataTopo', val
 GenDataTopo.help   = {'Generate rend data (NIRS_SPM) for topographic '
             'reconstruction - stored in a separate file: TopoData.mat'}';
 
+render_file         = cfg_files; 
+render_file.name    = 'Render file'; 
+render_file.tag     = 'render_file';      
+render_file.filter  = 'image';  
+render_file.ufilter = '.*';
+render_file.num     = [1 1];     
+render_file.help    = {'Grey matter (c1) anatomical image or rendered version of this c1 image.'
+    'Normalized or not according to Normalization choice option below.'}';
+        
+        
+render_normalize_choice = cfg_menu;
+render_normalize_choice.tag    = 'render_normalize_choice';
+render_normalize_choice.name   = 'Normalization Choice';
+render_normalize_choice.labels = {'MNI Talairach Tournoux atlas','Subject Coordinates'};
+render_normalize_choice.values = {1,0};
+render_normalize_choice.val = {1};
+render_normalize_choice.help   = {'Normalization choice. Need to specify appropriate'
+    'file: normalized file if normalized to TT, unnormalized if in subject coordinates.'
+    'Method in subject coordinates not coded up yet.'}';
+        
+render_template         = cfg_branch;
+render_template.tag     = 'render_template';
+render_template.name    = 'Render to SPM single subject template';
+render_template.val     = {}; 
+render_template.help    = {'Render to template.'};
+
+render_subject         = cfg_branch;
+render_subject.tag     = 'render_subject';
+render_subject.name    = 'Render to subject';
+render_subject.val     = {render_file render_normalize_choice}; 
+render_subject.help    = {'Render to subject.'};
+
+render_choice        = cfg_choice;
+render_choice.name   = 'Render to template or subject';
+render_choice.tag    = 'render_choice';
+render_choice.values = {render_template,render_subject};
+render_choice.val    = {render_template};
+render_choice.help   = {'Render to template or subject.'};
 
 coreg1      = cfg_exbranch;       
 coreg1.name = 'NIRScoreg';             
 coreg1.tag  = 'coreg1'; 
 coreg1.val  = {NIRSmat DelPreviousData NewDirCopyNIRS anatT1 segT1_4fit ...
-    anatT1_template fid_in_subject_MNI nasion_wMNI AL_wMNI AR_wMNI GenDataTopo};    
+    anatT1_template fid_in_subject_MNI nasion_wMNI AL_wMNI AR_wMNI GenDataTopo render_choice};    
 coreg1.prog = @nirs_run_coreg;  
 coreg1.vout = @nirs_cfg_vout_coreg; 
 coreg1.help = {'Automatic coregistration.'};

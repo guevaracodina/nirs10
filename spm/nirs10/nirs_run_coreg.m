@@ -273,7 +273,8 @@ for iSubj=1:size(job.NIRSmat,1)
                     
                     ch_MNI_vx = [ch_MNI_vx pos]; %%%% la notation serait Cp_rmv
                 end
-                [rend, rendered_MNI] = render_MNI_coordinates(ch_MNI_vx, wT1_info);%%%% la notation serait Cp_rmv
+                [rend, rendered_MNI] = render_MNI_coordinates(ch_MNI_vx, wT1_info,job.render_choice);
+                %%%% la notation serait Cp_rmv
                 for kk = 1:6
                     rendered_MNI{kk}.ren = rend{kk}.ren;
                 end 

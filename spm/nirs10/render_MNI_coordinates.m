@@ -1,7 +1,8 @@
-function [rend, rendered_MNI] = render_MNI_coordinates(vx_MNI, wT1_info)
+function [rend, rendered_MNI] = render_MNI_coordinates(vx_MNI, wT1_info,render_subj_info)
 dat.mat = wT1_info.mat;
 dat.dim = wT1_info.dim;
-
+rnc = -1; %values: -1: standard treatment (normalization to template); 
+%1: normalization of subject; 0: no normalization
 Nmark = size(vx_MNI, 2);
 dat.XYZ = zeros(3,Nmark);
 for kk = 1:Nmark
@@ -12,11 +13,36 @@ dat.XYZ(:,:) = vx_MNI(1:3,:);
 tmp_mm_MNI = wT1_info.mat * vx_MNI;
 dat.mm_MNI(:,:) = tmp_mm_MNI(1:3,:);
 clear tmp_MNI;
-
-load([spm('dir') filesep 'rend' filesep 'render_single_subj.mat']);
+if isfield(render_subj_info,'render_template')
+    %use SPM template
+    load([spm('dir') filesep 'rend' filesep 'render_single_subj.mat']);
+else
+    if isfield(render_subj_info,'render_subject')
+        try
+            rf = render_subj_info.render_subject.render_file{1};
+            rnc = render_subj_info.render_subject.render_normalize_choice;
+            [dir0,fil0,ext0] = fileparts(rf);
+            try
+                %could be a rendered .mat file
+                load(rf);
+            catch
+                %should be an image
+                owd = pwd;
+                cd(dir0);
+                %generate rendered image
+                spm_surf(rf,1);
+                load(fullfile(dir0,['render_' fil0 '.mat']));
+                cd(owd);
+            end
+        catch exception
+            disp(exception);
+            disp('Problem with render_subject');
+        end
+    end
+end
 brt = NaN;
 
-if (exist('rend') ~= 1), % Assume old format...
+if (exist('rend','var') ~= 1), % Assume old format...
     rend = cell(size(Matrixes,1),1);
     for i=1:size(Matrixes,1),
         rend{i}=struct('M',eval(Matrixes(i,:)),...
@@ -54,7 +80,7 @@ for j=1:length(dat),
     t  = dat(j).t;
     dim = dat(j).dim;
     mat = dat(j).mat;
-    % transform from Taliarach space to space of the rendered image
+    % transform from Talairach space to space of the rendered image
     %---------------------------------------------------------------
     for i=1:length(rend),
         M1  = rend{i}.M*dat(j).mat;
