@@ -8,7 +8,13 @@ function out = nirs_criugm_readtechen(job)
 
 f = job.nirs_file;
 out = 0;
-
+if ~isfield(f,'systemInfo')
+    [dir_spm, dummy1,dummy2] = fileparts(which('spm'));
+    load(fullfile(dir_spm, 'toolbox','nirs10','nirs10_templates','systemInfo.mat'));
+    f.systemInfo = systemInfo;
+    load(fullfile(dir_spm, 'toolbox','nirs10','nirs10_templates','SD.mat'));
+    f.SD = SD;
+end
 switch int2str(job.system) % System used for the acquisition
     case '6'
         
@@ -24,7 +30,6 @@ switch int2str(job.system) % System used for the acquisition
         % Information about the Helmet
         NIRS.Cf.H.n = f.systemInfo.SDfilenm;
         NIRS.Cf.H.p = f.systemInfo.SDfilepath;
-        
         switch job.coregType
             
             case 'Brainsight(c)'

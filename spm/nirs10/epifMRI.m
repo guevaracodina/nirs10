@@ -117,7 +117,7 @@ TR0 = 3.0; %13; %default TR value, in case code is unable to calculate it from
 nslices = 47;
 %the onsets files
 %Run GLM without time and dispersion derivatives
-noDerivs = 2; %Integer: 0: off (Derivs included); 1: on (noDerivs); 2: both
+noDerivs = 0; %Integer: 0: off (Derivs included); 1: on (noDerivs); 2: both
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Advanced options
@@ -151,8 +151,8 @@ Analyze_sessions = [];
 
 SaveStatsBatch = 1; %Boolean: 0: off; 1: on
 SaveReportBatch = 1; %Boolean: 0: off; 1: on
-SkipUncorrected = 1; %Boolean: 0 (do not skip): off; 1: on (skip)
-SkipGroupOnsets = 0; %Boolean: 0 (do not skip): off; 1: on (skip)
+SkipUncorrected = 1; %Integer: 0 FWE & none: 1: FWE; 2: none
+SkipGroupOnsets = 1; %Boolean: 0 (do not skip): off; 1: on (skip)
 SkipNegativeBOLD = 0; %Boolean: 0 (do not skip): off; 1: on (skip)
 
 %Prefixes for the various output files
@@ -171,7 +171,7 @@ skernelz = 8;
 %Code will not run if there are no spikes in one of the sessions -
 %By specifying a minimum number of spikes, sessions will be excluded 
 %and the code will run for the remaining sessions.
-minimum_number_spikes = 3;
+minimum_number_spikes = 0;
 NewSegmentOn = 0; %Boolean: 0: off; 1: on
 %normalize to TT atlas using Dartel - very long to run and not currently used
 DartelOn = 0; %Boolean: 0: off; 1: on
@@ -180,7 +180,7 @@ DartelOn = 0; %Boolean: 0: off; 1: on
 normalizeOn = 0; %Integer: 0: off; 1: on; 2: both
 %During output of results to a Ghostscript file, results can be displayed
 %by session
-reportContrastsBySession = 1; %Boolean: 0: off; 1: on
+reportContrastsBySession = 0; %Boolean: 0: off; 1: on
 %Generate stats with HRF peaking at different times with respect to onsets
 McGilldelaysOn = 0; %Boolean: 0: off; 1: on
 %Delays in seconds - to use with 
@@ -211,6 +211,10 @@ GammaOn = 0; %Integer: 0: off; 1: on; 2: both
 gamma_window = 20; %in seconds
 gamma_order = 3; %number of gamma function bases
 default_analysis_dir = 1; %Boolean: 0: let user choose analysis dir; 1: automatic default
+AnovaOn = 1; %Boolean
+threshold = 0.05;
+mask_threshold = 0.05;
+extent = 1;
 %Tyvaert Analysis - using groups of 2 second windows 
 TyvOn = 0; %Boolean: 0: off; 1: on
 TyvWindow = 4; %in seconds %Careful, this should not be less than TR, to
@@ -1452,7 +1456,10 @@ GLM.Plabel = '';
 GLM.glabel = glabel;
 GLM.Glabel = Glabel{1};
 GLM.Slabel = pfx_smooth;
-
+GLM.AnovaOn = AnovaOn;
+GLM.extent = extent;
+GLM.threshold = threshold;
+GLM.mask_threshold = mask_threshold;
 GLM.gamma_window = gamma_window;
 GLM.gamma_order = gamma_order;
 %GLM.TyvOn = TyvOn;
@@ -1931,7 +1938,10 @@ switch GLM.Vlabel %Volterra
     otherwise
         nV = 1;
 end
-
+AnovaOn = GLM.AnovaOn;
+extent = GLM.extent;
+threshold = GLM.threshold;
+mask_threshold = GLM.mask_threshold;
 TR0 = GLM.TR0;
 regenerate_reports = GLM.regenerate_reports;
 DirResultsAll = GLM.DirResultsAll;
@@ -2220,7 +2230,23 @@ if dStats
                             end
                         end
                     end
-                end                            
+                end
+                if AnovaOn                    
+                    for m1=1:M-1
+                        name1 = names{m1};
+                        reg1 = nD*(m1-1);
+                        for m2=m1+1:M
+                            name2 = names{m2};
+                            reg2 = nD*(m2-1);
+                            matlabbatch{3}.spm.stats.con.consess{q}.tcon.name = [name2 ' less ' name1 str_pos];
+                            matlabbatch{3}.spm.stats.con.consess{q}.tcon.convec = [zeros(1,reg1) -1 zeros(1,reg2-reg1-1) 1];
+                            matlabbatch{3}.spm.stats.con.consess{q}.tcon.sessrep = SessRep; q=q+1;
+                            matlabbatch{3}.spm.stats.con.consess{q}.tcon.name = [name2 ' less ' name1 str_neg];
+                            matlabbatch{3}.spm.stats.con.consess{q}.tcon.convec = [zeros(1,reg1) -1 zeros(1,reg2-reg1-1) 1];
+                            matlabbatch{3}.spm.stats.con.consess{q}.tcon.sessrep = SessRep; q=q+1;                            
+                        end
+                    end
+                end
             else
                 %Tyvaert Analysis
                 %NEED TO MAKE SURE THERE IS ONLY ONE SEIZURE PER SESSION AND ONLY ONE SESSION
@@ -2318,10 +2344,13 @@ if run_report
             mm = 0;
             RO = []; %Report Options
             
-            if SkipUncorrected
-                RO.threshdesc = {'FWE'};
-            else
-                RO.threshdesc = {'FWE' 'none'};
+            switch SkipUncorrected
+                case 1
+                    RO.threshdesc = {'FWE'};
+                case 2
+                    RO.threshdesc = {'none'};
+                case 0          
+                    RO.threshdesc = {'FWE' 'none'};
             end             
             %Loop over onset types
             if M > 1 && ~SkipGroupOnsets
@@ -2353,8 +2382,8 @@ if run_report
                         RO.start_str = [name Vstr];
                         RO.sess_str = ' - All Sessions';
 
-                        RO.thresh = 0.05;
-                        RO.extent = 1;
+                        RO.thresh = threshold;
+                        RO.extent = extent;
                         RO.mask = []; 
                         RO.F_str = [];
                         if nE > 1
@@ -2364,7 +2393,7 @@ if run_report
                             %Masked F-contrasts
                             if nD > 1     
                                 RO.F_str = str_noavg; 
-                                RO.mask.thresh = 0.05;
+                                RO.mask.thresh = mask_threshold;
                                 RO.mask.mtype = 0; %inclusive                                            
                                 [matlabbatch mm] = search_con(SPM,matlabbatch,mm,RO);
                                 RO.F_str = ''; %F of averaging type                       
@@ -2385,7 +2414,7 @@ if run_report
                                     Vstr = 'V1';
                                     RO.start_str = [name Vstr2];
                                     RO.mask.pretitlestr = [name Vstr];
-                                    RO.mask.thresh = 0.05;
+                                    RO.mask.thresh = mask_threshold;
                                     RO.mask.mtype = 0;
                                     RO.F_str = str_noavg; 
                                     [matlabbatch mm] = search_con(SPM,matlabbatch,mm,RO);                           
@@ -2404,7 +2433,7 @@ if run_report
                                 %Masked F-contrasts
                                 if nD > 1                      
                                     RO.F_str = str_noavg;
-                                    RO.mask.thresh = 0.05;
+                                    RO.mask.thresh = mask_threshold;
                                     RO.mask.mtype = 0; %inclusive                           
                                     [matlabbatch mm] = search_con(SPM,matlabbatch,mm,RO);
                                     RO.F_str = ''; %F of averaging type                          
@@ -2423,7 +2452,7 @@ if run_report
                                     if v==2
                                         Vstr2 = 'VA';
                                         Vstr = 'V1';
-                                        RO.mask.thresh = 0.05;
+                                        RO.mask.thresh = mask_threshold;
                                         RO.mask.mtype = 0;
                                         RO.start_str = [name Vstr2];
                                         RO.mask.pretitlestr = [name Vstr];
@@ -2436,7 +2465,30 @@ if run_report
                             end
                         end
                     end
-                end           
+                end 
+                if AnovaOn
+                    RO.thresh = threshold;
+                    RO.extent = extent;
+                    RO.mask = [];
+                    RO.F_str = [];
+                    for m1=1:M-1
+                        name1 = names{m1};
+                        RO.sess_str = ' - All Sessions';
+                        for m2=m1+1:M
+                            name2 = names{m2};
+                            RO.start_str = [name2 ' less ' name1];                            
+                            if nE > 1
+                                [matlabbatch mm] = search_con(SPM,matlabbatch,mm,RO);
+                            end
+                            if (reportContrastsBySession && nE > 1) || nE == 1
+                                for s1=1:nE
+                                    RO.sess_str = [' - Session ' int2str(s1)]; %careful about spaces!
+                                    [matlabbatch mm] = search_con(SPM,matlabbatch,mm,RO);
+                                end
+                            end
+                        end
+                    end
+                end
             else
                 %Tyvaert analysis
                 mid_str2 = {'Positive' 'Negative'};
@@ -2454,7 +2506,7 @@ if run_report
                             RO.thresh = tyv.TyvStatThreshold; %no adjustment
                         end
                         %
-                        RO.extent = 1;
+                        RO.extent = extent;
                         RO.mask = []; 
                         RO.F_str = [];
                         RO.mask.pretitlestr = names{m};

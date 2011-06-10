@@ -416,8 +416,8 @@ else
                 W.s2 = size(brain, 2);
                 W.spec_hemi = spec_hemi;
                 W.side_hemi = side_hemi;  
-                %Contrasts
-                xCon = TOPO.SSxCon;    
+                %Contrasts -- assume same contrasts for all subjects
+                xCon = big_TOPO{1}.SSxCon;    
                 TOPO.v{v1}.group.ns = ns;
                 TOPO.v{v1}.group.min_s = min_s;
                 TOPO.v{v1}.group.s1 = s1;
@@ -553,7 +553,8 @@ else
         %store in same directory as first subject
         ftopo = fullfile(dir0,'TOPO.mat');
         save(ftopo,'TOPO');
-    catch
+    catch exception
+        disp(exception)
         disp(['Could not do FFX group analysis for subject' int2str(Idx)]);
     end
         %NIRS.TOPO = ftopo;
