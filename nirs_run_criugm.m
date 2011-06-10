@@ -5,13 +5,15 @@ function out = nirs_run_criugm(job)
 
 % Clément Bonnéry
 % 2010-11-05
-
+try
 outNIRSmat ={};
 
 % Study configuration
 if isfield(job.study_cfg.study_path,'choose_path')
     study_p = job.study_cfg.study_path.choose_path;
-    mkdir(study_p);
+    if ~exist(study_p,'dir'),
+        mkdir(study_p);
+    end
 else
     study_p = job.study_cfg.study_path.existing_study{:};
 end
@@ -41,12 +43,14 @@ for is=1:sN
     NIRS.Dt.s.p = sDtp;
     % on ecrase tout sujet deja existant
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    if exist(sDtp,'dir')==7, rmdir(sDtp,'s'); end
-    mkdir(sDtp);
-    mkdir(fullfile(sDtp,'T1'));
-    mkdir(fullfile(sDtp,'fir'));
-    
-    % BOLD mask
+    %if exist(sDtp,'dir')==7, rmdir(sDtp,'s'); end
+    if ~exist(sDtp,'dir'), mkdir(sDtp); end
+    T1dir = fullfile(sDtp,'T1');
+    if ~exist(T1dir,'dir'), mkdir(T1dir); end
+    firdir = fullfile(sDtp,'fir'); 
+    if ~exist(firdir,'dir'), mkdir(firdir); end
+              
+        % BOLD mask
     if ~isempty(job.subj(1,is).boldmask{:})
         NIRS.Cm.bold = job.subj(1,is).boldmask{:};
     end
@@ -110,8 +114,7 @@ for is=1:sN
         
         for fi=1:size(job.subj(1,is).nirs_files,1)
             [dummy1,namef,extf] = fileparts(job.subj(1,is).nirs_files{fi,:});
-            nirs_files{fi,:} = fullfile(sDtp,'fir',[namef extf]);
-            copyfile(job.subj(1,is).nirs_files{fi,:},nirs_files{fi,:});
+            nirs_files{fi,:} = fullfile(sDtp,'fir',[namef extf]);            copyfile(job.subj(1,is).nirs_files{fi,:},nirs_files{fi,:});
         end
         % Read setup information from nirs file
         % System used for acquisition
@@ -142,8 +145,7 @@ for is=1:sN
             P.h    = 0;
             
             % Protocol
-            
-            if ~isempty(job.study_cfg.protocol{1,1}) && iU <= size(job.study_cfg.protocol,1)
+                        if ~isempty(job.study_cfg.protocol{1,1}) && iU <= size(job.study_cfg.protocol,1)
                 % Read "multiple conditions" file (.mat)
                 load(job.study_cfg.protocol{iU,1},'-mat');
                 for kk = 1:size(names, 2)
@@ -166,5 +168,7 @@ for is=1:sN
 end
 
 out.NIRSmat = outNIRSmat;
-
+catch exception
+    disp(exception);
+end
 end
