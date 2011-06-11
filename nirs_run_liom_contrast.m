@@ -480,166 +480,170 @@ for Idx=1:size(job.NIRSmat,1)
                 W.s2 = size(brain, 2);
                 %find channels which are visible from this projection view
                 W.index_ch = find(rchn ~= -1);
-                        %split into HbO and HbR interpolations 
-                wl = NIRS.Cf.dev.wl;
-                %for NIRS acquisition with 2 wavelengths only
-                
+                if isempty(W.index_ch)
+                    TOPO.v{side_hemi}.Warning = 'No channel found for this view';
+                    disp(['No channel for view ' int2str(v1) ': Probable coregistration problem. Skipping this view']);
+                else
+                    %split into HbO and HbR interpolations
+                    wl = NIRS.Cf.dev.wl;
+                    %for NIRS acquisition with 2 wavelengths only
+                    
                     % MD: it seems to me that the channels corresponding to
                     % HbO/HbR should be fixed after the module
                     % nirs_run_ODtoHbOHbR ? Not sure this gives the right
                     % order....?!?
-                
-                if wl(1) > 750
-                    %first wavelength is "HbO-like"
-                    W.ch_HbO = W.index_ch;
-                    W.ch_HbR = NC/2 + W.index_ch;
-                else
-                    W.ch_HbR = W.index_ch;
-                    W.ch_HbO = NC/2 + W.index_ch; 
-                end
-                try
-                    W.ch_HbT = NC+W.index_ch;
-                end
-                %nch = length(index_ch);
-                W.rchn = rchn(W.index_ch);
-                W.cchn = cchn(W.index_ch);
-                W.spec_hemi = spec_hemi;
-                W.side_hemi = side_hemi;               
-                            
-                if  ~(ProcessContrastsBySession == 1) %case 0 or 2
-                    %REMOVE contrasts of wrong length
-                    nC = length(xCon);
-                    nCon = [];
-                    for j1=1:nC
-                        tc = xCon(j1).c;
-                        if size(tc,1) == length(SPM.xXn)*nr
-                            %keep this contrast
-                            if isempty(nCon)
-                                nCon = xCon(j1);
-                            else
-                                nCon(end+1) = xCon(j1);
-                            end
-                        end                        
-                    end
-
-                    %group of sessions
-                    if GFIS                      
-                        Pt = figure('Visible',cbar.visible,'Name',['A_tube_' ...
-                            num2str(p_value) '_Pos'],'NumberTitle','off');
-                        %subplot(fh0Pt,nC,3,1);
-                        Pu = figure('Visible',cbar.visible,'Name',['A_unc_' ...
-                            num2str(p_value) '_Pos'],'NumberTitle','off');
-                        %subplot(fh0Pu,nC,3,1);
-                        if GInv
-                            Nt = figure('Visible',cbar.visible,'Name',['A_tube_' ...
-                                num2str(p_value) '_Neg'],'NumberTitle','off');
-                            %subplot(fh0Nt,nC,3,1);
-                            Nu = figure('Visible',cbar.visible,'Name',['A_unc_' ...
-                                num2str(p_value) '_Neg'],'NumberTitle','off');
-                            Ct = figure('Visible',cbar.visible,'Name',['A_tube_' ...
-                                num2str(p_value)],'NumberTitle','off');
-                            Cu = figure('Visible',cbar.visible,'Name',['A_unc_' ...
-                                num2str(p_value)],'NumberTitle','off');
-                        end
-                    end
-                    beta_tmpO = [];
-                    beta_tmpR = [];
-                    beta_tmpT = [];
-                    for f1 = 1:length(SPM.xXn)
-                        beta_tmpO = [beta_tmpO; SPM.xXn{f1}.beta(:, W.ch_HbO)];
-                        beta_tmpR = [beta_tmpR; SPM.xXn{f1}.beta(:, W.ch_HbR)];
-                        try
-                            beta_tmpT = [beta_tmpT; SPM.xXn{f1}.beta(:, W.ch_HbT)];
-                        end
-                    end
-                    W.var = SPM.xX.var; %careful, var can be a Matlab function,
-                    %but instead we want W.var
-                    W.beta_HbO = beta_tmpO(:); %taken as one vector
-                    W.beta_HbR = beta_tmpR(:); %taken as one vector
-                    W.mtx_var_HbO = diag(W.var(W.ch_HbO));
-                    W.mtx_var_HbR = diag(W.var(W.ch_HbR));
-                    try 
-                        W.beta_HbT = beta_tmpT(:); %taken as one vector
-                        W.mtx_var_HbT = diag(W.var(W.ch_HbT)); 
-                    end
                     
-                    W.corr_beta = SPM.xX.corr_beta;
-                    [TOPO] = constrasts_core(Z,W,TOPO,SPM.xX,nCon,0,Pt,Pu,Nt,Nu,Ct,Cu);
-                end
-                
-                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                if ~(ProcessContrastsBySession == 0) %case 1 or 2
-                %by session
-%                     %REMOVE contrasts defined over more than one session
-%                     nC = length(xCon);
-%                     nCon = [];
-%                     for j1=1:nC
-%                         tc = xCon(j1).c;
-%                         rk = 0;
-%                         for f1=1:length(SPM.xXn)
-%                             si = 1+nr*(f1-1); ei = nr*f1;
-%                             if rank(tc(si:ei,:)) > 0
-%                                 rk = rk+1;
-%                             end
-%                         end
-%                         if rk == 1
-%                             if isempty(nCon)
-%                                 nCon = xCon(j1);
-%                             else
-%                                 nCon(end+1) = xCon(j1);
-%                             end
-%                         end
-%                     end
-                    %xCon = SSxCon;
-                    %loop over sessions        
-                    for f1=1:length(SPM.xXn)
-                        if GFIS                      
+                    if wl(1) > 750
+                        %first wavelength is "HbO-like"
+                        W.ch_HbO = W.index_ch;
+                        W.ch_HbR = NC/2 + W.index_ch;
+                    else
+                        W.ch_HbR = W.index_ch;
+                        W.ch_HbO = NC/2 + W.index_ch;
+                    end
+                    try
+                        W.ch_HbT = NC+W.index_ch;
+                    end
+                    %nch = length(index_ch);
+                    W.rchn = rchn(W.index_ch);
+                    W.cchn = cchn(W.index_ch);
+                    W.spec_hemi = spec_hemi;
+                    W.side_hemi = side_hemi;
+                    
+                    if  ~(ProcessContrastsBySession == 1) %case 0 or 2
+                        %REMOVE contrasts of wrong length
+                        nC = length(xCon);
+                        nCon = [];
+                        for j1=1:nC
+                            tc = xCon(j1).c;
+                            if size(tc,1) == length(SPM.xXn)*nr
+                                %keep this contrast
+                                if isempty(nCon)
+                                    nCon = xCon(j1);
+                                else
+                                    nCon(end+1) = xCon(j1);
+                                end
+                            end
+                        end
+                        
+                        %group of sessions
+                        if GFIS
                             Pt = figure('Visible',cbar.visible,'Name',['A_tube_' ...
-                                num2str(p_value) '_S' int2str(f1) '_Pos'],'NumberTitle','off');
+                                num2str(p_value) '_Pos'],'NumberTitle','off');
                             %subplot(fh0Pt,nC,3,1);
                             Pu = figure('Visible',cbar.visible,'Name',['A_unc_' ...
-                                num2str(p_value) '_S' int2str(f1) '_Pos'],'NumberTitle','off');
+                                num2str(p_value) '_Pos'],'NumberTitle','off');
                             %subplot(fh0Pu,nC,3,1);
                             if GInv
                                 Nt = figure('Visible',cbar.visible,'Name',['A_tube_' ...
-                                    num2str(p_value) '_S' int2str(f1) '_Neg'],'NumberTitle','off');
+                                    num2str(p_value) '_Neg'],'NumberTitle','off');
                                 %subplot(fh0Nt,nC,3,1);
                                 Nu = figure('Visible',cbar.visible,'Name',['A_unc_' ...
-                                    num2str(p_value) '_S' int2str(f1) '_Neg'],'NumberTitle','off');
-                                %Combined figures
+                                    num2str(p_value) '_Neg'],'NumberTitle','off');
                                 Ct = figure('Visible',cbar.visible,'Name',['A_tube_' ...
-                                    num2str(p_value) '_S' int2str(f1)],'NumberTitle','off');
+                                    num2str(p_value)],'NumberTitle','off');
                                 Cu = figure('Visible',cbar.visible,'Name',['A_unc_' ...
-                                    num2str(p_value) '_S' int2str(f1)],'NumberTitle','off');
+                                    num2str(p_value)],'NumberTitle','off');
                             end
                         end
-                        try
-                            %for NIRS_SPM method
-                            W.var = SPM.xXn{f1}.ResSS./SPM.xXn{f1}.trRV; 
-                            %covariance of beta estimates
-                            W.corr_beta = SPM.xXn{f1}.Bcov;
-                        catch
-                            %for WLS and BGLM methods
-                            W.corr_beta = SPM.xXn{f1}.Bvar;
-                            %will not work as we don't have var = ResSS/trRV
-                        end                                        
-                        %GLM estimates - which beta though???
-                        beta_tmp = SPM.xXn{f1}.beta(:, W.ch_HbO);
-                        W.beta_HbO = beta_tmp(:); %taken as one vector
-                        beta_tmp = SPM.xXn{f1}.beta(:, W.ch_HbR);
-                        W.beta_HbR = beta_tmp(:); %taken as one vector
+                        beta_tmpO = [];
+                        beta_tmpR = [];
+                        beta_tmpT = [];
+                        for f1 = 1:length(SPM.xXn)
+                            beta_tmpO = [beta_tmpO; SPM.xXn{f1}.beta(:, W.ch_HbO)];
+                            beta_tmpR = [beta_tmpR; SPM.xXn{f1}.beta(:, W.ch_HbR)];
+                            try
+                                beta_tmpT = [beta_tmpT; SPM.xXn{f1}.beta(:, W.ch_HbT)];
+                            end
+                        end
+                        W.var = SPM.xX.var; %careful, var can be a Matlab function,
+                        %but instead we want W.var
+                        W.beta_HbO = beta_tmpO(:); %taken as one vector
+                        W.beta_HbR = beta_tmpR(:); %taken as one vector
                         W.mtx_var_HbO = diag(W.var(W.ch_HbO));
                         W.mtx_var_HbR = diag(W.var(W.ch_HbR));
-                        try 
-                            beta_tmp = SPM.xXn{f1}.beta(:, W.ch_HbT);
-                            W.beta_HbT = beta_tmp(:); %taken as one vector
-                            W.mtx_var_HbT = diag(W.var(W.ch_HbT)); 
+                        try
+                            W.beta_HbT = beta_tmpT(:); %taken as one vector
+                            W.mtx_var_HbT = diag(W.var(W.ch_HbT));
                         end
                         
-                        [TOPO] = constrasts_core(Z,W,TOPO,SPM.xXn{f1},SSxCon,f1,Pt,Pu,Nt,Nu,Ct,Cu);
+                        W.corr_beta = SPM.xX.corr_beta;
+                        [TOPO] = constrasts_core(Z,W,TOPO,SPM.xX,nCon,0,Pt,Pu,Nt,Nu,Ct,Cu);
                     end
-                end %end for f1
-                
+                    
+                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                    if ~(ProcessContrastsBySession == 0) %case 1 or 2
+                        %by session
+                        %                     %REMOVE contrasts defined over more than one session
+                        %                     nC = length(xCon);
+                        %                     nCon = [];
+                        %                     for j1=1:nC
+                        %                         tc = xCon(j1).c;
+                        %                         rk = 0;
+                        %                         for f1=1:length(SPM.xXn)
+                        %                             si = 1+nr*(f1-1); ei = nr*f1;
+                        %                             if rank(tc(si:ei,:)) > 0
+                        %                                 rk = rk+1;
+                        %                             end
+                        %                         end
+                        %                         if rk == 1
+                        %                             if isempty(nCon)
+                        %                                 nCon = xCon(j1);
+                        %                             else
+                        %                                 nCon(end+1) = xCon(j1);
+                        %                             end
+                        %                         end
+                        %                     end
+                        %xCon = SSxCon;
+                        %loop over sessions
+                        for f1=1:length(SPM.xXn)
+                            if GFIS
+                                Pt = figure('Visible',cbar.visible,'Name',['A_tube_' ...
+                                    num2str(p_value) '_S' int2str(f1) '_Pos'],'NumberTitle','off');
+                                %subplot(fh0Pt,nC,3,1);
+                                Pu = figure('Visible',cbar.visible,'Name',['A_unc_' ...
+                                    num2str(p_value) '_S' int2str(f1) '_Pos'],'NumberTitle','off');
+                                %subplot(fh0Pu,nC,3,1);
+                                if GInv
+                                    Nt = figure('Visible',cbar.visible,'Name',['A_tube_' ...
+                                        num2str(p_value) '_S' int2str(f1) '_Neg'],'NumberTitle','off');
+                                    %subplot(fh0Nt,nC,3,1);
+                                    Nu = figure('Visible',cbar.visible,'Name',['A_unc_' ...
+                                        num2str(p_value) '_S' int2str(f1) '_Neg'],'NumberTitle','off');
+                                    %Combined figures
+                                    Ct = figure('Visible',cbar.visible,'Name',['A_tube_' ...
+                                        num2str(p_value) '_S' int2str(f1)],'NumberTitle','off');
+                                    Cu = figure('Visible',cbar.visible,'Name',['A_unc_' ...
+                                        num2str(p_value) '_S' int2str(f1)],'NumberTitle','off');
+                                end
+                            end
+                            try
+                                %for NIRS_SPM method
+                                W.var = SPM.xXn{f1}.ResSS./SPM.xXn{f1}.trRV;
+                                %covariance of beta estimates
+                                W.corr_beta = SPM.xXn{f1}.Bcov;
+                            catch
+                                %for WLS and BGLM methods
+                                W.corr_beta = SPM.xXn{f1}.Bvar;
+                                %will not work as we don't have var = ResSS/trRV
+                            end
+                            %GLM estimates - which beta though???
+                            beta_tmp = SPM.xXn{f1}.beta(:, W.ch_HbO);
+                            W.beta_HbO = beta_tmp(:); %taken as one vector
+                            beta_tmp = SPM.xXn{f1}.beta(:, W.ch_HbR);
+                            W.beta_HbR = beta_tmp(:); %taken as one vector
+                            W.mtx_var_HbO = diag(W.var(W.ch_HbO));
+                            W.mtx_var_HbR = diag(W.var(W.ch_HbR));
+                            try
+                                beta_tmp = SPM.xXn{f1}.beta(:, W.ch_HbT);
+                                W.beta_HbT = beta_tmp(:); %taken as one vector
+                                W.mtx_var_HbT = diag(W.var(W.ch_HbT));
+                            end
+                            
+                            [TOPO] = constrasts_core(Z,W,TOPO,SPM.xXn{f1},SSxCon,f1,Pt,Pu,Nt,Nu,Ct,Cu);
+                        end
+                    end %end for f1
+                end
                 TOPO.v{side_hemi}.s1 = W.s1; %sizes of topographic projection
                 TOPO.v{side_hemi}.s2 = W.s2;
                 TOPO.v{side_hemi}.view = spec_hemi; %%% view of the brain

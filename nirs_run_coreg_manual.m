@@ -20,7 +20,7 @@ try
     standalone = 1;
 catch
     %coregistration based on NIRS.mat
-    load(job.NIRSmat{1,1});
+    load(job.Coreg_choice.CoregFromNIRS.NIRSmatSingle{1,1});
     V = spm_vol(job.Vsegmented{1,1});
     volume = spm_read_vols(V);
     standalone = 0;

@@ -229,8 +229,9 @@ for iSubj=1:size(job.NIRSmat,1)
         jobe.NP = NP;
         jobe.image_in = {fsegT1_4fit};
         jobe.lby = 'coreg';
-        out = nirs_fit_probe(jobe);
-        Pfp_rmm = out{1};
+        out2 = nirs_fit_probe(jobe); %careful, this is not the same out as the
+        %out of the function with NIRS.mat!
+        Pfp_rmm = out2{1};
         % from MNI real space (mm) to MNI voxel space
         V_4fit = spm_vol(fsegT1_4fit);
         Pfp_rmv = [];
