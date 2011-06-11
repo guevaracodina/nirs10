@@ -1383,8 +1383,8 @@ GenDataTopo.help   = {'Generate rend data (NIRS_SPM) for topographic '
 render_file         = cfg_files; 
 render_file.name    = 'Render file'; 
 render_file.tag     = 'render_file';      
-render_file.filter  = 'image';  
-render_file.ufilter = '.*';
+%render_file.filter  = 'image';  
+%render_file.ufilter = '.*';
 render_file.num     = [1 1];     
 render_file.help    = {'Grey matter (c1) anatomical image or rendered version of this c1 image.'
     'Normalized or not according to Normalization choice option below.'}';
