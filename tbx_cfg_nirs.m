@@ -407,7 +407,7 @@ subj_id.name    = 'Subject ID';
 subj_id.strtype = 's';
 subj_id.num     = [1 Inf];
 subj_id.val     = {}; 
-subj_id.help    = {'.'};
+subj_id.help    = {'A number must be entered.'};
 
 choose_path         = cfg_entry;
 choose_path.tag     = 'choose_path';

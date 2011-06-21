@@ -24,6 +24,7 @@ for is=1:sN
     age = job.subj(1,is).age1;
     
     if isfield(job.subj(1,is),'subj_id')
+        %%% verifier qu on a bien un nombre...
         s_id = str2double(job.subj(1,is).subj_id);
         if s_id < 10,
             str0 = '00';
@@ -103,8 +104,9 @@ for is=1:sN
     % Anatomical image
     if ~isempty(job.subj(1,is).anatT1{:})
         [ana,ana_nam,ana_ext] = fileparts(job.subj(1,is).anatT1{:});
+        ana_ext = ana_ext(1:4);
         if ~strcmp(fullfile(sDtp,'T1'),ana) %%%%% a changer en ana, a terme !!!!!
-            copyfile(job.subj(1,is).anatT1{:},fullfile(sDtp,'T1',[ana_nam ana_ext]));
+            copyfile(fullfile(ana,[ana_nam ana_ext]),fullfile(sDtp,'T1',[ana_nam ana_ext]));
         end
         NIRS.Dt.ana.T1 = fullfile(sDtp,'T1',[ana_nam ana_ext]);
     end
