@@ -107,7 +107,7 @@ for Idx=1:size(job.NIRSmat,1)
                     %LPF
                     if SPM.xX.LPFbutter                
                         cutoff=SPM.xX.lpf_butter_freq; %0.666; %Hz, or 1.5s
-                        FilterOrder=3;
+                        FilterOrder=6; %Is this too weak?
                         Wn=cutoff*2/fs;                           % normalised cutoff frequency
                         [fb,fa]=butter(FilterOrder,Wn);            % buterworth filter
                         Y=filtfilt(fb,fa,Y);                            
@@ -116,7 +116,7 @@ for Idx=1:size(job.NIRSmat,1)
                     %HPF
                     if SPM.xX.HPFbutter
                         cutoff=SPM.xX.hpf_butter_freq; %Hz, or 100s 
-                        FilterOrder=3;
+                        FilterOrder=3; %Is this too weak?
                         Wn=cutoff*2/fs;
                         [fb,fa]=butter(FilterOrder,Wn,'high');
                         Y=filtfilt(fb,fa,Y);
@@ -177,7 +177,7 @@ for Idx=1:size(job.NIRSmat,1)
                             if SPM.xX.HPFbutter
                                 %filter the design matrix
                                 cutoff=SPM.xX.hpf_butter_freq; %Hz, or 100s 
-                                FilterOrder=3;
+                                FilterOrder=3; %Is this too weak?
                                 Wn=cutoff*2/fs;
                                 [fb,fa]=butter(FilterOrder,Wn,'high');
                                 %exclude the constant
@@ -222,7 +222,7 @@ for Idx=1:size(job.NIRSmat,1)
                              end 
 
                     end
-
+                    
                     %fill in beta and var into tSPM.xX
                     switch SPM.xX.opt.meth
                         case {'BGLM', 'WLS'}
@@ -271,6 +271,23 @@ for Idx=1:size(job.NIRSmat,1)
                     end
                     iSPM = iSPM + 1;
                     SPM.xXn{iSPM} = tSPM.xX;
+                    %save
+                    save_dataON = 1;
+                    if save_dataON
+                        try
+                            if iSPM == 1
+                                nlst = lst;
+                            end
+                        temp  = tSPM.KY';
+                        outfile = fullfile(fGLM{g},['Sess' int2str(iSPM) '.nir']);
+                        %Careful, this data may include HbT, therefore may
+                        %have 50% more channels than the user expected...
+                        fwrite_NIR(outfile,temp(:)); 
+                        NIRS.Dt.fir.pp(nlst+1).p{iSPM,1} = outfile;
+                        catch exception
+                            disp(exception);
+                        end
+                    end                  
                 end %end for 1:nSubSess
             end 
             try
@@ -292,7 +309,9 @@ for Idx=1:size(job.NIRSmat,1)
             end
 
             save(fullfile(fGLM{g},'SPM.mat'), 'SPM');
-
+            if save_dataON
+                save(job.NIRSmat{Idx,1},'NIRS');
+            end
         end
     catch
         disp(['Could not estimate GLM for subject' int2str(Idx)]);

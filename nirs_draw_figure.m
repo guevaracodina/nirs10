@@ -492,7 +492,7 @@ try
         end
         %cbfreeze(hc1);
         %Write figure
-        if Z.write_neg_pos || combinedfig
+        if Z.write_neg_pos || combinedfig || tstr == 'F'
             filen1 = fullfile(pathn,[tstr '_' str_cor '_' contrast_info '.fig']);
             if gen_fig
                 saveas(fh1,filen1,'fig');

@@ -117,6 +117,7 @@ if FFX || size(job.NIRSmat,1)==1
                 try
                     s1 = TOPO.v{v1}.s1;
                     s2 = TOPO.v{v1}.s2;
+                    ns = length(TOPO.v{v1}.s);
                     view_estimated = 1;
                 catch
                 end
@@ -167,7 +168,7 @@ if FFX || size(job.NIRSmat,1)==1
                     %Contrasts
                     xCon = TOPO.SSxCon;              
 
-                    ns = length(TOPO.v{v1}.s);
+
                     min_s = 2;
                     TOPO.v{v1}.group.ns = ns;
                     TOPO.v{v1}.group.min_s = min_s;
@@ -555,7 +556,7 @@ else
         save(ftopo,'TOPO');
     catch exception
         disp(exception)
-        disp(['Could not do FFX group analysis for subject' int2str(Idx)]);
+        disp(['Could not do RFX group analysis for subject' int2str(Idx)]);
     end
         %NIRS.TOPO = ftopo;
         %save(job.NIRSmat{Idx,1});
