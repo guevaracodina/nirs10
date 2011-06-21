@@ -1380,6 +1380,14 @@ GenDataTopo.def    = @(val)nirs_get_defaults('coregNIRS.coreg1.GenDataTopo', val
 GenDataTopo.help   = {'Generate rend data (NIRS_SPM) for topographic '
             'reconstruction - stored in a separate file: TopoData.mat'}';
 
+View6Projections      = cfg_menu;
+View6Projections.tag  = 'View6Projections';
+View6Projections.name = 'View the 6 Projections';
+View6Projections.labels = {'True','False'};
+View6Projections.values = {1,0};
+View6Projections.val  = {0};
+View6Projections.help = {'View channel locations for the 6 projections.'}';
+
 render_file         = cfg_files; 
 render_file.name    = 'Render file'; 
 render_file.tag     = 'render_file';      
@@ -1410,7 +1418,8 @@ render_subject         = cfg_branch;
 render_subject.tag     = 'render_subject';
 render_subject.name    = 'Render to subject';
 render_subject.val     = {render_file render_normalize_choice}; 
-render_subject.help    = {'Render to subject.'};
+render_subject.help    = {'Render to subject. OPTION NOT FUNCTIONAL YET: '
+    'Problem with coordinate systems and projections.'}';
 
 render_choice        = cfg_choice;
 render_choice.name   = 'Render to template or subject';
@@ -1423,7 +1432,8 @@ coreg1      = cfg_exbranch;
 coreg1.name = 'NIRScoreg';             
 coreg1.tag  = 'coreg1'; 
 coreg1.val  = {NIRSmat DelPreviousData NewDirCopyNIRS anatT1 segT1_4fit ...
-    anatT1_template fid_in_subject_MNI nasion_wMNI AL_wMNI AR_wMNI GenDataTopo render_choice};    
+    anatT1_template fid_in_subject_MNI nasion_wMNI AL_wMNI AR_wMNI ...
+    GenDataTopo render_choice View6Projections};    
 coreg1.prog = @nirs_run_coreg;  
 coreg1.vout = @nirs_cfg_vout_coreg; 
 coreg1.help = {'Automatic coregistration.'};

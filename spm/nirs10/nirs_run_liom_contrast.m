@@ -198,7 +198,9 @@ for Idx=1:size(job.NIRSmat,1)
             SPM.xX.var = SPM.xX.ResSS/SPM.xX.trRV;
             SPM.xCon = [];
             %Generate the SPM-type contrasts over all sessions
-            SPM = nirs_spm_run_con(job,SPM);                      
+            SPM = nirs_spm_run_con(job,SPM);     
+        catch exception
+            disp(exception);
         end
         
         %Generate automated contrasts if required
@@ -326,6 +328,8 @@ for Idx=1:size(job.NIRSmat,1)
                     contrastT_name{ic1} = contrast_data(ic1).contrast_name;
                 end
             end 
+        catch exception
+            disp(exception);            
         end    
         %Find out if some of the SPM contrasts could be used for
         %single-session contrasts
@@ -352,6 +356,8 @@ for Idx=1:size(job.NIRSmat,1)
                     end
                 end
             end
+        catch exception
+            disp(exception);
         end
         %Generate single-session contrasts, using either automated
         %contrasts or user-specified contrasts
@@ -656,7 +662,8 @@ for Idx=1:size(job.NIRSmat,1)
         TOPO.xCon = xCon; %would not work if new contrasts are later added 
         TOPO.SSxCon = SSxCon;
         save(ftopo,'TOPO','-v7.3'); %file can be large
-    catch
+    catch exception
+        disp(exception);
         disp(['Could not create contrasts for subject' int2str(Idx)]);
     end
     NIRS.TOPO = ftopo;
@@ -896,6 +903,8 @@ for c1=1:nC
         if GFIS, [Pt,Nt,Ct] = nirs_copy_figure(Pt,Nt,Ct,DF,CF,c1,hb,0,tstr); end
     end
 end
+catch exception
+    disp(exception);
 end
 end
 
@@ -949,6 +958,8 @@ try
     end
     %fill TOPO
     TOPO = fill_TOPO(TOPO,C,side_hemi,f1,'HbO');
+catch exception
+    disp(exception);
 end
 
 %HbR
@@ -961,6 +972,8 @@ try
         [Pt,Pu,Nt,Nu,Ct,Cu] = interpolated_maps(Z,W,C,xCon,f1,W.erdf,'HbR',Pt,Pu,Nt,Nu,Ct,Cu);
     end
     TOPO = fill_TOPO(TOPO,C,side_hemi,f1,'HbR');
+catch exception
+    disp(exception);
 end
 
 try
@@ -973,6 +986,8 @@ try
         [Pt,Pu,Nt,Nu,Ct,Cu] = interpolated_maps(Z,W,C,xCon,f1,W.erdf,'HbT',Pt,Pu,Nt,Nu,Ct,Cu);
     end
     TOPO = fill_TOPO(TOPO,C,side_hemi,f1,'HbT');  
+catch exception
+    disp(exception);
 end
 
 try %works for both group and single sessions    
@@ -1008,6 +1023,8 @@ try %works for both group and single sessions
             end
         end
     end
+catch exception
+    disp(exception);
 end
 end
 

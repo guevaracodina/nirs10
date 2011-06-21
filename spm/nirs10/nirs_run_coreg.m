@@ -12,7 +12,11 @@ function out = nirs_run_coreg(job)
 %3) find a rotation that matches the subject fiducials to the atlas
 %4) output an updated NIRS.mat that contains the transformations and
 %the transformed coordinates
-
+try 
+    viewer_ON = job.View6Projections;
+catch
+    viewer_ON = 0;
+end
 % Loop over subjects
 for iSubj=1:size(job.NIRSmat,1)
     
@@ -284,12 +288,12 @@ for iSubj=1:size(job.NIRSmat,1)
                 NIRS.Dt.ana.rend = rend_file;
                 
                 %Viewer from NIRS_SPM
-                viewer_ON = 0;
+                %viewer_ON = 0;
                 if viewer_ON
                     %rendered_MNI = varargin{1};
                     Nch = size(rendered_MNI{1}.rchn,1);
                     load Split
-                    for kk=2:6
+                    for kk=1:6
                         figure;
                         %kk = 4; % dorsal view
                         %brain = rend{kk}.ren;

@@ -117,7 +117,7 @@ TR0 = 3.0; %13; %default TR value, in case code is unable to calculate it from
 nslices = 47;
 %the onsets files
 %Run GLM without time and dispersion derivatives
-noDerivs = 0; %Integer: 0: off (Derivs included); 1: on (noDerivs); 2: both
+noDerivs = 2; %Integer: 0: off (Derivs included); 1: on (noDerivs); 2: both
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Advanced options
@@ -205,7 +205,7 @@ unwarp_threshold = 0.3; %Boolean: 0: off; 1: on
 %inc_derivs = 0;
 add_pulse_regressor = 0; %Boolean: 0: off; 1: on
 %Volterra - nonlinearities
-VolterraOn = 0; %Integer: 0: off; 1: on; 2: both
+VolterraOn = 2; %Integer: 0: off; 1: on; 2: both
 %Window size for Gamma function HRF 
 GammaOn = 0; %Integer: 0: off; 1: on; 2: both
 gamma_window = 20; %in seconds
