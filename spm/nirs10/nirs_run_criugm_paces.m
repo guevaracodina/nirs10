@@ -323,7 +323,7 @@ for Idx=1:size(job.NIRSmat,1)
                         %%% a celui des canaux mais pas avant.....
                         % Affichage du resultat
                         if strcmp(NIRS.Cf.dev.n,'CW6')
-                            whpR = zeros(NC,size(whp,2)); whpR([k1 k1-(NC/2)],:) = whp; %figure;imagesc(whpR);title(['Heart pace: ' rDtp{f}]);
+                            whpR = zeros(NC,size(whp,2)); whpR([k1 k1-(NC/2)],:) = whp; figure;imagesc(whpR);title(['Heart pace: ' rDtp{f}]);
                         elseif strcmp(NIRS.Cf.dev.n,'CW5')
                             whpR = zeros(NC,size(whp,2)); whpR([k1 k1+(NC/2)],:) = whp; %figure;imagesc(whpR);title(['Heart pace: ' rDtp{f}]);
                         end
