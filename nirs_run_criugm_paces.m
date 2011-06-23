@@ -203,6 +203,8 @@ for Idx=1:size(job.NIRSmat,1)
                 heart.nrgy = heart.nrgy(first_k2,:);
                 heartfRpace = heart.pace(k2,:);
                 heart.pace = heart.pace(first_k2,:);
+            else
+                heartfRpace = heart.pace;
             end
             
             %output a heart rate per minute
