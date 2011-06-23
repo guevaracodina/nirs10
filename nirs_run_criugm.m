@@ -107,6 +107,9 @@ for is=1:sN
         ana_ext = ana_ext(1:4);
         if ~strcmp(fullfile(sDtp,'T1'),ana) %%%%% a changer en ana, a terme !!!!!
             copyfile(fullfile(ana,[ana_nam ana_ext]),fullfile(sDtp,'T1',[ana_nam ana_ext]));
+            if strcmp(ana_ext,'.img')        
+                copyfile(fullfile(ana,[ana_nam '.hdr']),fullfile(sDtp,'T1',[ana_nam '.hdr']));
+            end
         end
         NIRS.Dt.ana.T1 = fullfile(sDtp,'T1',[ana_nam ana_ext]);
     end
@@ -116,7 +119,8 @@ for is=1:sN
         
         for fi=1:size(job.subj(1,is).nirs_files,1)
             [dummy1,namef,extf] = fileparts(job.subj(1,is).nirs_files{fi,:});
-            nirs_files{fi,:} = fullfile(sDtp,'fir',[namef extf]);            copyfile(job.subj(1,is).nirs_files{fi,:},nirs_files{fi,:});
+            nirs_files{fi,:} = fullfile(sDtp,'fir',[namef extf]);            
+            copyfile(job.subj(1,is).nirs_files{fi,:},nirs_files{fi,:});
         end
         % Read setup information from nirs file
         % System used for acquisition

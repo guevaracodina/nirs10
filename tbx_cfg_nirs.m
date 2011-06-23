@@ -370,7 +370,7 @@ nirs_files.tag     = 'nirs_files';
 nirs_files.filter  = 'nirs';
 nirs_files.num     = [0 Inf];
 nirs_files.val{1} = {''};
-nirs_files.help    = {'Select all the sessions sharing the same device and helmet.'};
+nirs_files.help    = {'Select all the sessions sharing the same device and helmet. If no ''^.nirs'' is selected you won''t be able to run coregistration.'};
 
 protocol        = cfg_files;
 protocol.tag    = 'protocol';
