@@ -73,7 +73,8 @@ for Idx=1:size(job.NIRSmat,1)
         clear YsegRR;
         
         % Pairs....
-        C_cs = cs.C; %ancien Cmc
+        C_cs = [4 32];
+%         C_cs = cs.C; %ancien Cmc
         NC_cs = length(C_cs); %Total number of measurements
         
         %%% X %%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -240,7 +241,7 @@ for Idx=1:size(job.NIRSmat,1)
         save(job.NIRSmat{Idx,1},'NIRS');
     catch exception
         disp(exception.identifier);
-        rmdir(daate);
+        rmdir(dir_in,daate);
         disp(['Could not run MonteCarlo reconstruction for subject' int2str(Idx)]);
     end
 end

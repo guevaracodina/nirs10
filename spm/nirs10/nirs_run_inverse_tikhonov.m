@@ -119,14 +119,14 @@ for Idx=1:size(job.NIRSmat,1)
                 disp(['current : ' int2str(job.temp_pts(itp))])
                 
                 % Y
-                %                 Y_t0 = fnirs.d(job.temp_pts(itp),C_cs)';
-                %                 Y_to{1} = Y_t0(1:NC2mi,1);
-                %                 Y_to{2} = Y_t0(NC2mi+1:end,1);
+%                                 Y_t0 = fnirs.d(job.temp_pts(itp),C_cs)';
+%                                 Y_to{1} = Y_t0(1:NC2mi,1);
+%                                 Y_to{2} = Y_t0(NC2mi+1:end,1);
                 
                 %%%% test fantome
                 Yt0 = load('Yt0.nirs','-mat');
-                Y_to{1} = Yt0.Yt0(1:5,1);
-                Y_to{2} = Yt0.Yt0(6:10,1);
+                Y_to{1} = Yt0.Yt0(1:size(Yt0.Yt0,1)/2,1);
+                Y_to{2} = Yt0.Yt0(size(Yt0.Yt0,1)/2+1:size(Yt0.Yt0,1),1);
                 %%%%
                 
                 % Dmua
@@ -221,7 +221,7 @@ for Idx=1:size(job.NIRSmat,1)
         save(job.NIRSmat{Idx,1},'NIRS');
     catch exception
         disp(exception.identifier);
-        rmdir(daate);
+        rmdir([dir_in daate]);
         disp(['Could not run MonteCarlo reconstruction for subject' int2str(Idx)]);
     end
 end
