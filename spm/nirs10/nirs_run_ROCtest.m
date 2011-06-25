@@ -1,34 +1,48 @@
 function out = nirs_run_ROCtest(job)
 dirROC = pwd;
 %Hard-coded
-chan_len = 40;
+try 
+    chan_len = job.ROCnumCh;
+catch
+    chan_len = 40;
+end
 half_chan_len = chan_len/2;
 quarter_chan_len = chan_len/4;
 generate_ROC_curves = 1; %Boolean
 %specify some of the directory structure
-dir_dataSPM = 'dataSPM';
+try 
+    dir_dataSPM = job.dir_dataSPM;
+catch
+    dir_dataSPM = 'dataSPM';
+end
 %dir_stat = 'StatV';
 %alpha_unc = 0.05; %uncorrected threshold
-%exp_th_list = [19 22 24 28 31 35 39 42 47 66 72 80];
-exp_th_list = [0 10 19 22 24 28 31 35 39 42 47 66 72 76 80 90 100 110 200];
+exp_th_list = [0 10 19 22 24 28 31 35 39 42 47 66 72 80 90 100 200];
+%exp_th_list = [0 10 19 22 24 28 31 35 39 42 47 52 59 66 69 72 74 76 78 80 85 90 95 100 105 110 120 130 150 180 200];
 %options for the plots
-byIter = 0; %Boolean
-compute_OR = 0; %Boolean
-compute_LU = 1; %Boolean
-runFtest = 0; %Boolean
+try 
+    byIter = job.byIter;
+catch
+    byIter = 0; %Boolean
+end
+try
+    compute_OR = job.compute_OR;
+catch
+    compute_OR = 0; %Boolean
+end
+try
+    compute_LU = job.compute_LU;
+catch
+    compute_LU = 0; %Boolean
+end
+try
+    runFtest = job.runFtest;
+catch
+    runFtest = 0; %Boolean
+end
 %Here specifify whether run Jidx for Subject Idx will be later looked at
 %with a positive (1) or negative (0) t-test for the 2nd Volterra
 %this value will be in time assigned to Volt2_positive_ttest
-Volt2{1,1} = 0;
-Volt2{2,1} = 0;
-Volt2{3,1} = 0;
-Volt2{4,1} = 0;
-Volt2{5,1} = 0;
-Volt2{6,1} = 0;
-Volt2{7,1} = 0;
-Volt2{8,1} = 0;
-Volt2{9,1} = 0;
-Volt2{10,1} = 0;
 
 IN = job.ROCiternum;
 try 
@@ -50,6 +64,34 @@ end
 nSubj = size(job.NIRSmat,1);
 nJob = size(job.ROCLoopJob,1);
 Volt2_positive_ttest = false;
+
+try
+    v2a = job.Volt2;
+    if size(v2a,1)*size(v2a,2) == 1
+        for i1=1:size(v2a,1)
+            for j1=1:size(v2a,2)
+                Volt2{i1,j1} = v2a;
+            end
+        end
+    else
+        for i1=1:size(v2a,1)
+            for j1=1:size(v2a,2)
+                Volt2{i1,j1} = v2a(i1,j1);
+            end
+        end 
+    end       
+catch
+    Volt2{1,1} = 0;
+    Volt2{2,1} = 0;
+    Volt2{3,1} = 0;
+    Volt2{4,1} = 0;
+    Volt2{5,1} = 0;
+    Volt2{6,1} = 0;
+    Volt2{7,1} = 0;
+    Volt2{8,1} = 0;
+    Volt2{9,1} = 0;
+    Volt2{10,1} = 0;
+end
 
 %Loop over subjects
 for Idx=1:nSubj

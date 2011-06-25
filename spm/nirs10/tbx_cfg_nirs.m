@@ -994,6 +994,67 @@ testBfNorm.labels = {
 testBfNorm.values = {1, 0};
 testBfNorm.val = {0};
 
+testHPFButterOn         = cfg_menu;
+testHPFButterOn.tag     = 'testHPFButterOn';
+testHPFButterOn.name    = 'Butter HPF';
+testHPFButterOn.help    = {
+                'Preferred option: ON, at 0.004'}';
+testHPFButterOn.labels = {
+               'Filter On'
+               'Filter Off'
+                }';
+testHPFButterOn.values = {1, 0};
+testHPFButterOn.val = {1};
+
+testHPFbutterCutoff         = cfg_entry; 
+testHPFbutterCutoff.name    = 'HPF Butter cutoff';
+testHPFbutterCutoff.tag     = 'testHPFbutterCutoff';       
+testHPFbutterCutoff.strtype = 'r';
+testHPFbutterCutoff.num     = [1 1];     
+testHPFbutterCutoff.val = {0.004};
+testHPFbutterCutoff.help    = {'HPF cutoff in Hz. (0.004 Hz recommended)'}';
+
+testHPFbutterOrder         = cfg_entry; 
+testHPFbutterOrder.name    = 'HPF Butter order';
+testHPFbutterOrder.tag     = 'testHPFbutterOrder';       
+testHPFbutterOrder.strtype = 'r';
+testHPFbutterOrder.num     = [1 1];     
+testHPFbutterOrder.val = {3};
+testHPFbutterOrder.help    = {'HPF order (3 recommended)'}';
+
+testLPFGaussianOn         = cfg_menu;
+testLPFGaussianOn.tag     = 'testLPFGaussianOn';
+testLPFGaussianOn.name    = 'Gaussian LPF';
+testLPFGaussianOn.help    = {
+                'Preferred option: ON, at 1.5 s'}';
+testLPFGaussianOn.labels = {
+               'Filter On'
+               'Filter Off'
+                }';
+testLPFGaussianOn.values = {1, 0};
+testLPFGaussianOn.val = {1};
+
+testLPFGaussianFWHM         = cfg_entry; 
+testLPFGaussianFWHM.name    = 'LPF Gaussian FWHM';
+testLPFGaussianFWHM.tag     = 'testLPFGaussianFWHM';       
+testLPFGaussianFWHM.strtype = 'r';
+testLPFGaussianFWHM.num     = [1 1];     
+testLPFGaussianFWHM.val = {1.5};
+testLPFGaussianFWHM.help    = {'LPF Gaussian FWHM in seconds ( 1.5 s recommended)'}';
+
+testWaveletMDLOn         = cfg_menu;
+testWaveletMDLOn.tag     = 'testWaveletMDLOn';
+testWaveletMDLOn.name    = 'Wavelet MDL HPF';
+testWaveletMDLOn.help    = {
+                'Preferred option: Off'}';
+testWaveletMDLOn.labels = {
+               'Filter On'
+               'Filter Off'
+                }';
+testWaveletMDLOn.values = {1, 0};
+testWaveletMDLOn.val = {0};
+
+
 % Executable Branch
 addTestStimuli      = cfg_exbranch;       
 addTestStimuli.name = 'Add Stimuli with HRFs for testing';             
@@ -1001,7 +1062,9 @@ addTestStimuli.tag  = 'addTestStimuli';
 addTestStimuli.val  = {NIRSmat DelPreviousData NewDirCopyNIRS testStimulusName testStimuliNumber ...
                 testSessionNumber testWavelength testAmplitudeTarget ...
                 voltAddStim testAmplitude2 keepAllChannels testChannels testDupChannels testPType ...
-                testGamma testFilterX testFilterData testStdvsPower testBfNorm};   
+                testGamma testFilterX testFilterData testStdvsPower testBfNorm ...
+                testHPFButterOn testHPFbutterCutoff testHPFbutterOrder ...
+                testLPFGaussianOn testLPFGaussianFWHM testWaveletMDLOn};   
 addTestStimuli.prog = @nirs_run_addTestStimuli;  
 addTestStimuli.vout = @nirs_cfg_vout_addTestStimuli; 
 addTestStimuli.help = {'Module to add stimuli convoluted with HRFs for'
@@ -2200,7 +2263,7 @@ nirs_hpf.tag       = 'nirs_hpf';
 nirs_hpf.values    = {hpf_none
                       hpf_wavelet
                       hpf_dct}; 
-nirs_hpf.val       = {hpf_wavelet}; 
+nirs_hpf.val       = {hpf_none}; 
 %nirs_hpf.def    = @(val)nirs_get_defaults('nirs_hpf', val{:});
 nirs_hpf.help      = {'Choose high-pass filter.'}; 
 
@@ -2970,7 +3033,7 @@ testreconstruct1.tag  = 'testreconstruct1';
 testreconstruct1.val  = {NIRSmat DelPreviousData NewDirCopyNIRS head_shadow layers_opt inclusion};   
 testreconstruct1.prog = @nirs_run_testreconstruct;  
 testreconstruct1.vout = @nirs_cfg_vout_testreconstruct;
-testreconstruct1.help = {'Builds a phantom based on subject 53 (Claudine''s study)'};
+testreconstruct1.help = {'Builds a phantom based on subject 53 (Claudine''s study)'}';
 
 %make NIRS.mat available as a dependency
 function vout = nirs_cfg_vout_testreconstruct(job)
@@ -3342,6 +3405,8 @@ lpf_butter.values = {lpf_butter_On lpf_butter_Off};
 lpf_butter.val = {lpf_butter_Off};
 %lpf_butter.def = @(val)nirs_get_defaults('model_specify.wls_bglm_specify.lpf_butter', val{:}); 
 lpf_butter.help = {'Choose whether to include a Butterworth Low Pass Filter.'
+    'Careful - the degrees of freedom or precoloring will not be correctly'
+    'Done if used - hence currently do not use!'
         'Parameters are: order 3.'}';
 
 hpf_butter_freq         = cfg_entry; 
@@ -3353,10 +3418,18 @@ hpf_butter_freq.def     = @(val)nirs_get_defaults(...
     'model_specify.wls_bglm_specify.hpf_butter.hpf_butter_On.hpf_butter_freq', val{:}); 
 hpf_butter_freq.help    = {'Enter cutoff frequency in Hz for Butterworth HPF.'};
 
+hpf_butter_order         = cfg_entry; 
+hpf_butter_order.name    = 'Order of Butterworth HPF';
+hpf_butter_order.tag     = 'hpf_butter_order';       
+hpf_butter_order.strtype = 'r';
+hpf_butter_order.num     = [1 1];     
+hpf_butter_order.val     = {3};
+hpf_butter_order.help    = {'Enter order of Butterworth HPF (preferred value = 3).'};
+
 hpf_butter_On         = cfg_branch;
 hpf_butter_On.tag     = 'hpf_butter_On';
 hpf_butter_On.name    = 'Butterworth HP filter';
-hpf_butter_On.val     = {hpf_butter_freq}; 
+hpf_butter_On.val     = {hpf_butter_freq hpf_butter_order}; 
 hpf_butter_On.help    = {'Butterworth high-pass filter.'};
 
 hpf_butter_Off         = cfg_branch;
@@ -5234,7 +5307,6 @@ ROCLoopJob.num     = [1 Inf];
 ROCLoopJob.help    = {'Select .mat-format previously specified '
                         'and saved job(s) to loop over.'}'; 
 
-                    
 % Executable Branch
 AnalyzeGLM      = cfg_exbranch;       
 AnalyzeGLM.name = 'Analyze GLMs';            
@@ -5267,7 +5339,7 @@ ROCDeleteLarge.help = {'Delete large files (.nir) after each estimation.'};
 ROCiternum         = cfg_entry; 
 ROCiternum.name    = 'Number of iterations';
 ROCiternum.tag     = 'ROCiternum';  
-ROCiternum.val{1}  = 10;
+ROCiternum.val     = {10};
 ROCiternum.strtype = 'r';
 ROCiternum.num     = [1 1];     
 ROCiternum.help    = {'Number of iterations'}; 
@@ -5277,15 +5349,78 @@ RunGLMorFigures.tag  = 'RunGLMorFigures';
 RunGLMorFigures.name = 'Run GLMs or generate figures';
 RunGLMorFigures.labels = {'GLM','Figures','Both'};
 RunGLMorFigures.values = {1,2,3};
-RunGLMorFigures.val = {3};
+RunGLMorFigures.val    = {3};
 RunGLMorFigures.help = {'Run GLMs and/or generate figures from'
     'Previously run GLMs.'}';
+
+%ROC options                    
+ROCnumCh         = cfg_entry; 
+ROCnumCh.name    = 'Total Number of channels';
+ROCnumCh.tag     = 'ROCnumCh';  
+ROCnumCh.val     = {40};
+ROCnumCh.strtype = 'r';
+ROCnumCh.num     = [1 1];     
+ROCnumCh.help    = {'Total Number of channels'}; 
+
+dir_dataSPM         = cfg_entry; 
+dir_dataSPM.name    = 'Directory to work from';
+dir_dataSPM.tag     = 'dir_dataSPM';  
+dir_dataSPM.val{1}  = 'dataSPM';
+dir_dataSPM.strtype = 's';
+dir_dataSPM.num     = [1 Inf];     
+dir_dataSPM.help    = {'Directory to work from'}; 
+
+Volt2         = cfg_entry; 
+Volt2.name    = 'Positive or negative t-test for 2nd Volterra';
+Volt2.tag     = 'Volt2';  
+Volt2.val     = {0};
+Volt2.strtype = 'r';
+Volt2.num     = [1 1];     
+Volt2.help    = {'Positive or negative t-test for 2nd Volterra'
+    'Enter a matrix of number of jobs by number of subjects'
+    'With entries of 0 if negative t-test and 1 if positive t-test'
+    'for the 2nd Volterra'
+    'Or enter just 0 (and not a matrix) if all t-tests are negative.'}'; 
+
+byIter           = cfg_menu;
+byIter.name      = 'Give test result by iteration';
+byIter.tag       = 'byIter';
+byIter.labels    = {'No' 'Yes'};
+byIter.values    = {0,1};
+byIter.val       = {0};
+byIter.help      = {'Usually, No.'}';
+
+compute_OR           = cfg_menu;
+compute_OR.name      = 'Compute HbO and HbR separately';
+compute_OR.tag       = 'compute_OR';
+compute_OR.labels    = {'No' 'Yes'};
+compute_OR.values    = {0,1};
+compute_OR.val       = {0};
+compute_OR.help      = {'Usually, No.'}';
+
+compute_LU           = cfg_menu;
+compute_LU.name      = 'Compute lower and upper bounds';
+compute_LU.tag       = 'compute_LU';
+compute_LU.labels    = {'No' 'Yes'};
+compute_LU.values    = {0,1};
+compute_LU.val       = {0};
+compute_LU.help      = {'Usually, No.'}';
+
+runFtest           = cfg_menu;
+runFtest.name      = 'Give test result by iteration';
+runFtest.tag       = 'runFtest';
+runFtest.labels    = {'No' 'Yes'};
+runFtest.values    = {0,1};
+runFtest.val       = {0};
+runFtest.help      = {'Usually, No.'
+                'Careful, can be very slow, since...'}';
 
 % Executable Branch
 ROCtest      = cfg_exbranch;       
 ROCtest.name = 'ROC Sensitivity and specificity testing';            
 ROCtest.tag  = 'ROCtest';
-ROCtest.val  = {NIRSmat ROCLoopJob ROCDeleteLarge ROCiternum RunGLMorFigures}; 
+ROCtest.val  = {NIRSmat ROCLoopJob ROCDeleteLarge ROCiternum RunGLMorFigures ...
+    ROCnumCh dir_dataSPM Volt2 byIter compute_OR compute_LU runFtest}; 
 ROCtest.prog = @nirs_run_ROCtest;  
 ROCtest.vout = @nirs_cfg_vout_ROCtest; 
 ROCtest.help = {'This module performs a large loop over GLMs'
@@ -5295,7 +5430,10 @@ ROCtest.help = {'This module performs a large loop over GLMs'
             'with a module that requires a random seed (such as the '
             'AddTestStimuli module). This sequence of modules is referred '
             'to as a job. The code will run that job repetitively '
-            'by incrementing the random seed as many times as specified. '}';
+            'by incrementing the random seed as many times as specified. '
+            'One can later use the separate script ROCfigures_script'
+            'to generate a variety of figures: ROC plots and boxplots.'
+            'This script will require adapting it to specific requirements.'}';
 
 function vout = nirs_cfg_vout_ROCtest(job)
 vout = cfg_dep;                     
