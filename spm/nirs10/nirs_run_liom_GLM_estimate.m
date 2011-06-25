@@ -177,7 +177,7 @@ for Idx=1:size(job.NIRSmat,1)
                             if SPM.xX.HPFbutter
                                 %filter the design matrix
                                 cutoff=SPM.xX.hpf_butter_freq; %Hz, or 100s 
-                                FilterOrder=HPFButter_order; %Is this too weak?
+                                FilterOrder=SPM.xX.hpf_butter_order; %Is this too weak?
                                 Wn=cutoff*2/fs;
                                 [fb,fa]=butter(FilterOrder,Wn,'high');
                                 %exclude the constant
