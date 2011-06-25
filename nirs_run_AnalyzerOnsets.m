@@ -5,8 +5,13 @@ function out = nirs_run_AnalyzerOnsets(job)
 outNIRSmat = {};
 try 
     outNIRSmat = job.NIRSmat_optional;
-    nsubj = length(outNIRSmat);
-    NIRSok = 1;   
+    if ~isempty(outNIRSmat{1})
+        nsubj = length(outNIRSmat);
+        NIRSok = 1;   
+    else
+        nsubj = 1;
+        NIRSok = 0;
+    end
 catch
     NIRSok = 0;
     nsubj = 1;
@@ -21,8 +26,13 @@ try
         end
     else
         new_onset_files = 1;
+        try
         dp_NIRS1 = job.dp_NIRS1{1,1};
         freq_NIRS1 = job.freq_NIRS1{1,1}; 
+        catch
+            dp_NIRS1 = [];
+            freq_NIRS1 = 19.5312;
+        end
     end    
 catch
     new_onset_files = 0;
@@ -33,13 +43,17 @@ end
 %res_factor = 10; %factor to control precision of interpolation for confound regressors
 %Code allows up to 3 onset types to be removed. If want to keep all onsets,
 %make sure all rem_onsets are set to ''
-rem_onsets{1} = '250'; %'spkLFT';
-rem_onsets{2} = '252';
-rem_onsets{3} = '254';
+rem_onsets{1} = 'S250'; %'spkLFT';
+rem_onsets{2} = 'S252';
+rem_onsets{3} = 'S254';
 rem_onsets{4} = 'F 0';
 rem_onsets{5} = 'sCS';
 rem_onsets{6} = 'eCS';
-
+rem_onsets{7} = 'GSWD L>R';
+rem_onsets{8} = 'burst start';
+rem_onsets{9} = '250'; %'spkLFT';
+rem_onsets{10} = '252';
+rem_onsets{11} = '254';
 %Exit if nothing available
 if ~new_onset_files && ~NIRSok, return; end
 %Exit if more than one subject and new onset files were specified
@@ -86,11 +100,14 @@ for Idx=1:nsubj
                 %Delta t between points in seconds
                 dt = str2double(temp(i1(2)+1:i2-1))/1000;
 
-                %find first Scan Start -- ignore onsets that would arrive before the
+                %find first 255 marker -- ignore onsets that would arrive before the
                 %first Scan Start
                 while ~feof(fp)
                     temp = fgetl(fp);
                     indx = findstr('Scan Start',temp);
+                    if isempty(indx)
+                        indx = findstr('S255',temp);
+                    end
                     if ~isempty(indx)
                         indx = findstr(',',temp);
                         start_scan = dt*str2double(temp(indx(2):indx(3)));
@@ -139,7 +156,12 @@ for Idx=1:nsubj
                              && (~strcmp(tag,rem_onsets{3})) ...
                              && (~strcmp(tag,rem_onsets{4})) ...
                              && (~strcmp(tag,rem_onsets{5})) ...
-                             && (~strcmp(tag,rem_onsets{6}))
+                             && (~strcmp(tag,rem_onsets{6})) ...
+                             && (~strcmp(tag,rem_onsets{7})) ...
+                             && (~strcmp(tag,rem_onsets{8})) ...
+                             && (~strcmp(tag,rem_onsets{9})) ...
+                             && (~strcmp(tag,rem_onsets{10})) ...
+                             && (~strcmp(tag,rem_onsets{11}))
                      %Possible new onset
                         not_found = 1; %true
                         for i=1:NTonset
@@ -227,9 +249,17 @@ for Idx=1:nsubj
                 NIRS.Dt.fir.Sess(i3).fR = {fR};
                 end
                 save(job.NIRSmat_optional{Idx,1},'NIRS'); 
+            else
+                outfile = fullfile(dir1, [fil1 '.mat']);
+                try 
+                    save(outfile, 'names' , 'onsets', 'durations', 'fR', 'vR');
+                catch
+                    save(outfile, 'names' , 'onsets', 'durations');
+                end
             end
         end
-    catch
+    catch exception
+        disp(exception);
         disp(['Could not process onsets for subj' int2str(Idx)]);
     end
     

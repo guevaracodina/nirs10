@@ -17,6 +17,13 @@ try
 catch
     viewer_ON = 0;
 end
+try 
+    NewNIRSdir = job.NewDirCopyNIRS.CreateNIRSCopy.NewNIRSdir;
+    NewDirCopyNIRS = 1;
+catch
+    NewDirCopyNIRS = 0;
+end
+
 % Loop over subjects
 for iSubj=1:size(job.NIRSmat,1)
     
@@ -329,8 +336,19 @@ for iSubj=1:size(job.NIRSmat,1)
                 disp('Could not create TopoData.mat file');
             end
         end
-        save(job.NIRSmat{iSubj},'NIRS');
-    catch
+
+        if NewDirCopyNIRS
+            [dirN fil1 ext1] =fileparts(job.NIRSmat{iSubj,1});
+            dir2 = [dirN filesep NewNIRSdir];
+            if ~exist(dir2,'dir'), mkdir(dir2); end;
+            newNIRSlocation = fullfile(dir2,'NIRS.mat');
+            save(newNIRSlocation,'NIRS');
+            job.NIRSmat{iSubj,1} = newNIRSlocation;          
+        else
+            save(job.NIRSmat{iSubj,1},'NIRS'); 
+        end
+    catch exception
+        disp(exception);
         disp(['Coregistration failed for the ' int2str(iSubj) 'th subject.']);
     end
 end

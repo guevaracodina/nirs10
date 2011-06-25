@@ -96,15 +96,17 @@ end
 %HPF - Butterworth infinite impulse response filter
 try
     hpf_butter_freq = job.hpf_butter.hpf_butter_On.hpf_butter_freq;
+    hpf_butter_order = job.hpf_butter.hpf_butter_On.hpf_butter_order;
     HPFbutter = 1;
 catch
     HPFbutter = 0; %no high pass filter
     hpf_butter_freq = 0;
+    hpf_butter_order = 3;
 end
 
 %LPF - Butterworth infinite impulse response filter
 try    
-    lpf_butter_freq = job.lpf_butter.lpf_butter_On.lpf_butter_freq; 
+    lpf_butter_freq = job.lpf_butter.lpf_butter_On.lpf_butter_freq;     
     LPFbutter = 1;
 catch
     LPFbutter = 0; %no low pass filter
@@ -203,6 +205,7 @@ for Idx=1:size(job.NIRSmat,1)
                 if job.GLM_include_cardiac
                     %heart rate regressor
                     C = NIRS.Dt.fir.Sess(f).fR{1};
+                    C = C - repmat(mean(C),[length(C),1]);
                     Cname = {'H'};
                 end
                 if job.GLM_include_Mayer
@@ -509,6 +512,7 @@ for Idx=1:size(job.NIRSmat,1)
         %Butterworth high pass filter
         SPM.xX.HPFbutter = HPFbutter;
         SPM.xX.hpf_butter_freq = hpf_butter_freq;
+        SPM.xX.hpf_butter_order = hpf_butter_order;
         %Butterworth low pass filter
         SPM.xX.LPFbutter = LPFbutter;
         SPM.xX.lpf_butter_freq = lpf_butter_freq;
@@ -636,7 +640,8 @@ for Idx=1:size(job.NIRSmat,1)
         catch
             NIRS.SPM{1} = spm_dir;
         end
-    catch
+    catch exception
+        disp(exception);
         disp(['Could not specify GLM for subject' int2str(Idx)]);
     end
     %NIRS is now modified - it includes a link to the GLM   

@@ -93,7 +93,7 @@ for Idx=1:size(job.NIRSmat,1)
                     else
                         Y = d';
                     end
-
+                    sigma_unf = std(Y,0,1);
                     % PCA
                     if SPM.xX.PCA
                         nComponents = 1;
@@ -107,16 +107,16 @@ for Idx=1:size(job.NIRSmat,1)
                     %LPF
                     if SPM.xX.LPFbutter                
                         cutoff=SPM.xX.lpf_butter_freq; %0.666; %Hz, or 1.5s
-                        FilterOrder=6; %Is this too weak?
+                        FilterOrder=5; %Is this too weak?
                         Wn=cutoff*2/fs;                           % normalised cutoff frequency
-                        [fb,fa]=butter(FilterOrder,Wn);            % buterworth filter
+                        [fb,fa]=butter(FilterOrder,Wn);            % butterworth filter
                         Y=filtfilt(fb,fa,Y);                            
                     end
 
                     %HPF
                     if SPM.xX.HPFbutter
-                        cutoff=SPM.xX.hpf_butter_freq; %Hz, or 100s 
-                        FilterOrder=3; %Is this too weak?
+                        cutoff=SPM.xX.hpf_butter_freq; %in Hz,                      
+                        FilterOrder=SPM.xX.hpf_butter_order; %Is this too weak?
                         Wn=cutoff*2/fs;
                         [fb,fa]=butter(FilterOrder,Wn,'high');
                         Y=filtfilt(fb,fa,Y);
@@ -177,13 +177,24 @@ for Idx=1:size(job.NIRSmat,1)
                             if SPM.xX.HPFbutter
                                 %filter the design matrix
                                 cutoff=SPM.xX.hpf_butter_freq; %Hz, or 100s 
-                                FilterOrder=3; %Is this too weak?
+                                FilterOrder=HPFButter_order; %Is this too weak?
                                 Wn=cutoff*2/fs;
                                 [fb,fa]=butter(FilterOrder,Wn,'high');
                                 %exclude the constant
                                 tX=filtfilt(fb,fa,tSPM.xX.X(:,1:end-1));
                                 %add back the constant
                                 tSPM.xX.X = [tX tSPM.xX.X(:,end)];
+                            end
+                            %LPF
+                            if SPM.xX.LPFbutter                
+                                cutoff=SPM.xX.lpf_butter_freq; %0.666; %Hz, or 1.5s
+                                FilterOrder=5; %Is this too weak?
+                                Wn=cutoff*2/fs;                           % normalised cutoff frequency
+                                [fb,fa]=butter(FilterOrder,Wn);            % buterworth filter
+                                %exclude the constant
+                                tX=filtfilt(fb,fa,tSPM.xX.X(:,1:end-1));
+                                %add back the constant
+                                tSPM.xX.X = [tX tSPM.xX.X(:,end)];                         
                             end
                         end
                     end
@@ -246,22 +257,68 @@ for Idx=1:size(job.NIRSmat,1)
                     %A posteriori estimation of the amplitude of the response
                     try
                         %filtered data less estimated beta times filtered design
-                        %matrix
-                        sigma = std(Y- (tSPM.xX.X(:,1)*tSPM.xX.beta(1,:) + tSPM.xX.X(:,2)*tSPM.xX.beta(2,:)),0,1);
+                        %matrix = adjusted data
+                        if nbetaS == 6 %HARD CODED - Careful! to catch case with 2 types of onsets for patient 1
+                            V2r = 3; %position of 2nd Volterra regressor 
+                        else
+                            V2r = 2;
+                        end
+                        %Need filtered Y (KY) and filtered X ()
+                        %sigma = std(tSPM.KY- (tSPM.xX.X(:,1)*tSPM.xX.beta(1,:) + tSPM.xX.X(:,V2r)*tSPM.xX.beta(V2r,:)),0,1);
+                        %sigma = std(tSPM.KY- (tSPM.xX.xKXs.X(:,1)*tSPM.xX.beta(1,:) + tSPM.xX.xKXs.X(:,V2r)*tSPM.xX.beta(V2r,:)),0,1);
+                        sigma = std(tSPM.KY- (tSPM.xX.xKXs.X*tSPM.xX.beta),0,1);
+                        
+                        tSPM.xX.sigma = sigma;
+                        tSPM.xX.sigma_unf = sigma_unf;
+                        tSPM.xX.sigma_filt_unadj = std(tSPM.KY,0,1); 
                         if strcmp(SPM.xBF.name,'Gamma Functions')
-                            if NIRS.Dt.fir.calculate_bf_norm
-                                tSPM.xX.a2 = (tSPM.xX.beta(1,:) ./ sigma)/4.4631; 
-                            else
+                            try 
+                                if NIRS.Dt.fir.calculate_bf_norm
+                                    tSPM.xX.a2 = (tSPM.xX.beta(1,:) ./ sigma)/4.4631; 
+                                else
+                                    tSPM.xX.a2 = (tSPM.xX.beta(1,:) ./ sigma);
+                                end
+                            catch
                                 tSPM.xX.a2 = (tSPM.xX.beta(1,:) ./ sigma);
                             end
                         else %For canonical HRF
-                            if NIRS.Dt.fir.calculate_bf_norm
-                                tSPM.xX.a2 = (tSPM.xX.beta(1,:) ./ sigma)/4.7506; 
-                            else
-                                tSPM.xX.a2 = (tSPM.xX.beta(1,:) ./ sigma); 
+                            try
+                                if NIRS.Dt.fir.calculate_bf_norm
+                                    tSPM.xX.a2 = (tSPM.xX.beta(1,:) ./ sigma)/4.7506;
+                                else
+                                    tSPM.xX.a2 = (tSPM.xX.beta(1,:) ./ sigma);
+                                end
+                            catch
+                                tSPM.xX.a2 = (tSPM.xX.beta(1,:) ./ sigma);
                             end %norm_bf = 4.7506 = 1/max(X(:,1)) for a protocol with only one spike
                         end
-                        tSPM.xX.b  = tSPM.xX.beta(2,:) ./ tSPM.xX.beta(1,:);
+                        
+                        tSPM.xX.b  = tSPM.xX.beta(V2r,:) ./ tSPM.xX.beta(1,:);
+                        tSPM.xX.b2  = tSPM.xX.beta(V2r,:) ./ sigma;
+                        %tSPM.xX.a2 and b2 give the sigma-normalized
+                        %amplitudes, for each channel
+                        %Careful, HARD-CODED, this might not be correct
+                        %order of HbO and HbR channels
+                        CHbO = 1:(NC/2);
+                        CHbR = (1+(NC/2)):NC;
+                        [tSPM.xX.S.OtaVmax, tSPM.xX.S.OtaCmax] = max(tSPM.xX.t(1,CHbO));
+                        [tSPM.xX.S.OtaVmin, tSPM.xX.S.OtaCmin] = min(tSPM.xX.t(1,CHbO));
+                        [tSPM.xX.S.OtbVmax, tSPM.xX.S.OtbCmax] = max(tSPM.xX.t(V2r,CHbO));
+                        [tSPM.xX.S.OtbVmin, tSPM.xX.S.OtbCmin] = min(tSPM.xX.t(V2r,CHbO));
+                        [tSPM.xX.S.RtaVmax, tSPM.xX.S.RtaCmax] = max(tSPM.xX.t(1,CHbR));
+                        [tSPM.xX.S.RtaVmin, tSPM.xX.S.RtaCmin] = min(tSPM.xX.t(1,CHbR));
+                        [tSPM.xX.S.RtbVmax, tSPM.xX.S.RtbCmax] = max(tSPM.xX.t(V2r,CHbR));
+                        [tSPM.xX.S.RtbVmin, tSPM.xX.S.RtbCmin] = min(tSPM.xX.t(V2r,CHbR));
+                        [tSPM.xX.S.OaVmax, tSPM.xX.S.OaCmax] = max(tSPM.xX.beta(1,CHbO)./ sigma(CHbO));
+                        [tSPM.xX.S.OaVmin, tSPM.xX.S.OaCmin] = min(tSPM.xX.beta(1,CHbO)./ sigma(CHbO));
+                        [tSPM.xX.S.ObVmax, tSPM.xX.S.ObCmax] = max(tSPM.xX.beta(V2r,CHbO)./ sigma(CHbO));
+                        [tSPM.xX.S.ObVmin, tSPM.xX.S.ObCmin] = min(tSPM.xX.beta(V2r,CHbO)./ sigma(CHbO));
+                        [tSPM.xX.S.RaVmax, tSPM.xX.S.RaCmax] = max(tSPM.xX.beta(1,CHbR)./ sigma(CHbR));
+                        [tSPM.xX.S.RaVmin, tSPM.xX.S.RaCmin] = min(tSPM.xX.beta(1,CHbR)./ sigma(CHbR));
+                        [tSPM.xX.S.RbVmax, tSPM.xX.S.RbCmax] = max(tSPM.xX.beta(V2r,CHbR)./ sigma(CHbR));
+                        [tSPM.xX.S.RbVmin, tSPM.xX.S.RbCmin] = min(tSPM.xX.beta(V2r,CHbR)./ sigma(CHbR));
+                    catch exception
+                        disp(exception)
                     end
                     %Add piece of SPM to the whole SPM 
                     try 
@@ -290,6 +347,49 @@ for Idx=1:size(job.NIRSmat,1)
                     end                  
                 end %end for 1:nSubSess
             end 
+            %group weighted and unweighted amplitudes
+            try
+                tmpa2 = zeros(size(SPM.xXn{1}.a2)); 
+                tmpb2 = zeros(size(SPM.xXn{1}.b2)); 
+                for n1=1:iSPM
+                    %unweighted
+                    tmpa2 = tmpa2 + SPM.xXn{n1}.a2;
+                    tmpb2 = tmpb2 + SPM.xXn{n1}.b2;
+                end
+                tmpa2 = tmpa2/iSPM;
+                tmpb2 = tmpb2/iSPM;
+                %weighted
+                SPM.Gr.a2_uw = tmpa2;
+                SPM.Gr.b2_uw = tmpb2;
+                
+                %only do calculation if trRV, trRVRV and erdf are available
+                if ~isnan(SPM.xXn{1}.trRV) && ~(SPM.xXn{1}.trRV == 0)
+                    nch = length(SPM.xXn{1}.ResSS);
+                    cova = zeros(iSPM,nch);
+                    covb = zeros(iSPM,nch);
+                    betaa = zeros(1,nch);
+                    betab = zeros(1,nch);
+                    %fill data
+                    for n1=1:iSPM
+                         cova(n1,:) = SPM.xXn{n1}.ResSS./SPM.xXn{n1}.trRV*SPM.xXn{n1}.Bcov(1,1);
+                         covb(n1,:) = SPM.xXn{n1}.ResSS./SPM.xXn{n1}.trRV*SPM.xXn{n1}.Bcov(V2r,V2r);
+                         betaa(n1,:) = SPM.xXn{n1}.beta(1,:);
+                         betab(n1,:) = SPM.xXn{n1}.beta(V2r,:);
+                    end
+                    %group - 1st Volterra
+                    numera = betaa./cova;
+                    SPM.Gr.betaa = sum(numera);
+                    denuma = sqrt(sum(1./cova));
+                    SPM.Gr.ta = SPM.Gr.betaa./denuma;
+                    %2nd Volterra
+                    numerb = betab./covb;
+                    SPM.Gr.betab = sum(numerb);
+                    denumb = sqrt(sum(1./covb));
+                    SPM.Gr.tb = SPM.Gr.betab./denumb;
+                end
+            catch exception
+                disp(exception)
+            end
             try
                 K = SPM.xX.K;
                 K = rmfield(K, 'X');
@@ -313,7 +413,8 @@ for Idx=1:size(job.NIRSmat,1)
                 save(job.NIRSmat{Idx,1},'NIRS');
             end
         end
-    catch
+    catch exception
+        disp(exception)
         disp(['Could not estimate GLM for subject' int2str(Idx)]);
     end
 end
