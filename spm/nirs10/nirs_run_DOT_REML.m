@@ -1,4 +1,4 @@
-function [lambda,Beta,Stats]=nirs_run_DOT_REML(Y,X,Beta_prior,Qn,Qp,maxIter);
+function [lambda,Beta,Stats]=nirs_run_DOT_REML(Y,X,Beta_prior,Qn,Qp,maxIter)
 % Restricted Maximum Likelihood code.  This program was modified from the
 % SPM function spm_reml to be optimized for the dimensions of optical data.
 % For reference see
@@ -125,7 +125,7 @@ else
         for c=1:cnt, fprintf('\b'); end
         cnt=fprintf('%-5s: %i %5s%e','  ReML Iteration',iter,'...',full(dF));
 
-        if dF < tol, break; end
+        if abs(dF) < tol, break; end
 
     end
 end

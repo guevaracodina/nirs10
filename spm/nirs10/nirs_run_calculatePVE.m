@@ -516,33 +516,33 @@ for iSubj=1:size(job.NIRSmat,1)
                     dHbR_projBOLD = (coeff_ext(2,2) .* dmuaProj_pairs(1,:) - ...
                         coeff_ext(1,2) .* dmuaProj_pairs(2,:) ) ./ ...
                         (coeff_ext(2,2).*coeff_ext(1,1) - coeff_ext(2,1).*coeff_ext(1,2) );
-                    
-                    otherwise
-                        disp('The algorithm with which the simulation has been runned is not recognised.')
                 end
-                
-                % ----------------------------------------------------------------------- %
-                %[dir1,fil1,ext1] = fileparts(NIRS.Dt.s.p);
-                if NewDirCopyNIRS
-                    dir2 = [dir1 filesep NewNIRSdir];
-                    if ~exist(dir2,'dir'), mkdir(dir2); end;
-                    outfile = fullfile(dir2,[prefix fil1 ext1]);
-                else
-                    outfile = fullfile(dir1,[prefix fil1 ext1]);
-                end
-                if DelPreviousData
-                    delete(rDtp{f,1});
-                end
-                if NewDirCopyNIRS
-                    newNIRSlocation = fullfile(dir2,'NIRS.mat');
-                    save(newNIRSlocation,'NIRS');
-                    job.NIRSmat{Idx,1} = newNIRSlocation;
-                else
-                    save(job.NIRSmat{Idx,1},'NIRS');
-                end
-                catch
-                    disp(['Calculus of PVE failed for subject ' int2str(Idx)]);
+            otherwise
+                disp('The algorithm with which the simulation has been runned is not recognised.')
         end
+        
+        % ----------------------------------------------------------------------- %
+        %[dir1,fil1,ext1] = fileparts(NIRS.Dt.s.p);
+        if NewDirCopyNIRS
+            dir2 = [dir1 filesep NewNIRSdir];
+            if ~exist(dir2,'dir'), mkdir(dir2); end;
+            outfile = fullfile(dir2,[prefix fil1 ext1]);
+        else
+            outfile = fullfile(dir1,[prefix fil1 ext1]);
+        end
+        if DelPreviousData
+            delete(rDtp{f,1});
+        end
+        if NewDirCopyNIRS
+            newNIRSlocation = fullfile(dir2,'NIRS.mat');
+            save(newNIRSlocation,'NIRS');
+            job.NIRSmat{Idx,1} = newNIRSlocation;
+        else
+            save(job.NIRSmat{Idx,1},'NIRS');
+        end
+    catch
+        disp(['Calculus of PVE failed for subject ' int2str(Idx)]);
     end
-    out.NIRSmat = job.NIRSmat;
+end
+out.NIRSmat = job.NIRSmat;
 end
