@@ -1,4 +1,4 @@
-function [V,h,Ph,F,Fa,Fc] = nirs_spm_reml(YY,X,Q,N,D,t)
+function [V,h,Ph,F,Fa,Fc] = spm_reml_hijacked(YY,X,Q,N,D,t)
 % ReML estimation of [improper] covariance components from y*y'
 % FORMAT [C,h,Ph,F,Fa,Fc] = spm_reml(YY,X,Q,N,D,t);
 %
@@ -50,9 +50,9 @@ try, t; catch, t  = 4;  end       % default regularisation
 W     = Q;
 q     = find(all(isfinite(YY)));
 YY    = YY(q,q);
-for i = 1:length(Q)
-    Q{i} = Q{i}(q,q);
-end
+% for i = 1:length(Q)
+%     Q{i} = Q{i}(q,q);
+% end
  
 % dimensions
 %--------------------------------------------------------------------------
@@ -64,7 +64,12 @@ m     = length(Q);
 if isempty(X)
     X = sparse(n,0);
 else
+    [Uclm,Sclm,Vclm] = spm_svd(X(q,:),0);
     X = spm_svd(X(q,:),0);
+end
+
+for idx=3:length(Q)
+        Q{idx}=Sclm*Vclm'*Q{idx}*Vclm*Sclm';
 end
  
 % initialise h and specify hyperpriors
@@ -94,11 +99,9 @@ for k = 1:K
     %----------------------------------------------------------------------
     for i = 1:D
         if min(real(eig(full(C)))) < 0
-            try sum(dh);
-            catch
-                dh =[0;0;0;0;0;0;0];
-                dFdh=[];
-            end
+            
+            dh =zeros(7,1);
+
             % increase regularisation and re-evaluate C
             %--------------------------------------------------------------
             t     = t - 1;
@@ -177,7 +180,7 @@ for k = 1:K
     % revert to SPD checking, if near phase-transition
     %----------------------------------------------------------------------
     if abs(pF) > 1e6
-        [V,h,Ph,F,Fa,Fc] = nirs_spm_reml(YY,X,Q,N,1,t - 2);
+        [V,h,Ph,F,Fa,Fc] = spm_reml(YY,X,Q,N,1,t - 2);
         return
     else
         dF = pF;
@@ -189,7 +192,7 @@ for k = 1:K
  
     % final estimate of covariance (with missing data points)
     %----------------------------------------------------------------------
-    if dF < 1e-16, break, end
+    if dF < 1e-16, RETURN, end%-16 ORIGINQLEMENT
 end
 
  
@@ -197,14 +200,14 @@ end
 %==========================================================================
 V     = 0;
 for i = 1:m
-    V = V + W{i}*h(i);
+    V = V + Q{i}*h(i);%%%%%% W remplace par Q pour avoir la bonne taille de matrice
 end
  
 % check V is positive semi-definite (if not already checked)
 %==========================================================================
 if ~D
     if min(eig(V)) < 0
-        [V,h,Ph,F,Fa,Fc] = nirs_spm_reml(YY,X,Q,N,1,2);
+        [V,h,Ph,F,Fa,Fc] = spm_reml_hijacked(YY,X,Q,N,1,2);
         return
     end
 end

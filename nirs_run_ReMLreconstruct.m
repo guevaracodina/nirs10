@@ -31,10 +31,8 @@ for Idx=1:size(job.NIRSmat,1)
         load(job.NIRSmat{Idx,1});
         
         dir_in = job.dir_in{:};
-        daate = strrep(datestr(now),':','-');
-        mkdir(dir_in,daate);
         
-        % gets current simulation cs
+        % gets the simulation cs used for the reconstruction
         sep = strfind(dir_in,'\');
         csn = dir_in(sep(end-1)+3:sep(end)-1);
         itest=1;
@@ -43,6 +41,8 @@ for Idx=1:size(job.NIRSmat,1)
         end
         i_cs =itest;
         cs = NIRS.Cs.mcs{i_cs};
+        %current tomo reconstruction
+        ctm = {};
         
         %         fid=fopen(cs.b8i,'rb');% 8bits isotropic voxel volume has voxels in the same order as sensitivity matrix
         %         m = fread(fid);% currently not used
@@ -56,17 +56,13 @@ for Idx=1:size(job.NIRSmat,1)
         jobR.out_dt = 'same';
         jobR.out_vxsize = job.sens_vxsize;
         jobR.out_autonaming = 0;
-        cs.segRR =  nirs_resize(jobR);
+        temp.segRR =  nirs_resize(jobR);
         
         % segRR has the same size as the sensitivity matrix
-        VsegRR = spm_vol(cs.segRR);
+        VsegRR = spm_vol(temp.segRR);
         YsegRR = spm_read_vols(VsegRR);
         YsegRR = reshape(YsegRR,[1 prod(VsegRR.dim)]);
-
-%         m_c1 = zeros(size(YsegRR));
-%         m_c1(YsegRR==1)=1;
-%         m_c5 = zeros(size(YsegRR));
-%         m_c5(YsegRR==5)=1;
+        
         %positions for Qp
         Y_c1 = find(YsegRR==1);% mask for GM
         Y_c5 = find(YsegRR==5);% mask for skin
@@ -74,7 +70,7 @@ for Idx=1:size(job.NIRSmat,1)
         
         % Pairs....
         C_cs = [4 32];
-%         C_cs = cs.C; %ancien Cmc
+        %         C_cs = cs.C; %ancien Cmc
         NC_cs = length(C_cs); %Total number of measurements
         
         %%% X %%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -82,7 +78,7 @@ for Idx=1:size(job.NIRSmat,1)
         % on prend l'identite pour \Omegachapeau en premiere approximation
         %%% pour l'instant pas de SVD
         load(fullfile(dir_in,'sens.mat'));
-
+        
         % On veut reconstruire efficacement. Comme on a une resolution
         % proche du cm, on sous echantillonne la matrice de sensitivite...
         for Ci =1:NC_cs
@@ -120,29 +116,10 @@ for Idx=1:size(job.NIRSmat,1)
         
         ext1 = GetExtinctions(NIRS.Cf.dev.wl(1,1));
         ext2 = GetExtinctions(NIRS.Cf.dev.wl(1,2));
-%         %%% Matrice epsilons (coefficients d'extcintion) %%%
-%         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%         % Coefficients d'extinction selon Ted Huppert's HOMer (GetExtinctions.m)
-%         % à, respectivement, 690 (ligne1, HbO HbR) et 830 (ligne2, HbO HbR)
-%         
-%         % [ Lamda1-HbO  Lambda1-HbR  (690=lambda1 avec le CW6)
-%         %   Lambda2-HbO Lambda2-HbR] (830=lambda2 avec le CW6)
-%         % size : nLambda x nHb (2x2)
-%         
-%         % source : http://omlc.ogi.edu/spectra/hemoglobin/summary.html (au 22
-%         % juillet 2008)
-%         if lambda(1)==830 && lambda(1)==690
-%             coeff_ext = [ 974  693.04 ;   % POUR DONNÉES PRISES AVEC LE CW5
-%                 276  2051.96  ] .* 2.303 ./1e6; % en cm^-1 / (umol/L).
-%         elseif lambda(1)==690 && lambda(1)==830
-%             coeff_ext = [ 276  2051.96 ;   % POUR DONNÉES PRISES AVEC LE CW6
-%                 974  693.04  ] .* 2.303 ./1e6; % en cm^-1 / (umol/L).
-%             % Le facteur 2.303 permet d'obtenir des coefficients d'absorption
-%             % mu_a lorsqu'on mutliplie par la concentration en umol/L (toujours
-%             % selon le site des données compilées par Scott Prahl!)
-      
-        for ifnirs=1:size(NIRS.Dt.fir.pp,2)         
+        
+        for ifnirs=1:size(NIRS.Dt.fir.pp,2)
             fnirs = load(NIRS.Dt.fir.pp.p{1,ifnirs},'-mat');
+            ctm.Y = NIRS.Dt.fir.pp.p{1,ifnirs};
             
             %%% X %%% une matrice par session
             Xsens = sparse([Xwl{1} zeros(size(Xwl{1}));zeros(size(Xwl{1})) Xwl{2}]);
@@ -161,67 +138,114 @@ for Idx=1:size(job.NIRSmat,1)
                 Qn{idx}=sparse(lst,lst,ones(size(lst)),NC_cs,NC_cs);
             end
             %  Qp : Covariance components for the parameters (4 total- 2 per HbO/HbR {layer 1; layer II})
-            Qp{1}=sparse(Y_c5,Y_c5,ones(length(Y_c5),1),2*Nvx,2*Nvx);         %Skin layer- HbO % Prior knowledge of location of ROI (eq 22 huppert_hierarchical_2010)
-            Qp{2}=sparse(Y_c1,Y_c1,ones(length(Y_c1),1),2*Nvx,2*Nvx);         %Brain layer- HbO
-            Qp{3}=sparse(Nvx+Y_c5,Nvx+Y_c5,ones(length(Y_c5),1),2*Nvx,2*Nvx); %Skin layer- HbR
-            Qp{4}=sparse(Nvx+Y_c1,Nvx+Y_c1,ones(length(Y_c1),1),2*Nvx,2*Nvx); %Brain layer- HbR
-            Qp{5}=sparse(1:Nvx,1:Nvx,-ones(Nvx,1),2*Nvx,2*Nvx);               % Quantifie la covariance entre HbO et HbR dans chacun des voxels
-%             if ~isempty(job.subj(1,is).boldmask{:})                           % BOLD
-%                 %Qp{6}=sparse(1);
-%             elseif ~isfield(NIRS.Cm,'bold')
-%                 %'NIRS.Cm.bold'
-%                 %Qp{6}=sparse();
-%             end
-
+            Qp{1}=sparse(Y_c5,Y_c5,ones(length(Y_c5),1),2*Nvx,2*Nvx);         % Skin layer- HbO % Prior knowledge of location of ROI (eq 22 huppert_hierarchical_2010)
+            Qp{2}=sparse(Y_c1,Y_c1,ones(length(Y_c1),1),2*Nvx,2*Nvx);         % Brain layer- HbO
+            Qp{3}=sparse(Nvx+Y_c5,Nvx+Y_c5,ones(length(Y_c5),1),2*Nvx,2*Nvx); % Skin layer- HbR
+            Qp{4}=sparse(Nvx+Y_c1,Nvx+Y_c1,ones(length(Y_c1),1),2*Nvx,2*Nvx); % Brain layer- HbR
+            Qp{5}=sparse(Nvx+1:2*Nvx,1:Nvx,-ones(Nvx,1),2*Nvx,2*Nvx)+sparse(1:Nvx,1+Nvx:2*Nvx,-ones(Nvx,1),2*Nvx,2*Nvx); % Quantifie la covariance entre HbO et HbR dans chacun des voxels
+            %             if ~isempty(job.subj(1,is).boldmask{:})                           % BOLD
+            %                 %Qp{6}=sparse(1);
+            %             elseif ~isfield(NIRS.Cm,'bold')
+            %                 %'NIRS.Cm.bold'
+            %                 %Qp{6}=sparse();
+            %             end
+            
             for itp=1:length(job.temp_pts)
                 disp(['current : ' int2str(job.temp_pts(itp))])
                 %%% Y %%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                 Y_t0 = fnirs.d(job.temp_pts(itp),C_cs)';
-              Yt0 = load('Yt0.nirs','-mat');
-              Y_t0 = Yt0.Yt0;
+                %                 Y_t0 = fnirs.d(job.temp_pts(itp),C_cs)';
+                
+                ctm.Y = 'fantom';
+                Yt0 = load('Yt0.nirs','-mat');
+                Y_t0 = Yt0.Yt0;
                 switch job.ReML_method
                     case 0
                         disp('code Huppert');
-                        meth = 'HUP';
+                        ctm.alg = 'HUP';
                         % on doit envoyer X et Y pas les bar !!!!!
                         
-                        
                         [lambda,beta_W,Stats]=nirs_run_DOT_REML(Y_t0,X,beta_prior,Qn,Qp);
-%                         [lambda,beta_W,Stats]=nirs_run_DOT_REML(Y_t0,X*W',beta_prior,Qn,Qp);
+                        %                         [lambda,beta_W,Stats]=nirs_run_DOT_REML(Y_t0,X*W',beta_prior,Qn,Qp);
                         %Convert to the image domain and display
-%                         beta = W'*beta_W;
-                        
+                        %                         beta = W'*beta_W;
+                        beta = beta_W;
                     case 1
                         disp('code spm_reml');
-                        meth = 'SPM';
+                        ctm.alg = 'SPM';
                         
                         %%% Y %%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                         Y_t0 = fnirs.d(job.temp_pts(itp),C_cs)';
-         
+                        %                         Y_t0 = fnirs.d(job.temp_pts(itp),C_cs)';
+                        
                         %Set up the extended covariance model by concatinating the measurement
                         %and parameter noise terms
                         Q=cell(length(Qn)+length(Qp),1);
+                        
+                        %%%% ACHTUNG : les Q sont des matrices carres du
+                        %%%% grandeur le nombre de canaux...
+                        %%%% On leur applique la mem svd qu a X !
+                        %  Y = U*S*V'*Beta
+                        %  Y = U*(S*V'*Beta) --> Y=U*S*Beta2;
+                        %  cov(Beta2) = S*V'*Q*V*S';
+                        [U,S,V]=svd(full(X),'econ');
+                        
+                        for idx=1:length(Qp)
+                            Qp2{idx}=S*V'*Qp{idx}*V*S';
+                        end
+                        beta_prior=S*V'*beta_prior;
+                        %%%%
+                        %%%%
                         for idx=1:length(Qn)
-                            Q{idx}=blkdiag(Qn{idx},sparse(size(Qp{1},1),size(Qp{1},2))); % Build block diagonal matrix from Qn & Qp matrices
+                            %                             Q{idx}=blkdiag(Qn{idx},sparse(size(Qp{1},1),size(Qp{1},2))); % Build block diagonal matrix from Qn & Qp matrices
+                            Q{idx}=Qn{idx};
                         end
                         for idx2=1:length(Qp)
-                            Q{idx+idx2}=blkdiag(sparse(size(Qn{1},1),size(Qn{1},2)),Qp{idx2});
+                            %                             Q{idx+idx2}=blkdiag(sparse(size(Qn{1},1),size(Qn{1},2)),Qp{idx2});
+                            Q{idx+idx2}=Qp2{idx2};
                         end
                         
                         % sample covariance matrix Y*Y'
                         YY = (Y_t0-mean(Y_t0))*(Y_t0-mean(Y_t0))';
-                        [C,h,Ph,F,Fa,Fc]=spm_reml(YY,X,Q);
+                        %                         [C,h,Ph,F,Fa,Fc]=spm_reml_hijacked(YY,X,Q);
+                        [C,h,Ph,F,Fa,Fc]=nirs_spm_reml(YY,X,Q);
                         iC     = spm_inv(C);
                         iCX    = iC*X;
                         Cq = spm_inv(X'*iCX);
                         beta = Cq*X'*iC*Y_t0;
                 end
                 
+                
+                
                 betaR_HbO = reshape(beta(1:Nvx,1),[VsegRR.dim]);
                 betaR_HbR = reshape(beta(Nvx+1:2*Nvx,1),[VsegRR.dim]);
-
+                
+                %creates Tmrs : tomographical reconstruction
+                if ~isfield(NIRS,'Tm')
+                    NIRS.Tm ={};
+                end
+                
+                %mkdir
+                daate = strrep(datestr(now),':','-');
+                daate = ['Re_' int2str(length(job.temp_pts)) 'PT' daate '_' ctm.alg '_' int2str(job.sens_vxsize) 'mm'];
+                ctm.p = fullfile(dir_in,daate);
+                mkdir(ctm.p);
+                
+                if isfield(NIRS.Tm,'tmrs')
+                    itm = size(NIRS.Tm.tmrs,2)+1;
+                else
+                    itm=1;
+                end
+                ctm.n = daate;
+                
+                [dum,namRR,extRR] = fileparts(temp.segRR);
+                ctm.segRR = fullfile(ctm.p,[namRR extRR]);
+                copyfile(temp.segRR,ctm.segRR);
+                delete(temp.segRR);
+                
+                NIRS.Tm.tmrs{itm} = ctm;
+                NIRS.Tm.n{itm} = ctm.n;
+                
                 %write nifti for DHbO DHbR
-                V_O = struct('fname',fullfile(dir_in,daate,['D[HbO]_' meth '_t' int2str(job.temp_pts(itp)) '.nii']),...
+                V_O = struct('fname',fullfile(dir_in,daate,['D[HbO]_t' int2str(job.temp_pts(itp)) '.nii']),...
                     'dim',  VsegRR.dim,...
                     'dt',   [16,0],...
                     'pinfo',VsegRR.pinfo,...
@@ -229,7 +253,7 @@ for Idx=1:size(job.NIRSmat,1)
                 V_O = spm_create_vol(V_O);
                 spm_write_vol(V_O, betaR_HbO);
                 
-                V_R = struct('fname',fullfile(dir_in,daate,['D[HbR]_' meth '_t' int2str(job.temp_pts(itp)) '.nii']),...
+                V_R = struct('fname',fullfile(dir_in,daate,['D[HbR]_t' int2str(job.temp_pts(itp)) '.nii']),...
                     'dim',  VsegRR.dim,...
                     'dt',   [16,0],...
                     'pinfo',VsegRR.pinfo,...
@@ -241,202 +265,8 @@ for Idx=1:size(job.NIRSmat,1)
         save(job.NIRSmat{Idx,1},'NIRS');
     catch exception
         disp(exception.identifier);
-        rmdir(dir_in,daate);
+        rmdir([dir_in daate]);
         disp(['Could not run MonteCarlo reconstruction for subject' int2str(Idx)]);
     end
 end
 out.NIRSmat = job.NIRSmat;
-
-% % % % % % %                 case 2 % ON FAIT POUR CHAQUE LONGUEUR D'ONDE SEPAREMENT
-% % % % % % %                     tic
-% % % % % % %                     %%% Y %%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% % % % % % %                     fnirs = load(NIRS.Dt.fir.pp.p{:},'-mat');
-% % % % % % %                     Y_t0 = fnirs.d(itp,C_cs)';
-% % % % % % %
-% % % % % % %                     %%% X %%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% % % % % % %                     % p330
-% % % % % % %                     % on prend l'identite pour \Omegachapeau en premiere approximation
-% % % % % % %                     Kmat = load(fullfile(dir_in,'sens.mat'));
-% % % % % % %                     Xmc = Kmat.sens;
-% % % % % % %                     clear Kmat
-% % % % % % %                     % On veut reconstruire efficacement. Comme on a une resolution
-% % % % % % %                     % proche du cm, on sous echantillonne la matrice de sensitivite...
-% % % % % % %                     for Ci =1:NC_cs
-% % % % % % %                         Xmci = reshape(Xmc(Ci,:),VsegR.dim);
-% % % % % % %                         Vmc = struct('fname',fullfile(dir_in,'Xmci.nii'),...
-% % % % % % %                             'dim',  VsegR.dim,...
-% % % % % % %                             'dt',   VsegR.dt,...
-% % % % % % %                             'pinfo',VsegR.pinfo,...
-% % % % % % %                             'mat',  VsegR.mat);
-% % % % % % %                         Vmc = spm_create_vol(Vmc);
-% % % % % % %                         spm_write_vol(Vmc, Xmci);
-% % % % % % %
-% % % % % % %                         jobR.out_autonaming = 1;
-% % % % % % %                         jobR.out_prefix = 'R';
-% % % % % % %                         out =  nirs_resize(jobR);
-% % % % % % %                         clear Xmci Vmc
-% % % % % % %                         Vmc = spm_vol(out);
-% % % % % % %                         Ymc = spm_read_vols(Vmc);
-% % % % % % %                         Xmc_cm(Ci,:) = reshape(Ymc,[1 prod(Vmc.dim)]);
-% % % % % % %                     end
-% % % % % % %                     Xmc = Xmc_cm;
-% % % % % % %                     clear Xmc_cm Vmc Ymc
-% % % % % % %
-% % % % % % %                     NC2mi = NC_cs/2;
-% % % % % % %                     %         X = sparse([[Xmc(1:NCdemi,:)*415.5 Xmc(1:NCdemi,:)*2141.8];[Xmc(NCdemi+1:end,:)*1008.0 Xmc(NCdemi+1:end,:)*778.0]]);
-% % % % % % %                     Xwlt{1} = sparse([Xmc(1:NC2mi,:)*415.5 Xmc(1:NC2mi,:)*2141.8]);
-% % % % % % %                     Xwlt{2} = sparse([Xmc(NC2mi+1:end,:)*1008.0 Xmc(NC2mi+1:end,:)*778.0]);
-% % % % % % %
-% % % % % % %                     for iwl=1:2
-% % % % % % %                         Xwl = Xwlt{1,iwl};
-% % % % % % %
-% % % % % % %                         %% Qn : Covariance pour la longueur d'onde
-% % % % % % %                         lst=(1:NC2mi);
-% % % % % % %                         Qn=sparse(lst,lst,ones(size(lst)),NC2mi,NC2mi);
-% % % % % % %                         %%  Qp : Covariance components for the parameters (4 total- 2 per HbO/HbR {layer 1; layer II})
-% % % % % % %                         Qp{1}=sparse(Yb8i_c5,Yb8i_c5,ones(length(Yb8i_c5),1),2*Nvx,2*Nvx);  %Skin layer- HbO
-% % % % % % %                         Qp{2}=sparse(Yb8i_c1,Yb8i_c1,ones(length(Yb8i_c1),1),2*Nvx,2*Nvx);  %Brain layer- HbO
-% % % % % % %                         Qp{3}=sparse(Yb8i_c5,Yb8i_c5,ones(length(Yb8i_c5),1),2*Nvx,2*Nvx);  %Skin layer- HbR
-% % % % % % %                         Qp{4}=sparse(Yb8i_c1,Yb8i_c1,ones(length(Yb8i_c1),1),2*Nvx,2*Nvx);  %Brain layer- HbR
-% % % % % % %
-% % % % % % %                         %% On prepare les reconstructions :
-% % % % % % %                         switch job.ReML_method
-% % % % % % %                             case 0
-% % % % % % %                                 disp('code Huppert');
-% % % % % % %                                 meth = 'HUP';
-% % % % % % %                                 [lambda,beta_W,Stats]=nirs_run_DOT_REML(Y_t0,X*W',beta_prior,Qn,Qp);
-% % % % % % %                                 %Convert to the image domain and display
-% % % % % % %                                 beta = W'*beta_W;
-% % % % % % %
-% % % % % % %                             case 1
-% % % % % % %                                 disp('code spm_reml');
-% % % % % % %                                 meth = 'SPM';
-% % % % % % %                                 %Set up the extended covariance model by concatinating the measurement
-% % % % % % %                                 %and parameter noise terms
-% % % % % % %                                 Q=cell(length(Qn)+length(Qp),1);
-% % % % % % %                                 for idx=1:length(Qn)
-% % % % % % %                                     Q{idx}=blkdiag(Qn{idx},sparse(size(Qp{1},1),size(Qp{1},2))); % Build block diagonal matrix from Qn & Qp matrices
-% % % % % % %                                 end
-% % % % % % %                                 for idx2=1:length(Qp)
-% % % % % % %                                     Q{idx+idx2}=blkdiag(sparse(size(Qn{1},1),size(Qn{1},2)),Qp{idx2});
-% % % % % % %                                 end
-% % % % % % %                                 % sample covariance matrix Y*Y'
-% % % % % % %                                 YY = (Y_t0-mean(Y_t0))*(Y_t0-mean(Y_t0))';
-% % % % % % %                                 [C,h,Ph,F,Fa,Fc]=spm_reml(YY,X,Q);
-% % % % % % %                                 iC     = spm_inv(C);
-% % % % % % %                                 iCX    = iC*X;
-% % % % % % %                                 Cq = spm_inv(X'*iCX);
-% % % % % % %                                 beta = Cq*X'*iC*Y_t0;
-% % % % % % %
-% % % % % % %                                 %                             case 2
-% % % % % % %                                 %                                 disp('peudo inverse');
-% % % % % % %                                 %                                 meth = 'PInv';
-% % % % % % %                                 %                                 % Clement's version
-% % % % % % %                                 %
-% % % % % % %                                 %                                 % % % % %         Ybar = sparse([Y_t0;zeros(3*size(X,2),1)]);
-% % % % % % %                                 %                                 % M_c1 Mask for cortex
-% % % % % % %                                 %                                 M_c1_wl = [m_c1+m_c5 m_c1+m_c5];
-% % % % % % %                                 %                                 M_c1_wl = [m_c1 m_c1];
-% % % % % % %                                 %                                 M_c1 = sparse(diag(M_c1_wl));
-% % % % % % %                                 %                                 % % % % %         Xbar = sparse([log(X) log(X)*M_c1 log(X)*M_c1; sparse(1:3*size(X,2),1:3*size(X,2),ones(3*size(X,2),1),3*size(X,2),3*size(X,2))]);
-% % % % % % %                                 %                                 Ybar = Y_t0((iwl-1)*NC2mi+(1:NC2mi));
-% % % % % % %                                 %
-% % % % % % %                                 %                                 % begin SVD :
-% % % % % % %                                 %                                 % Chapitre 26 : p330
-% % % % % % %                                 %                                 % observation noise : hatOmega pour nous Qn
-% % % % % % %                                 %                                 Qinv =blkdiag(Qn); % hatsigma = Q
-% % % % % % %                                 %                                 Q = inv(Qinv);
-% % % % % % %                                 %                                 Xbar = sparse(Xwl*M_c1);
-% % % % % % %                                 %
-% % % % % % %                                 %                                 %         % custom SVD
-% % % % % % %                                 %                                 %                     Xbar = sparse(Q.^(1/2)*full(Xwl*M_c1));
-% % % % % % %                                 %                                 %         XbarN = Xbar'*Xbar;
-% % % % % % %                                 %                                 %         [v S v] = svd(XbarN,0);
-% % % % % % %                                 %                                 %         S       = sparse(S);
-% % % % % % %                                 %                                 %         s       = diag(S);
-% % % % % % %                                 %                                 %         j       = find(s*length(s)/sum(s) >= U & s >= T);
-% % % % % % %                                 %                                 %         v       = v(:,j);
-% % % % % % %                                 %                                 %         u       = spm_en(Xbar*v);
-% % % % % % %                                 %                                 %         S       = sqrt(S(j,j));
-% % % % % % %                                 %                                 %         % replace in full matrices
-% % % % % % %                                 %                                 %         %---------------------------------------------------------------------------
-% % % % % % %                                 %                                 %         j      = length(j);
-% % % % % % %                                 %                                 %         U      = sparse(M,j);
-% % % % % % %                                 %                                 %         V      = sparse(N,j);
-% % % % % % %                                 %                                 %         if j
-% % % % % % %                                 %                                 %             U(p,:) = u;
-% % % % % % %                                 %                                 %             V(q,:) = v;
-% % % % % % %                                 %                                 %         end
-% % % % % % %                                 %                                 %
-% % % % % % %                                 %                                 %         %%% voir les valeurs propres
-% % % % % % %                                 %                                 %         %         i=1;
-% % % % % % %                                 %                                 %         %         while S(i,i)>0 && i<=40
-% % % % % % %                                 %                                 %         %             disp([int2str(i) ' ieme valeur propre de S : ' num2str(S(i,i))])
-% % % % % % %                                 %                                 %         %             i = i+1;
-% % % % % % %                                 %                                 %         %         end
-% % % % % % %                                 %                                 %         %%%
-% % % % % % %                                 %                                 %         Vbar = S*V';
-% % % % % % %                                 %                                 %         Xbar = Vbar;
-% % % % % % %                                 %                                 %         % end SVD
-% % % % % % %                                 %
-% % % % % % %                                 %                                 % TIKHONOV AMELIORE
-% % % % % % %                                 %                                 % Beta contient omega_space omega et beta_prior : pour Tikhonov pas
-% % % % % % %                                 %                                 % besoin de le definir puisque c'est nul...
-% % % % % % %                                 %                                 % Betabar = sparse(,,,beta_prior);
-% % % % % % %                                 %
-% % % % % % %                                 %                                 % ebar DE MEME, par contre on definit la matrice des covariances
-% % % % % % %                                 %                                 % des erreurs :
-% % % % % % %                                 %                                 %         coef = 0.1;%%%%% moyen de calculer ca sur les images ??????????????
-% % % % % % %                                 %                                 % of course : idee : en pratique surtout au niveau des interfaces,
-% % % % % % %                                 %                                 % peut etre sortir l'info de ci_ fournie par newsegment puisque
-% % % % % % %                                 %                                 % c'est des cartes de probabilite....
-% % % % % % %                                 %                                 %         Qs=sparse(1:2*Nvx,1:2*Nvx,coef*ones(2*Nvx,1),2*Nvx,2*Nvx); % omega_space
-% % % % % % %                                 %                                 %Set up the extended covariance model by concatinating the measurement
-% % % % % % %                                 %                                 %and parameter noise terms and spatial prior
-% % % % % % %                                 %                                 %         Q =blkdiag(Qn{1}+Qn{2},Qs,Qp{1}+Qp{2}+Qp{3}+Qp{4},Qp{1}+Qp{2}+Qp{3}+Qp{4});
-% % % % % % %                                 %
-% % % % % % %                                 %
-% % % % % % %                                 %                                 % on applique ensuite la formule de l'inversion :
-% % % % % % %                                 %                                 %%%cas de la svd
-% % % % % % %                                 %                                 %         Beta_estimate = (Xbar'*Xbar) \ (Xbar'*U'*Ybar);
-% % % % % % %                                 %
-% % % % % % %                                 %                                 %%% pour sauver de l'espace memoire: from Philippe
-% % % % % % %                                 %                                 %%%%%% je pense qu'on n'a pas le droit d'utiliser le slash a la
-% % % % % % %                                 %                                 %%%%%% place de pinv...
-% % % % % % %                                 %                                 %%% si l'on voulais prendre en compte les covariances, se rapporter
-% % % % % % %                                 %                                 %%% au fichier TeX :
-% % % % % % %                                 %                                 %                     clear M_c1 M_c1_wl W X Xmc Yb8i_c1 Yb8i_c5 beta_prior m_c1
-% % % % % % %                                 %                                 alpha =1;
-% % % % % % %                                 %                                 XX =Xbar'*Xbar;
-% % % % % % %                                 %                                 YY = (Xbar'*Ybar);
-% % % % % % %                                 %                                 clear Xbar;
-% % % % % % %                                 %                                 XXLI = sparse(XX + eye(size(XX,2)));
-% % % % % % %                                 %                                 %                     METHODE 1
-% % % % % % %                                 %                                 % % % % % % % % % % %                     PAS SUUUUUUUUUUUR : je pense aue
-% % % % % % %                                 %                                 % c4est fqux / on va essayer avec une plus grosse taille de voxels
-% % % % % % %                                 %                                 % % % % % % % % % % %                     pinvXX = XXLI \ eye(size(XXLI,1));
-% % % % % % %                                 %                                 % % % % % % % % % % %                         %                 pinvXX = pinv(XX + eye(size(XX,2)));
-% % % % % % %                                 %                                 % % % % % % % % % % %
-% % % % % % %                                 %                                 % % % % % % % % % % %                     %save the inverse
-% % % % % % %                                 %                                 % % % % % % % % % % %                     save([dir_in '\pinvXX_' int2str(iwl) '.mat'],'pinvXX','-v7.3');
-% % % % % % %                                 %                                 % % % % % % % % % % %                     save([dir_in '\YY_' int2str(iwl) '.mat'],'YY','-v7.3');
-% % % % % % %                                 %                                 % % % % % % % % % % %                     %free up some memory
-% % % % % % %                                 %                                 % % % % % % % % % % %                     clear Xbar;
-% % % % % % %                                 %                                 % % % % % % % % % % %
-% % % % % % %                                 %                                 % % % % % % % % % % %                     Beta_estimate = pinvXX*YY;
-% % % % % % %                                 %                                 %                     METHODE 2
-% % % % % % %                                 %                                 %free up some memory
-% % % % % % %                                 %                                 clear Xbar;
-% % % % % % %                                 %
-% % % % % % %                                 %                                 Beta_estimate = XXLI \ YY;
-% % % % % % %                                 %                                 % % % % % % % % % % % % % % % % % RETOUR AU CODE APRES INVERSION % % % % % % % % % % % % %
-% % % % % % %                                 %                                 % TIKHONOV AMELIORE
-% % % % % % %                                 %                                 %         beta = Beta_estimate((size(Y_t0,1)+2*size(Xbar,2)+1):size(Beta_estimate,1),1);
-% % % % % % %                                 %                                 beta = Beta_estimate;
-% % % % % % %                         end
-% % % % % % %                         beta_4d = reshape(full(beta),[VsegRR.dim 2]);
-% % % % % % %
-% % % % % % %                         beta_HbO = beta_4d(:,:,:,1);
-% % % % % % %                         beta_HbR = beta_4d(:,:,:,2);
-% % % % % % %                     end
-% % % % % % %             end
