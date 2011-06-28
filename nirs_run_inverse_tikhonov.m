@@ -38,6 +38,8 @@ for Idx=1:size(job.NIRSmat,1)
         end
         i_cs =itest;
         cs = NIRS.Cs.mcs{i_cs};
+        %current tomo reconstruction
+        ctm = {};
         
         %         fid=fopen(cs.b8i,'rb');% 8bits isotropic voxel volume has voxels in the same order as sensitivity matrix
         %         Yb8i = fread(fid);% currently not used
@@ -51,10 +53,10 @@ for Idx=1:size(job.NIRSmat,1)
         jobR.out_dt = 'same';
         jobR.out_vxsize = job.sens_vxsize;
         jobR.out_autonaming = 0;
-        cs.segRR =  nirs_resize(jobR);
+        temp.segRR =  nirs_resize(jobR);
         
         % segRR has the same size as the sensitivity matrix
-        VsegRR = spm_vol(cs.segRR);
+        VsegRR = spm_vol(temp.segRR);
         YsegRR = spm_read_vols(VsegRR);
         YsegRR = reshape(YsegRR,[1 prod(VsegRR.dim)]);
         
@@ -114,6 +116,7 @@ for Idx=1:size(job.NIRSmat,1)
         
         for ifnirs=1:size(NIRS.Dt.fir.pp,2)
             fnirs = load(NIRS.Dt.fir.pp.p{1,ifnirs},'-mat');
+            ctm.Y = NIRS.Dt.fir.pp.p{1,ifnirs};
             
             for itp=1:length(job.temp_pts)
                 disp(['current : ' int2str(job.temp_pts(itp))])
@@ -136,7 +139,7 @@ for Idx=1:size(job.NIRSmat,1)
                 switch job.tikh_method
                     case 0 % Tikhonov regularization : ancienne version
                         disp('Methode a l''ancienne')
-                        meth ='anci';
+                        ctm.alg ='anci';
                         for iwl=1:2
                             Ybar = Y_to{1,iwl};
                             X = Xwl{1,iwl};
@@ -150,7 +153,7 @@ for Idx=1:size(job.NIRSmat,1)
                         end
                     case 1 % Tikhonov regularization
                         disp('peudo inverse');
-                        meth = 'PInv';
+                        ctm.alg = 'PInv';
                         
                         for iwl=1:2
                             Ybar = Y_to{1,iwl};
@@ -200,8 +203,36 @@ for Idx=1:size(job.NIRSmat,1)
                 betaR_HbO = reshape(full(beta_HbO),[VsegRR.dim]);
                 betaR_HbR = reshape(full(beta_HbR),[VsegRR.dim]);
                 
+                %creates Tmrs : tomographical reconstruction
+                if ~isfield(NIRS,'Tm')
+                    NIRS.Tm ={};
+                end
+                
+                %mkdir
+                daate = strrep(datestr(now),':','-');
+                daate = ['Re_' int2str(length(job.temp_pts)) 'PT_' daate '_' ctm.alg '_' int2str(job.sens_vxsize) 'mm'];
+                ctm.p = fullfile(dir_in,daate);
+                mkdir(ctm.p);
+                
+                if isfield(NIRS.Tm,'tmrs')
+                    itm = size(NIRS.Tm.tmrs,2)+1;
+                else
+                    itm=1;
+                end
+                ctm.n = daate;
+                ctm.hyperparameter = job.alpha;
+                ctm.sens_vxsize = job.sens_vxsize;
+                
+                [dum,namRR,extRR] = fileparts(temp.segRR);
+                ctm.segRR = fullfile(ctm.p,[namRR extRR]);
+                copyfile(temp.segRR,ctm.segRR);
+                delete(temp.segRR);
+                
+                NIRS.Tm.tmrs{itm} = ctm;
+                NIRS.Tm.n{itm} = ctm.n;
+                
                 %write nifti for DHbO DHbR
-                V_O = struct('fname',fullfile(dir_in,daate,['D[HbO]_' meth '_t' int2str(job.temp_pts(itp)) '.nii']),...
+                V_O = struct('fname',fullfile(ctm.p,['D[HbO]_t' int2str(job.temp_pts(itp)) '_' int2str(job.alpha) 'hyperparam.nii']),...
                     'dim',  VsegRR.dim,...
                     'dt',   [16,0],...
                     'pinfo',VsegRR.pinfo,...
@@ -209,7 +240,7 @@ for Idx=1:size(job.NIRSmat,1)
                 V_O = spm_create_vol(V_O);
                 spm_write_vol(V_O, betaR_HbO);
                 
-                V_R = struct('fname',fullfile(dir_in,daate,['D[HbR]_' meth '_t' int2str(job.temp_pts(itp)) '.nii']),...
+                V_R = struct('fname',fullfile(ctm.p,['D[HbR]_t' int2str(job.temp_pts(itp)) '_' int2str(job.alpha) 'hyperparam.nii']),...
                     'dim',  VsegRR.dim,...
                     'dt',   [16,0],...
                     'pinfo',VsegRR.pinfo,...
@@ -221,7 +252,7 @@ for Idx=1:size(job.NIRSmat,1)
         save(job.NIRSmat{Idx,1},'NIRS');
     catch exception
         disp(exception.identifier);
-        rmdir([dir_in daate]);
+        rmdir(ctm.p);
         disp(['Could not run MonteCarlo reconstruction for subject' int2str(Idx)]);
     end
 end

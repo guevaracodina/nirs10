@@ -70,10 +70,13 @@ for Idx=1:size(job.NIRSmat,1)
                 cd(dir1);
         
                 if k1 == 1
-                    copyfile([spm('Dir') '\toolbox\nirs10\mc_exe\mcx.exe'],[dir1 '\mcx.exe']);% le premier etait mcx_dir
+%                     copyfile([spm('Dir') '\toolbox\nirs10\mc_exe\mcx.exe'],[dir1 '\mcx.exe']);% le premier etait mcx_dir
+                    copyfile([spm('Dir') '\toolbox\nirs10\mc_exe\mcx.exe'],[dir1 '\mcx.exe']);
+%                     copyfile([spm('Dir') '\toolbox\nirs10\mc_exe\mcx_det_cached.exe'],[dir1 '\mcx_det_cached.exe']);
                 end
                 %         res = system(['mcx.exe -t 2048 -T 64 -n 1e5 -f ' file2 ' -s ' file1 ' -r 10 -g 1 -U 1 -d 1 -a 0 -b 0']);
-                str_run1 = ['mcx.exe -t ' int2str(J.MCX_t) ' -T ' int2str(J.MCX_T) ' -n ' int2str(cs.par.nphotons)];
+%                 str_run1 = ['mcx.exe -t ' int2str(J.MCX_t) ' -T ' int2str(J.MCX_T) ' -n ' int2str(cs.par.nphotons)];
+                str_run1 = ['mcx.exe -A 2 -n ' int2str(cs.par.nphotons)];
                 if J.MCX_l
                     str_log = ' -l'; %'MCX_logfile';
                 else

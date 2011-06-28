@@ -44,10 +44,7 @@ for Idx=1:size(job.NIRSmat,1)
         %current tomo reconstruction
         ctm = {};
         
-        %         fid=fopen(cs.b8i,'rb');% 8bits isotropic voxel volume has voxels in the same order as sensitivity matrix
-        %         m = fread(fid);% currently not used
-        %         fclose(fid);
-        % b8i and segR have the same orientations as there is no
+        % b8i and segR have the same orientations since there is no
         % permutation (C and Matlab conventions in nirs_run_configMC)
         VsegR = spm_vol(cs.segR);
         jobR.image_in ={cs.segR};
@@ -63,7 +60,7 @@ for Idx=1:size(job.NIRSmat,1)
         YsegRR = spm_read_vols(VsegRR);
         YsegRR = reshape(YsegRR,[1 prod(VsegRR.dim)]);
         
-        %positions for Qp
+        % positions for Qp
         Y_c1 = find(YsegRR==1);% mask for GM
         Y_c5 = find(YsegRR==5);% mask for skin
         clear YsegRR;
@@ -102,7 +99,7 @@ for Idx=1:size(job.NIRSmat,1)
             Ymc = spm_read_vols(Vmc);
             Xmc_cm(Ci,:) = reshape(Ymc,[1 prod(Vmc.dim)]);
         end
-        % Xmc : matrice de sensitivite retaille avec des plus gros voxels !
+        % Xmc : matrice de sensitivite retaillee avec des plus gros voxels !
         Xmc = Xmc_cm;
         clear Xmc_cm Vmc Ymc sens
         Nvx = size(Xmc,2);
@@ -110,6 +107,7 @@ for Idx=1:size(job.NIRSmat,1)
         
         Xwl{1} = sparse(Xmc(1:NC2mi,:));
         Xwl{2} = sparse(Xmc(NC2mi+1:end,:));
+        sXmc = sparse(Xmc);%%%%%%%% SHBTB
         clear Xmc
         
         beta_prior = zeros(2*Nvx,1);
@@ -117,18 +115,24 @@ for Idx=1:size(job.NIRSmat,1)
         ext1 = GetExtinctions(NIRS.Cf.dev.wl(1,1));
         ext2 = GetExtinctions(NIRS.Cf.dev.wl(1,2));
         
+        Xsens = sparse([Xwl{1} zeros(size(Xwl{1}));zeros(size(Xwl{1})) Xwl{2}]);
+        E11 = sparse(ext1(1,1)*eye(Nvx));
+        E12 = sparse(ext1(1,2)*eye(Nvx));
+        E21 = sparse(ext2(1,1)*eye(Nvx));
+        E22 = sparse(ext2(1,2)*eye(Nvx));
+        Egrande = sparse([E11 E12 ; E21 E22]);
+        X = Xsens*Egrande;
+        sX = sparse(X);%%%%%%%% SHBTB
+        
+        %%% systeme hierarchique by the book !
+        clear E11 E12 E21 E22 Egrande Xsens X%%%%%%%% SHBTB
+        tic%%%%%%%% SHBTB
+        Xbar = sparse([sXmc sX ; speye(Nvx) sparse(zeros(Nvx,2*Nvx)) ; sparse(zeros(2*Nvx,Nvx)) speye(2*Nvx)]);%%%%%%%% SHBTB
+        toc%%%%%%%% SHBTB
+        
         for ifnirs=1:size(NIRS.Dt.fir.pp,2)
             fnirs = load(NIRS.Dt.fir.pp.p{1,ifnirs},'-mat');
             ctm.Y = NIRS.Dt.fir.pp.p{1,ifnirs};
-            
-            %%% X %%% une matrice par session
-            Xsens = sparse([Xwl{1} zeros(size(Xwl{1}));zeros(size(Xwl{1})) Xwl{2}]);
-            E11 = sparse(ext1(1,1)*eye(Nvx));
-            E12 = sparse(ext1(1,2)*eye(Nvx));
-            E21 = sparse(ext2(1,1)*eye(Nvx));
-            E22 = sparse(ext2(1,2)*eye(Nvx));
-            Egrande = sparse([E11 E12 ; E21 E22]);
-            X = Xsens*Egrande;
             
             %%% covariances %%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % Qn : Covariance du bruit de mesure
@@ -158,6 +162,7 @@ for Idx=1:size(job.NIRSmat,1)
                 ctm.Y = 'fantom';
                 Yt0 = load('Yt0.nirs','-mat');
                 Y_t0 = Yt0.Yt0;
+                Y_bar_t0 = sparse([Y_t0; zeros(3*Nvx,1)]);%%%%%%%% SHBTB
                 switch job.ReML_method
                     case 0
                         disp('code Huppert');
@@ -208,12 +213,10 @@ for Idx=1:size(job.NIRSmat,1)
                         %                         [C,h,Ph,F,Fa,Fc]=spm_reml_hijacked(YY,X,Q);
                         [C,h,Ph,F,Fa,Fc]=nirs_spm_reml(YY,X,Q);
                         iC     = spm_inv(C);
-                        iCX    = iC*X;
+                        iCX    = iC*X; 
                         Cq = spm_inv(X'*iCX);
                         beta = Cq*X'*iC*Y_t0;
                 end
-                
-                
                 
                 betaR_HbO = reshape(beta(1:Nvx,1),[VsegRR.dim]);
                 betaR_HbR = reshape(beta(Nvx+1:2*Nvx,1),[VsegRR.dim]);
@@ -225,7 +228,7 @@ for Idx=1:size(job.NIRSmat,1)
                 
                 %mkdir
                 daate = strrep(datestr(now),':','-');
-                daate = ['Re_' int2str(length(job.temp_pts)) 'PT' daate '_' ctm.alg '_' int2str(job.sens_vxsize) 'mm'];
+                daate = ['Re_' int2str(length(job.temp_pts)) 'PT_' daate '_' ctm.alg '_' int2str(job.sens_vxsize) 'mm'];
                 ctm.p = fullfile(dir_in,daate);
                 mkdir(ctm.p);
                 
@@ -235,6 +238,7 @@ for Idx=1:size(job.NIRSmat,1)
                     itm=1;
                 end
                 ctm.n = daate;
+                ctm.sens_vxsize = job.sens_vxsize;
                 
                 [dum,namRR,extRR] = fileparts(temp.segRR);
                 ctm.segRR = fullfile(ctm.p,[namRR extRR]);
@@ -245,7 +249,7 @@ for Idx=1:size(job.NIRSmat,1)
                 NIRS.Tm.n{itm} = ctm.n;
                 
                 %write nifti for DHbO DHbR
-                V_O = struct('fname',fullfile(dir_in,daate,['D[HbO]_t' int2str(job.temp_pts(itp)) '.nii']),...
+                V_O = struct('fname',fullfile(ctm.p,['D[HbO]_t' int2str(job.temp_pts(itp)) '.nii']),...
                     'dim',  VsegRR.dim,...
                     'dt',   [16,0],...
                     'pinfo',VsegRR.pinfo,...
@@ -253,7 +257,7 @@ for Idx=1:size(job.NIRSmat,1)
                 V_O = spm_create_vol(V_O);
                 spm_write_vol(V_O, betaR_HbO);
                 
-                V_R = struct('fname',fullfile(dir_in,daate,['D[HbR]_t' int2str(job.temp_pts(itp)) '.nii']),...
+                V_R = struct('fname',fullfile(ctm.p,['D[HbR]_t' int2str(job.temp_pts(itp)) '.nii']),...
                     'dim',  VsegRR.dim,...
                     'dt',   [16,0],...
                     'pinfo',VsegRR.pinfo,...
@@ -265,7 +269,9 @@ for Idx=1:size(job.NIRSmat,1)
         save(job.NIRSmat{Idx,1},'NIRS');
     catch exception
         disp(exception.identifier);
-        rmdir([dir_in daate]);
+        if exist('daate','var')
+            rmdir(ctm.p);
+        end
         disp(['Could not run MonteCarlo reconstruction for subject' int2str(Idx)]);
     end
 end
