@@ -12,7 +12,7 @@ else
     compute_OR = 0;
 end
 line_choice = 1;
-figure_choice = 0;
+figure_choice = 1;
 %1+3 or 4 plots
 plot4 = 1; %Boolean
 plotUL = 0;

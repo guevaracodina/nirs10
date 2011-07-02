@@ -405,53 +405,44 @@ for Idx=1:size(job.NIRSmat,1)
                     %HPF
                     cutoff=HPFButt;
                     FilterOrder=HPFButt_order;
-                    Wn=cutoff*2/fs;
-                    [fb,fa]=butter(FilterOrder,Wn,'high');
                     switch volt
                     case 1
-                        fX1 =  filtfilt(fb,fa,fX1);
+                        fX1 =  ButterHPF(fs,cutoff,FilterOrder,fX1);
                     case 2
-                        fX1 =  filtfilt(fb,fa,fX1);
-                        FX1 =  filtfilt(fb,fa,FX1);
-                        FX2 =  filtfilt(fb,fa,FX2);
+                        fX1 =  ButterHPF(fs,cutoff,FilterOrder,fX1);
+                        FX1 =  ButterHPF(fs,cutoff,FilterOrder,FX1);
+                        FX2 =  ButterHPF(fs,cutoff,FilterOrder,FX2);
                     end
                 end
                 if use_OLD_wrong_Butter_LPF
                     %LPF
                     cutoff=LFP_butter;
                     FilterOrder=5;
-                    Wn=cutoff*2/fs;
-                    [fb,fa]=butter(FilterOrder,Wn);
                     switch volt
                     case 1
-                        fX1 =  filtfilt(fb,fa,fX1);
+                        fX1 =  ButterLPF(fs,cutoff,FilterOrder,fX1);
                     case 2
-                        fX1 =  filtfilt(fb,fa,fX1);
-                        FX1 =  filtfilt(fb,fa,FX1);
-                        FX2 =  filtfilt(fb,fa,FX2);
+                        fX1 =  ButterLPF(fs,cutoff,FilterOrder,fX1);
+                        FX1 =  ButterLPF(fs,cutoff,FilterOrder,FX1);
+                        FX2 =  ButterLPF(fs,cutoff,FilterOrder,FX2);
                     end
                 end
             else
                 %LPF
                 cutoff=0.667;
                 FilterOrder=5;
-                Wn=cutoff*2/fs;
-                [fb,fa]=butter(FilterOrder,Wn);
-                
-                switch volt
+                 switch volt
                     case 1
-                        fX1=filtfilt(fb,fa,X(:,1));
+                        fX1=ButterLPF(fs,cutoff,FilterOrder,X(:,1));
                     case 2
-                        fX1 = filtfilt(fb,fa,X(:,1)+tb*X(:,2));
-                        FX1 = filtfilt(fb,fa,X(:,1));
-                        FX2 = filtfilt(fb,fa,X(:,2));
+                        fX1 = ButterLPF(fs,cutoff,FilterOrder,X(:,1)+tb*X(:,2));
+                        FX1 = ButterLPF(fs,cutoff,FilterOrder,X(:,1));
+                        FX2 = ButterLPF(fs,cutoff,FilterOrder,X(:,2));
                 end
                 %HPF
                 cutoff=HPFButt;
                 FilterOrder=5;
-                Wn=cutoff*2/fs;
-                [fb,fa]=butter(FilterOrder,Wn,'high');
-                fX1 = filtfilt(fb,fa,fX1);
+                fX1 = ButterHPF(fs,cutoff,FilterOrder,fX1);
             end            
         else
             switch volt
@@ -497,32 +488,24 @@ for Idx=1:size(job.NIRSmat,1)
                         %HPF
                         cutoff=HPFButt;
                         FilterOrder=HPFButt_order;
-                        Wn=cutoff*2/fs;
-                        [fb,fa]=butter(FilterOrder,Wn,'high');
-                        tdc = filtfilt(fb,fa,tdc);
+                        tdc = ButterHPF(fs,cutoff,FilterOrder,tdc);
                     end
                     if use_OLD_wrong_Butter_LPF
                     %LPF
                         cutoff=LFP_butter;
                         FilterOrder=5;
-                        Wn=cutoff*2/fs;
-                        [fb,fa]=butter(FilterOrder,Wn);
-                        tdc = filtfilt(fb,fa,tdc);
+                        tdc = ButterLPF(fs,cutoff,FilterOrder,tdc);
                     end
                 else
                     %Butterworth - careful: number of degrees of freedom
                     %will be incorrectly calculated!
                     cutoff=0.667; %SPM.xX.lpf_butter_freq; %0.666; %Hz, or 1.5s
                     FilterOrder=5;
-                    Wn=cutoff*2/fs;                           % normalised cutoff frequency
-                    [fb,fa]=butter(FilterOrder,Wn);            % buterworth filter
-                    tdc=filtfilt(fb,fa,dc(Cidx,:));
+                    tdc=ButterLPF(fs,cutoff,FilterOrder,dc(Cidx,:));
                     %HPF
                     cutoff=HPFButt; %SPM.xX.hpf_butter_freq; %Hz, or 100s (250s may be optimal)
                     FilterOrder=5;
-                    Wn=cutoff*2/fs;
-                    [fb,fa]=butter(FilterOrder,Wn,'high');
-                    tdc=filtfilt(fb,fa,tdc);
+                    tdc=ButterHPF(fs,cutoff,FilterOrder,tdc);
                   
                 end
                 
