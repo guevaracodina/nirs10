@@ -108,18 +108,14 @@ for Idx=1:size(job.NIRSmat,1)
                     if SPM.xX.LPFbutter                
                         cutoff=SPM.xX.lpf_butter_freq; %0.666; %Hz, or 1.5s
                         FilterOrder=5; %Is this too weak?
-                        Wn=cutoff*2/fs;                           % normalised cutoff frequency
-                        [fb,fa]=butter(FilterOrder,Wn);            % butterworth filter
-                        Y=filtfilt(fb,fa,Y);                            
+                        Y = ButterLPF(fs,cutoff,FilterOrder,Y);                                                   
                     end
 
                     %HPF
                     if SPM.xX.HPFbutter
                         cutoff=SPM.xX.hpf_butter_freq; %in Hz,                      
                         FilterOrder=SPM.xX.hpf_butter_order; %Is this too weak?
-                        Wn=cutoff*2/fs;
-                        [fb,fa]=butter(FilterOrder,Wn,'high');
-                        Y=filtfilt(fb,fa,Y);
+                        Y = ButterHPF(fs,cutoff,FilterOrder,Y); 
                         %need to filter the design matrix too,
                         %otherwise, the estimates will be significantly
                         %biased 
@@ -178,21 +174,16 @@ for Idx=1:size(job.NIRSmat,1)
                                 %filter the design matrix
                                 cutoff=SPM.xX.hpf_butter_freq; %Hz, or 100s 
                                 FilterOrder=SPM.xX.hpf_butter_order; %Is this too weak?
-                                Wn=cutoff*2/fs;
-                                [fb,fa]=butter(FilterOrder,Wn,'high');
                                 %exclude the constant
-                                tX=filtfilt(fb,fa,tSPM.xX.X(:,1:end-1));
+                                tX=ButterHPF(fs,cutoff,FilterOrder,tSPM.xX.X(:,1:end-1));                               
                                 %add back the constant
                                 tSPM.xX.X = [tX tSPM.xX.X(:,end)];
                             end
                             %LPF
                             if SPM.xX.LPFbutter                
                                 cutoff=SPM.xX.lpf_butter_freq; %0.666; %Hz, or 1.5s
-                                FilterOrder=5; %Is this too weak?
-                                Wn=cutoff*2/fs;                           % normalised cutoff frequency
-                                [fb,fa]=butter(FilterOrder,Wn);            % buterworth filter
-                                %exclude the constant
-                                tX=filtfilt(fb,fa,tSPM.xX.X(:,1:end-1));
+                                FilterOrder=5; %Is this too weak?                         
+                                tX=ButterLPF(fs,cutoff,FilterOrder,Wn,tSPM.xX.X(:,1:end-1));            % buterworth filter
                                 %add back the constant
                                 tSPM.xX.X = [tX tSPM.xX.X(:,end)];                         
                             end
