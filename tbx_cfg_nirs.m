@@ -435,13 +435,13 @@ study_path.help      = {'Choose the study the subject belongs to or specify a pa
 study_cfg         = cfg_branch;
 study_cfg.tag     = 'study_cfg';
 study_cfg.name    = 'Study configuration';
-study_cfg.val     = {study_path protocol}; 
+study_cfg.val     = {study_path}; 
 study_cfg.help    = {''};
 
 subj         = cfg_branch;
 subj.tag     = 'subj';
 subj.name    = 'Subject';
-subj.val     = {subj_id age1 anatT1 helmet allSD_autosave CWsystem nirs_files TopoData boldmask};%config_path2
+subj.val     = {subj_id age1 anatT1 helmet allSD_autosave CWsystem nirs_files protocol TopoData boldmask};%config_path2
 subj.help    = {'Subject'};
 
 generic2         = cfg_repeat;
