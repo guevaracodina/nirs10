@@ -2347,34 +2347,6 @@ vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%4.8 Calculate partial volume effect
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-dir_in         = cfg_files;
-dir_in.tag     = 'dir_in';
-dir_in.name    = 'MonteCarlo output directory';
-dir_in.filter = 'dir';
-dir_in.ufilter = '.*';
-dir_in.num     = [1 1];
-dir_in.help    = {'Select the MonteCarlo simulation output directory.'};
-
-% Executable Branch
-calculatePVE1      = cfg_exbranch;       
-calculatePVE1.name = 'Calculate Partial Volume Effect';             
-calculatePVE1.tag  = 'calculatePVE1'; 
-calculatePVE1.val  = {NIRSmat DelPreviousData NewDirCopyNIRS dir_in}; 
-calculatePVE1.prog = @nirs_run_calculatePVE;  
-calculatePVE1.vout = @nirs_cfg_vout_calculatePVE; 
-calculatePVE1.help = {'Calculate Partial Volume Effect'};
-
-function vout = nirs_cfg_vout_calculatePVE(job)
-vout = cfg_dep;                     
-vout.sname      = 'NIRS.mat';       
-vout.src_output = substruct('.','NIRSmat'); 
-vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
-end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Configure input files for Monte Carlo simulation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -2814,7 +2786,7 @@ end
 %Configuration: generate sensitivity matrix
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-outMCfiles      = cfg_files;
+outMCfiles         = cfg_files;
 outMCfiles.name    = 'Select MC output files';
 outMCfiles.tag     = 'outMCfiles';
 outMCfiles.ufilter = {'.2pt','.mc2'};    
@@ -2831,6 +2803,41 @@ makesens1.vout = @nirs_cfg_vout_generate_sensitivity_matrix;
 makesens1.help = {'Generate sensitivity matrix.'};
 
 function vout = nirs_cfg_vout_generate_sensitivity_matrix(job)
+vout = cfg_dep;                     
+vout.sname      = 'NIRS.mat';       
+vout.src_output = substruct('.','NIRSmat'); 
+vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%4.8 Calculate partial volume effect
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+dir_in         = cfg_files;
+dir_in.tag     = 'dir_in';
+dir_in.name    = 'MonteCarlo output directory';
+dir_in.filter = 'dir';
+dir_in.ufilter = '.*';
+dir_in.num     = [1 1];
+dir_in.help    = {'Select the MonteCarlo simulation output directory.'};
+
+historyfiles         = cfg_files;
+historyfiles.name    = 'Monte Carlo history files';
+historyfiles.tag     = 'historyfiles';
+historyfiles.ufilter = {'.his','.mch'};    
+historyfiles.num     = [1 Inf];     
+historyfiles.help    = {'Select history files for this subject.'}; 
+
+% Executable Branch
+calculatePVE1      = cfg_exbranch;       
+calculatePVE1.name = 'Calculate Partial Volume Effect';             
+calculatePVE1.tag  = 'calculatePVE1';
+calculatePVE1.val  = {NIRSmat DelPreviousData NewDirCopyNIRS historyfiles}; 
+calculatePVE1.prog = @nirs_run_calculatePVE;  
+calculatePVE1.vout = @nirs_cfg_vout_calculatePVE; 
+calculatePVE1.help = {'Calculate Partial Volume Effect'};
+
+function vout = nirs_cfg_vout_calculatePVE(job)
 vout = cfg_dep;                     
 vout.sname      = 'NIRS.mat';       
 vout.src_output = substruct('.','NIRSmat'); 
@@ -5803,7 +5810,7 @@ preprocessNIRS        = cfg_choice;
 preprocessNIRS.name   = 'Preprocess NIRS data';
 preprocessNIRS.tag    = 'preprocessNIRS';
 preprocessNIRS.values = {remove_chn_stdev criugm_paces1  ...
-         mark_movement normalize_baseline ODtoHbOHbR generate_vhdr_vmrk calculatePVE1}; %mark_negative HPF_LPF
+         mark_movement normalize_baseline ODtoHbOHbR generate_vhdr_vmrk}; %mark_negative HPF_LPF
 preprocessNIRS.help   = {'These modules preprocess NIRS data: '
     'heart rate check, '
     'downsampling, removal of bad channels, filters.'}';
@@ -5844,6 +5851,6 @@ nirs10.name   = 'nirs10';
 nirs10.tag    = 'nirs10'; %Careful, this tag nirs10 must be the same as
 %the name of the toolbox and when called by spm_jobman in nirs10.m
 nirs10.values = {readNIRS readOnsets preprocessNIRS preprocANAT coregNIRS ...
-    configMC1 runMC1 makesens1 model_reconstruct model_specify ...
+    configMC1 runMC1 makesens1 calculatePVE1 model_reconstruct model_specify ...
     model_estimate NIRS_HDM CRIUGM}; %model_display
 end
