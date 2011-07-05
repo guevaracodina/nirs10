@@ -66,8 +66,16 @@ for iSubj=1:size(job.NIRSmat,1)
         i_cs =itest;
         cs = NIRS.Cs.mcs{i_cs};
         
+        % dir
+        % [t,dummy] = spm_select('FPList',cs_dir,'.cfg');
+        % files
+        f = job.historyfiles;
+        
         switch cs.alg
             case 1 %MCX
+%                 for i=1:size(1)
+%                 [data, header]=loadmch();
+%                 end
             case 2 %tMCimg
                 
                 % ----------------------------------------------------------------------- %
@@ -541,7 +549,7 @@ for iSubj=1:size(job.NIRSmat,1)
             save(job.NIRSmat{Idx,1},'NIRS');
         end
     catch
-        disp(['Calculus of PVE failed for subject ' int2str(Idx)]);
+        disp(['Calculus of PVE failed for subject ' int2str(iSubj)]);
     end
 end
 out.NIRSmat = job.NIRSmat;
