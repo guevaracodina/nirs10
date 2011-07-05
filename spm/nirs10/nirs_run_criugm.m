@@ -151,9 +151,9 @@ for is=1:sN
             P.h    = 0;
             
             % Protocol
-                        if ~isempty(job.study_cfg.protocol{1,1}) && iU <= size(job.study_cfg.protocol,1)
+           if ~isempty(job.subj(1,is).protocol{:})
                 % Read "multiple conditions" file (.mat)
-                load(job.study_cfg.protocol{iU,1},'-mat');
+                load(job.subj(1,is).protocol{:},'-mat');
                 for kk = 1:size(names, 2)
                     NIRS.Dt.fir.Sess(iU).U(kk).name = names(kk);
                     NIRS.Dt.fir.Sess(iU).U(kk).ons = onsets{kk};
