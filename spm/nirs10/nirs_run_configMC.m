@@ -24,6 +24,7 @@ function out = nirs_run_configMC(job)
 %_______________________________________________________________________
 % Copyright (C) 2010 Laboratoire d'Imagerie Optique et Moleculaire
 % Clement Bonnery
+
 %Overwrite to fix path
 job.MC_configdir = 'MC';
 
@@ -53,6 +54,7 @@ for Idx=1:size(job.NIRSmat,1)
         cs.alg = job.MC_CUDAchoice;%1=MCX ; 2=tMCimg
         cs.dir = [job.MC_configdir csn];
         cs.par = job.MC_parameters;
+        cs.NSinit = NIRS.Cf.H.S.N;
 
         if isfield(job.mcim_cfg,'mcim_in')% image segmentee de l'anatomique de base
             roi =0;% image choisie
@@ -125,7 +127,7 @@ for Idx=1:size(job.NIRSmat,1)
 
         %%%%%%% appliquer ca sur le 8bit !!!!!!!!!
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % if job.MC_CUDAchoice==1 % MCX : sources et detecteurs doivent etre DANS
+         if job.MC_CUDAchoice==1 % MCX : sources et detecteurs doivent etre DANS
         % le volume
         %%%%%%%%%%%%%%%%%%%%
         % pour MCX, ca n'a pas d'effet... peut etre on projette pas sur la bonne
@@ -140,7 +142,7 @@ for Idx=1:size(job.NIRSmat,1)
             jobF.lby = 'configMC';
             outF = nirs_fit_probe(jobF);
             Pfp_ancienne_rmiv = outF{1};
-        % end
+         end
 
         % Directions
         Pd_rmm = cs.Pp_rmm - cs.Pp_c1_rmm;
@@ -220,6 +222,7 @@ for Idx=1:size(job.NIRSmat,1)
             jobW.ROIlimits = [1 1 1; dim_rmiv];
 
             jobW.parameters = parameters;
+            jobW.NSinit = cs.NSinit;
             jobW.NS = cs.NSkpt;
             jobW.ND = cs.NDkpt;
             jobW.Pvoid = Pvoid;
