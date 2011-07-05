@@ -17,6 +17,7 @@ function out = nirs_configMC_writeCFGfiles(job)
 % Copyright (C) 2010 Laboratoire d'Imagerie Optique et Moleculaire
 
 algo = job.algo;
+NSinit = job.NSinit;
 NS = job.NS;
 ND = job.ND;
 Pvoid = job.Pvoid;
@@ -32,7 +33,7 @@ for iP = 1:NS+ND
         if iP<=NS
             if iP<10, PNo = ['S_No' num2str(0) num2str(Pkpt(iP))]; else PNo = ['S_No' num2str(Pkpt(iP))]; end
         else
-            if iP<NS+10, PNo = ['D_No' num2str(0) num2str(Pkpt(iP-NS))]; else PNo = ['D_No' num2str(Pkpt(iP-NS))]; end
+            if iP<NS+10, PNo = ['D_No' num2str(0) num2str(Pkpt(iP)-NSinit)]; else PNo = ['D_No' num2str(Pkpt(iP)-NSinit)]; end
         end
         
         if algo==2 % tMCimg
