@@ -1,5 +1,5 @@
 function out = nirs_run_coreg_2templateT1(job)
-% Clement
+% Clement Bonnery
 
 % Loop over subjects
 for iSubj=1:size(job.NIRSmat,1)
