@@ -9,7 +9,7 @@ function out = nirs_run_MCsegment(job)
 %outVsegmented = {};
 outNIRSmat = {};
 try
-    outNIRSmat = job.NIRSmat_optional;
+    outNIRSmat = job.NIRSmat_optional;%%%%%%%job.NIRSmat_optional;
     nsubj = length(outNIRSmat);
     NIRSok = 1;
 catch

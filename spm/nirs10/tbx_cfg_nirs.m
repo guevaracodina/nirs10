@@ -1349,7 +1349,7 @@ MCsegment1.name = 'MC Segmentation';
 
 MCsegment1.val  = {NIRSmat_optional DelPreviousData NewDirCopyNIRS image_in output_autonaming ...
     output_prefix skn skl csf grm wtm thresh_as head_shadow ...
-    rebel_surrounding rebel_thresh_hs process_image};
+    rebel_surrounding rebel_thresh_hs process_image}; %%%%%% pk NIRSmat_optional ???
 MCsegment1.prog = @nirs_run_MCsegment;
 MCsegment1.vout = @nirs_cfg_vout_MCsegment;
 MCsegment1.help = {'Segmentation for Monte Carlo simulation and sorting ',...
@@ -1513,13 +1513,13 @@ end
 % Coreg vers le template T1
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 coreg2      = cfg_exbranch;       
-coreg2.name = 'NIRScoreg2';             
-coreg2.tag  = 'coreg1'; 
+coreg2.name = 'NIRScoreg with T1 template';             
+coreg2.tag  = 'coreg2'; 
 coreg2.val  = {NIRSmat DelPreviousData NewDirCopyNIRS anatT1 segT1_4fit ...
     anatT1_template fid_in_subject_MNI nasion_wMNI AL_wMNI AR_wMNI GenDataTopo};    
 coreg2.prog = @nirs_run_coreg_2templateT1;  
 coreg2.vout = @nirs_cfg_vout_coreg2; 
-coreg2.help = {'Automatic coregistration.'};
+coreg2.help = {'Automatic coregistration with T1 template. Use this choice in the case you don''t have the anatomical T1 images of the subject.'};
 
 %make NIRS.mat available as a dependency
 function vout = nirs_cfg_vout_coreg2(job)
