@@ -31,9 +31,9 @@ wl = job.wl;
 for iP = 1:NS+ND
     if isempty(Pvoid) || ~Pvoid(1,iP) %skip optodes with no data &&&'nS',iS,wl(iwl)
         if iP<=NS
-            if iP<10, PNo = ['S_No' num2str(0) num2str(Pkpt(iP))]; else PNo = ['S_No' num2str(Pkpt(iP))]; end
+            if Pkpt(iP)<10, PNo = ['S_No' num2str(0) num2str(Pkpt(iP))]; else PNo = ['S_No' num2str(Pkpt(iP))]; end
         else
-            if iP<NS+10, PNo = ['D_No' num2str(0) num2str(Pkpt(iP)-NSinit)]; else PNo = ['D_No' num2str(Pkpt(iP)-NSinit)]; end
+            if Pkpt(iP)-NSinit<10, PNo = ['D_No' num2str(0) num2str(Pkpt(iP)-NSinit)]; else PNo = ['D_No' num2str(Pkpt(iP)-NSinit)]; end
         end
         
         if algo==2 % tMCimg
