@@ -105,8 +105,8 @@ for Idx=1:size(job.NIRSmat,1)
                 case 1 % MCX
                     % already normalized (http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/README : 6.1 output files)
                     %%%%%%%%%ERREUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUR
-                   % numgates = min(cs.numTimeGates,MCX_g);
-                   numgates = min(cs.numTimeGates);
+                   numgates = min(cs.numTimeGates,MCX_g);
+%                    numgates = min(cs.numTimeGates);
 
                     ms4=loadmc2(fS{fiS,:},[V_segR.dim numgates],'float');
                     ms=sum(ms4,4);

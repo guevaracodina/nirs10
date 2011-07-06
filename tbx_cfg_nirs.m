@@ -2792,7 +2792,7 @@ outMCfiles.name    = 'Select MC output files';
 outMCfiles.tag     = 'outMCfiles';
 outMCfiles.ufilter = {'.2pt','.mc2'};    
 outMCfiles.num     = [0 Inf];
-outMCfiles.val  = {0};
+outMCfiles.val     = {};
 outMCfiles.help    = {'Select .mc2 or .2pt files for this subject.'}; 
 
 % Executable Branch
@@ -2818,11 +2818,11 @@ end
 dir_in         = cfg_files;
 dir_in.tag     = 'dir_in';
 dir_in.name    = 'MonteCarlo output directory';
+dir_in.help    = {'Select the MonteCarlo simulation output directory.'};
 dir_in.filter = 'dir';
+dir_in.val{1} = {''};
 dir_in.ufilter = '.*';
 dir_in.num     = [0 1];
-dir_in.val  = {0}; 
-dir_in.help    = {'Select the MonteCarlo simulation output directory.'};
 
 % historyfiles         = cfg_files;
 % historyfiles.name    = 'Monte Carlo history files';
