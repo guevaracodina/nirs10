@@ -41,23 +41,28 @@ alpha = -4.3 * nu0 * TE * V0 * OEF0 / HbR0; % Facteur de calibration du BOLD(rel
 %  V = nombre de voxels dans le volume de simulation Monte-Carlo
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% DelPreviousData  = job.DelPreviousData;
-% try
-%     NewNIRSdir = job.NewDirCopyNIRS.CreateNIRSCopy.NewNIRSdir;
-%     NewDirCopyNIRS = 1;
-% catch
-%     NewDirCopyNIRS = 0;
-% end
+DelPreviousData  = job.DelPreviousData;
+try
+    NewNIRSdir = job.NewDirCopyNIRS.CreateNIRSCopy.NewNIRSdir;
+    NewDirCopyNIRS = 1;
+catch
+    NewDirCopyNIRS = 0;
+end
 % Loop over subjects
 for iSubj=1:size(job.NIRSmat,1)
-    
     % Load NIRS.mat
     try
         NIRS = [];
         load(job.NIRSmat{iSubj,1});
         
+        if isempty(job.dir_in{:})
+            [dir_in, dummy1, dummy2] = fileparts(job.NIRSmat{iSubj,1});
+        else
+            dir_in = job.dir_in{:};
+        end
+        
         % gets current simulation cs
-        sep = strfind(job.dir_in{:},'\');
+        sep = strfind(dir_in,'\');
         csn = dir_in(sep(end-1)+3:sep(end)-1);
         itest=1;
         while itest<length(NIRS.Cs.n) && (isempty(strfind(csn,NIRS.Cs.n{itest})) || length(csn)~=length(NIRS.Cs.n{itest}))
@@ -66,16 +71,14 @@ for iSubj=1:size(job.NIRSmat,1)
         i_cs =itest;
         cs = NIRS.Cs.mcs{i_cs};
         
-        % dir
-        % [t,dummy] = spm_select('FPList',cs_dir,'.cfg');
-        % files
-        f = job.historyfiles;
-        
         switch cs.alg
             case 1 %MCX
-%                 for i=1:size(1)
-%                 [data, header]=loadmch();
-%                 end
+                [t,dummy] = spm_select('FPList',fullfile(cs.p,cs.dir),'.mch');
+                for i=1:size(t,1)
+                    [data, header]=loadmch(t(i,:));
+                end
+                
+                
             case 2 %tMCimg
                 
                 % ----------------------------------------------------------------------- %
