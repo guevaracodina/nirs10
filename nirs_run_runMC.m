@@ -74,19 +74,19 @@ for Idx=1:size(job.NIRSmat,1)
                     cd(dir1);
                     
                     if k1 == 1
-                         copyfile([spm('Dir') '\toolbox\nirs10\mc_exe\mcx_det.exe'],[dir1 '\mcx_det.exe']);
+                         copyfile([spm('Dir') '\toolbox\nirs10\mc_exe\mcx_det_1.exe'],[dir1 '\mcx_det_1.exe']);
                     end
                     %                 str_run1 = ['mcx.exe -t ' int2str(J.MCX_t) ' -T ' int2str(J.MCX_T) ' -n ' int2str(cs.par.nphotons)];
-                    str_run1 = ['mcx_det.exe -A 2 -n ' int2str(cs.par.nphotons)];
+                    str_run1 = ['mcx_det_1.exe -A 2 -n ' int2str(cs.par.nphotons)];
                     if J.MCX_l
                         str_log = ' -l'; %'MCX_logfile';
                     else
                         str_log = '';
                     end
-                    str_run2 = [' -r ' int2str(J.MCX_r) ' -g ' int2str(J.MCX_g) ' -U 1 -S 1 -d 1 -H 1000000 -a 0 -b 0'];
+                    str_run2 = [' -r ' int2str(J.MCX_r) ' -g ' int2str(J.MCX_g) ' -U 1 -S 1 -d 1 -a 0 -b 0'];
                     res = system([str_run1 ' -f ' file2 ' -s ' file1 str_run2 str_log]);
                 end
-                delete([dir1 '\mcx_det.exe']);
+                delete([dir1 '\mcx_det_1.exe']);
                 
             case 2 %tMCimg
                 [t,dummy] = spm_select('FPList',cs_dir,'.cfg');
