@@ -349,18 +349,18 @@ no_helmet.name = 'No helmet information';
 no_helmet.tag  = 'no_helmet';
 no_helmet.help = {'Helmet informations will be extracted from ''.nirs'' file.'};
 
-custom         = cfg_files;
-custom.tag     = 'custom';
-custom.name    = 'Custom informations';
-custom.help = {'You only have ''.nirs'' files but you need to have a good topographic position of the fibers linked to sources and detectors. The template will be selected as T1 image by default. Choose here the directory containing Hcoregistered and TopoData (coregistration won''t need to be done)'};
-custom.filter  = 'dir';
-custom.ufilter = '.*';
-custom.num     = [1 1];
+% custom         = cfg_files;
+% custom.tag     = 'custom';
+% custom.name    = 'Custom informations';
+% custom.help = {'PLEASE USE  ''Respective T1 or template''. No more used :You only have ''.nirs'' files but you need to have a good topographic position of the fibers linked to sources and detectors. The template will be selected as T1 image by default. Choose here the directory containing Hcoregistered and TopoData (coregistration won''t need to be done)'};
+% custom.filter  = 'dir';
+% custom.ufilter = '.*';
+% custom.num     = [1 1];
 
 helmet         = cfg_choice;
 helmet.tag     = 'helmet';
 helmet.name    = 'Helmet';
-helmet.values = {text_brainsight T1_vitamins no_helmet custom};
+helmet.values = {text_brainsight T1_vitamins no_helmet};%custom
 helmet.val     = {text_brainsight};
 helmet.help    = {'If you choose a Brainsight text file, it will be used to determine all you need about sources, detectors and other points of interest.'};
 
@@ -432,10 +432,46 @@ study_path.values    = {existing_study choose_path};%choose_path
 study_path.val       = {existing_study}; 
 study_path.help      = {'Choose the study the subject belongs to or specify a path (entire name should look like .\study_name).'}; 
 
+respdata_chosen      = cfg_branch; 
+respdata_chosen.name = 'One set of data per subject';
+respdata_chosen.tag  = 'respdata_chosen';
+respdata_chosen.help = {'You will have to choose one T1 image in the field ''Raw anatomical image'' and one helmet in the field ''Helmet->Text file from Brainsight.''.'};
+
+anatT1_template         = cfg_files; 
+anatT1_template.name    = 'Anatomical template image'; 
+anatT1_template.tag     = 'anatT1_template';       %file names
+anatT1_template.filter  = 'image';  
+anatT1_template.ufilter = '.*';
+anatT1_template.def = @(val)nirs_get_defaults('coregNIRS.coreg1.anatT1_template', val{:});
+anatT1_template.num     = [1 1];     % Number of inputs required 
+anatT1_template.help    = {'Select anatomical template image for this subject.'};
+
+anatT1_subj0         = cfg_files; 
+anatT1_subj0.name    = 'Anatomical image of subject 0'; 
+anatT1_subj0.tag     = 'anatT1_subj0';
+anatT1_subj0.filter  = 'image';  
+anatT1_subj0.ufilter = '.*';
+anatT1_subj0.num     = [1 1];
+anatT1_subj0.help    = {'Select anatomical template image for the subject 0.'};
+
+template_chosen      = cfg_branch;
+template_chosen.tag  = 'template_chosen';
+template_chosen.name = 'Template';
+template_chosen.val  = {anatT1_subj0 text_brainsight}; 
+template_chosen.help = {'You must have a T1 image and a Brainsight registration of the right helmet for one subject (called subject 0).'};
+
+respectivedata        = cfg_choice;
+respectivedata.name   = 'Respective data or template for all';
+respectivedata.tag    = 'respectivedata';
+respectivedata.values = {template_chosen respdata_chosen};%choose_path
+respectivedata.val    = {respdata_chosen}; 
+respectivedata.help   = {['Respective data allows you to choose data for each of the subject.'...
+    'Template for all allows you to use one coregistration for all your subjects. You will need one T1 image and the registration of the helmet on the same person.']}; 
+
 study_cfg         = cfg_branch;
 study_cfg.tag     = 'study_cfg';
 study_cfg.name    = 'Study configuration';
-study_cfg.val     = {study_path}; 
+study_cfg.val     = {study_path respectivedata}; 
 study_cfg.help    = {''};
 
 subj         = cfg_branch;
@@ -1389,15 +1425,6 @@ segT1_4fit.help    = {['(Optional) Choose the segmented image ',...
     'the order of the subjects in the NIRS.mat matrix. ',...
     'If no input image is specified, the segmented image available in the ',...
     'NIRS matrix will be used (last one generated in MCsegment module).']};      
-
-anatT1_template         = cfg_files; 
-anatT1_template.name    = 'Anatomical template image'; 
-anatT1_template.tag     = 'anatT1_template';       %file names
-anatT1_template.filter  = 'image';  
-anatT1_template.ufilter = '.*';
-anatT1_template.def = @(val)nirs_get_defaults('coregNIRS.coreg1.anatT1_template', val{:});
-anatT1_template.num     = [1 1];     % Number of inputs required 
-anatT1_template.help    = {'Select anatomical template image for this subject.'}; 
 
 fid_in_subject_MNI = cfg_menu;
 fid_in_subject_MNI.tag    = 'fid_in_subject_MNI';

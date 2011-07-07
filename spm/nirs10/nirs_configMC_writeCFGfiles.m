@@ -172,8 +172,8 @@ for iP = 1:NS+ND
             %             Rwd_rmiv = Rwd_rmiv(1:3,:);
             Rr = r(1,[1:iP-1 iP+1:NS+ND]);
             Rn = (1:size(Rr,2));
-            fprintf(fid,'%g %s            # detector number and radius (mm)\n',...
-                size(Rr,2),'0.4');
+            fprintf(fid,'%g %g            # detector number and radius (mm)\n',...
+                size(Rr,2),job.P.Dr);
             for iR=1:size(Rr,2)
                 fprintf(fid,'%.1f	%.1f	%.1f  # detector %g position (mm)\n',...
                     Rp_rmiv(:,iR),Rn(iR));
