@@ -1,19 +1,13 @@
 function out = nirs_run_coreg_2templateT1(job)
 % Clement Bonnery
 
-% Loop over subjects
-for iSubj=1:size(job.NIRSmat,1)
+% Only one subject !!
     
-    % Load NIRS.mat
+    % don't load NIRS.mat
     try
         NIRS = [];
-        load(job.NIRSmat{iSubj,1});
-        load(job.sd_C{:});
-        NIRS.Cf.H.C = C;
-        save(job.NIRSmat{iSubj,1},'NIRS');
-        
-        NIRS=[];
-        load(job.NIRSmat{iSubj,1});
+        load(job.NIRSmat{:});
+
         % SPATIAL NORMALIZATION OF ANATOMICAL IMAGE
         % Allow user-specified image of subject to overwrite previous
         % anatomical image in NIRS.mat; unlikely to ever happen
@@ -116,7 +110,7 @@ for iSubj=1:size(job.NIRSmat,1)
         % Store coregistration error
         err = y - estY;
         errVal = sum(err(:).^2);
-        disp(['Error Value for subject ' int2str(iSubj) ': ' num2str(errVal)]);
+        disp(['Error Value for the 0th subject : ' num2str(errVal)]);
         NIRS.Dt.pro.errValofCoreg_mm2 = errVal;
         
         % Apply the same transformation to all points in order to
@@ -192,9 +186,9 @@ for iSubj=1:size(job.NIRSmat,1)
         NIRS.Cs.temp.NSkpt = size(Sp_rom,2);
         NIRS.Cs.temp.NDkpt = size(Dp_rom,2);
         
-        save(job.NIRSmat{iSubj},'NIRS');
+        save(job.NIRSmat{:},'NIRS');
     catch
-        disp(['Coregistration failed for the ' int2str(iSubj) 'th subject.']);
+        disp(['Coregistration failed for the 0th subject.']);
     end
     
     % affichage 3D
@@ -279,9 +273,7 @@ for iSubj=1:size(job.NIRSmat,1)
     
     saveas(gcf,fullfile(NIRS.Dt.s.p,'coreg_3Dview.fig'));
     close(gcf);
-end
-out.NIRSmat = job.NIRSmat;
-
+out.NIRSmat = job.NIRSmat{:};
 
 function [s R t] = abs_orientation(x,y)
 % y = sR(x) + t

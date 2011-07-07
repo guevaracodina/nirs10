@@ -247,6 +247,7 @@ for Idx=1:size(job.NIRSmat,1)
             P.Pkpt = cs.Pkpt;
             P.wd = -Pwd_rmiv(1:3,:); %to point toward the inside of brain
             P.r = [Sr' Dr' zeros(1,NP -(cs.NSkpt+cs.NDkpt))];
+            P.Dr = job.MC_parameters.radiid;
             jobW.P =P;
             jobW.wl = NIRS.Cf.dev.wl(iwl);
 
