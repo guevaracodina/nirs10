@@ -6,6 +6,7 @@ try
 catch
     chan_len = 40;
 end
+all_channels = 1;
 half_chan_len = chan_len/2;
 quarter_chan_len = chan_len/4;
 generate_ROC_curves = 1; %Boolean
@@ -76,7 +77,8 @@ try
     else
         for i1=1:size(v2a,1)
             for j1=1:size(v2a,2)
-                Volt2{i1,j1} = v2a(i1,j1);
+                %careful - transposed here... usually only one subject
+                Volt2{j1,i1} = v2a(i1,j1);
             end
         end 
     end       
@@ -419,6 +421,14 @@ for Idx=1:nSubj
                             FPu2Rl{Jidx,Idx} = [];
                         end
                     end
+                    if all_channels
+                        %1st Volterra
+                        TPu1A{Jidx,Idx} = [];
+                        FPu1A{Jidx,Idx} = [];
+                        %2nd Volterra
+                        TPu2A{Jidx,Idx} = [];
+                        FPu2A{Jidx,Idx} = [];
+                    end
                     %
                     try
                         Volt2_positive_ttest = Volt2{Jidx,Idx};
@@ -438,6 +448,10 @@ for Idx=1:nSubj
                             TPu1u{Jidx,Idx} = [TPu1u{Jidx,Idx} prctile(v,75)-median(v)];
                             TPu1l{Jidx,Idx} = [TPu1l{Jidx,Idx} median(v)-prctile(v,25)];
                         end
+                        if all_channels
+                            %1st Volterra
+                            TPu1A{Jidx,Idx} = [TPu1A{Jidx,Idx} v];
+                        end
                         %2nd Volterra
                         [u v] = count_TP_FP(IN,[1:half_chan_len],...
                             t2,alpha_bonf_TPn,alpha_unc,erdf,true,Volt2_positive_ttest,byIter); 
@@ -446,6 +460,10 @@ for Idx=1:nSubj
                         if compute_LU
                             TPu2u{Jidx,Idx} = [TPu2u{Jidx,Idx} prctile(v,75)-median(v)];
                             TPu2l{Jidx,Idx} = [TPu2l{Jidx,Idx} median(v)-prctile(v,25)];
+                        end
+                        if all_channels
+                            %2nd Volterra
+                            TPu2A{Jidx,Idx} = [TPu2A{Jidx,Idx} v];
                         end
                         %False Positive
                         %1st Volterra
@@ -459,6 +477,10 @@ for Idx=1:nSubj
                             FPu1u{Jidx,Idx} = [FPu1u{Jidx,Idx} prctile(v,75)-median(v)];
                             FPu1l{Jidx,Idx} = [FPu1l{Jidx,Idx} median(v)-prctile(v,25)];
                         end
+                        if all_channels
+                            %1st Volterra
+                            FPu1A{Jidx,Idx} = [FPu1A{Jidx,Idx} v];
+                        end
                         %2nd Volterra
                         [u v ] = count_TP_FP(IN,[(half_chan_len+1):chan_len],...
                             t2,alpha_bonf_FPn,alpha_unc,erdf,false,false,byIter); 
@@ -467,6 +489,10 @@ for Idx=1:nSubj
                         if compute_LU
                             FPu2u{Jidx,Idx} = [FPu2u{Jidx,Idx} prctile(v,75)-median(v)];
                             FPu2l{Jidx,Idx} = [FPu2l{Jidx,Idx} median(v)-prctile(v,25)];
+                        end
+                        if all_channels
+                            %1st Volterra
+                            FPu2A{Jidx,Idx} = [FPu2A{Jidx,Idx} v];
                         end
                         if compute_OR
                             %For HbO and HbR separately
@@ -606,7 +632,12 @@ else
         save(fullfile(dirROC,'ROC.mat'),'T','TPb1','FPb1','TPu1','FPu1','TPb2','FPb2','TPu2','FPu2',...
             'TPu1u','FPu1u','TPu2u','FPu2u','TPu1l','FPu1l','TPu2l','FPu2l');
     else
-        save(fullfile(dirROC,'ROC.mat'),'T','TPb1','FPb1','TPu1','FPu1','TPb2','FPb2','TPu2','FPu2');
+        if ~all_channels
+            save(fullfile(dirROC,'ROC.mat'),'T','TPb1','FPb1','TPu1','FPu1','TPb2','FPb2','TPu2','FPu2');
+        else
+            save(fullfile(dirROC,'ROC.mat'),'T','TPb1','FPb1','TPu1','FPu1','TPb2','FPb2','TPu2','FPu2',...
+                'TPu1A','FPu1A','TPu2A','FPu2A');
+        end
     end
 end
 end 

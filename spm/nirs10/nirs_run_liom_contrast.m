@@ -19,9 +19,14 @@ views_to_run = job.view;
 % 5: 'frontal'
 % 6: 'occipital'
 
-%User-specified contrasts - old-type only
-contrast_data = job.contrast_data;
-
+%User-specified contrasts - old-type only - T-contrasts only - option no longer used
+%Was useful to generate additional contrasts on top of automated contrasts
+%But did not include F-contrasts
+try 
+    contrast_data = job.contrast_data;
+catch
+    contrast_data = []; 
+end
 %Options
 try
     GroupColorbars = job.GroupColorbars;
@@ -37,6 +42,11 @@ try
     write_neg_pos = job.write_neg_pos;
 catch
     write_neg_pos = 0;
+end
+try
+    GroupMultiSession = job.GroupMultiSession;
+catch
+    GroupMultiSession = 0;
 end
 %When there are two or more sessions
 %1: contrasts defined over more than 1 session are ignored
@@ -118,6 +128,20 @@ if ~isempty(contrast_data) || ~isempty(job.consess)
 else
     automated_contrasts = 1;
 end
+%Gaussian spatial LPF
+try 
+    radius = job.spatial_LPF.spatial_LPF_On.spatial_LPF_radius;
+    spatial_LPF = 1;
+catch
+    spatial_LPF = 0;
+end
+%New directory
+try 
+    NewNIRSdir = job.NewDirCopyNIRS.CreateNIRSCopy.NewNIRSdir;
+    NewDirCopyNIRS = 1;
+catch
+    NewDirCopyNIRS = 0;
+end
 
 %Loop over all subjects
 for Idx=1:size(job.NIRSmat,1)
@@ -145,6 +169,16 @@ for Idx=1:size(job.NIRSmat,1)
         ftopo = fullfile(dir1,'TOPO.mat');
         TOPO = [];
         try load(ftopo); end
+        if NewDirCopyNIRS
+            [dirN fil1 ext1] =fileparts(job.NIRSmat{Idx,1});
+            dir2 = [dirN filesep NewNIRSdir];
+            if ~exist(dir2,'dir'), mkdir(dir2); end;
+            newNIRSlocation = fullfile(dir2,'NIRS.mat');
+            job.NIRSmat{Idx,1} = newNIRSlocation;  
+            [dir fil1 ext1] = fileparts(ftopo);
+            ftopo = fullfile(dir2, [fil1 ext1]);
+            dir1 = dir2;
+        end
         %Structure for passing more generic data
         Z = [];
         Z.gen_fig = gen_fig;
@@ -158,10 +192,6 @@ for Idx=1:size(job.NIRSmat,1)
         Z.output_unc = output_unc;
         Z.SmallFigures = SmallFigures;
         Z.write_neg_pos = write_neg_pos;
-%         Z.fh0Pt = [];
-%         Z.fh0Pu = [];
-%         Z.fh0Nt = [];
-%         Z.fh0Nu = [];
         Pt = [];
         Pu = [];
         Nt = [];
@@ -179,7 +209,6 @@ for Idx=1:size(job.NIRSmat,1)
                 tmp2 = blkdiag(tmp2,SPM.xXn{i1}.X);
                 %residual sum of squares of full model
                 tmp3 = tmp3 + SPM.xXn{i1}.ResSS;
-                %tmp4 = tmp4 +SPM.xXn{i1}.erdf;
                 tmp5 = tmp5 + SPM.xXn{i1}.trRV;
                 tmp6 = tmp6 + SPM.xXn{i1}.trRVRV;
                 tmp7 = blkdiag(tmp7,SPM.xXn{i1}.Bcov);          
@@ -444,12 +473,6 @@ for Idx=1:size(job.NIRSmat,1)
         %Single session contrasts
         SSxCon = SS_SPM.xCon;
         
-        %Merge spm contrasts with automated or older contrasts
-%         try
-%             for i1=1:length(SPM.xCon)
-%                 xCon(end+1) = SPM.xCon(i1);
-%             end
-%         end        
         %Big loop over views 
         for v1=1:size(views_to_run,2)
             try
@@ -486,6 +509,8 @@ for Idx=1:size(job.NIRSmat,1)
                 W.s2 = size(brain, 2);
                 %find channels which are visible from this projection view
                 W.index_ch = find(rchn ~= -1);
+                W.spatial_LPF = spatial_LPF;
+                W.radius = radius;
                 if isempty(W.index_ch)
                     TOPO.v{side_hemi}.Warning = 'No channel found for this view';
                     disp(['No channel for view ' int2str(v1) ': Probable coregistration problem. Skipping this view']);
@@ -517,21 +542,22 @@ for Idx=1:size(job.NIRSmat,1)
                     W.side_hemi = side_hemi;
                     
                     if  ~(ProcessContrastsBySession == 1) %case 0 or 2
-                        %REMOVE contrasts of wrong length
-                        nC = length(xCon);
-                        nCon = [];
-                        for j1=1:nC
-                            tc = xCon(j1).c;
-                            if size(tc,1) == length(SPM.xXn)*nr
-                                %keep this contrast
-                                if isempty(nCon)
-                                    nCon = xCon(j1);
-                                else
-                                    nCon(end+1) = xCon(j1);
+                        if ~GroupMultiSession
+                            %REMOVE contrasts of wrong length
+                            nC = length(xCon);
+                            nCon = [];
+                            for j1=1:nC
+                                tc = xCon(j1).c;
+                                if size(tc,1) == length(SPM.xXn)*nr
+                                    %keep this contrast
+                                    if isempty(nCon)
+                                        nCon = xCon(j1);
+                                    else
+                                        nCon(end+1) = xCon(j1);
+                                    end
                                 end
                             end
-                        end
-                        
+                        end                        
                         %group of sessions
                         if GFIS
                             Pt = figure('Visible',cbar.visible,'Name',['A_tube_' ...
@@ -653,21 +679,27 @@ for Idx=1:size(job.NIRSmat,1)
                 TOPO.v{side_hemi}.s1 = W.s1; %sizes of topographic projection
                 TOPO.v{side_hemi}.s2 = W.s2;
                 TOPO.v{side_hemi}.view = spec_hemi; %%% view of the brain
-            catch
+            catch exception
+                disp(exception);
                 disp(['Could not create contrasts for view ' spec_hemi ' for subject ' int2str(Idx)]);
             end
         end %end for v1
         %TOPO.SPM = SPM; %save modified SPM - too big - not required
+              
         try TOPO.xX = SPM.xX; end
         TOPO.xCon = xCon; %would not work if new contrasts are later added 
         TOPO.SSxCon = SSxCon;
-        save(ftopo,'TOPO','-v7.3'); %file can be large
+        save(ftopo,'TOPO','-v7.3'); %file can be large - really?
     catch exception
         disp(exception);
         disp(['Could not create contrasts for subject' int2str(Idx)]);
     end
     NIRS.TOPO = ftopo;
-    save(job.NIRSmat{Idx,1},'NIRS');
+    if NewDirCopyNIRS
+        save(newNIRSlocation,'NIRS');
+    else
+        save(job.NIRSmat{Idx,1},'NIRS');
+    end
 end
 out.NIRSmat = job.NIRSmat;
 end
@@ -794,6 +826,14 @@ end
 for c1 = 1:nC %not for F contrasts...
     tm = kappa(c1,:,:);
     sum_kappa(c1) = sum(tm(:)); 
+end
+if W.spatial_LPF
+    K.k1 = s1;
+    K.k2 = s2;
+    K.radius = W.radius;
+    K = spatial_LPF('set',K);
+    c_interp_beta = spatial_LPF('lpf',K,c_interp_beta);
+    c_cov_interp_beta = spatial_LPF('lpf',K,c_cov_interp_beta);    
 end
 C.sum_kappa = sum_kappa;
 C.c_interp_beta = c_interp_beta;
@@ -925,7 +965,13 @@ W.erdf = xX.erdf;
 gen_fig = Z.gen_fig;
 gen_tiff = Z.gen_tiff;
 nC = size(xCon,2);
-wX = xX.xKXs.X;
+try
+    wX = xX.xKXs.X;
+catch
+    wX = xX.xKXs; %quick fix for GroupMultiSessions - more properly, full xKXs 
+    %structure needs to be generated at the subject level from the
+    %multisessions, in order to treat F contrasts
+end
 %Complete xCon structure for F contrasts (fields h and trRV)
 for c1 = 1:nC
     if xCon(c1).STAT == 'F'

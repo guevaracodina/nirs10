@@ -331,6 +331,8 @@ for Idx=1:size(job.NIRSmat,1)
                         %Careful, this data may include HbT, therefore may
                         %have 50% more channels than the user expected...
                         fwrite_NIR(outfile,temp(:)); 
+                        SPM.xY.Pf{iSPM,1} = outfile; %filtered 
+                        SPM.xY.Cf = size(temp,1); %number of filtered channels stored
                         NIRS.Dt.fir.pp(nlst+1).p{iSPM,1} = outfile;
                         catch exception
                             disp(exception);
