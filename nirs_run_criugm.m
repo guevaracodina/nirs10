@@ -96,7 +96,8 @@ try
         if isfield(job.subj(1,is).helmet,'text_brainsight') || template4all% Reading subject-specific setup from BrainSight file
             if template4all
                 staxp = job.study_cfg.respectivedata.template_chosen.text_brainsight{:};
-                NIRS.Dt.fir.stax.n = 'Brainsight(c) on subject 0';
+                NIRS.Dt.fir.stax.n = 'Brainsight(c)';
+                NIRS.Dt.fir.stax.nota = 'Brainsight template';
             else
                 staxp = job.subj(1,is).helmet.text_brainsight{:};
                 NIRS.Dt.fir.stax.n = 'Brainsight(c)';
@@ -123,23 +124,7 @@ try
             clear NIRS_Cf
             delete(fullfile(sDtp, 'NIRS_Cf.mat'));
             
-            if template4all
-                save(fullfile(study_p, 'NIRS4all.mat'),'NIRS');
-                matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.NIRSmat = {fullfile(study_p,'NIRS4all.mat')};
-                matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.DelPreviousData = 0;
-                matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.NewDirCopyNIRS.CreateNIRSCopy_false = struct([]);
-                matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.anatT1 = {[fullfile(fileparts(which('spm')),'templates','T1.nii') ',1']};
-                matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.segT1_4fit = {[fullfile(fileparts(which('spm')),'\toolbox\nirs10\nirs10_templates','00044_segmented_T1.nii') ',1']};
-                matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.anatT1_template = {[fullfile(fileparts(which('spm')),'templates','T1.nii') ',1']};
-                matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.fid_in_subject_MNI = 0;
-                matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.nasion_wMNI = [0 84 -48];
-                matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.AL_wMNI = [-83 -19 -38];
-                matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.AR_wMNI = [83 -19 -38];
-                matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.GenDataTopo = 1;
-                matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.render_choice.render_template = struct([]);
-                matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.View6Projections = 0;
-                spm_jobman('run_nogui',matlabbatch);
-            end
+            %%%ancienne position de template4all
             
         elseif isfield(job.subj(1,is).helmet,'T1_vitamins') && ~template4all
             NIRS.Dt.fir.stax.n = 'T1_vitamins';
@@ -209,10 +194,13 @@ try
                 P.name = 'none';
                 P.h    = 0;
                 
+                
+                %%%%%
                 % Protocol
-                if ~isempty(job.subj(1,is).protocol{:})
+                if ~isempty(job.subj(1,is).protocol{iU,:})
                     % Read "multiple conditions" file (.mat)
-                    load(job.subj(1,is).protocol{:},'-mat');
+                    clear names onsets durations;
+                    load(job.subj(1,is).protocol{iU,:},'-mat');
                     for kk = 1:size(names, 2)
                         NIRS.Dt.fir.Sess(iU).U(kk).name = names(kk);
                         NIRS.Dt.fir.Sess(iU).U(kk).ons = onsets{kk};
@@ -226,6 +214,34 @@ try
                     NIRS.Dt.fir.Sess(iU).U.P = P;
                 end
             end
+        end
+        
+        %%% on lance la coregistration pour le premier sujet uniquement
+        %%% avec les donnees du sujet 0
+        if template4all && is==1
+            save(fullfile(study_p, 'NIRS4all.mat'),'NIRS');
+            matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.NIRSmat = {fullfile(study_p,'NIRS4all.mat')};
+            matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.DelPreviousData = 0;
+            matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.NewDirCopyNIRS.CreateNIRSCopy_false = struct([]);
+            matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.anatT1 = {[fullfile(fileparts(which('spm')),'templates','T1.nii') ',1']};
+            matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.segT1_4fit = {[fullfile(fileparts(which('spm')),'\toolbox\nirs10\nirs10_templates','00044_segmented_T1.nii') ',1']};
+            matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.anatT1_template = {[fullfile(fileparts(which('spm')),'templates','T1.nii') ',1']};
+            matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.fid_in_subject_MNI = 0;
+            matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.nasion_wMNI = [0 84 -48];
+            matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.AL_wMNI = [-83 -19 -38];
+            matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.AR_wMNI = [83 -19 -38];
+            matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.GenDataTopo = 1;
+            matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.render_choice.render_template = struct([]);
+            matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.View6Projections = 0;
+            spm_jobman('run_nogui',matlabbatch);
+        end
+        
+        if template4all
+            NIRS4all = load(fullfile(study_p, 'NIRS4all.mat'));
+            NIRS.Cf.H = NIRS4all.NIRS.Cf.H;
+            NIRS.Dt.ana = NIRS4all.NIRS.Dt.ana;
+%             NIRS.Dt.pro.errValofCoreg_mm2 = NIRS4all.NIRS.Dt.pro.errValofCoreg_mm2;
+            copyfile(fullfile(study_p, 'TopoData.mat'),fullfile(sDtp, 'TopoData.mat'));
         end
         
         save(fullfile(sDtp, 'NIRS.mat'),'NIRS');
