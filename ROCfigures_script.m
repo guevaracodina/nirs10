@@ -11,22 +11,32 @@ if isfield(Z,'TPu1O')
 else
     compute_OR = 0;
 end
+if isfield(Z,'TPu1A')
+    all_channels = 1; 
+else
+    all_channels = 0;
+end
 line_choice = 1;
-figure_choice = 1;
+figure_choice =10;
 %1+3 or 4 plots
-plot4 = 1; %Boolean
-plotUL = 0;
+plot4 = 0; %Boolean
+plotUL = 1;
 %0: generic testing - 1 data set, 1st Volterra
+%14: using all channels, just ROC plot
 %1: figure for 1st Volterra
-%11: figure for different number of spikes
-%12: compare cano to gamma
-%10: figure for 1st Volterra - canonical HRF
+%12: V1 figure for different number of spikes
+%13: V2 figure for different number of spikes
+%10: figure for 1st Volterra - canonical HRF  - Also for HbO + HbR with
+%plotUL = 1
 %2: figure for 1st of 2 Volterra estimation
 %3: figure for 2nd of 2 Volterra estimation
+%21: WMDL 1st Volterra
+%31: WMDL 2nd Volterra
 %4: Compare negative 2nd to positive 2nd Volterra: figure for 2st of 2 Volterra estimation
 %5: Compare negative 2nd to positive 2nd Volterra: figure for 1nd of 2 Volterra estimation
 %6: Compare Gamma to Canonical HRF - 1st Volterra
 %61: Compare Neg and Pos
+%62: Compare V and noV
 %7: Compare Gamma to Canonical HRF - 2nd Volterra
 %8: Canonical HRF - figure for 1st of 2 Volterra estimation
 %9: Canonical HRF - figure for 2nd of 2 Volterra estimation
@@ -49,6 +59,24 @@ for Jidx=1:nJob
             %HbR
             meanROC=(Z.TPu1R{Jidx,Idx}(1:end-1)+Z.TPu1R{Jidx,Idx}(2:end))/2;
             ROCareaR{Jidx,Idx} = -sum(meanROC.*diff(Z.FPu1R{Jidx,Idx}));
+            %HbO
+            meanROC=(Z.TPu2O{Jidx,Idx}(1:end-1)+Z.TPu2O{Jidx,Idx}(2:end))/2;
+            ROCareaO2{Jidx,Idx} = -sum(meanROC.*diff(Z.FPu2O{Jidx,Idx}));
+            %HbR
+            meanROC=(Z.TPu2R{Jidx,Idx}(1:end-1)+Z.TPu2R{Jidx,Idx}(2:end))/2;
+            ROCareaR2{Jidx,Idx} = -sum(meanROC.*diff(Z.FPu2R{Jidx,Idx}));
+        end
+        if all_channels
+            Nch = size(Z.FPu1A{Jidx,Idx},1);
+            ROCarea1A = zeros(1,Nch);
+            ROCarea2A = zeros(1,Nch);
+            
+            for i=1:Nch
+                meanROC=(Z.TPu1A{Jidx,Idx}(i,1:end-1)+Z.TPu1A{Jidx,Idx}(i,2:end))/2;
+                ROCarea1A(i) =  -sum(meanROC.*diff(Z.FPu1A{Jidx,Idx}(i,:)));
+                meanROC=(Z.TPu2A{Jidx,Idx}(i,1:end-1)+Z.TPu2A{Jidx,Idx}(i,2:end))/2;
+                ROCarea2A(i) =  -sum(meanROC.*diff(Z.FPu2A{Jidx,Idx}(i,:)));
+            end
         end
     end
 end
@@ -135,6 +163,43 @@ switch figure_choice
         end
         boxplot(tmp,'notch','on','labels',BPL); 
         hold off
+    case 14
+        figure; hold on
+        %if plot4
+        %    subplot(2,2,1)
+            title('ROC curves'); hold on
+        %end 
+        box on; hold on
+        xlabel('1-Specificity');
+        ylabel('Sensitivity'); hold on
+        Jidx = 1;
+        %h = [];
+        for nch=1:Nch
+            if nch <= Nch/2
+                h1 = plot(Z.FPu1A{Jidx,Idx}(nch,:),Z.TPu1A{Jidx,Idx}(nch,:),':r'); hold on
+            else
+                h2 = plot(Z.FPu1A{Jidx,Idx}(nch,:),Z.TPu1A{Jidx,Idx}(nch,:),'-b'); hold on          
+            end
+        end
+        legend([h1 h2],'HbO','HbR')
+        %if plot4
+        %    subplot(2,2,2);
+        %else
+            figure; 
+        %    subplot(1,3,1);
+        %end
+    
+        title('ROC Area'); hold on
+          
+        Idx=1;
+        Jidx=1;
+%          tmp = [ROCarea1A' ROCarea2A']; 
+%         BPL = {'V1','V2'};
+        tmp = [ROCarea1A(1:Nch/2)' ROCarea1A(1+Nch/2:Nch)' ...
+               ROCarea2A(1:Nch/2)' ROCarea2A(1+Nch/2:Nch)']; 
+        BPL = {'O1','R1','O2','R2'};
+        boxplot(tmp,'notch','on','labels',BPL);
+        
     case 1
         %linespec = fn_linespec(2);
         %4 plots combined
@@ -159,9 +224,9 @@ switch figure_choice
         h3 = plot(Z.FPu1{Jidx,Idx},Z.TPu1{Jidx,Idx},'-.b',...
                  Z.FPu1{Jidx,Idx},Z.TPu1{Jidx,Idx},'xb'); hold on
             
-        legend([h1(1) h2(1) h3(1)],['150%, area=' num2str(ROCarea1{1,1}*100,'%3.1f') '%'],...
-            ['100%, area=' num2str(ROCarea1{2,1}*100,'%3.1f') '%'],...
-            ['50%, area=' num2str(ROCarea1{3,1}*100,'%3.1f') '%']); hold on
+        legend([h1(1) h2(1) h3(1)],['(0.75,0), area=' num2str(ROCarea1{1,1}*100,'%3.1f') '%'],...
+            ['(0.50,0), area=' num2str(ROCarea1{2,1}*100,'%3.1f') '%'],...
+            ['(0.25,0), area=' num2str(ROCarea1{3,1}*100,'%3.1f') '%']); hold on
         %set(gca,'xlim',[0,1.01]); hold on
         %set(gca,'ylim',[0,1.01]); hold on
         if plot4
@@ -177,7 +242,7 @@ switch figure_choice
                tmp = [tmp squeeze(mean(Z.T{Jidx,Idx}.RE(:,1,:),3))];          
             end   
         end
-        BPL = {'(1.5,0)','(1,0)','(0.5,0)'};
+        BPL = {'(0.75,0)','(0.5,0)','(0.25,0)'};
         boxplot(tmp,'notch','on','labels',BPL);
                 
         if plot4
@@ -423,23 +488,23 @@ switch figure_choice
                 herrorbar(Z.FPu1{Jidx,Idx},Z.TPu1{Jidx,Idx},Z.FPu1l{Jidx,Idx},Z.FPu1u{Jidx,Idx},'-.b'); hold on
             else
                 Jidx= 1;
-                h1 = errorbar(Z.FPu1O{Jidx,Idx},Z.TPu1O{Jidx,Idx},Z.TPu1Ol{Jidx,Idx},Z.TPu1Ou{Jidx,Idx},'-r'); hold on
-                herrorbar(Z.FPu1O{Jidx,Idx},Z.TPu1O{Jidx,Idx},Z.FPu1Ol{Jidx,Idx},Z.FPu1Ou{Jidx,Idx},'-r'); hold on
+                h1 = errorbar(Z.FPu1O{Jidx,Idx},Z.TPu1O{Jidx,Idx},Z.TPu1Ol{Jidx,Idx},Z.TPu1Ou{Jidx,Idx},':r'); hold on
+                herrorbar(Z.FPu1O{Jidx,Idx},Z.TPu1O{Jidx,Idx},Z.FPu1Ol{Jidx,Idx},Z.FPu1Ou{Jidx,Idx},':r'); hold on
                 Jidx= 2;
-                h2 = errorbar(Z.FPu1O{Jidx,Idx},Z.TPu1O{Jidx,Idx},Z.TPu1Ol{Jidx,Idx},Z.TPu1Ou{Jidx,Idx},'-r'); hold on
-                herrorbar(Z.FPu1O{Jidx,Idx},Z.TPu1O{Jidx,Idx},Z.FPu1Ol{Jidx,Idx},Z.FPu1Ou{Jidx,Idx},'-r'); hold on
+                h2 = errorbar(Z.FPu1O{Jidx,Idx},Z.TPu1O{Jidx,Idx},Z.TPu1Ol{Jidx,Idx},Z.TPu1Ou{Jidx,Idx},':r'); hold on
+                herrorbar(Z.FPu1O{Jidx,Idx},Z.TPu1O{Jidx,Idx},Z.FPu1Ol{Jidx,Idx},Z.FPu1Ou{Jidx,Idx},':r'); hold on
                 Jidx= 3;
-                h3 = errorbar(Z.FPu1O{Jidx,Idx},Z.TPu1O{Jidx,Idx},Z.TPu1Ol{Jidx,Idx},Z.TPu1Ou{Jidx,Idx},'-r'); hold on
-                herrorbar(Z.FPu1O{Jidx,Idx},Z.TPu1O{Jidx,Idx},Z.FPu1Ol{Jidx,Idx},Z.FPu1Ou{Jidx,Idx},'-r'); hold on
+                h3 = errorbar(Z.FPu1O{Jidx,Idx},Z.TPu1O{Jidx,Idx},Z.TPu1Ol{Jidx,Idx},Z.TPu1Ou{Jidx,Idx},':r'); hold on
+                herrorbar(Z.FPu1O{Jidx,Idx},Z.TPu1O{Jidx,Idx},Z.FPu1Ol{Jidx,Idx},Z.FPu1Ou{Jidx,Idx},':r'); hold on
                 Jidx= 1;
-                h4 = errorbar(Z.FPu1R{Jidx,Idx},Z.TPu1R{Jidx,Idx},Z.TPu1Rl{Jidx,Idx},Z.TPu1Ru{Jidx,Idx},':b'); hold on
-                herrorbar(Z.FPu1R{Jidx,Idx},Z.TPu1R{Jidx,Idx},Z.FPu1Rl{Jidx,Idx},Z.FPu1Ru{Jidx,Idx},':b'); hold on
+                h4 = errorbar(Z.FPu1R{Jidx,Idx},Z.TPu1R{Jidx,Idx},Z.TPu1Rl{Jidx,Idx},Z.TPu1Ru{Jidx,Idx},'-b'); hold on
+                herrorbar(Z.FPu1R{Jidx,Idx},Z.TPu1R{Jidx,Idx},Z.FPu1Rl{Jidx,Idx},Z.FPu1Ru{Jidx,Idx},'-b'); hold on
                 Jidx= 2;
-                h5 = errorbar(Z.FPu1R{Jidx,Idx},Z.TPu1R{Jidx,Idx},Z.TPu1Rl{Jidx,Idx},Z.TPu1Ru{Jidx,Idx},':b'); hold on
-                herrorbar(Z.FPu1R{Jidx,Idx},Z.TPu1R{Jidx,Idx},Z.FPu1Rl{Jidx,Idx},Z.FPu1Ru{Jidx,Idx},':b'); hold on
+                h5 = errorbar(Z.FPu1R{Jidx,Idx},Z.TPu1R{Jidx,Idx},Z.TPu1Rl{Jidx,Idx},Z.TPu1Ru{Jidx,Idx},'-b'); hold on
+                herrorbar(Z.FPu1R{Jidx,Idx},Z.TPu1R{Jidx,Idx},Z.FPu1Rl{Jidx,Idx},Z.FPu1Ru{Jidx,Idx},'-b'); hold on
                 Jidx= 3;
-                h6 = errorbar(Z.FPu1R{Jidx,Idx},Z.TPu1R{Jidx,Idx},Z.TPu1Rl{Jidx,Idx},Z.TPu1Ru{Jidx,Idx},':b'); hold on
-                herrorbar(Z.FPu1R{Jidx,Idx},Z.TPu1R{Jidx,Idx},Z.FPu1Rl{Jidx,Idx},Z.FPu1Ru{Jidx,Idx},':b'); hold on   
+                h6 = errorbar(Z.FPu1R{Jidx,Idx},Z.TPu1R{Jidx,Idx},Z.TPu1Rl{Jidx,Idx},Z.TPu1Ru{Jidx,Idx},'-b'); hold on
+                herrorbar(Z.FPu1R{Jidx,Idx},Z.TPu1R{Jidx,Idx},Z.FPu1Rl{Jidx,Idx},Z.FPu1Ru{Jidx,Idx},'-b'); hold on   
             end
         end
         if ~compute_OR
@@ -447,12 +512,19 @@ switch figure_choice
                 ['75%, area=' num2str(ROCarea1{2,1}*100,'%3.1f') '%'],...
                 ['50%, area=' num2str(ROCarea1{3,1}*100,'%3.1f') '%']); hold on
         else
-            legend([h1(1) h4(1) h2(1) h5(1) h3(1) h6(1)],['HbO (3, -3), area=' num2str(ROCareaO{1,1}*100,'%3.1f') '%'],...
-                ['HbR (3, -3), area=' num2str(ROCareaR{1,1}*100,'%3.1f') '%'],...
-                ['HbO (2, -2) area=' num2str(ROCareaO{2,1}*100,'%3.1f') '%'],...
-                ['HbR (2, -2), area=' num2str(ROCareaR{2,1}*100,'%3.1f') '%'],...
-                ['HbO (1, -1), area=' num2str(ROCareaO{3,1}*100,'%3.1f') '%'],...
-                ['HbR (1, -1) area=' num2str(ROCareaR{3,1}*100,'%3.1f') '%']); hold on
+%             legend([h1(1) h4(1) h2(1) h5(1) h3(1) h6(1)],['HbO (3, -3), area=' num2str(ROCareaO{1,1}*100,'%3.1f') '%'],...
+%                 ['HbR (3, -3), area=' num2str(ROCareaR{1,1}*100,'%3.1f') '%'],...
+%                 ['HbO (2, -2) area=' num2str(ROCareaO{2,1}*100,'%3.1f') '%'],...
+%                 ['HbR (2, -2), area=' num2str(ROCareaR{2,1}*100,'%3.1f') '%'],...
+%                 ['HbO (1, -1), area=' num2str(ROCareaO{3,1}*100,'%3.1f') '%'],...
+%                 ['HbR (1, -1) area=' num2str(ROCareaR{3,1}*100,'%3.1f') '%']); hold on
+legend([h1(1) h4(1) h2(1) h5(1) h3(1) h6(1)],...
+                ['HbO (3, -3), V1: ' num2str(ROCareaO{1,1}*100,'%3.1f') '%, ' 'V2: ' num2str(ROCareaO2{1,1}*100,'%3.1f') '%'],...
+                ['HbR (3, -3), V1: ' num2str(ROCareaR{1,1}*100,'%3.1f') '%, ' 'V2: ' num2str(ROCareaR2{1,1}*100,'%3.1f') '%'],...
+                ['HbO (2, -2), V1: ' num2str(ROCareaO{2,1}*100,'%3.1f') '%, ' 'V2: ' num2str(ROCareaO2{2,1}*100,'%3.1f') '%'],...
+                ['HbR (2, -2), V1: ' num2str(ROCareaR{2,1}*100,'%3.1f') '%, ' 'V2: ' num2str(ROCareaR2{2,1}*100,'%3.1f') '%'],...
+                ['HbO (1, -1), V1: ' num2str(ROCareaO{3,1}*100,'%3.1f') '%, ' 'V2: ' num2str(ROCareaO2{3,1}*100,'%3.1f') '%'],...
+                ['HbR (1, -1), V1: ' num2str(ROCareaR{3,1}*100,'%3.1f') '%, ' 'V2: ' num2str(ROCareaR2{3,1}*100,'%3.1f') '%']); hold on
             title('ROC curves for HbO and HbR'); hold on
         end
         set(gca,'xlim',[0,1.01]); hold on
@@ -524,7 +596,7 @@ switch figure_choice
         h3 = plot(Z.FPu1{Jidx,Idx},Z.TPu1{Jidx,Idx},'-.b',...
                  Z.FPu1{Jidx,Idx},Z.TPu1{Jidx,Idx},'xb'); hold on
         
-        legend([h1(1) h2(1) h3(1)],['(4,-4), area=' num2str(ROCarea1{1,1}*100,'%3.1f') '%'],...
+        legend([h1(1) h2(1) h3(1)],['(3,-3), area=' num2str(ROCarea1{1,1}*100,'%3.1f') '%'],...
             ['(2,-2), area=' num2str(ROCarea1{2,1}*100,'%3.1f') '%'],...
             ['(1,-1), area=' num2str(ROCarea1{3,1}*100,'%3.1f') '%']);
         if plot4
@@ -540,7 +612,77 @@ switch figure_choice
                tmp = [tmp squeeze(mean(Z.T{Jidx,Idx}.RE(:,1,:),3))];          
             end   
         end
-        BPL = {'(4,-4)','(2,-2)','(1,-1)'};
+        BPL = {'(3,-3)','(2,-2)','(1,-1)'};
+        boxplot(tmp,'notch','on','labels',BPL);
+                
+        if plot4
+            subplot(2,2,3);
+        else
+            subplot(1,3,2);
+        end
+        title('T-Statistic'); hold on
+        tmp = [];    
+        for Idx=1:nSubj    
+            for Jidx= 1:nJob
+               tmp = [tmp squeeze(mean(Z.T{Jidx,Idx}.t(:,1,:),3))];          
+            end   
+        end
+        boxplot(tmp,'notch','on','labels',BPL);    
+        if plot4
+            subplot(2,2,4);
+        else
+            subplot(1,3,3);
+        end
+        title('Signal-to-Noise Ratio'); hold on
+        tmp = [];    
+        for Idx=1:nSubj    
+            for Jidx= 1:nJob
+               tmp = [tmp Z.T{Jidx,Idx}.SNR(:)];          
+            end   
+        end
+        boxplot(tmp,'notch','on','labels',BPL); 
+        hold off
+    case 21
+        %linespec = fn_linespec(2);
+        %4 plots combined
+        %1st Volterra
+        figure; hold on
+        if plot4
+            subplot(2,2,1)
+            title('ROC curves'); hold on
+        end 
+        box on; hold on
+        xlabel('1-Specificity');
+        ylabel('Sensitivity'); hold on
+        Jidx= 1;
+        h1 = plot(Z.FPu1{Jidx,Idx},Z.TPu1{Jidx,Idx},'-r',...
+                Z.FPu1{Jidx,Idx},Z.TPu1{Jidx,Idx},'or'); hold on
+
+        Jidx = 2;
+        h2 = plot(Z.FPu1{Jidx,Idx},Z.TPu1{Jidx,Idx},'--k',...
+                 Z.FPu1{Jidx,Idx},Z.TPu1{Jidx,Idx},'+k'); hold on
+
+        Jidx = 3;
+        h3 = plot(Z.FPu1{Jidx,Idx},Z.TPu1{Jidx,Idx},'-.b',...
+                 Z.FPu1{Jidx,Idx},Z.TPu1{Jidx,Idx},'xb'); hold on
+        
+        legend([h1(1) h2(1) h3(1)], ['B,   V1 area=' num2str(ROCarea1{1,1}*100,'%3.1f') '%' ', V2 area=' num2str(ROCarea2{1,1}*100,'%3.1f') '%'],...
+            ['W,   V1 area=' num2str(ROCarea1{2,1}*100,'%3.1f') '%' ', V2 area=' num2str(ROCarea2{2,1}*100,'%3.1f') '%'],...
+            ['B+W,  V1 area=' num2str(ROCarea1{3,1}*100,'%3.1f') '%' ', V2 area=' num2str(ROCarea2{3,1}*100,'%3.1f') '%']);
+        if plot4
+            subplot(2,2,2);
+        else
+            figure; 
+            subplot(1,3,1);
+        end
+        title('Estimated Amplitude'); hold on
+        tmp = [];    
+        for Idx=1:nSubj    
+            for Jidx= 1:nJob
+               tmp = [tmp squeeze(mean(Z.T{Jidx,Idx}.RE(:,1,:),3))];          
+            end   
+        end
+        BPL = {'B','W','B+W'};
         boxplot(tmp,'notch','on','labels',BPL);
                 
         if plot4
@@ -594,7 +736,7 @@ switch figure_choice
         h3 = plot(Z.FPu2{Jidx,Idx},Z.TPu2{Jidx,Idx},'-.b',...
                 Z.FPu2{Jidx,Idx},Z.TPu2{Jidx,Idx},'xb'); hold on    
         
-        legend([h1(1) h2(1) h3(1)],['(4,-4), area=' num2str(ROCarea2{1,1}*100,'%3.1f') '%'],...
+        legend([h1(1) h2(1) h3(1)],['(3,-3), area=' num2str(ROCarea2{1,1}*100,'%3.1f') '%'],...
             ['(2,-2), area=' num2str(ROCarea2{2,1}*100,'%3.1f') '%'],...
             ['(1,-1), area=' num2str(ROCarea2{3,1}*100,'%3.1f') '%']);
         if plot4
@@ -610,7 +752,7 @@ switch figure_choice
                tmp = [tmp squeeze(mean(Z.T{Jidx,Idx}.RE(:,2,:),3))];          
             end   
         end
-        BPL = {'(4,-4)','(2,-2)','(1,-1)'};
+        BPL = {'(3,-3)','(2,-2)','(1,-1)'};
         boxplot(tmp,'notch','on','labels',BPL);
                 
         if plot4
@@ -641,7 +783,77 @@ switch figure_choice
         boxplot(tmp,'notch','on','labels',BPL); 
         set(gca,'ylim',[-4,2]);
         hold off
+    case 31
+        %linespec = fn_linespec(2);
+        %4 plots combined
+        %1st Volterra
+        figure; hold on
+        if plot4
+            subplot(2,2,1)
+            title('ROC curves'); hold on
+        end 
+        box on; hold on
+        xlabel('1-Specificity');
+        ylabel('Sensitivity'); hold on
+        Jidx= 1;
+        h1 = plot(Z.FPu2{Jidx,Idx},Z.TPu2{Jidx,Idx},'-r',...
+                Z.FPu2{Jidx,Idx},Z.TPu2{Jidx,Idx},'or'); hold on
+
+        Jidx = 2;
+        h2 = plot(Z.FPu2{Jidx,Idx},Z.TPu2{Jidx,Idx},'--k',...
+                Z.FPu2{Jidx,Idx},Z.TPu2{Jidx,Idx},'+k'); hold on
+
+        Jidx = 3;
+        h3 = plot(Z.FPu2{Jidx,Idx},Z.TPu2{Jidx,Idx},'-.b',...
+                Z.FPu2{Jidx,Idx},Z.TPu2{Jidx,Idx},'xb'); hold on    
         
+        legend([h1(1) h2(1) h3(1)],['B, area=' num2str(ROCarea2{1,1}*100,'%3.1f') '%'],...
+            ['W, area=' num2str(ROCarea2{2,1}*100,'%3.1f') '%'],...
+            ['B+W, area=' num2str(ROCarea2{3,1}*100,'%3.1f') '%']);
+        if plot4
+            subplot(2,2,2);
+        else
+            figure; 
+            subplot(1,3,1);
+        end
+        title('Estimated Amplitude'); hold on
+        tmp = [];    
+        for Idx=1:nSubj    
+            for Jidx= 1:nJob
+               tmp = [tmp squeeze(mean(Z.T{Jidx,Idx}.RE(:,2,:),3))];          
+            end   
+        end
+        BPL = {'B','W','B+W'};
+        boxplot(tmp,'notch','on','labels',BPL);
+                
+        if plot4
+            subplot(2,2,3);
+        else
+            subplot(1,3,2);
+        end
+        title('T-Statistic'); hold on
+        tmp = [];    
+        for Idx=1:nSubj    
+            for Jidx= 1:nJob
+               tmp = [tmp squeeze(mean(Z.T{Jidx,Idx}.t(:,2,:),3))];          
+            end   
+        end
+        boxplot(tmp,'notch','on','labels',BPL);    
+        if plot4
+            subplot(2,2,4);
+        else
+            subplot(1,3,3);
+        end
+        title('Ratio of 2nd to 1st amplitudes'); hold on
+        tmp = [];    
+        for Idx=1:nSubj    
+            for Jidx= 1:nJob
+               tmp = [tmp squeeze(mean(Z.T{Jidx,Idx}.RE(:,3,:),3))];          
+            end   
+        end
+        boxplot(tmp,'notch','on','labels',BPL); 
+        set(gca,'ylim',[-4,2]);
+        hold off     
      
      case 4
         %for negative vs positive 2nd Volterra amplitudes
@@ -892,6 +1104,107 @@ switch figure_choice
         ylabel('Sensitivity'); hold on
         if ~plotUL
             Jidx= 1;
+            h1 = plot(Z.FPu2{Jidx,Idx},Z.TPu2{Jidx,Idx},'-r',...
+                    Z.FPu2{Jidx,Idx},Z.TPu2{Jidx,Idx},'or'); hold on
+
+            Jidx = 2;
+            h2 = plot(Z.FPu2{Jidx,Idx},Z.TPu2{Jidx,Idx},'--k',...
+                     Z.FPu2{Jidx,Idx},Z.TPu2{Jidx,Idx},'+k'); hold on
+
+            Jidx = 3;
+            h3 = plot(Z.FPu2{Jidx,Idx},Z.TPu2{Jidx,Idx},'-.b',...
+                     Z.FPu2{Jidx,Idx},Z.TPu2{Jidx,Idx},'xb'); hold on
+            Jidx = 4;
+            h4 = plot(Z.FPu2{Jidx,Idx},Z.TPu2{Jidx,Idx},':g',...
+                     Z.FPu2{Jidx,Idx},Z.TPu2{Jidx,Idx},'sg'); hold on
+        else
+            Jidx= 1;
+            h1 = errorbar(Z.FPu1{Jidx,Idx},Z.TPu1{Jidx,Idx},Z.TPu1l{Jidx,Idx},Z.TPu1u{Jidx,Idx},'-r'); hold on
+            herrorbar(Z.FPu1{Jidx,Idx},Z.TPu1{Jidx,Idx},Z.FPu1l{Jidx,Idx},Z.FPu1u{Jidx,Idx},'-r'); hold on
+            Jidx= 2;
+            h2 = errorbar(Z.FPu1{Jidx,Idx},Z.TPu1{Jidx,Idx},Z.TPu1l{Jidx,Idx},Z.TPu1u{Jidx,Idx},'--k'); hold on
+            herrorbar(Z.FPu1{Jidx,Idx},Z.TPu1{Jidx,Idx},Z.FPu1l{Jidx,Idx},Z.FPu1u{Jidx,Idx},'--k'); hold on
+            Jidx= 3;
+            h3 = errorbar(Z.FPu1{Jidx,Idx},Z.TPu1{Jidx,Idx},Z.TPu1l{Jidx,Idx},Z.TPu1u{Jidx,Idx},'-.b'); hold on
+            herrorbar(Z.FPu1{Jidx,Idx},Z.TPu1{Jidx,Idx},Z.FPu1l{Jidx,Idx},Z.FPu1u{Jidx,Idx},'-.b'); hold on
+            Jidx= 4;
+            h4 = errorbar(Z.FPu1{Jidx,Idx},Z.TPu1{Jidx,Idx},Z.TPu1l{Jidx,Idx},Z.TPu1u{Jidx,Idx},':g'); hold on
+            herrorbar(Z.FPu1{Jidx,Idx},Z.TPu1{Jidx,Idx},Z.FPu1l{Jidx,Idx},Z.FPu1u{Jidx,Idx},':g'); hold on
+            set(gca,'xlim',[0,1.01]);
+            set(gca,'ylim',[0,1.01]);
+        end
+      
+        legend([h1(1) h2(1) h3(1) h4(1)],...
+            ['(2,-2), V1 area=' num2str(ROCarea1{1,1}*100,'%3.1f') '%' ', V2 area=' num2str(ROCarea2{1,1}*100,'%3.1f') '%'],...
+            ['(2,-1), V1 area=' num2str(ROCarea1{2,1}*100,'%3.1f') '%' ', V2 area=' num2str(ROCarea2{2,1}*100,'%3.1f') '%'],...
+            ['(2,1),  V1 area=' num2str(ROCarea1{3,1}*100,'%3.1f') '%' ', V2 area=' num2str(ROCarea2{3,1}*100,'%3.1f') '%'],...
+            ['(2,2),  V1 area=' num2str(ROCarea1{4,1}*100,'%3.1f') '%' ', V2 area=' num2str(ROCarea2{4,1}*100,'%3.1f') '%']);
+        if plot4
+            subplot(2,2,2);
+        else
+            figure; 
+            subplot(1,3,1);
+        end
+        title('Estimated Amplitude'); hold on
+        tmp = [];    
+        for Idx=1:nSubj    
+            for Jidx= 1:nJob
+               tmp = [tmp squeeze(mean(Z.T{Jidx,Idx}.RE(:,2,:),3))];          
+            end   
+        end
+        BPL = {'(2,-2)','(2,-1)','(2,1)','(2,2)'};
+        boxplot(tmp,'notch','on','labels',BPL);
+                
+        if plot4
+            subplot(2,2,3);
+        else
+            subplot(1,3,2);
+        end
+%         title('T-Statistic'); hold on
+%         tmp = [];    
+%         for Idx=1:nSubj    
+%             for Jidx= 1:nJob
+%                tmp = [tmp squeeze(mean(Z.T{Jidx,Idx}.t(:,2,:),3))];          
+%             end   
+%         end
+%         boxplot(tmp,'notch','on','labels',BPL);  
+        title('Ratio of 2nd to 1st amplitudes'); hold on
+        tmp = [];    
+        for Idx=1:nSubj    
+            for Jidx= 1:nJob
+               tmp = [tmp squeeze(mean(Z.T{Jidx,Idx}.RE(:,3,:),3))];          
+            end   
+        end
+        boxplot(tmp,'notch','on','labels',BPL); 
+        %set(gca,'ylim',[-4,2]);
+        if plot4
+            subplot(2,2,4);
+        else
+            subplot(1,3,3);
+        end
+        title('Signal-to-Noise Ratio'); hold on
+        tmp = [];    
+        for Idx=1:nSubj    
+            for Jidx= 1:nJob
+               tmp = [tmp Z.T{Jidx,Idx}.SNR(:)];          
+            end   
+        end
+        boxplot(tmp,'notch','on','labels',BPL); 
+        hold off
+     case 62
+        %linespec = fn_linespec(2);
+        %4 plots combined
+        %1st Volterra
+        figure; hold on
+        if plot4
+            subplot(2,2,1)
+            title('ROC curves'); hold on
+        end 
+        box on; hold on
+        xlabel('1-Specificity');
+        ylabel('Sensitivity'); hold on
+        if ~plotUL
+             Jidx= 1;
             h1 = plot(Z.FPu1{Jidx,Idx},Z.TPu1{Jidx,Idx},'-r',...
                     Z.FPu1{Jidx,Idx},Z.TPu1{Jidx,Idx},'or'); hold on
 
@@ -923,24 +1236,24 @@ switch figure_choice
         end
       
         legend([h1(1) h2(1) h3(1) h4(1)],...
-            ['CC, V1 area=' num2str(ROCarea1{1,1}*100,'%3.1f') '%' ', V2 area=' num2str(ROCarea2{1,1}*100,'%3.1f') '%'],...
-            ['GG, V1 area=' num2str(ROCarea1{2,1}*100,'%3.1f') '%' ', V2 area=' num2str(ROCarea2{2,1}*100,'%3.1f') '%'],...
-            ['CG, V1 area=' num2str(ROCarea1{3,1}*100,'%3.1f') '%' ', V2 area=' num2str(ROCarea2{3,1}*100,'%3.1f') '%'],...
-            ['GC, V1 area=' num2str(ROCarea1{4,1}*100,'%3.1f') '%' ', V2 area=' num2str(ROCarea2{4,1}*100,'%3.1f') '%']);
+            ['VV, V1: ' num2str(ROCarea1{1,1}*100,'%3.1f') '%' ', V2: ' num2str(ROCarea2{1,1}*100,'%3.1f') '%'],...
+            ['VN, V1: ' num2str(ROCarea1{2,1}*100,'%3.1f') '%'],...
+            ['NV,  V1: ' num2str(ROCarea1{3,1}*100,'%3.1f') '%' ', V2: ' num2str(ROCarea2{3,1}*100,'%3.1f') '%'],...
+            ['NN,  V1: ' num2str(ROCarea1{4,1}*100,'%3.1f') '%']);
         if plot4
             subplot(2,2,2);
         else
             figure; 
             subplot(1,3,1);
         end
-        title('Estimated Amplitude'); hold on
+        title('V1 Estimated Amplitude'); hold on
         tmp = [];    
         for Idx=1:nSubj    
             for Jidx= 1:nJob
                tmp = [tmp squeeze(mean(Z.T{Jidx,Idx}.RE(:,1,:),3))];          
             end   
         end
-        BPL = {'CC','GG','CG','GC'};
+        BPL = {'VV','VN','NV','NN'};
         boxplot(tmp,'notch','on','labels',BPL);
                 
         if plot4
@@ -955,7 +1268,26 @@ switch figure_choice
                tmp = [tmp squeeze(mean(Z.T{Jidx,Idx}.t(:,1,:),3))];          
             end   
         end
-        boxplot(tmp,'notch','on','labels',BPL);    
+        boxplot(tmp,'notch','on','labels',BPL);  
+%        title('V2 Estimated Amplitude'); hold on
+%         tmp = [];    
+%         for Idx=1:nSubj    
+%             for Jidx= 1:nJob
+%                tmp = [tmp squeeze(mean(Z.T{Jidx,Idx}.RE(:,1,:),3))];          
+%             end   
+%         end
+%         BPL = {'(2,-2)','(2,-1)','(2,1)','(2,2)'};
+%         boxplot(tmp,'notch','on','labels',BPL);
+%                 
+%         title('Ratio of 2nd to 1st amplitudes'); hold on
+%         tmp = [];    
+%         for Idx=1:nSubj    
+%             for Jidx= 1:nJob
+%                tmp = [tmp squeeze(mean(Z.T{Jidx,Idx}.RE(:,3,:),3))];          
+%             end   
+%         end
+%         boxplot(tmp,'notch','on','labels',BPL); 
+        %set(gca,'ylim',[-4,2]);
         if plot4
             subplot(2,2,4);
         else

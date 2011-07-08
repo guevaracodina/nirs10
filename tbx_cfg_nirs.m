@@ -1055,7 +1055,7 @@ testHPFbutterOrder.name    = 'HPF Butter order';
 testHPFbutterOrder.tag     = 'testHPFbutterOrder';       
 testHPFbutterOrder.strtype = 'r';
 testHPFbutterOrder.num     = [1 1];     
-testHPFbutterOrder.val = {3};
+testHPFbutterOrder.val = {5};
 testHPFbutterOrder.help    = {'HPF order (3 recommended)'}';
 
 testLPFGaussianOn         = cfg_menu;
@@ -2334,22 +2334,22 @@ nirs_lpf.val       = {lpf_gauss};
 nirs_lpf.help      = {'Choose low-pass filter.'}; 
 
 
-% Executable Branch
-HPF_LPF      = cfg_exbranch;       
-HPF_LPF.name = 'Filters';             
-HPF_LPF.tag  = 'HPF_LPF'; 
-HPF_LPF.val  = {NIRSmat DelPreviousData NewDirCopyNIRS nirs_hpf nirs_lpf}; 
-HPF_LPF.prog = @nirs_run_HPF_LPF;  
-HPF_LPF.vout = @nirs_cfg_vout_HPF_LPF; 
-HPF_LPF.help = {'Filters: currently only low pass, with or without ',...
-    'a downsampling factor.'};
-
-function vout = nirs_cfg_vout_HPF_LPF(job)
-vout = cfg_dep;                     
-vout.sname      = 'NIRS.mat';       
-vout.src_output = substruct('.','NIRSmat'); 
-vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
-end
+% % Executable Branch
+% HPF_LPF      = cfg_exbranch;       
+% HPF_LPF.name = 'Filters';             
+% HPF_LPF.tag  = 'HPF_LPF'; 
+% HPF_LPF.val  = {NIRSmat DelPreviousData NewDirCopyNIRS nirs_hpf nirs_lpf}; 
+% HPF_LPF.prog = @nirs_run_HPF_LPF;  
+% HPF_LPF.vout = @nirs_cfg_vout_HPF_LPF; 
+% HPF_LPF.help = {'Filters: currently only low pass, with or without ',...
+%     'a downsampling factor.'};
+% 
+% function vout = nirs_cfg_vout_HPF_LPF(job)
+% vout = cfg_dep;                     
+% vout.sname      = 'NIRS.mat';       
+% vout.src_output = substruct('.','NIRSmat'); 
+% vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
+% end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %4.7 Generate header and marker files for Analyzer based on NIRS.mat
@@ -3256,9 +3256,7 @@ volt.labels = {
                'Model 3rd Volterra'
 }';
 volt.values = {1 2 3};
-volt.val = {2};
-%volt.def = @(val)nirs_get_defaults('model_specify.volt', val{:}); 
-
+volt.val = {1};
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % LIOM General Linear Model Specification
@@ -3413,39 +3411,6 @@ channel_pca.def = @(val)nirs_get_defaults('model_specify.wls_bglm_specify.channe
 channel_pca.help = {'Choose whether to do a channel PCA removal: '
             'Principal component analysis and removing the largest eigenvalue.'}';
 
-lpf_butter_freq         = cfg_entry; 
-lpf_butter_freq.name    = 'Cutoff frequency for LPF';
-lpf_butter_freq.tag     = 'lpf_butter_freq';       
-lpf_butter_freq.strtype = 'r';
-lpf_butter_freq.num     = [1 1];     
-lpf_butter_freq.def     = @(val)nirs_get_defaults(...
-    'model_specify.wls_bglm_specify.lpf_butter.lpf_butter_On.lpf_butter_freq', val{:}); 
-lpf_butter_freq.help    = {'Enter cutoff frequency in Hz for Butterworth LPF.'};
-
-lpf_butter_On         = cfg_branch;
-lpf_butter_On.tag     = 'lpf_butter_On';
-lpf_butter_On.name    = 'Butterworth LP filter';
-lpf_butter_On.val     = {lpf_butter_freq}; 
-lpf_butter_On.help    = {'Butterworth low-pass filter.'};
-
-lpf_butter_Off         = cfg_branch;
-lpf_butter_Off.tag     = 'lpf_butter_Off';
-lpf_butter_Off.name    = 'LP filter off';
-lpf_butter_Off.val     = {}; 
-lpf_butter_Off.help    = {'Low pass filter turned off.'};
-
-lpf_butter      = cfg_choice;
-lpf_butter.tag  = 'lpf_butter';
-lpf_butter.name = 'Butterworth Low Pass Filter';
-%lpf_butter.labels = {'Yes','No'};
-lpf_butter.values = {lpf_butter_On lpf_butter_Off};
-lpf_butter.val = {lpf_butter_Off};
-%lpf_butter.def = @(val)nirs_get_defaults('model_specify.wls_bglm_specify.lpf_butter', val{:}); 
-lpf_butter.help = {'Choose whether to include a Butterworth Low Pass Filter.'
-    'Careful - the degrees of freedom or precoloring will not be correctly'
-    'Done if used - hence currently do not use!'
-        'Parameters are: order 3.'}';
-
 hpf_butter_freq         = cfg_entry; 
 hpf_butter_freq.name    = 'Cutoff frequency for HPF';
 hpf_butter_freq.tag     = 'hpf_butter_freq';       
@@ -3460,7 +3425,7 @@ hpf_butter_order.name    = 'Order of Butterworth HPF';
 hpf_butter_order.tag     = 'hpf_butter_order';       
 hpf_butter_order.strtype = 'r';
 hpf_butter_order.num     = [1 1];     
-hpf_butter_order.val     = {3};
+hpf_butter_order.val     = {5};
 hpf_butter_order.help    = {'Enter order of Butterworth HPF (preferred value = 3).'};
 
 hpf_butter_On         = cfg_branch;
@@ -3474,12 +3439,6 @@ hpf_butter_Off.tag     = 'hpf_butter_Off';
 hpf_butter_Off.name    = 'HP filter off';
 hpf_butter_Off.val     = {}; 
 hpf_butter_Off.help    = {'High pass filter turned off.'};
-
-lpf_butter_Off         = cfg_branch;
-lpf_butter_Off.tag     = 'lpf_butter_Off';
-lpf_butter_Off.name    = 'LP filter off';
-lpf_butter_Off.val     = {}; 
-lpf_butter_Off.help    = {'Low pass filter turned off.'};
 
 NoNIRSconfounds         = cfg_branch;
 NoNIRSconfounds.tag     = 'NoNIRSconfounds';
@@ -3550,7 +3509,7 @@ filter_design_matrix.tag  = 'filter_design_matrix';
 filter_design_matrix.name = 'Filter the design matrix';
 filter_design_matrix.labels = {'Yes','No'};
 filter_design_matrix.values = {1,0};
-filter_design_matrix.val = {0};
+filter_design_matrix.val = {1};
 filter_design_matrix.help = {'Currently under testing. Potential problem:'
     'introduces long range correlations in the design matrix that falsify'
     'the calculation of the nubmer of degrees of freedom, and thus the covariance.'}';
@@ -3571,7 +3530,7 @@ wls_bglm_specify.name = 'LIOM GLM Specification';
 wls_bglm_specify.tag  = 'wls_bglm_specify'; 
 wls_bglm_specify.val  = {NIRSmat dir1 subj units time_res derivs bases ...
     volt GLM_include_cardiac GLM_include_Mayer NIRSchannelsConfound GenerateHbT flag_window ...
-    channel_pca hpf_butter lpf_butter generate_trRV filter_design_matrix ...
+    channel_pca hpf_butter generate_trRV filter_design_matrix ...
      wls_or_bglm LiomDeleteLarge}; 
 wls_bglm_specify.prog = @nirs_run_liom_GLM_specify;  
 wls_bglm_specify.vout = @nirs_cfg_vout_liom_GLM_specify; 
@@ -3618,7 +3577,8 @@ view         = cfg_entry;
 view.name    = 'View'; 
 view.tag     = 'view';    
 view.strtype = 'r'; 
-view.num     = [1 Inf];    
+view.num     = [1 Inf];  
+view.val     = {5};
 view.help    = {['Enter view.  ',...
     '1: ventral  ',...
     '2: dorsal  ',...
@@ -3692,12 +3652,13 @@ contrast_data.help    = {'Specify contrasts.'};
 % Liom Contrast calculations - based on tube formula and code by NIRS_SPM
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-liom_contrast_struct         = cfg_repeat;
-liom_contrast_struct.tag     = 'liom_contrast_struct';
-liom_contrast_struct.name    = 'Contrasts';
-liom_contrast_struct.help    = {'Specify contrasts'};
-liom_contrast_struct.values  = {contrast_data};
-liom_contrast_struct.num     = [0 Inf];
+% liom_contrast_struct         = cfg_repeat;
+% liom_contrast_struct.tag     = 'liom_contrast_struct';
+% liom_contrast_struct.name    = 'Contrasts';
+% liom_contrast_struct.help    = {'Specify contrasts'
+%     'NOTE: this is an older method to specify contrasts, which will disappear.'}';
+% liom_contrast_struct.values  = {contrast_data};
+% liom_contrast_struct.num     = [0 Inf];
 
 contrast_p_value         = cfg_entry; 
 contrast_p_value.name    = 'Contrast uncorrected p_value';
@@ -3706,6 +3667,39 @@ contrast_p_value.strtype = 'r';
 contrast_p_value.num     = [1 1];
 contrast_p_value.val     = {0.05};
 contrast_p_value.help    = {'Contrast uncorrected p_value'}; 
+
+spatial_LPF_radius         = cfg_entry; 
+spatial_LPF_radius.name    = 'Spatial LPF radius';
+spatial_LPF_radius.tag     = 'spatial_LPF_radius';       
+spatial_LPF_radius.strtype = 'r';
+spatial_LPF_radius.num     = [1 1];     
+spatial_LPF_radius.val     = {3}; 
+spatial_LPF_radius.help    = {'Enter radius of spatial low pass filter in pixels.'
+    'One pixel is very approximately 1 mm. FWHM will be twice this radius.'
+    'If 0 is entered, this is equivalent to no spatial filtering.'
+    'Spatial filtering will be applied linearly even though '
+    'stereographic projection is nonlinear.'}';
+
+spatial_LPF_On         = cfg_branch;
+spatial_LPF_On.tag     = 'spatial_LPF_On';
+spatial_LPF_On.name    = 'Spatial LP filter';
+spatial_LPF_On.val     = {spatial_LPF_radius}; 
+spatial_LPF_On.help    = {'Spatial low-pass filter.'};
+
+spatial_LPF_Off         = cfg_branch;
+spatial_LPF_Off.tag     = 'spatial_LPF_Off';
+spatial_LPF_Off.name    = 'Spatial filter off';
+spatial_LPF_Off.val     = {}; 
+spatial_LPF_Off.help    = {'Spatial low pass filter turned off.'};
+
+spatial_LPF      = cfg_choice;
+spatial_LPF.tag  = 'spatial_LPF';
+spatial_LPF.name = 'Spatial Low Pass Filter';
+spatial_LPF.values = {spatial_LPF_On spatial_LPF_Off};
+spatial_LPF.val = {spatial_LPF_On};
+spatial_LPF.help = {'Choose whether to include a spatial Low Pass Filter'
+    'on the interpolated estimates and their variance before constructing'
+    'statistical maps.'}';
 
 contrast_figures      = cfg_menu;
 contrast_figures.tag  = 'contrast_figures';
@@ -4178,7 +4172,10 @@ tconsess.help    = {
 consess         = cfg_repeat;
 consess.tag     = 'consess';
 consess.name    = 'Contrast Sessions';
-consess.help    = {
+consess.help    = { ' NOTE: IF ONLY BASIC CONTRASTS ARE REQUIRED,'
+                    ' No need to specify any contrasts -- they will be generated automatically.'
+                    ' If more contrasts are required, all need to be specified.'
+                    ' ' 
                    'For general linear model Y = XB + E with data Y, desgin matrix X, parameter vector B, and (independent) errors E, a contrast is a linear combination of the parameters c''B. Usually c is a column vector, defining a simple contrast of the parameters, assessed via an SPM{T}. More generally, c can be a matrix (a linear constraining matrix), defining an "F-contrast" assessed via an SPM{F}.'
                    ''
                    'The vector/matrix c contains the contrast weights. It is this contrast weights vector/matrix that must be specified to define the contrast. The null hypothesis is that the linear combination c''B is zero. The order of the parameters in the parameter (column) vector B, and hence the order to which parameters are referenced in the contrast weights vector c, is determined by the construction of the design matrix.'
@@ -4256,14 +4253,25 @@ write_neg_pos.help = {'If generating negative contrasts, whether to output '
     'separate maps for negative and positive contrasts and for both, '
     'or only the maps with both contrasts' }';
 
+GroupMultiSession           = cfg_menu;
+GroupMultiSession.name      = 'Group Multi-Session';
+GroupMultiSession.tag       = 'GroupMultiSession';
+GroupMultiSession.labels    = {'Yes' 'No'};
+GroupMultiSession.values    = {1,0};
+GroupMultiSession.val       = {0};
+GroupMultiSession.help      = {'Group Multi Session'
+    'If selected, with option ProcessContrastBySession set to 0,'
+    'Contrasts defined as vectors over all sessions will be treated.'}';
+
 % Executable Branch
 liom_contrast      = cfg_exbranch;      
 liom_contrast.name = 'Liom Contrast Calculations';            
 liom_contrast.tag  = 'liom_contrast';
-liom_contrast.val  = {NIRSmat view liom_contrast_struct consess ...
-    ProcessContrastsBySession GenerateInverted GroupColorbars contrast_p_value ...
+%PP removed: liom_contrast_struct
+liom_contrast.val  = {NIRSmat NewDirCopyNIRS view consess ...
+    spatial_LPF ProcessContrastsBySession GenerateInverted GroupColorbars contrast_p_value ...
     contrast_figures override_colorbar figures_visible GroupFiguresIntoSubplots ...
-    output_unc SmallFigures write_neg_pos TopoData}; 
+    output_unc SmallFigures write_neg_pos TopoData GroupMultiSession}; 
 liom_contrast.prog = @nirs_run_liom_contrast;  
 liom_contrast.vout = @nirs_cfg_vout_liom_contrast; 
 liom_contrast.help = {'Liom Contrast Calculations.'};
@@ -5412,7 +5420,7 @@ Volt2.name    = 'Positive or negative t-test for 2nd Volterra';
 Volt2.tag     = 'Volt2';  
 Volt2.val     = {0};
 Volt2.strtype = 'r';
-Volt2.num     = [1 1];     
+Volt2.num     = [1 Inf];     
 Volt2.help    = {'Positive or negative t-test for 2nd Volterra'
     'Enter a matrix of number of jobs by number of subjects'
     'With entries of 0 if negative t-test and 1 if positive t-test'
@@ -5587,6 +5595,136 @@ map_file.help    = {'Select statistical map of interest (file '
 % vout.src_output = substruct('.','NIRSmat'); 
 % vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
 % end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Extract map data from group and session analyses
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+extract_max_HbR           = cfg_branch;
+extract_max_HbR.name      = 'extract_max_HbR';
+extract_max_HbR.tag       = 'extract_max_HbR';
+%extract_max_HbR.val       = {}; 
+extract_max_HbR.help      = {''};
+
+extract_max_all           = cfg_branch;
+extract_max_all.name      = 'extract_max_all';
+extract_max_all.tag       = 'extract_max_all';
+%extract_max_all.val       = {}; 
+extract_max_all.help      = {''};
+
+extract_coord_max         = cfg_entry;
+extract_coord_max.name    = 'extract_coord_max';
+extract_coord_max.tag     = 'extract_coord_max';       
+extract_coord_max.strtype = 'r';
+extract_coord_max.num     = [1 2];   
+extract_coord_max.val     = {[100 200]};
+extract_coord_max.help    = {'Enter location of the maximum in pixels. '
+    '[0 0] is the upper left corner of the map.'}'; 
+
+extract_coord_min         = cfg_entry;
+extract_coord_min.name    = 'extract_coord_min';
+extract_coord_min.tag     = 'extract_coord_min';       
+extract_coord_min.strtype = 'r';
+extract_coord_min.num     = [1 2];   
+extract_coord_min.val     = {[150 250]};
+extract_coord_min.help    = {'Enter location of the minimum in pixels. '
+    '[0 0] is the upper left corner of the map.'}';
+
+extract_coordinates           = cfg_branch;
+extract_coordinates.name      = 'extract_coordinates';
+extract_coordinates.tag       = 'extract_coordinates';
+extract_coordinates.val       = {extract_coord_max extract_coord_min}; 
+extract_coordinates.help      = {''};
+
+extract_select_auto_mode           = cfg_choice;
+extract_select_auto_mode.name      = 'Automatic Extraction Selection Mode';
+extract_select_auto_mode.tag       = 'extract_select_auto_mode';
+extract_select_auto_mode.values    = {extract_max_HbR extract_max_all extract_coordinates}; 
+extract_select_auto_mode.val       = {extract_max_HbR}; 
+extract_select_auto_mode.help      = {'Automatic Extraction Selection Mode.'}'; 
+
+extract_auto_mode           = cfg_branch;
+extract_auto_mode.name      = 'extract_auto_mode';
+extract_auto_mode.tag       = 'extract_auto_mode';
+extract_auto_mode.val       = {extract_select_auto_mode}; 
+extract_auto_mode.help      = {''};
+
+extract_manual_mode           = cfg_branch;
+extract_manual_mode.name      = 'extract_manual_mode';
+extract_manual_mode.tag       = 'extract_manual_mode';
+%extract_manual_mode.val       = {}; 
+extract_manual_mode.help      = {''};
+
+extract_select_mode           = cfg_choice;
+extract_select_mode.name      = 'Extraction Selection Mode';
+extract_select_mode.tag       = 'extract_select_mode';
+extract_select_mode.values    = {extract_auto_mode extract_manual_mode}; 
+extract_select_mode.val       = {extract_auto_mode}; 
+extract_select_mode.help      = {'Extraction Selection Mode.'}'; 
+
+extract_contrast         = cfg_entry;
+extract_contrast.name    = 'Contrast number';
+extract_contrast.tag     = 'extract_contrast';       
+extract_contrast.strtype = 'r';
+extract_contrast.num     = [1 Inf];   
+extract_contrast.val     = {1};
+extract_contrast.help    = {'Enter contrast number(s) to extract'
+    'maps data from. If an array is entered, a loop over all specified'
+    'contrasts will be carried out.'}'; 
+
+extract_threshold_val         = cfg_entry;
+extract_threshold_val.name    = 'Threshold value';
+extract_threshold_val.tag     = 'extract_threshold_val';       
+extract_threshold_val.strtype = 'r';
+extract_threshold_val.num     = [1 1];   
+extract_threshold_val.val     = {3.5};
+extract_threshold_val.help    = {'Threshold value of cluster to average.'}'; 
+
+extract_radius_val         = cfg_entry;
+extract_radius_val.name    = 'Radius value';
+extract_radius_val.tag     = 'extract_radius_val';       
+extract_radius_val.strtype = 'r';
+extract_radius_val.num     = [1 1];  
+extract_radius_val.val     = {3};
+extract_radius_val.help    = {'Radius value in pixels for average.'
+    '1 pixel corresponds to very approximately 0.5 to 2 mm.'}'; 
+
+extract_threshold           = cfg_branch;
+extract_threshold.name      = 'extract_threshold';
+extract_threshold.tag       = 'extract_threshold';
+extract_threshold.val       = {extract_threshold_val extract_radius_val}; 
+extract_threshold.help      = {'Note that here both a threshold and the radius are used as pixel'
+    'selection criteria'}';
+
+extract_radius           = cfg_branch;
+extract_radius.name      = 'extract_radius';
+extract_radius.tag       = 'extract_radius';
+%extract_radius.val       = {}; 
+extract_radius.help      = {''};
+
+extract_average_mode           = cfg_choice;
+extract_average_mode.name      = 'Extraction Averaging Mode';
+extract_average_mode.tag       = 'extract_average_mode';
+extract_average_mode.values    = {extract_radius extract_threshold}; 
+extract_average_mode.val       = {extract_radius}; 
+extract_average_mode.help      = {'Extraction Averaging Mode.'}'; 
+
+% Executable Branch
+extract_map_data      = cfg_exbranch;      
+extract_map_data.name = 'Extract map data';            
+extract_map_data.tag  = 'extract_map_data';
+extract_map_data.val  = {NIRSmat view extract_contrast extract_select_mode ...
+    extract_average_mode TopoData}; 
+extract_map_data.prog = @nirs_run_extract_map_data;  
+extract_map_data.vout = @nirs_cfg_vout_extract_map_data; 
+extract_map_data.help = {'Extract_map_data.'};
+
+function vout = nirs_cfg_vout_extract_map_data(job)
+vout = cfg_dep;                     
+vout.sname      = 'NIRS.mat';       
+vout.src_output = substruct('.','NIRSmat'); 
+vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Configuration NIRS Hemodynamic Modeling HDM
@@ -5864,7 +6002,7 @@ model_estimate        = cfg_choice; %cfg_repeat;
 model_estimate.name   = 'GLM Estimation';
 model_estimate.tag    = 'model_estimate';
 model_estimate.values = {wls_bglm_estimate liom_contrast  ...
-            liom_group AnalyzeGLM ROCtest}; 
+            liom_group extract_map_data AnalyzeGLM ROCtest}; 
 model_estimate.help   = {'These modules estimate a GLM.'};
  
 
