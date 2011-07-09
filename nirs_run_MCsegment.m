@@ -22,7 +22,9 @@ for Idx=1:nsubj
         try
             load(outNIRSmat{Idx});
         catch
-            disp(['Could not load NIRS.mat for ' int2str(Idx) 'th subject.']);
+            if ~isempty(outNIRSmat{Idx})
+                disp(['Could not load NIRS.mat for subject ' int2str(Idx)]);
+            end
         end
     end
     if ~isempty(job.image_in{1,1})
