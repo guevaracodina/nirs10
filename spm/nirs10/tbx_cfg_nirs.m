@@ -334,7 +334,7 @@ allSD_autosave.name   = 'Select all sources and detectors';
 allSD_autosave.tag    = 'allSD_autosave';
 allSD_autosave.labels = {'Yes' 'No'};
 allSD_autosave.values = {1,0};
-allSD_autosave.val    = {0};
+allSD_autosave.val    = {1};
 allSD_autosave.help   = {'ONLY with the choice : Text file from Brainsight !'
     'If No, you have to choose points and click on Save button'
     'If Yes, all sources and all detectors are selected (use for group analysis).'}';
