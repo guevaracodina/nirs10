@@ -38,14 +38,22 @@ ind_AR_n = sum(ind_AR.*(1:length(handles.Cf.H.O.n'))');
 
 %pre-selected points
 handles.Fn_s{1,1} = handles.Cf.H.O.n{1,ind_nasion_n};
+try
 handles.Fn_s{2,1} = handles.Cf.H.O.n{1,ind_AL_n};
+catch
+   handles.Fn_s{2,1} = handles.Cf.H.O.n{1,3}; 
+end
+try
 handles.Fn_s{3,1} = handles.Cf.H.O.n{1,ind_AR_n};
-
+catch
+handles.Fn_s{3,1} = handles.Cf.H.O.n{1,4};    
+end
 handles.Sn_s = handles.Cf.H.S.n';
 handles.Dn_s = handles.Cf.H.D.n';
 handles.Qn_s = {};
 
 % coordinates of these pre-selected points
+try
 handles.Fp_s_rom{1,1} = handles.Cf.H.O.r.o.mm.p{1,ind_nasion};
 handles.Fp_s_rom{1,2} = handles.Cf.H.O.r.o.mm.p{2,ind_nasion};
 handles.Fp_s_rom{1,3} = handles.Cf.H.O.r.o.mm.p{3,ind_nasion};
@@ -79,9 +87,10 @@ ind_AR = strcmp(handles.Fn_s,'RightEar');
 ind_AR_n = sum(ind_AR.*(1:length(handles.Fn_s))');
 Fn_sorted_s{3,1} = handles.Fn_s(ind_AR_n,1);
 Fp_sorted_s_rom(3,:) = handles.Fp_s_rom(ind_AR,:);
-
+end
 %NIRS
 NIRS =[];
+try
 NIRS.Cf.H.F.n = Fn_sorted_s';    % Fiducials
 NIRS.Cf.H.S.n = handles.Sn_s';   % Sources
 NIRS.Cf.H.D.n = handles.Dn_s';   % Detectors
@@ -96,7 +105,9 @@ NIRS.Cf.H.F.r.o.mm.p = cell2mat(Fp_sorted_s_rom');
 NIRS.Cf.H.S.r.o.mm.p = cell2mat(handles.Sp_s_rom');
 NIRS.Cf.H.D.r.o.mm.p = cell2mat(handles.Dp_s_rom');
 NIRS.Cf.H.Q.r.o.mm.p = cell2mat(handles.Qp_s_rom');
-
+catch
+    disp('Problem with NIRS_Cf');
+end
 save(fullfile(sDtp,'NIRS_Cf.mat'),'NIRS');
 out = 1;
 end
