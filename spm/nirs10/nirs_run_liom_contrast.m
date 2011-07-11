@@ -510,7 +510,9 @@ for Idx=1:size(job.NIRSmat,1)
                 %find channels which are visible from this projection view
                 W.index_ch = find(rchn ~= -1);
                 W.spatial_LPF = spatial_LPF;
-                W.radius = radius;
+                if spatial_LPF
+                    W.radius = radius;
+                end
                 if isempty(W.index_ch)
                     TOPO.v{side_hemi}.Warning = 'No channel found for this view';
                     disp(['No channel for view ' int2str(v1) ': Probable coregistration problem. Skipping this view']);
