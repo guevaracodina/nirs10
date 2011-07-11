@@ -329,6 +329,36 @@ text_brainsight.ufilter = '.*';
 text_brainsight.num     = [1 1];
 text_brainsight.help    = {'Select the text file from Brainsight.'};
 
+% nasion         = cfg_entry; %path
+% nasion.name    = 'Tag for nasion fiducial in Brainsight text';
+% nasion.tag     = 'nasion';       
+% nasion.strtype = 's';
+% nasion.num     = [1 Inf];     
+% nasion.def     = @(val)nirs_get_defaults('readNIRS.criugm1.generic2.subj.bs_pos.nasion', val{:}); 
+% nasion.help    = {''};
+% 
+% leftear         = cfg_entry; %path
+% leftear.name    = 'Tag for left ear fiducial in Brainsight text';
+% leftear.tag     = 'leftear';       
+% leftear.strtype = 's';
+% leftear.num     = [1 Inf];     
+% leftear.def     = @(val)nirs_get_defaults('readNIRS.criugm1.generic2.subj.bs_pos.leftear', val{:}); 
+% leftear.help    = {''};
+% 
+% rightear         = cfg_entry; %path
+% rightear.name    = 'Tag for right ear fiducial in Brainsight text';
+% rightear.tag     = 'rightear';       
+% rightear.strtype = 's';
+% rightear.num     = [1 Inf];     
+% rightear.def     = @(val)nirs_get_defaults('readNIRS.criugm1.generic2.subj.bs_pos.rightear', val{:}); 
+% rightear.help    = {''};
+
+% bs_pos         = cfg_branch;
+% bs_pos.tag     = 'bs_pos';
+% bs_pos.name    = 'Positions recording with Brainsight';
+% bs_pos.val     = {text_brainsight nasion leftear rightear};
+% bs_pos.help    = {'If the recording has been made with Brainsight.'};
+
 allSD_autosave        = cfg_menu;
 allSD_autosave.name   = 'Select all sources and detectors';
 allSD_autosave.tag    = 'allSD_autosave';
@@ -349,19 +379,19 @@ no_helmet.name = 'No helmet information';
 no_helmet.tag  = 'no_helmet';
 no_helmet.help = {'Helmet informations will be extracted from ''.nirs'' file.'};
 
-% custom         = cfg_files;
-% custom.tag     = 'custom';
-% custom.name    = 'Custom informations';
-% custom.help = {'PLEASE USE  ''Respective T1 or template''. No more used :You only have ''.nirs'' files but you need to have a good topographic position of the fibers linked to sources and detectors. The template will be selected as T1 image by default. Choose here the directory containing Hcoregistered and TopoData (coregistration won''t need to be done)'};
-% custom.filter  = 'dir';
-% custom.ufilter = '.*';
-% custom.num     = [1 1];
+helm_temp         = cfg_files;
+helm_temp.tag     = 'helm_temp';
+helm_temp.name    = 'Helmet template';
+helm_temp.help = {'If you have chosen before template in choice : ''Respective T1 or template''.'};
+helm_temp.filter  = 'dir';
+helm_temp.ufilter = '.*';
+helm_temp.num     = [1 1];
 
 helmet         = cfg_choice;
 helmet.tag     = 'helmet';
 helmet.name    = 'Helmet';
-helmet.values = {text_brainsight T1_vitamins no_helmet};%custom
-helmet.val     = {text_brainsight};
+helmet.values = {text_brainsight T1_vitamins no_helmet helm_temp};
+helmet.val     = {helm_temp};
 helmet.help    = {'If you choose a Brainsight text file, it will be used to determine all you need about sources, detectors and other points of interest.'};
 
 nirs_files         = cfg_files;
