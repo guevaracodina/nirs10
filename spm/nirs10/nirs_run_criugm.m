@@ -55,9 +55,14 @@ try
             %                 jobC.View6Projections = 0;
             %                 outC = nirs_run_coreg(jobC);
             %             end
+<<<<<<< .mine
+        else
+            template4all=0;
+=======
         else
             template4all=0;
             NIRS.Cf.H.template4all = template4all;
+>>>>>>> .r444
         end
         
         age = job.subj(1,is).age1;
@@ -107,18 +112,31 @@ try
             end
             NIRS.Dt.fir.stax.p{1} = staxp;
             
-            if ~job.subj(1,is).allSD_autosave % if group analysis you may want to run all the subjects without having to confirm at each time...
+            try % try to get Helmet automatically
                 jobH.subj.sDtp = sDtp;
                 jobH.subj.helmet.staxp = staxp;
-                nirs_criugm_getHelmet(jobH); % get helmet configuration (S,D,P,Q) from Brainsight
+                nirs_criugm_getHelmet_autosave(jobH);
+            catch % launch GUI for the user to select the right points
+                jobH.subj.sDtp = sDtp;
+                jobH.subj.helmet.staxp = staxp;
+                nirs_criugm_getHelmet2(jobH); % get helmet configuration (S,D,P,Q) from Brainsight
                 
-                fig=gcf; %findall(0,'name','Get positions from Brainsight (%%%%%)');
+                fig=gcf;
                 waitfor(fig,'BeingDeleted','On');
-            else % all sources and all detectors are selected
-                jobH.subj.sDtp = sDtp;
-                jobH.subj.helmet.staxp = staxp;
-                nirs_criugm_getHelmet_allSD_autosave(jobH);
             end
+            
+%             if ~job.subj(1,is).allSD_autosave % if group analysis you may want to run all the subjects without having to confirm for every subject...
+%                 jobH.subj.sDtp = sDtp;
+%                 jobH.subj.helmet.staxp = staxp;
+%                 nirs_criugm_getHelmet2(jobH); % get helmet configuration (S,D,P,Q) from Brainsight
+%                 
+%                 fig=gcf; %findall(0,'name','Get positions from Brainsight (%%%%%)');
+%                 waitfor(fig,'BeingDeleted','On');
+%             else % all sources and all detectors are selected
+%                 jobH.subj.sDtp = sDtp;
+%                 jobH.subj.helmet.staxp = staxp;
+%                 nirs_criugm_getHelmet_allSD_autosave(jobH);
+%             end
             
             % CB: NOUVELLE VERSION : LA partie HELMET DOIT enregistrer dans le
             % dossier du sujet une structure NIRS_Cf qui est lue ici puis effacee .
