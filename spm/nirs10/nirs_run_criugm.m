@@ -55,14 +55,9 @@ try
             %                 jobC.View6Projections = 0;
             %                 outC = nirs_run_coreg(jobC);
             %             end
-<<<<<<< .mine
-        else
-            template4all=0;
-=======
         else
             template4all=0;
             NIRS.Cf.H.template4all = template4all;
->>>>>>> .r444
         end
         
         age = job.subj(1,is).age1;
