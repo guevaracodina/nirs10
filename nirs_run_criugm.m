@@ -22,39 +22,13 @@ try
     sN = size(job.subj,2);
     for is=1:sN
         
-        if isfield(job.study_cfg.respectivedata,'template_chosen')
-            %         NIRS.Dt.fir.stax.n = 'custom';
-            %         % H : NIRS.Cf.H already done, just have to save it in the NIRS.mat
-            %         load(fullfile(job.subj(1,is).helmet.custom{:},'Hcoregistered.mat'));
-            %         NIRS.Cf.H = Hcoregistered;
-            %         % Topo Data : nirs_run_coreg has already been executed to generate
-            %         % once and for all the subjects the TopoData matrix.
-            %         NIRS.Dt.ana.rend = fullfile(job.subj(1,is).helmet.custom{:},'TopoData.mat');
-            
+        if isfield(job.study_cfg.respectivedata,'template_chosen')            
             % save template T1 as anatT1
             anatT1 = fullfile(fileparts(which('spm')),'templates','T1.nii');
             job.subj(1,is).anatT1 = {anatT1};
             % on saute ensuite les segmentations et coregistrations
             template4all=1;
             NIRS.Cf.H.template4all =template4all;
-            
-            %             if is ==1
-            %                 % batch pour la coregistration du sujet
-            %                 jobC.NIRSmat = job.NIRSmat;
-            %                 jobC.DelPreviousData =0;
-            %                 jobC.NewDirCopyNIRS = NewDirCopyNIRS;
-            %                 jobC.anatT1 = fullfile(fileparts(which('spm')),'templates','T1.nii');
-            %                 jobC.segT1_4fit = fullfile(fileparts(which('spm')),'\toolbox\nirs10_templates','00044_segmented_T1.nii');
-            %                 jobC.anatT1_template = fullfile(fileparts(which('spm')),'templates','T1.nii');
-            %                 jobC.fid_in_subject_MNI = 0;
-            %                 jobC.nasion_wMNI = [0,84,-48];
-            %                 jobC.AL_wMNI = [-83,-19,-38];
-            %                 jobC.AR_wMNI = [83,-19,-38];
-            %                 jobC.GenDataTopo = 1;
-            %                 jobC.render_choice = render_choice;
-            %                 jobC.View6Projections = 0;
-            %                 outC = nirs_run_coreg(jobC);
-            %             end
         else
             template4all=0;
             NIRS.Cf.H.template4all = template4all;
@@ -120,27 +94,12 @@ try
                 waitfor(fig,'BeingDeleted','On');
             end
             
-%             if ~job.subj(1,is).allSD_autosave % if group analysis you may want to run all the subjects without having to confirm for every subject...
-%                 jobH.subj.sDtp = sDtp;
-%                 jobH.subj.helmet.staxp = staxp;
-%                 nirs_criugm_getHelmet2(jobH); % get helmet configuration (S,D,P,Q) from Brainsight
-%                 
-%                 fig=gcf; %findall(0,'name','Get positions from Brainsight (%%%%%)');
-%                 waitfor(fig,'BeingDeleted','On');
-%             else % all sources and all detectors are selected
-%                 jobH.subj.sDtp = sDtp;
-%                 jobH.subj.helmet.staxp = staxp;
-%                 nirs_criugm_getHelmet_allSD_autosave(jobH);
-%             end
-            
             % CB: NOUVELLE VERSION : LA partie HELMET DOIT enregistrer dans le
             % dossier du sujet une structure NIRS_Cf qui est lue ici puis effacee .
             NIRS_Cf = load(fullfile(sDtp, 'NIRS_Cf.mat'));
             NIRS.Cf = NIRS_Cf.NIRS.Cf;
             clear NIRS_Cf
             delete(fullfile(sDtp, 'NIRS_Cf.mat'));
-            
-            %%%ancienne position de template4all
             
         elseif isfield(job.subj(1,is).helmet,'T1_vitamins') && ~template4all
             NIRS.Dt.fir.stax.n = 'T1_vitamins';
