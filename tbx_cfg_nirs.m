@@ -3696,7 +3696,7 @@ spatial_LPF      = cfg_choice;
 spatial_LPF.tag  = 'spatial_LPF';
 spatial_LPF.name = 'Spatial Low Pass Filter';
 spatial_LPF.values = {spatial_LPF_On spatial_LPF_Off};
-spatial_LPF.val = {spatial_LPF_On};
+spatial_LPF.val = {spatial_LPF_Off};
 spatial_LPF.help = {'Choose whether to include a spatial Low Pass Filter'
     'on the interpolated estimates and their variance before constructing'
     'statistical maps.'}';
@@ -5319,6 +5319,15 @@ factorial_design.help    = {
 %-------------------------------------------------------------------------
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
+group_session_to_average         = cfg_entry;
+group_session_to_average.name    = 'Session to average';
+group_session_to_average.tag     = 'group_session_to_average';       
+group_session_to_average.strtype = 'r';
+group_session_to_average.num     = [1 1];   
+group_session_to_average.val     = {1};
+group_session_to_average.help    = {'This is only used for multi-session group studies.'
+    'Specify here which session the group analysis should be done upon. '
+    'Only one session can be specified.'}'; 
 
 % Executable Branch
 liom_group      = cfg_exbranch;       
@@ -5326,7 +5335,8 @@ liom_group.name = 'Liom Group Model Estimation';
 liom_group.tag  = 'liom_group'; 
 liom_group.val  = {NIRSmat FFX_or_RFX contrast_figures contrast_p_value ...
         GenerateInverted GroupColorbars override_colorbar figures_visible ...
-        GroupFiguresIntoSubplots output_unc SmallFigures write_neg_pos}; % factorial_design}; 
+        GroupFiguresIntoSubplots output_unc SmallFigures write_neg_pos ...
+        group_session_to_average}; % factorial_design}; 
 liom_group.prog = @nirs_run_liom_group;  
 liom_group.vout = @nirs_cfg_vout_liom_group; 
 liom_group.help = {'Liom Group level model estimation.'};
@@ -5662,6 +5672,15 @@ extract_select_mode.values    = {extract_auto_mode extract_manual_mode};
 extract_select_mode.val       = {extract_auto_mode}; 
 extract_select_mode.help      = {'Extraction Selection Mode.'}'; 
 
+%extract name
+extract_struct_name         = cfg_entry; %path
+extract_struct_name.name    = 'extract_struct_name';
+extract_struct_name.tag     = 'extract_struct_name';       
+extract_struct_name.strtype = 's';
+extract_struct_name.num     = [1 Inf];     
+extract_struct_name.val     = {'ED'}; 
+extract_struct_name.help    = {'Name of structure of extracted data to be saved.'}; 
+
 extract_contrast         = cfg_entry;
 extract_contrast.name    = 'Contrast number';
 extract_contrast.tag     = 'extract_contrast';       
@@ -5687,7 +5706,7 @@ extract_radius_val.strtype = 'r';
 extract_radius_val.num     = [1 1];  
 extract_radius_val.val     = {3};
 extract_radius_val.help    = {'Radius value in pixels for average.'
-    '1 pixel corresponds to very approximately 0.5 to 2 mm.'}'; 
+    '1 pixel corresponds to very approximately 1 mm.'}'; 
 
 extract_threshold           = cfg_branch;
 extract_threshold.name      = 'extract_threshold';
@@ -5699,7 +5718,7 @@ extract_threshold.help      = {'Note that here both a threshold and the radius a
 extract_radius           = cfg_branch;
 extract_radius.name      = 'extract_radius';
 extract_radius.tag       = 'extract_radius';
-%extract_radius.val       = {}; 
+extract_radius.val       = {extract_radius_val}; 
 extract_radius.help      = {''};
 
 extract_average_mode           = cfg_choice;
@@ -5714,7 +5733,7 @@ extract_map_data      = cfg_exbranch;
 extract_map_data.name = 'Extract map data';            
 extract_map_data.tag  = 'extract_map_data';
 extract_map_data.val  = {NIRSmat view extract_contrast extract_select_mode ...
-    extract_average_mode TopoData}; 
+    extract_average_mode extract_struct_name}; 
 extract_map_data.prog = @nirs_run_extract_map_data;  
 extract_map_data.vout = @nirs_cfg_vout_extract_map_data; 
 extract_map_data.help = {'Extract_map_data.'};

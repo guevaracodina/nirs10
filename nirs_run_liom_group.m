@@ -25,6 +25,11 @@ try
 catch
     write_neg_pos = 0;
 end
+try
+    group_session_to_average = job.group_session_to_average;
+catch
+    group_session_to_average = 1;
+end
 %Booleans to choose which figures to write to disk, if any
 switch job.contrast_figures
     case 0
@@ -249,11 +254,23 @@ for Idx=1:nl
                                         tmp = squeeze(TOPO.v{v1}.s{f1}.hb{h1}.c_cov_interp_beta(c1,:,:));
                                         ccov_beta(f1,:) = tmp(:);
                                     else
-                                        %assume only one session
-                                        tmp = squeeze(big_TOPO{f1}.v{v1}.s{1}.hb{h1}.c_interp_beta(c1,:,:));
-                                        cbeta(f1,:) = tmp(:);
-                                        tmp = squeeze(big_TOPO{f1}.v{v1}.s{1}.hb{h1}.c_cov_interp_beta(c1,:,:));
-                                        ccov_beta(f1,:) = tmp(:);
+                                        if isfield(big_TOPO{f1}.v{v1},'g')
+                                            %group analysis of a group of
+                                            %sessions analysis
+                                            tmp = squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_interp_beta(c1,:,:));
+                                            cbeta(f1,:) = tmp(:);
+                                            tmp = squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_cov_interp_beta(c1,:,:));
+                                            ccov_beta(f1,:) = tmp(:);
+                                        else
+                                            %for is1=1:length(big_TOPO{f1}.v{v1}.s)
+                                            is1 = group_session_to_average;
+                                                %do each session separately
+                                                tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_beta(c1,:,:));
+                                                cbeta(f1,:) = tmp(:);
+                                                tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_cov_interp_beta(c1,:,:));
+                                                ccov_beta(f1,:) = tmp(:);
+                                            %end
+                                        end
                                         
                                     end
                                 end
@@ -266,11 +283,25 @@ for Idx=1:nl
                                         tmp = ones(sz(1), sz(2));
                                         ccov_beta(f1,:) = tmp(:);
                                     else
-                                        tmp = squeeze(big_TOPO{f1}.v{v1}.s{1}.hb{h1}.c_interp_F(c1,:,:));
-                                        cbeta(f1,:) = tmp(:);
-                                        sz = size(squeeze(big_TOPO{f1}.v{v1}.s{1}.hb{h1}.c_interp_F(c1,:,:)));
-                                        tmp = ones(sz(1), sz(2));
-                                        ccov_beta(f1,:) = tmp(:);
+                                        if isfield(big_TOPO{f1}.v{v1},'g')
+                                            %group analysis of a group of
+                                            %sessions analysis
+                                            tmp = squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_interp_F(c1,:,:));
+                                            cbeta(f1,:) = tmp(:);
+                                            sz = size(squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_interp_F(c1,:,:)));
+                                            tmp = ones(sz(1), sz(2));
+                                            ccov_beta(f1,:) = tmp(:);
+                                        else
+                                            %do each session separately
+                                            is1 = group_session_to_average;
+                                            %for is1=1:length(big_TOPO{f1}.v{v1}.s)
+                                                tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_F(c1,:,:));
+                                                cbeta(f1,:) = tmp(:);
+                                                sz = size(squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_F(c1,:,:)));
+                                                tmp = ones(sz(1), sz(2));
+                                                ccov_beta(f1,:) = tmp(:);
+                                            %end
+                                        end
                                     end
                                 end
                             end
@@ -311,9 +342,14 @@ for Idx=1:nl
                                         tmp = -squeeze(TOPO.v{v1}.s{f1}.hb{h1}.c_interp_beta(c1,:,:));
                                         cbeta(f1,:,:) = tmp(:);
                                     else
-                                        tmp = -squeeze(big_TOPO{f1}.v{v1}.s{1}.hb{h1}.c_interp_beta(c1,:,:));
-                                        cbeta(f1,:,:) = tmp(:);
-                                        
+                                        if isfield(big_TOPO{f1}.v{v1},'g')
+                                            tmp = -squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_interp_beta(c1,:,:));
+                                            cbeta(f1,:,:) = tmp(:);
+                                        else
+                                            is1 = group_session_to_average;
+                                            tmp = -squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_beta(c1,:,:));
+                                            cbeta(f1,:,:) = tmp(:);
+                                        end
                                     end
                                 end
                                 if GInv || strcmp(hb,'HbR')

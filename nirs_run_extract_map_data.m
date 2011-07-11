@@ -31,6 +31,11 @@ catch
     end
 end
 try
+    extract_struct_name = job.extract_struct_name;
+catch
+    extract_struct_name = 'ED';
+end
+try
     contrast = job.extract_contrast;
 catch
     contrast = 1;
@@ -345,7 +350,7 @@ for Idx=1:size(job.NIRSmat,1)
         disp(exception);
         disp(['Could not create extract data']);
     end
-    outfile = fullfile(dir1,'ED.mat');
+    outfile = fullfile(dir1,[extract_struct_name '.mat']);
     NIRS.ED = outfile;
     save(outfile,'ED');
     save(job.NIRSmat{Idx,1},'NIRS');
