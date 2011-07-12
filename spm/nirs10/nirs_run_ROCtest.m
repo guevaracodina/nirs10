@@ -613,6 +613,7 @@ for Idx=1:nSubj
     catch exception
         disp(['Could not perform ROC iterations subject ' int2str(Idx)]);
         disp(exception.identifier);
+        disp(exception.stack(1));
     end   
 end %end for Idx
 

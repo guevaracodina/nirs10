@@ -175,6 +175,8 @@ try
 %                 save(fullfile(NIRS.Dt.s.p,['Cox' fil1 '.mat']),'COx');
             end
         catch exception
+            disp(exception.identifier);
+            disp(exception.stack(1));
             error(msg);
             disp([rDtp{f} ' : heart regressor has not been calculated']);
         end

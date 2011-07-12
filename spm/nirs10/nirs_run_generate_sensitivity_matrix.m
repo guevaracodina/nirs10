@@ -304,6 +304,7 @@ for Idx=1:size(job.NIRSmat,1)
         save(job.NIRSmat{Idx,1},'NIRS');       
     catch exception
         disp(exception.identifier);
+        disp(exception.stack(1));
         disp(['Could not run MonteCarlo sensitivity matrix for subject' int2str(Idx)]);
     end  
 end

@@ -309,7 +309,8 @@ for Idx=1:size(job.NIRSmat,1)
                         [tSPM.xX.S.RbVmax, tSPM.xX.S.RbCmax] = max(tSPM.xX.beta(V2r,CHbR)./ sigma(CHbR));
                         [tSPM.xX.S.RbVmin, tSPM.xX.S.RbCmin] = min(tSPM.xX.beta(V2r,CHbR)./ sigma(CHbR));
                     catch exception
-                        disp(exception)
+                        disp(exception.identifier)
+                        disp(exception.stack(1));
                     end
                     %Add piece of SPM to the whole SPM 
                     try 
@@ -335,7 +336,8 @@ for Idx=1:size(job.NIRSmat,1)
                         SPM.xY.Cf = size(temp,1); %number of filtered channels stored
                         NIRS.Dt.fir.pp(nlst+1).p{iSPM,1} = outfile;
                         catch exception
-                            disp(exception);
+                            disp(exception.identifier);
+                            disp(exception.stack(1));
                         end
                     end                  
                 end %end for 1:nSubSess
@@ -381,7 +383,8 @@ for Idx=1:size(job.NIRSmat,1)
                     SPM.Gr.tb = SPM.Gr.betab./denumb;
                 end
             catch exception
-                disp(exception)
+                disp(exception.identifier)
+                disp(exception.stack(1));
             end
             try
                 K = SPM.xX.K;
@@ -407,7 +410,8 @@ for Idx=1:size(job.NIRSmat,1)
             end
         end
     catch exception
-        disp(exception)
+        disp(exception.identifier)
+        disp(exception.stack(1));
         disp(['Could not estimate GLM for subject' int2str(Idx)]);
     end
 end

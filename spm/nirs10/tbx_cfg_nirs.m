@@ -3828,6 +3828,28 @@ ProcessContrastsBySession.help = {'Important option, careful; only applies'
     'statistics, e.g. number of degrees of freedom, calculated for the full design matrix.'
     'if both, both options will be run.'}';
 
+GroupMultiSession           = cfg_menu;
+GroupMultiSession.name      = 'Group Multi-Session';
+GroupMultiSession.tag       = 'GroupMultiSession';
+GroupMultiSession.labels    = {'Yes' 'No'};
+GroupMultiSession.values    = {1,0};
+GroupMultiSession.val       = {0};
+GroupMultiSession.help      = {'Group Multi Session'
+    'If selected, with option ProcessContrastBySession set to 0,'
+    'Contrasts defined as vectors over all sessions will be treated.'}';
+
+% Study_type           = cfg_menu;
+% Study_type.name      = 'Study type';
+% Study_type.tag       = 'Study_type';
+% Study_type.labels    = {'Group Single Session' 'Group Multi Sessions' 'Single Subject Multi Sessions'};
+% Study_type.values    = {2,1,0};
+% Study_type.val       = {2};
+% Study_type.help      = {'Study type: note that all cases can be used for one or more subjects.'
+%     'However, the treatment by liom_contrast and/or liom_group will be affected by this choice'
+%     'Group Single Session: use when there is only one session, or with more than one session but contrasts do not combine different sessions'
+%     'Group Multi Sessions: use when contrasts are combined over more than one session'
+%     'Single Subject Multi Sessions: use when subjects will not be combined into a group analysis.'}';
+
 GroupFiguresIntoSubplots      = cfg_menu;
 GroupFiguresIntoSubplots.tag  = 'GroupFiguresIntoSubplots';
 GroupFiguresIntoSubplots.name = 'Group Figures Into Subplots';
@@ -4270,27 +4292,6 @@ write_neg_pos.help = {'If generating negative contrasts, whether to output '
     'separate maps for negative and positive contrasts and for both, '
     'or only the maps with both contrasts' }';
 
-GroupMultiSession           = cfg_menu;
-GroupMultiSession.name      = 'Group Multi-Session';
-GroupMultiSession.tag       = 'GroupMultiSession';
-GroupMultiSession.labels    = {'Yes' 'No'};
-GroupMultiSession.values    = {1,0};
-GroupMultiSession.val       = {0};
-GroupMultiSession.help      = {'Group Multi Session'
-    'If selected, with option ProcessContrastBySession set to 0,'
-    'Contrasts defined as vectors over all sessions will be treated.'}';
-
-% Study_type           = cfg_menu;
-% Study_type.name      = 'Study type';
-% Study_type.tag       = 'Study_type';
-% Study_type.labels    = {'Group Single Session' 'Group Multi Sessions' 'Single Subject Multi Sessions'};
-% Study_type.values    = {2,1,0};
-% Study_type.val       = {2};
-% Study_type.help      = {'Study type: note that all cases can be used for one or more subjects.'
-%     'However, the treatment by liom_contrast and/or liom_group will be affected by this choice'
-%     'Group Single Session: use when there is only one session, or with more than one session but contrasts do not combine different sessions'
-%     'Group Multi Sessions: use when contrasts are combined over more than one session'
-%     'Single Subject Multi Sessions: use when subjects will not be combined into a group analysis.'}';
 
 % Executable Branch
 liom_contrast      = cfg_exbranch;      

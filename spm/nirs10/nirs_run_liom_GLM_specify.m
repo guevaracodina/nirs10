@@ -641,7 +641,8 @@ for Idx=1:size(job.NIRSmat,1)
             NIRS.SPM{1} = spm_dir;
         end
     catch exception
-        disp(exception);
+        disp(exception.identifier);
+        disp(exception.stack(1));
         disp(['Could not specify GLM for subject' int2str(Idx)]);
     end
     %NIRS is now modified - it includes a link to the GLM   

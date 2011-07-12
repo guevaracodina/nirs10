@@ -174,6 +174,7 @@ if (GInv && Z.GroupColorbars)||(~Z.GroupColorbars && run_other_chart)
 end
 catch exception
     disp(exception.identifier);
+    disp(exception.stack(1));
 end 
 end
 
@@ -527,5 +528,6 @@ try
     end
 catch exception
     disp(exception.identifier);
+    disp(exception.stack(1));
 end
 end

@@ -348,7 +348,8 @@ for iSubj=1:size(job.NIRSmat,1)
             save(job.NIRSmat{iSubj,1},'NIRS'); 
         end
     catch exception
-        disp(exception);
+        disp(exception.identifier);
+        disp(exception.stack(1));
         disp(['Coregistration failed for the ' int2str(iSubj) 'th subject.']);
     end
 end
