@@ -77,76 +77,23 @@ for iSubj=1:size(job.NIRSmat,1)
                 for i=1:size(t,1)
                     [data, header]=loadmch(t(i,:));
                 end
-                
-                
+
             case 2 %tMCimg
-                
-                % ----------------------------------------------------------------------- %
-                %% Géométrie : paires d'optodes
-                
-                
-                % ICI : patch motrice ("moteur4x8") du CW6
-                
-                % Sources
-                % nomsSrc = [{'s1-2'};
-                %            {'s3-4'};
-                %            {'s5-6'};
-                %            {'s7-8'}];
-                nomsSrc = [{'srcNo1'};
-                    {'srcNo3'};
-                    {'srcNo4'};
-                    {'srcNo2'}];
-                
-                % Détecteurs correspondants - chaque ligne donne toutes les paires
-                % associées à  une source
-                % NE PAS CHANGER LA FORME "AAANOX" CAR CELA DÉTERMINE LE NO DE L'OPTODE
-                % (NOM(6:END))
-                nomsDet =  {[{'detNo9'}, {'detNo5'}, {'detNo8'}];
-                    [{'detNo9'}, {'detNo12'}, {'detNo8'}, {'detNo6'}];
-                    [{'detNo12'}, {'detNo11'}, {'detNo6'}, {'detNo7'}];
-                    [{'detNo11'}, {'detNo10'}, {'detNo7'}]};
-                % % Numéros de paires correspondants (informatif) PU BON:
-                % pairnumbers = {[{'p1'}, {'p8'}, {'p9'}];
-                %             [{'p2'}, {'p3'}, {'p10'}, {'p11'}];
-                %             [{'p4'}, {'p5'}, {'p12'}, {'p13'}];
-                %             [{'p6'}, {'p7'}, {'p14'}]};
-                
-                % Distance de chaque détecteur à sa source (dist. s-d pour chaque paire)
-                % en cm (matrice paddée avec des 0)
-                % (car unités des coeff. d'extinction (plus bas) sont cm^-1)
-                % En utilisant les positions projetées à la surface du voume (réelles)
-                distSrcDet = [ 3.2300    2.4800    2.2500    0; ...
-                    3.2000    3.0700    2.6600    2.7500; ...
-                    3.2000    3.1800    3.3100    2.7700; ...
-                    4.0200    3.0600    2.8300    0;];
-                
-                
-                %%
                 %%% Calcul des phi et DPF pour chaque longueur d'onde... %%%
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                
-                
                 lambdas = [690 830]; % CW6 : [690 830]. Sont inversées pour le CW5.
-                
-                % Paramètres
-                nLambda = size(lambdas); % nb de longueurs d'onde
-                P = 0;
-                for src = 1:size(nomsDet,1)
-                    P = P + size(nomsDet{src},2); % nb de paires
-                end
-                V = 0; % nb de voxels - sera lu, plus loin, dans les fichiers .cfg
-                
+                               
                 % Initialisations des matrices
-                
-                % Sera initialisée plus loin, lorsqu'on a lu le nombre de voxels V dans les fichiers .cfg
-                DPF = zeros(P,nLambda);        % Differential pathlength factor pour chaque paire et chaque longueur d'onde
-                DPFmean= zeros(1,nLambda);     % Differential pathlength factor moyen pour chaque longueur d'onde
-                DPL = zeros(P,nLambda);        % Parcours des photons pour chaque paire et chaque longueur d'onde
-                % Note : DPF = DPL/distSrcDet;
-                % Partial pathlength factors : for simulations with perturbation
-                PPF = zeros(P,nLambda);        % Partial pathlength factor pour chaque paire et chaque longueur d'onde
-                PPFmean= zeros(1,nLambda);     % Partial pathlength factor moyen pour chaque longueur d'onde
-                PPL = zeros(P,nLambda);        % Parcours des photons dans la perturbation pour chaque paire et chaque longueur d'onde
+%                 
+%                 % Sera initialisée plus loin, lorsqu'on a lu le nombre de voxels V dans les fichiers .cfg
+%                 DPF = zeros(P,nLambda);        % Differential pathlength factor pour chaque paire et chaque longueur d'onde
+%                 DPFmean= zeros(1,nLambda);     % Differential pathlength factor moyen pour chaque longueur d'onde
+%                 DPL = zeros(P,nLambda);        % Parcours des photons pour chaque paire et chaque longueur d'onde
+%                 % Note : DPF = DPL/distSrcDet;
+%                 % Partial pathlength factors : for simulations with perturbation
+%                 PPF = zeros(P,nLambda);        % Partial pathlength factor pour chaque paire et chaque longueur d'onde
+%                 PPFmean= zeros(1,nLambda);     % Partial pathlength factor moyen pour chaque longueur d'onde
+%                 PPL = zeros(P,nLambda);        % Parcours des photons dans la perturbation pour chaque paire et chaque longueur d'onde
                 
                 
                 if sum(cs.par.perturbationPpties_l1 ==[0,0,0,0])/4 && sum(cs.par.perturbationPpties_l2 ==[0,0,0,0])/4
@@ -164,10 +111,7 @@ for iSubj=1:size(job.NIRSmat,1)
                     
                     for k1=1:size(t,1)
                         [allhistory nbPhotonsTotSimu ntissus muaEachTiss] = lirehis(t(k1,:),cs.par.nphotons,cs.NDkpt,ntissues,cs.par.numTimeGates);
-                        
-                        
                     end
-                    % allhis : cell contenant chaque history file
                     
                     % Pour chaque paire "pi" formée de la source "sm" et du détecteur "dn"...
                     pi = 0; % Numéro de la paire
@@ -257,125 +201,27 @@ for iSubj=1:size(job.NIRSmat,1)
                     PVFmean_lambda = mean(PVF_lambda);
                     PVFstd_lambda = std(PVF_lambda);
                     
-                    % Libérer mémoire
-                    %clear allhistory
-                    
-                    % ------------------------------------------------------------------- %
-                    
-% % % % % % % % % %                     %%% Lire fichiers .2pt (2-pt Green's functions ou densités de photons) %%%
-% % % % % % % % % %                     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% % % % % % % % % %                     % Lire 1 à 1 les fichiers .2pt (densités de photons), sommer sur le
-% % % % % % % % % %                     % temps pour obtenir phi (on enregistre au passage cette matrice
-% % % % % % % % % %                     % sommée qui prend moins d'espace mémoire)
-% % % % % % % % % %                     [allPhi V volLims] = lire2pt(nomsFichiers);
-% % % % % % % % % %                     [segVol volDimsxyz] = lirebin(nomsFichiers(1)); % ont tous le même fichier de segmentation donc on n'en lit qu'un
-% % % % % % % % % %                     medium3D = segVol{1};
-% % % % % % % % % %                     clear segVol
-% % % % % % % % % %                     % allPhi : cell contenant chaque matrice phi (a été normalisé dans lire2pt)
-% % % % % % % % % %                     % volLims : dimensions en voxels de la ROI dans laquelle on a calculé la simulation
-% % % % % % % % % %                     % Format : [xmin ymin zmin; xmax ymax zmax]
-% % % % % % % % % %                     % V : nombre de voxels dans la ROI de la simulation
-% % % % % % % % % %                     % %%optodePositions : cell où chaque élément est un vecteur 1x3 de la
-% % % % % % % % % %                     % %%position de la source dans le volume de simulation
-% % % % % % % % % %                     % segVol : fichier de segmentation (volume segmenté en tissus)
-% % % % % % % % % %                     
-% % % % % % % % % %                     % Oups on ne veut pas réinitialiser à chaque longueur d'onde
-% % % % % % % % % %                     %AA = zeros(2*P,2*V);         % Initialisation de la matrice de sensitivité
-% % % % % % % % % %                     
-% % % % % % % % % %                     %%% Calcul des éléments "L" (parcours effectif moyen) %%%
-% % % % % % % % % %                     %%%               Matrice de sensitivité              %%%
-% % % % % % % % % %                     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% % % % % % % % % %                     
-% % % % % % % % % %                     % Pour chaque paire "pi" formée de la source "sm" et du détecteur "dn"...
-% % % % % % % % % %                     pi = 0; % Numéro de la paire
-% % % % % % % % % %                     % Matrice "L" (sensitivité)
-% % % % % % % % % %                     L_lambda = zeros(P,V); % size : PxV
-% % % % % % % % % %                     for sm = 1:size(nomsSrc,1)
-% % % % % % % % % %                         for dn = 1:size(nomsDet{sm},2)
-% % % % % % % % % %                             % paire pi : nomsSrc(sm) avec nomsDet(sm,dn)
-% % % % % % % % % %                             pi = pi+1;
-% % % % % % % % % %                             % Index correspondant à sm dans allphi
-% % % % % % % % % %                             idxSrc = find(strcmp(nomsSrc(sm),nomsOptodes)==1);
-% % % % % % % % % %                             % Index correspondant à dn dans allphi
-% % % % % % % % % %                             idxDet = find(strcmp(nomsDet{sm}{dn},nomsOptodes)==1);
-% % % % % % % % % %                             % Densités de photons phi
-% % % % % % % % % %                             phi1 = allPhi{idxSrc}; % size nvx x nvy x nvz (V elements)
-% % % % % % % % % %                             phi2 = allPhi{idxDet}; % idem
-% % % % % % % % % %                             
-% % % % % % % % % %                             %%% Calcul phi0 %%%
-% % % % % % % % % %                             % size : 1xP
-% % % % % % % % % %                             % Boas dans son code calcule son phi0 de cette façon, sans
-% % % % % % % % % %                             % utiliser le fichier .his; il considère simplement la valeur
-% % % % % % % % % %                             % de phi pour les photons issus de la source M dans le voxel
-% % % % % % % % % %                             % correspondant à la position du détecteur N.
-% % % % % % % % % %                             
-% % % % % % % % % %                             % Lire les positions des optodes une fois projetées
-% % % % % % % % % %                             fid = fopen('positionsProjected.txt');   % fichier que j'enregistre à la main
-% % % % % % % % % %                             % Les positions doivent être dans l'ordre des optodes
-% % % % % % % % % %                             % (1,2,3,...,12)
-% % % % % % % % % %                             no_opt = 0;
-% % % % % % % % % %                             while ~feof(fid)
-% % % % % % % % % %                                 ligne = fgetl(fid);              % le lire ligne par ligne
-% % % % % % % % % %                                 cel{1} = ligne;
-% % % % % % % % % %                                 if isempty(ligne)
-% % % % % % % % % %                                     break
-% % % % % % % % % %                                 end
-% % % % % % % % % %                                 no_opt = no_opt + 1;
-% % % % % % % % % %                                 % Lire les positions des optodes
-% % % % % % % % % %                                 positionyxz(no_opt,1:3) = floor(str2num(ligne(20:end-1)));
-% % % % % % % % % %                                 % Vérifier qu'on est bien dans le tissu et non l'air
-% % % % % % % % % %                                 if medium3D(positionyxz(no_opt,2),positionyxz(no_opt,1),positionyxz(no_opt,3))==0
-% % % % % % % % % %                                     h = msgbox(['Attention la position trouvée du détecteur'...
-% % % % % % % % % %                                         nomsDet{sm}{dn} 'est dans l''air!']);
-% % % % % % % % % %                                     uiwait(h)
-% % % % % % % % % %                                 end
-% % % % % % % % % %                             end
-% % % % % % % % % %                             fclose(fid);
-% % % % % % % % % %                             
-% % % % % % % % % %                             % Numéros d'optodes de sm et dn (dans la forme 'optodeNoX')
-% % % % % % % % % %                             noDet = str2num(nomsDet{sm}{dn}(6:end));
-% % % % % % % % % %                             noSrc = str2num(nomsSrc{sm}(6:end));
-% % % % % % % % % %                             
-% % % % % % % % % %                             % Phi0 pour la paire pi formée de la source sm et du détecteur
-% % % % % % % % % %                             % dn est la valeur du phi de la source sm à la position du
-% % % % % % % % % %                             % détecteur dn dans le volume. Ça pourrait aussi être la valeur
-% % % % % % % % % %                             % du phi de la source dn à la position du détecteur sm. On
-% % % % % % % % % %                             % prend la moyenne des deux.
-% % % % % % % % % %                             phi0_lambdaS = phi1(positionyxz(noDet,2),...
-% % % % % % % % % %                                 positionyxz(noDet,1),positionyxz(noDet,3));
-% % % % % % % % % %                             phi0_lambdaD = phi2(positionyxz(noSrc,2),...
-% % % % % % % % % %                                 positionyxz(noSrc,1),positionyxz(noSrc,3));
-% % % % % % % % % %                             phi0_lambda(pi) = phi0_lambdaS/2 + phi0_lambdaD/2;
-% % % % % % % % % %                             
-% % % % % % % % % %                             phiProduct = phi1.*phi2; % idem (PxV)
-% % % % % % % % % %                             L_lambda(pi,:) = phiProduct(:)' ./ phi0_lambda(pi); % size : 1xV
-% % % % % % % % % %                             % Approximation de Rytov : le produit phi(s,v)*phi(v,d) est
-% % % % % % % % % %                             % normalisé par phi0(s,d) - à l'opposé de l'approximation de
-% % % % % % % % % %                             % Born (pas de normalisation)
-                            
-% % %                             
-% % %                         end
-% % %                     end
-                    
-                    % Libérer mémoire
-                    clear allPhi phi1 phi2 phiProduct
-                    
-                    % ------------------------------------------------------------------- %
-                    
-                    
-                    % Matrices incluant toutes les longueurs d'onde %
-                    % --------------------------------------------- %
-                    DPF(:,lambda) = DPF_lambda;              % size : P x nLambda
-                    PVF(:,lambda) = PVF_lambda;              % size : P x nLambda
-                    DPFmean(lambda,1) = DPFmean_lambda;      % size : 1 x nLambda
-                    AA( (1+(P*(lambda-1))):(P+(P*(lambda-1))),...
-                        (1+(V*(lambda-1))):(V+(V*(lambda-1))) ) = ...
-                        L_lambda;       % size : 2P x 2V
-                    
-                    % Pas nécessaire :
-                    %phi0(:,lambda) = phi0_lambda;            % size : P x nLambda
-                    
-% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %                 end
+                end     % Libérer mémoire
+                %clear allhistory
+                
+                % Libérer mémoire
+                clear allPhi phi1 phi2 phiProduct
+                
+                % ------------------------------------------------------------------- %
+                
+                % Matrices incluant toutes les longueurs d'onde %
+                % --------------------------------------------- %
+                DPF(:,lambda) = DPF_lambda;              % size : P x nLambda
+                PVF(:,lambda) = PVF_lambda;              % size : P x nLambda
+                DPFmean(lambda,1) = DPFmean_lambda;      % size : 1 x nLambda
+                AA( (1+(P*(lambda-1))):(P+(P*(lambda-1))),...
+                    (1+(V*(lambda-1))):(V+(V*(lambda-1))) ) = ...
+                    L_lambda;       % size : 2P x 2V
+                
+                % Pas nécessaire :
+                %phi0(:,lambda) = phi0_lambda;            % size : P x nLambda
+                
+                % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %                 end
                 
                 % Enregistrer matrice de sensitivité pour l'avenir
                 save('MegaMatriceSensitivite.mat','AA');
@@ -394,25 +240,6 @@ for iSubj=1:size(job.NIRSmat,1)
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 % Coefficients d'extinction selon Ted Huppert's HOMer (GetExtinctions.m)
                 % à, respectivement, 690 (ligne1, HbO HbR) et 830 (ligne2, HbO HbR)
-                
-                % [ Lamda1-HbO  Lambda1-HbR  (690=lambda1 avec le CW6)
-                %   Lambda2-HbO Lambda2-HbR] (830=lambda2 avec le CW6)
-                % size : nLambda x nHb (2x2)
-                
-                % source : http://omlc.ogi.edu/spectra/hemoglobin/summary.html (au 22
-                % juillet 2008)
-                if lambda(1)==830 && lambda(1)==690
-                    coeff_ext = [ 974  693.04 ;   % POUR DONNÉES PRISES AVEC LE CW5
-                        276  2051.96  ] .* 2.303 ./1e6; % en cm^-1 / (umol/L).
-                elseif lambda(1)==690 && lambda(1)==830
-                    coeff_ext = [ 276  2051.96 ;   % POUR DONNÉES PRISES AVEC LE CW6
-                        974  693.04  ] .* 2.303 ./1e6; % en cm^-1 / (umol/L).
-                    % Le facteur 2.303 permet d'obtenir des coefficients d'absorption
-                    % mu_a lorsqu'on mutliplie par la concentration en umol/L (toujours
-                    % selon le site des données compilées par Scott Prahl!)
-                else
-                    disp('Les coefficients utilisés dans ce script sont pour des longueurs d''onde de 690 et 830 nm!');
-                end
                 
                 
                 %% ----------------------------------------------------------------------- %
@@ -496,7 +323,7 @@ for iSubj=1:size(job.NIRSmat,1)
                 dHbR_projBOLD = (coeff_ext(2,2) .* dmuaProj_pairs(1,:) - ...
                     coeff_ext(1,2) .* dmuaProj_pairs(2,:) ) ./ ...
                     (coeff_ext(2,2).*coeff_ext(1,1) - coeff_ext(2,1).*coeff_ext(1,2) );
-end
+                
             otherwise
                 disp('The algorithm with which the simulation has been runned is not recognised.')
         end
