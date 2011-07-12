@@ -118,6 +118,7 @@ for Idx=1:size(job.NIRSmat,1)
         end
     catch exception
         disp(exception.identifier);
+        disp(exception.stack(1));
         disp(['Could not run MonteCarlo simulation for subject' int2str(Idx)]);
     end
 end

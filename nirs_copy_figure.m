@@ -232,6 +232,7 @@ if ~isempty(DF) %&& DF.GroupColorbars %Separated colorbars too far from working 
         end
     catch exception
         disp(exception.identifier);
+        disp(exception.stack(1));
     end
 end
 end

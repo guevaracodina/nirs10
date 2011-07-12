@@ -35,7 +35,8 @@ else
                 cd(owd);
             end
         catch exception
-            disp(exception);
+            disp(exception.identifier);
+            disp(exception.stack(1));
             disp('Problem with render_subject');
         end
     end

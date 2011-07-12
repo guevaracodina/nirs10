@@ -420,7 +420,8 @@ for Idx=1:nl
                                 end
                             end
                         catch exception
-                            disp(exception);
+                            disp(exception.identifier);
+                            disp(exception.stack(1));
                             disp(['Problem with a specific contrast ' int2str(c1) ' and chromophore ' hb ' for view ' int2str(v1)]);
                         end
                     end
@@ -450,6 +451,7 @@ for Idx=1:nl
         save(ftopo,'TOPO');
     catch exception
         disp(exception.identifier);
+        disp(exception.stack(1));
         disp(['Could not do group analysis']);
     end
     %NIRS.TOPO = ftopo;

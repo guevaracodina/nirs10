@@ -235,7 +235,8 @@ for Idx=1:size(job.NIRSmat,1)
             %Generate the SPM-type contrasts over all sessions
             SPM = nirs_spm_run_con(job,SPM);     
         catch exception
-            disp(exception);
+            disp(exception.identifier);
+            disp(exception.stack(1));
         end
         
         %Generate automated contrasts if required
@@ -364,7 +365,8 @@ for Idx=1:size(job.NIRSmat,1)
                 end
             end 
         catch exception
-            disp(exception);            
+            disp(exception.identifier);
+            disp(exception.stack(1));
         end    
         %Find out if some of the SPM contrasts could be used for
         %single-session contrasts
@@ -392,7 +394,8 @@ for Idx=1:size(job.NIRSmat,1)
                 end
             end
         catch exception
-            disp(exception);
+            disp(exception.identifier);
+            disp(exception.stack(1));
         end
         %Generate single-session contrasts, using either automated
         %contrasts or user-specified contrasts
@@ -702,7 +705,8 @@ for Idx=1:size(job.NIRSmat,1)
                 TOPO.v{side_hemi}.s2 = W.s2;
                 TOPO.v{side_hemi}.view = spec_hemi; %%% view of the brain
             catch exception
-                disp(exception);
+                disp(exception.identifier);
+                disp(exception.stack(1));
                 disp(['Could not create contrasts for view ' spec_hemi ' for subject ' int2str(Idx)]);
             end
         end %end for v1
@@ -713,7 +717,8 @@ for Idx=1:size(job.NIRSmat,1)
         TOPO.SSxCon = SSxCon;
         save(ftopo,'TOPO','-v7.3'); %file can be large - really?
     catch exception
-        disp(exception);
+        disp(exception.identifier);
+        disp(exception.stack(1));
         disp(['Could not create contrasts for subject' int2str(Idx)]);
     end
     NIRS.TOPO = ftopo;
@@ -966,7 +971,8 @@ for c1=1:nC
     end
 end
 catch exception
-    disp(exception);
+    disp(exception.identifier);
+    disp(exception.stack(1));
 end
 end
 
@@ -1027,7 +1033,8 @@ try
     %fill TOPO
     TOPO = fill_TOPO(TOPO,C,side_hemi,f1,'HbO');
 catch exception
-    disp(exception);
+    disp(exception.identifier);
+    disp(exception.stack(1));
 end
 
 %HbR
@@ -1041,7 +1048,8 @@ try
     end
     TOPO = fill_TOPO(TOPO,C,side_hemi,f1,'HbR');
 catch exception
-    disp(exception);
+    disp(exception.identifier);
+    disp(exception.stack(1));
 end
 
 try
@@ -1055,7 +1063,8 @@ try
     end
     TOPO = fill_TOPO(TOPO,C,side_hemi,f1,'HbT');  
 catch exception
-    disp(exception);
+    disp(exception.identifier);
+    disp(exception.stack(1));
 end
 
 try %works for both group and single sessions    

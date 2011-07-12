@@ -259,7 +259,8 @@ for Idx=1:nsubj
             end
         end
     catch exception
-        disp(exception);
+        disp(exception.identifier);
+        disp(exception.stack(1));
         disp(['Could not process onsets for subj' int2str(Idx)]);
     end
     

@@ -252,6 +252,7 @@ for Idx=1:size(job.NIRSmat,1)
         save(job.NIRSmat{Idx,1},'NIRS');
     catch exception
         disp(exception.identifier);
+        disp(exception.stack(1));
         rmdir(ctm.p);
         disp(['Could not run MonteCarlo reconstruction for subject' int2str(Idx)]);
     end

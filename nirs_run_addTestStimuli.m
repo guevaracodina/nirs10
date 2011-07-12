@@ -679,7 +679,8 @@ for Idx=1:size(job.NIRSmat,1)
         disp('Recall that NIRS.mat for testing is now in the testing folder');
         %disp('*************************************************************');
     catch exception
-        disp(exception);
+        disp(exception.identifier);
+        disp(exception.stack(1));
         disp(['Adding stimuli for testing failed for subject' int2str(Idx)]);
     end
 end
