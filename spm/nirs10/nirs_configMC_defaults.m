@@ -10,8 +10,6 @@ global nirs10
 nirs10.configMC1.MC_CUDAchoice = 1;
 nirs10.configMC1.MC_configdir = 'MC'; %no longer used
 
-nirs10.configMC1.mcim_in = 0;
-
 nirs10.configMC1.nphotons = 1e8;
 nirs10.configMC1.seed = 394581069;
 nirs10.configMC1.modulationFreq = 0;
