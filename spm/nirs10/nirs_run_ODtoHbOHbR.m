@@ -223,7 +223,8 @@ for Idx=1:size(job.NIRSmat,1)
         else
             save(job.NIRSmat{Idx,1},'NIRS');
         end
-    catch
+    catch exception
+        disp exception
         disp(['Conversion of optical intensities to hemoglobin ',...
             'concentrations failed for subject ' int2str(Idx)]);
     end

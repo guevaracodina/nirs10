@@ -1994,12 +1994,28 @@ heart_rate_cfg.values    = {heart_resting heart_exercise};
 heart_rate_cfg.val       = {heart_resting}; 
 heart_rate_cfg.help      = {'Choose configuration of parameters.'
                             'Resting-state or VO2max (aerobic exercise)'}'; 
+save_heart_rate_figure      = cfg_menu;
+save_heart_rate_figure.tag  = 'save_heart_rate_figure';
+save_heart_rate_figure.name = 'save_heart_rate_figure';
+save_heart_rate_figure.labels = {'True','False'};
+save_heart_rate_figure.values = {1,0};
+save_heart_rate_figure.val  = {1};
+save_heart_rate_figure.help = {'save_heart_rate_figure.'}';
+
+display_heart_rate_figure      = cfg_menu;
+display_heart_rate_figure.tag  = 'display_heart_rate_figure';
+display_heart_rate_figure.name = 'display_heart_rate_figure';
+display_heart_rate_figure.labels = {'True','False'};
+display_heart_rate_figure.values = {1,0};
+display_heart_rate_figure.val  = {0};
+display_heart_rate_figure.help = {'display_heart_rate_figure.'}';
 
 % Executable Branch
 criugm_paces1      = cfg_exbranch;       
 criugm_paces1.name = 'Heart rate utility';             
 criugm_paces1.tag  = 'criugm_paces1'; 
-criugm_paces1.val  = {NIRSmat DelPreviousData NewDirCopyNIRS heart_rate_cfg remove_no_heartbeat};   
+criugm_paces1.val  = {NIRSmat DelPreviousData NewDirCopyNIRS heart_rate_cfg ...
+    remove_no_heartbeat save_heart_rate_figure display_heart_rate_figure};   
 criugm_paces1.prog = @nirs_run_criugm_paces;  
 criugm_paces1.vout = @nirs_cfg_vout_criugm_paces;
 criugm_paces1.help = {['Preprocessing step: Extract heart rate and, if desired, ',...
