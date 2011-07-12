@@ -48,6 +48,12 @@ try
 catch
     GroupMultiSession = 0;
 end
+% try
+%     Study_type = job.Study_type;
+% catch
+%     Study_type = 2;
+% end
+
 %When there are two or more sessions
 %1: contrasts defined over more than 1 session are ignored
 %0: contrasts defined over only 1 session are processed with full design
@@ -543,6 +549,18 @@ for Idx=1:size(job.NIRSmat,1)
                     W.spec_hemi = spec_hemi;
                     W.side_hemi = side_hemi;
                     
+%                     switch Study_type
+%                         case 0 %Single subject
+%                             ProcessContrastsBySession = 2;
+%                             GroupMultiSession = 0;
+%                         case 1 %Group multi session
+%                             ProcessContrastsBySession = 
+%                             GroupMultiSession = 1;
+%                         case 2 %Group single session
+%                             ProcessContrastsBySession = 
+%                             GroupMultiSession = 0;
+%                     end
+                            
                     if  ~(ProcessContrastsBySession == 1) %case 0 or 2
                         if ~GroupMultiSession
                             %REMOVE contrasts of wrong length
@@ -559,6 +577,8 @@ for Idx=1:size(job.NIRSmat,1)
                                     end
                                 end
                             end
+                        else
+                            nCon = xCon;
                         end                        
                         %group of sessions
                         if GFIS
