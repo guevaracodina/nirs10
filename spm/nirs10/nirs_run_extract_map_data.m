@@ -250,7 +250,7 @@ for Idx=1:size(job.NIRSmat,1)
                                 end
                                 ED.v{side_hemi}.hb{h1}.lmax = lmax;
                                 ED.v{side_hemi}.hb{h1}.lmin = lmin;
-                                
+                                ED.v{side_hemi}.hb{h1}.M = M;
                                 %Extract time series at selected points
                                 %from SPM.xY.P -- does that exist for group
                                 %studies?
@@ -278,17 +278,19 @@ for Idx=1:size(job.NIRSmat,1)
                                     end
                                     %group Std
                                     try
-                                    Ymin = [];
-                                    Ymax = [];
-                                    for f1=1:length(SPM.xY.P)
-                                        Ymin = [Ymin; ED.v{side_hemi}.s{f1}.hb{h1}.Ymin];
-                                        Ymax = [Ymax; ED.v{side_hemi}.s{f1}.hb{h1}.Ymax];
-                                    end
-                                    ED.v{side_hemi}.group.hb{h1}.Ymin = Ymin;
-                                    ED.v{side_hemi}.group.hb{h1}.Ymax = Ymax;
-                                    ED.v{side_hemi}.group.hb{h1}.Ymin_Sigma = std(Ymin);
-                                    ED.v{side_hemi}.group.hb{h1}.Ymax_Sigma = std(Ymax);
-                                    ED.v{side_hemi}.group.hb{h1}.filteredOK = filteredOK;
+                                        Ymin = [];
+                                        Ymax = [];
+                                        for f1=1:length(SPM.xY.P)
+                                            Ymin = [Ymin; ED.v{side_hemi}.s{f1}.hb{h1}.Ymin];
+                                            Ymax = [Ymax; ED.v{side_hemi}.s{f1}.hb{h1}.Ymax];
+                                        end
+                                        if length(length(SPM.xY.P)) > 1
+                                            ED.v{side_hemi}.g.hb{h1}.Ymin = Ymin;
+                                            ED.v{side_hemi}.g.hb{h1}.Ymax = Ymax;
+                                            ED.v{side_hemi}.g.hb{h1}.Ymin_Sigma = std(Ymin);
+                                            ED.v{side_hemi}.g.hb{h1}.Ymax_Sigma = std(Ymax);
+                                            ED.v{side_hemi}.g.hb{h1}.filteredOK = filteredOK;
+                                        end
                                     end
                                 end
                                 %Extract statistics data from maps
@@ -337,6 +339,35 @@ for Idx=1:size(job.NIRSmat,1)
                                     %                                 [TOPO] = extract_data_core(Z,W,TOPO,SPM.xXn{f1},nCon,f1);
                                     %
                                 end %end for f1
+                                %Group of sessions
+                                if isfield(ED.v{side_hemi},'g')
+                                    ED.v{side_hemi}.g.hb{h1}.c{c1}.bcmin = interp_series(squeeze(TOPO.v{side_hemi}.g.hb{h1}.c_interp_beta(c1,:,:)),lmin,[]);
+                                    ED.v{side_hemi}.g.hb{h1}.c{c1}.bcmax = interp_series(squeeze(TOPO.v{side_hemi}.g.hb{h1}.c_interp_beta(c1,:,:)),lmax,[]);
+                                    %normalized by standard deviation
+                                    ED.v{side_hemi}.g.hb{h1}.c{c1}.bNmin = ED.v{side_hemi}.g.hb{h1}.c{c1}.bcmin/ED.v{side_hemi}.g.hb{h1}.Ymin_Sigma;
+                                    ED.v{side_hemi}.g.hb{h1}.c{c1}.bNmax = ED.v{side_hemi}.g.hb{h1}.c{c1}.bcmax/ED.v{side_hemi}.g.hb{h1}.Ymax_Sigma;
+                                    %interpolated covariance
+                                    ED.v{side_hemi}.g.hb{h1}.c{c1}.covmin = interp_series(squeeze(TOPO.v{side_hemi}.g.hb{h1}.c_cov_interp_beta(c1,:,:)),lmin,[]);
+                                    ED.v{side_hemi}.g.hb{h1}.c{c1}.covmax = interp_series(squeeze(TOPO.v{side_hemi}.g.hb{h1}.c_cov_interp_beta(c1,:,:)),lmax,[]);
+                                    %interpolated F
+                                    ED.v{side_hemi}.g.hb{h1}.c{c1}.Fmin = interp_series(squeeze(TOPO.v{side_hemi}.g.hb{h1}.c_interp_F(c1,:,:)),lmin,[]);
+                                    ED.v{side_hemi}.g.hb{h1}.c{c1}.Fmax = interp_series(squeeze(TOPO.v{side_hemi}.g.hb{h1}.c_interp_F(c1,:,:)),lmax,[]);
+
+                                else
+                                    %group study proper
+                                    ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bcmin = interp_series(squeeze(TOPO.v{side_hemi}.s{f1}.hb{h1}.c_interp_beta(c1,:,:)),lmin,[]);
+                                    ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bcmax = interp_series(squeeze(TOPO.v{side_hemi}.s{f1}.hb{h1}.c_interp_beta(c1,:,:)),lmax,[]);
+                                    %normalized by standard deviation
+                                    ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bNmin = ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bcmin/ED.v{side_hemi}.s{f1}.hb{h1}.Ymin_Sigma;
+                                    ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bNmax = ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bcmax/ED.v{side_hemi}.s{f1}.hb{h1}.Ymax_Sigma;
+                                    %interpolated covariance
+                                    ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.covmin = interp_series(squeeze(TOPO.v{side_hemi}.s{f1}.hb{h1}.c_cov_interp_beta(c1,:,:)),lmin,[]);
+                                    ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.covmax = interp_series(squeeze(TOPO.v{side_hemi}.s{f1}.hb{h1}.c_cov_interp_beta(c1,:,:)),lmax,[]);
+                                    %interpolated F
+                                    ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.Fmin = interp_series(squeeze(TOPO.v{side_hemi}.s{f1}.hb{h1}.c_interp_F(c1,:,:)),lmin,[]);
+                                    ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.Fmax = interp_series(squeeze(TOPO.v{side_hemi}.s{f1}.hb{h1}.c_interp_F(c1,:,:)),lmax,[]);
+
+                                end
                             end %end for h1
                         end %end for c1
                     end
@@ -358,45 +389,6 @@ end
 out.NIRSmat = job.NIRSmat;
 end
  
-
-
-% 
-% function [TOPO] = extract_data_core(W,TOPO,xX,xCon)
-% side_hemi = W.side_hemi;
-% W.erdf = xX.erdf;
-% 
-% %HbO
-% try
-%     %Note that var(ch_HbO) depends on HbO vs HbR
-%     Q = interpolation_kernel_short(W.corr_beta,length(W.ch_HbO),W.mtx_var_HbO,W);
-%     interp_series();
-%     [C xCon] = loop_contrasts(xCon,W.beta_HbO,W.corr_beta,W.mtx_var_HbO,Q,xX,W);
-% catch exception
-%     disp(exception);
-% end
-% 
-% %HbR
-% try
-%     Q = interpolation_kernel_short(W.corr_beta,length(W.ch_HbR),W.mtx_var_HbR,W);              
-% 
-%     [C xCon] = loop_contrasts(xCon,W.beta_HbR,W.corr_beta,W.mtx_var_HbR,Q,xX,W);
-% 
-% catch exception
-%     disp(exception);
-% end
-% 
-% try
-%     %HbT
-%     Q = interpolation_kernel_short(W.corr_beta,length(W.ch_HbT),W.mtx_var_HbT,W);              
-% 
-%     [C xCon] = loop_contrasts(xCon,W.beta_HbT,W.corr_beta,W.mtx_var_HbT,Q,xX,W);
-%     
-% catch exception
-%     disp(exception);
-% end
-% 
-% end
-
 function M = get_min_max(m)
     %min
     [M.min M.pmin] = min(m(:));

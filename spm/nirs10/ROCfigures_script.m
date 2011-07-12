@@ -66,18 +66,7 @@ for Jidx=1:nJob
             meanROC=(Z.TPu2R{Jidx,Idx}(1:end-1)+Z.TPu2R{Jidx,Idx}(2:end))/2;
             ROCareaR2{Jidx,Idx} = -sum(meanROC.*diff(Z.FPu2R{Jidx,Idx}));
         end
-        if all_channels
-            Nch = size(Z.FPu1A{Jidx,Idx},1);
-            ROCarea1A = zeros(1,Nch);
-            ROCarea2A = zeros(1,Nch);
-            
-            for i=1:Nch
-                meanROC=(Z.TPu1A{Jidx,Idx}(i,1:end-1)+Z.TPu1A{Jidx,Idx}(i,2:end))/2;
-                ROCarea1A(i) =  -sum(meanROC.*diff(Z.FPu1A{Jidx,Idx}(i,:)));
-                meanROC=(Z.TPu2A{Jidx,Idx}(i,1:end-1)+Z.TPu2A{Jidx,Idx}(i,2:end))/2;
-                ROCarea2A(i) =  -sum(meanROC.*diff(Z.FPu2A{Jidx,Idx}(i,:)));
-            end
-        end
+        
     end
 end
 
@@ -87,7 +76,18 @@ set(0,'DefaultAxesFontSize',16)
 set(0,'DefaultTextFontSize',16)
 
 
-
+if all_channels
+    Jidx = 2; Idx = 1;
+    Nch = size(Z.FPu1A{Jidx,Idx},1);
+    ROCarea1A = zeros(1,Nch);
+    ROCarea2A = zeros(1,Nch);
+    for i=1:Nch
+        meanROC=(Z.TPu1A{Jidx,Idx}(i,1:end-1)+Z.TPu1A{Jidx,Idx}(i,2:end))/2;
+        ROCarea1A(i) =  -sum(meanROC.*diff(Z.FPu1A{Jidx,Idx}(i,:)));
+        meanROC=(Z.TPu2A{Jidx,Idx}(i,1:end-1)+Z.TPu2A{Jidx,Idx}(i,2:end))/2;
+        ROCarea2A(i) =  -sum(meanROC.*diff(Z.FPu2A{Jidx,Idx}(i,:)));
+    end
+end
 
 % % set(gcf,'PaperUnits','centimeters')
 % % %This sets the units of the current figure (gcf = get current figure) on paper to centimeters.
@@ -172,7 +172,7 @@ switch figure_choice
         box on; hold on
         xlabel('1-Specificity');
         ylabel('Sensitivity'); hold on
-        Jidx = 1;
+        Jidx = 2;
         %h = [];
         for nch=1:Nch
             if nch <= Nch/2
@@ -192,7 +192,7 @@ switch figure_choice
         title('ROC Area'); hold on
           
         Idx=1;
-        Jidx=1;
+        Jidx=2;
 %          tmp = [ROCarea1A' ROCarea2A']; 
 %         BPL = {'V1','V2'};
         tmp = [ROCarea1A(1:Nch/2)' ROCarea1A(1+Nch/2:Nch)' ...

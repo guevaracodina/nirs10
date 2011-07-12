@@ -1090,7 +1090,10 @@ end
 function TOPO = fill_TOPO(TOPO,C,side_hemi,f1,hb)
 %Fills TOPO structure with interpolated beta, cov_beta, and F-contrast
 hbi = inv_get_chromophore(hb);
-
+%CONVENTION:
+%'g': group of sessions
+%'group': group analysis over subjects (see liom_group)
+%'s': individual sessions
 if f1 == 0
     TOPO.v{side_hemi}.g.hb{hbi}.sum_kappa = C.sum_kappa;
     TOPO.v{side_hemi}.g.hb{hbi}.c_interp_beta = C.c_interp_beta;

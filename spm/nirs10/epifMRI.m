@@ -137,7 +137,7 @@ EEGlabel = 'EEG';
 %Created folder where anatomical files are put
 T1label = 'T1';
 %Created folder where stat results are put
-Statslabel = 'Stat_';
+Statslabel = 'Stat2_';
 %results directory
 DirResults = 'ResultsAll';
 %epilepsy root name
@@ -151,9 +151,9 @@ Analyze_sessions = [];
 
 SaveStatsBatch = 1; %Boolean: 0: off; 1: on
 SaveReportBatch = 1; %Boolean: 0: off; 1: on
-SkipUncorrected = 0; %Integer: 0 FWE & none: 1: FWE; 2: none
-SkipGroupOnsets = 0; %Boolean: 0 (do not skip): off; 1: on (skip)
-SkipNegativeBOLD = 0; %Boolean: 0 (do not skip): off; 1: on (skip)
+SkipUncorrected = 0; %Integer: 0: FWE & none: 1: FWE; 2: none
+SkipGroupOnsets = 0; %Boolean: 0: (do not skip): off; 1: on (skip)
+SkipNegativeBOLD = 0; %Boolean: 0: (do not skip): off; 1: on (skip)
 
 %Prefixes for the various output files
 pfx_temporal = 'a';
@@ -177,7 +177,7 @@ NewSegmentOn = 0; %Boolean: 0: off; 1: on
 DartelOn = 0; %Boolean: 0: off; 1: on
 %Normalize to Talairach-Tournoux atlas using old SPM normalise procedure
 %Do not normalize to an atlas for a typical fMRI study in epilepsy 
-normalizeOn = 2; %Integer: 0: off; 1: on; 2: both
+normalizeOn = 0; %Integer: 0: off; 1: on; 2: both
 %During output of results to a Ghostscript file, results can be displayed
 %by session
 reportContrastsBySession = 0; %Boolean: 0: off; 1: on
@@ -207,9 +207,9 @@ add_pulse_regressor = 0; %Boolean: 0: off; 1: on
 %Volterra - nonlinearities
 VolterraOn = 2; %Integer: 0: off; 1: on; 2: both
 %Window size for Gamma function HRF 
-GammaOn = 0; %Integer: 0: off; 1: on; 2: both
+GammaOn = 2; %Integer: 0: off; 1: on; 2: both
 gamma_window = 20; %in seconds
-gamma_order = 3; %number of gamma function bases
+gamma_order = 1; %number of gamma function bases
 default_analysis_dir = 1; %Boolean: 0: let user choose analysis dir; 1: automatic default
 AnovaOn = 0; %Boolean
 threshold = 0.05;

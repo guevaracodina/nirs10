@@ -311,13 +311,21 @@ for Idx=1:nl
                                 if GInv || strcmp(hb,'HbO') || strcmp(hb,'HbT')
                                     try, [tmap_group, erdf_group, var_bs, beta_group] = liom_group(...
                                             cbeta,ccov_beta,s1,s2,ns,min_s,FFX); end
-                                    
-                                    TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.Tmap = tmap_group;
-                                    TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.erdf = erdf_group;
-                                    TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.beta_group = beta_group;
-                                    TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.type = 'Positive';
-                                    TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.var_bs = var_bs;
-                                    TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.c = xCon(c1);
+                                    if FFX || nS==1
+                                        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.Tmap = tmap_group;
+                                        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.erdf = erdf_group;
+                                        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.beta_group = beta_group;
+                                        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.type = 'Positive';
+                                        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.var_bs = var_bs;
+                                        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.c = xCon(c1);
+                                    else
+                                        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.Tmap = tmap_group;
+                                        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.erdf = erdf_group;
+                                        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.beta_group = beta_group;
+                                        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.type = 'Positive';
+                                        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.var_bs = var_bs;
+                                        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.c = xCon(c1);
+                                    end
                                     erdf_group = max(erdf_group(:)); %quick fix...
                                     filestr = [num2str(p_value) '_' spec_hemi '_' hb];
                                     filestr_fig = [num2str(p_value) ' ' spec_hemi ' ' hb];
@@ -356,14 +364,21 @@ for Idx=1:nl
                                     %Generate group result as t-stat
                                     try, [tmap_group, erdf_group, var_bs, beta_group] = liom_group(...
                                             cbeta,ccov_beta,s1,s2,ns,min_s,FFX); end
-                                    
-                                    TOPO.v{v1}.group.hb{h1}.c{2*c1}.Tmap = tmap_group;
-                                    TOPO.v{v1}.group.hb{h1}.c{2*c1}.erdf = erdf_group;
-                                    TOPO.v{v1}.group.hb{h1}.c{2*c1}.beta_group = beta_group;
-                                    TOPO.v{v1}.group.hb{h1}.c{2*c1}.type = 'Negative';
-                                    TOPO.v{v1}.group.hb{h1}.c{2*c1}.var_bs = var_bs;
-                                    TOPO.v{v1}.group.hb{h1}.c{2*c1}.c = xCon(c1);
-                                    
+                                    if FFX || nS==1
+                                        TOPO.v{v1}.g.hb{h1}.c{2*c1}.Tmap = tmap_group;
+                                        TOPO.v{v1}.g.hb{h1}.c{2*c1}.erdf = erdf_group;
+                                        TOPO.v{v1}.g.hb{h1}.c{2*c1}.beta_group = beta_group;
+                                        TOPO.v{v1}.g.hb{h1}.c{2*c1}.type = 'Negative';
+                                        TOPO.v{v1}.g.hb{h1}.c{2*c1}.var_bs = var_bs;
+                                        TOPO.v{v1}.g.hb{h1}.c{2*c1}.c = xCon(c1);
+                                    else
+                                        TOPO.v{v1}.group.hb{h1}.c{2*c1}.Tmap = tmap_group;
+                                        TOPO.v{v1}.group.hb{h1}.c{2*c1}.erdf = erdf_group;
+                                        TOPO.v{v1}.group.hb{h1}.c{2*c1}.beta_group = beta_group;
+                                        TOPO.v{v1}.group.hb{h1}.c{2*c1}.type = 'Negative';
+                                        TOPO.v{v1}.group.hb{h1}.c{2*c1}.var_bs = var_bs;
+                                        TOPO.v{v1}.group.hb{h1}.c{2*c1}.c = xCon(c1);
+                                    end
                                     erdf_group = max(erdf_group(:)); %quick fix...
                                     filestr = [num2str(p_value) '_' spec_hemi '_' hb];
                                     filestr_fig = [num2str(p_value) ' ' spec_hemi ' ' hb];
@@ -414,7 +429,7 @@ for Idx=1:nl
         else
             [dir0,dummy,dummy2] = fileparts(job.NIRSmat{1});
             %extract previous directory
-            tmp = findstring(filesep,dir0);
+            tmp = findstr(filesep,dir0);
             dir_root = dir0(1:tmp(end));
             dir_group = [dir_root filesep 'Group'];
             if ~exist(dir_group,'dir'), mkdir(dir_group); end
