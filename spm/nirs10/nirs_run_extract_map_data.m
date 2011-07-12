@@ -445,6 +445,8 @@ for Idx=1:size(job.NIRSmat,1)
                             for h1=1:3
                                 c_min = [];
                                 c_max = [];
+                                std_min = [];
+                                std_max = [];
                                 for c1=1:length(ED.v{side_hemi}.s{1}.hb{1}.c)
                                     tmp_min = [];
                                     tmp_max = [];
@@ -464,36 +466,49 @@ for Idx=1:size(job.NIRSmat,1)
                                     %add group result to list
                                     switch study_type
                                         case {0,1}
-                                            tmp_min = [tmp_min sum(tmp_min)/length(tmp_min) ED.v{side_hemi}.g.hb{h1}.c{c1}.bcmin];
-                                            tmp_max = [tmp_max sum(tmp_max)/length(tmp_max) ED.v{side_hemi}.g.hb{h1}.c{c1}.bcmax];
+                                            tmp_min = [tmp_min mean(tmp_min) ED.v{side_hemi}.g.hb{h1}.c{c1}.bcmin/ED.v{side_hemi}.g.hb{h1}.Ymin_Sigma];
+                                            tmp_max = [tmp_max mean(tmp_max) ED.v{side_hemi}.g.hb{h1}.c{c1}.bcmax/ED.v{side_hemi}.g.hb{h1}.Ymax_Sigma];
                                             tmp_std_min = [tmp_std_min std(tmp_min)/length(tmp_min)^0.5 ED.v{side_hemi}.g.hb{h1}.c{c1}.stdmin];
                                             tmp_std_max = [tmp_std_max std(tmp_max)/length(tmp_max)^0.5 ED.v{side_hemi}.g.hb{h1}.c{c1}.stdmax];
                                             tmin = ED.v{side_hemi}.g.hb{h1}.c{c1}.tmin;
                                             tmax = ED.v{side_hemi}.g.hb{h1}.c{c1}.tmax;
                                         case 2
-                                            %if isfield(TOPO.v{side_hemi},'group')
-                                            tmp_min = [tmp_min  sum(tmp_min)/length(tmp_min) ED.v{side_hemi}.group.hb{h1}.c{c1}.stdmin];
-                                            tmp_max = [tmp_max  sum(tmp_max)/length(tmp_max) ED.v{side_hemi}.group.hb{h1}.c{c1}.stdmax];
+                                            %if
+                                            %isfield(TOPO.v{side_hemi},'group')
+                                            tmp_min = [tmp_min  mean(tmp_min) ED.v{side_hemi}.group.hb{h1}.c{c1}.stdmin];
+                                            tmp_max = [tmp_max  mean(tmp_max) ED.v{side_hemi}.group.hb{h1}.c{c1}.stdmax];
+                                            tmp_std_min = [tmp_std_min std(tmp_min)/length(tmp_min)^0.5 ED.v{side_hemi}.group.hb{h1}.c{c1}.stdmin];
+                                            tmp_std_max = [tmp_std_max std(tmp_max)/length(tmp_max)^0.5 ED.v{side_hemi}.group.hb{h1}.c{c1}.stdmax];
                                             tmin = ED.v{side_hemi}.group.hb{h1}.c{c1}.tmin;
                                             tmax = ED.v{side_hemi}.group.hb{h1}.c{c1}.tmax;
                                         otherwise
                                     end
-                                    %                                   end
+                                    %                                 
                                     c_min = [c_min;tmp_min];
                                     c_max = [c_max;tmp_max];
+                                    std_min = [std_min; tmp_std_min];
+                                    std_max = [std_max; tmp_std_max];
+                                    
+                                end
+                                try
                                     epilepsy = 1;
                                     if epilepsy
-                                        %add ratio
-                                        cmin(end+1,:) = c_min(1,:)./c_min(2,:);
-                                        cmax(end+1,:) = c_max(1,:)./c_max(2,:);
+                                        %add ratio of 2nd to 1st Volterra
+                                        c_min(end+1,:) = c_min(2,:)./c_min(1,:);
+                                        c_max(end+1,:) = c_max(2,:)./c_max(1,:);
                                     end
                                 end
                                 ED.v{side_hemi}.hb{h1}.bNmin = c_min;
                                 ED.v{side_hemi}.hb{h1}.bNmax = c_max;
+                                ED.v{side_hemi}.hb{h1}.std_min = std_min;
+                                ED.v{side_hemi}.hb{h1}.std_max = std_max;
                                 ED.v{side_hemi}.hb{h1}.tmin = tmin;
                                 ED.v{side_hemi}.hb{h1}.tmax = tmax;
                                 ED.v{side_hemi}.hb{h1}.note = 'bNmin: normalized amplitudes by session or subject, then unweighted average and precision-weighted group result, for each contrast and perhaps ratio of first 2 contrasts';
                             end
+                        catch exception
+                            disp(exception.identifier);
+                            disp(exception.stack(1));                            
                         end
                     end
                 end
