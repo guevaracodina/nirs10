@@ -17,7 +17,7 @@ else
     all_channels = 0;
 end
 line_choice = 1;
-figure_choice =10;
+figure_choice =14;
 %1+3 or 4 plots
 plot4 = 0; %Boolean
 plotUL = 1;
@@ -77,7 +77,7 @@ set(0,'DefaultTextFontSize',16)
 
 
 if all_channels
-    Jidx = 2; Idx = 1;
+    Jidx = 1; Idx = 1;
     Nch = size(Z.FPu1A{Jidx,Idx},1);
     ROCarea1A = zeros(1,Nch);
     ROCarea2A = zeros(1,Nch);
@@ -172,7 +172,7 @@ switch figure_choice
         box on; hold on
         xlabel('1-Specificity');
         ylabel('Sensitivity'); hold on
-        Jidx = 2;
+        Jidx = 1;
         %h = [];
         for nch=1:Nch
             if nch <= Nch/2
@@ -192,7 +192,7 @@ switch figure_choice
         title('ROC Area'); hold on
           
         Idx=1;
-        Jidx=2;
+        Jidx=1;
 %          tmp = [ROCarea1A' ROCarea2A']; 
 %         BPL = {'V1','V2'};
         tmp = [ROCarea1A(1:Nch/2)' ROCarea1A(1+Nch/2:Nch)' ...

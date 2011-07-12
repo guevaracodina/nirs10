@@ -219,7 +219,15 @@ for Idx=1:nl
                 if FFX || nS==1
                     %Contrasts
                     xCon = TOPO.SSxCon;
+                    TOPO.v{v1}.g.ns = ns;
+                    TOPO.v{v1}.g.min_s = min_s;
+                    TOPO.v{v1}.g.s1 = s1;
+                    TOPO.v{v1}.g.s2 = s2;
                 else
+                    TOPO.v{v1}.group.ns = ns;
+                    TOPO.v{v1}.group.min_s = min_s;
+                    TOPO.v{v1}.group.s1 = s1;
+                    TOPO.v{v1}.group.s2 = s2;
                     %Contrasts -- assume same contrasts for all subjects
                     try
                         xCon = big_TOPO{1}.SSxCon; % big_TOPO{1}.xCon}; %????
@@ -230,10 +238,7 @@ for Idx=1:nl
                     %xCon = big_TOPO{1}.xCon;
                 end
 
-                TOPO.v{v1}.group.ns = ns;
-                TOPO.v{v1}.group.min_s = min_s;
-                TOPO.v{v1}.group.s1 = s1;
-                TOPO.v{v1}.group.s2 = s2;
+                
                 cbeta = zeros(ns,s1*s2);
                 ccov_beta = zeros(ns,s1*s2);
                 tmp = zeros(s1,s2);
@@ -324,24 +329,25 @@ for Idx=1:nl
                                 %Positive contrasts
                                 %Generate group result as t-stat
                                 if GInv || strcmp(hb,'HbO') || strcmp(hb,'HbT')
-                                    try, [tmap_group, erdf_group, var_bs, beta_group] = liom_group(...
-                                            cbeta,ccov_beta,s1,s2,ns,min_s,FFX); end
+                                    try, G = liom_group(cbeta,ccov_beta,s1,s2,ns,min_s,FFX); end
                                     if FFX || nS==1
-                                        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.Tmap = tmap_group;
-                                        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.erdf = erdf_group;
-                                        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.beta_group = beta_group;
+                                        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.Tmap = G.tmap_group;
+                                        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.erdf = G.erdf_group;
+                                        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.beta_group = G.beta_group;
+                                        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.std_group = G.std_group;
                                         TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.type = 'Positive';
-                                        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.var_bs = var_bs;
+                                        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.var_bs = G.var_bs;
                                         TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.c = xCon(c1);
                                     else
-                                        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.Tmap = tmap_group;
-                                        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.erdf = erdf_group;
-                                        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.beta_group = beta_group;
+                                        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.Tmap = G.tmap_group;
+                                        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.erdf = G.erdf_group;
+                                        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.beta_group = G.beta_group;
+                                        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.std_group = G.std_group;
                                         TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.type = 'Positive';
-                                        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.var_bs = var_bs;
+                                        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.var_bs = G.var_bs;
                                         TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.c = xCon(c1);
                                     end
-                                    erdf_group = max(erdf_group(:)); %quick fix...
+                                    erdf_group = max(G.erdf_group(:)); %quick fix...
                                     filestr = [num2str(p_value) '_' spec_hemi '_' hb];
                                     filestr_fig = [num2str(p_value) ' ' spec_hemi ' ' hb];
                                     info1 = [filestr '_Pos' xCon(c1).name];
@@ -351,7 +357,7 @@ for Idx=1:nl
                                     F.contrast_info_both = [filestr xCon(c1).name]; %same for Pos and Neg, used for combined figures
                                     F.contrast_info_both_for_fig = [filestr_fig xCon(c1).name]; %same for Pos and Neg, used for combined figures
                                     
-                                    F.T_map = tmap_group;
+                                    F.T_map = G.tmap_group;
                                     F.erdf = erdf_group;
                                     F.eidf = xCon(c1).eidf;
                                     F.tstr = xCon(c1).STAT; %tstr;
@@ -377,24 +383,25 @@ for Idx=1:nl
                                 end
                                 if GInv || strcmp(hb,'HbR')
                                     %Generate group result as t-stat
-                                    try, [tmap_group, erdf_group, var_bs, beta_group] = liom_group(...
-                                            cbeta,ccov_beta,s1,s2,ns,min_s,FFX); end
+                                    try, G = liom_group(cbeta,ccov_beta,s1,s2,ns,min_s,FFX); end
                                     if FFX || nS==1
-                                        TOPO.v{v1}.g.hb{h1}.c{2*c1}.Tmap = tmap_group;
-                                        TOPO.v{v1}.g.hb{h1}.c{2*c1}.erdf = erdf_group;
-                                        TOPO.v{v1}.g.hb{h1}.c{2*c1}.beta_group = beta_group;
+                                        TOPO.v{v1}.g.hb{h1}.c{2*c1}.Tmap = G.tmap_group;
+                                        TOPO.v{v1}.g.hb{h1}.c{2*c1}.erdf = G.erdf_group;
+                                        TOPO.v{v1}.g.hb{h1}.c{2*c1}.beta_group = G.beta_group;
+                                        TOPO.v{v1}.g.hb{h1}.c{2*c1}.std_group = G.std_group;
                                         TOPO.v{v1}.g.hb{h1}.c{2*c1}.type = 'Negative';
-                                        TOPO.v{v1}.g.hb{h1}.c{2*c1}.var_bs = var_bs;
+                                        TOPO.v{v1}.g.hb{h1}.c{2*c1}.var_bs = G.var_bs;
                                         TOPO.v{v1}.g.hb{h1}.c{2*c1}.c = xCon(c1);
                                     else
-                                        TOPO.v{v1}.group.hb{h1}.c{2*c1}.Tmap = tmap_group;
-                                        TOPO.v{v1}.group.hb{h1}.c{2*c1}.erdf = erdf_group;
-                                        TOPO.v{v1}.group.hb{h1}.c{2*c1}.beta_group = beta_group;
+                                        TOPO.v{v1}.group.hb{h1}.c{2*c1}.Tmap = G.tmap_group;
+                                        TOPO.v{v1}.group.hb{h1}.c{2*c1}.erdf = G.erdf_group;
+                                        TOPO.v{v1}.group.hb{h1}.c{2*c1}.beta_group = G.beta_group;
+                                        TOPO.v{v1}.group.hb{h1}.c{2*c1}.std_group = G.std_group;
                                         TOPO.v{v1}.group.hb{h1}.c{2*c1}.type = 'Negative';
-                                        TOPO.v{v1}.group.hb{h1}.c{2*c1}.var_bs = var_bs;
+                                        TOPO.v{v1}.group.hb{h1}.c{2*c1}.var_bs = G.var_bs;
                                         TOPO.v{v1}.group.hb{h1}.c{2*c1}.c = xCon(c1);
                                     end
-                                    erdf_group = max(erdf_group(:)); %quick fix...
+                                    erdf_group = max(G.erdf_group(:)); %quick fix...
                                     filestr = [num2str(p_value) '_' spec_hemi '_' hb];
                                     filestr_fig = [num2str(p_value) ' ' spec_hemi ' ' hb];
                                     info1 = [filestr '_Neg' xCon(c1).name];
@@ -403,7 +410,7 @@ for Idx=1:nl
                                     F.contrast_info_for_fig = info_for_fig1;
                                     F.contrast_info_both = [filestr xCon(c1).name]; %same for Pos and Neg, used for combined figures
                                     F.contrast_info_both_for_fig = [filestr_fig xCon(c1).name]; %same for Pos and Neg, used for combined figures
-                                    F.T_map = tmap_group;
+                                    F.T_map = G.tmap_group;
                                     F.erdf = erdf_group;
                                     F.eidf = xCon(c1).eidf;
                                     F.tstr = xCon(c1).STAT; %tstr;

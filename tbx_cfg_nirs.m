@@ -4309,15 +4309,27 @@ GroupMultiSession.help      = {'Group Multi Session'
     'If selected, with option ProcessContrastBySession set to 0,'
     'Contrasts defined as vectors over all sessions will be treated.'}';
 
+% Study_type           = cfg_menu;
+% Study_type.name      = 'Study type';
+% Study_type.tag       = 'Study_type';
+% Study_type.labels    = {'Group Single Session' 'Group Multi Sessions' 'Single Subject Multi Sessions'};
+% Study_type.values    = {2,1,0};
+% Study_type.val       = {2};
+% Study_type.help      = {'Study type: note that all cases can be used for one or more subjects.'
+%     'However, the treatment by liom_contrast and/or liom_group will be affected by this choice'
+%     'Group Single Session: use when there is only one session, or with more than one session but contrasts do not combine different sessions'
+%     'Group Multi Sessions: use when contrasts are combined over more than one session'
+%     'Single Subject Multi Sessions: use when subjects will not be combined into a group analysis.'}';
+
 % Executable Branch
 liom_contrast      = cfg_exbranch;      
 liom_contrast.name = 'Liom Contrast Calculations';            
 liom_contrast.tag  = 'liom_contrast';
 %PP removed: liom_contrast_struct
-liom_contrast.val  = {NIRSmat NewDirCopyNIRS view consess ...
-    spatial_LPF ProcessContrastsBySession GenerateInverted GroupColorbars contrast_p_value ...
+liom_contrast.val  = {NIRSmat NewDirCopyNIRS ProcessContrastsBySession GroupMultiSession view consess ...
+    spatial_LPF GenerateInverted GroupColorbars contrast_p_value ...
     contrast_figures override_colorbar figures_visible GroupFiguresIntoSubplots ...
-    output_unc SmallFigures write_neg_pos TopoData GroupMultiSession}; 
+    output_unc SmallFigures write_neg_pos TopoData}; %Study_type
 liom_contrast.prog = @nirs_run_liom_contrast;  
 liom_contrast.vout = @nirs_cfg_vout_liom_contrast; 
 liom_contrast.help = {'Liom Contrast Calculations.'};
@@ -5727,8 +5739,18 @@ extract_struct_name.num     = [1 Inf];
 extract_struct_name.val     = {'ED'}; 
 extract_struct_name.help    = {'Name of structure of extracted data to be saved.'}; 
 
+extract_base_contrast         = cfg_entry;
+extract_base_contrast.name    = 'Base contrast number';
+extract_base_contrast.tag     = 'extract_base_contrast';       
+extract_base_contrast.strtype = 'r';
+extract_base_contrast.num     = [1 1];   
+extract_base_contrast.val     = {1};
+extract_base_contrast.help    = {'Enter base contrast number to extract'
+    'maps data from. Specify here the contrast based on which the map points'
+    'will be selected.'}';
+
 extract_contrast         = cfg_entry;
-extract_contrast.name    = 'Contrast number';
+extract_contrast.name    = 'List of contrast number(s) to extract';
 extract_contrast.tag     = 'extract_contrast';       
 extract_contrast.strtype = 'r';
 extract_contrast.num     = [1 Inf];   
@@ -5778,7 +5800,8 @@ extract_average_mode.help      = {'Extraction Averaging Mode.'}';
 extract_map_data      = cfg_exbranch;      
 extract_map_data.name = 'Extract map data';            
 extract_map_data.tag  = 'extract_map_data';
-extract_map_data.val  = {NIRSmat view extract_contrast extract_select_mode ...
+extract_map_data.val  = {NIRSmat view extract_base_contrast ...
+    extract_contrast extract_select_mode ...
     extract_average_mode extract_struct_name}; 
 extract_map_data.prog = @nirs_run_extract_map_data;  
 extract_map_data.vout = @nirs_cfg_vout_extract_map_data; 

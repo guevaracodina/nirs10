@@ -35,10 +35,15 @@ try
 catch
     extract_struct_name = 'ED';
 end
-try
-    contrast = job.extract_contrast;
+try 
+    extract_base_contrast = job.extract_base_contrast;
 catch
-    contrast = 1;
+    extract_base_contrast = 1;
+end
+try
+    extract_contrast = job.extract_contrast;
+catch
+    extract_contrast = 1;
 end
 try 
     %job.extract_average_mode.extract_radius;
@@ -178,25 +183,29 @@ for Idx=1:size(job.NIRSmat,1)
                         Q = interpolation_kernel_short(length(cHb{1}),W);
                         %TO DO
                         %Big loop over selected contrasts
-                        for c1 = 1:length(contrast)
-                            con = contrast(c1);
+                        base_con = extract_base_contrast;
+                        for c1 = 1:length(extract_contrast)
+                            try
+                            con = extract_contrast(c1);
                             for h1=1:3 %careful if HbT not generated
-                                
                                 %Select point(s) on map
                                 switch select_mode
                                     case 0 %manual
-                                        m = TOPO.v{side_hemi}.group.hb{2}.c{con}.Tmap;
-                                        M = get_min_max(m);
-                                        figure; imagesc(m);
-                                        M.rmin = spm_input('Enter rmin ',1);
-                                        M.cmin = spm_input('Enter cmin ',1);
-                                        M.rmax = spm_input('Enter rmax ',1);
-                                        M.cmax = spm_input('Enter cmax ',1);
-                                        
+                                        if h1 == 1 && c1 == 1 %only go through once                                           
+                                            m = TOPO.v{side_hemi}.group.hb{2}.c{base_con}.Tmap;
+                                            disp(['Displayed HbR map for contrast ' int2str(base_con)]);
+                                            M = get_min_max(m);
+                                            figure; imagesc(m);
+                                            M.rmin = spm_input('Enter rmin ',1);
+                                            M.cmin = spm_input('Enter cmin ',1);
+                                            M.rmax = spm_input('Enter rmax ',1);
+                                            M.cmax = spm_input('Enter cmax ',1);
+                                        end
                                     case 1 %extract_max_HbR - might be recalculating
-                                        m = TOPO.v{side_hemi}.group.hb{2}.c{con}.Tmap;
+                                        m = TOPO.v{side_hemi}.group.hb{2}.c{base_con}.Tmap;
                                         M = get_min_max(m);
                                     case 2 %extract_max_all
+                                        %might want base_con here?
                                         m = TOPO.v{side_hemi}.group.hb{h1}.c{con}.Tmap;
                                         M = get_min_max(m); %
                                     case 3 %extract_coordinates
@@ -284,7 +293,7 @@ for Idx=1:size(job.NIRSmat,1)
                                             Ymin = [Ymin; ED.v{side_hemi}.s{f1}.hb{h1}.Ymin];
                                             Ymax = [Ymax; ED.v{side_hemi}.s{f1}.hb{h1}.Ymax];
                                         end
-                                        if length(length(SPM.xY.P)) > 1
+                                        if length(SPM.xY.P) > 1
                                             ED.v{side_hemi}.g.hb{h1}.Ymin = Ymin;
                                             ED.v{side_hemi}.g.hb{h1}.Ymax = Ymax;
                                             ED.v{side_hemi}.g.hb{h1}.Ymin_Sigma = std(Ymin);
@@ -340,36 +349,99 @@ for Idx=1:size(job.NIRSmat,1)
                                     %
                                 end %end for f1
                                 %Group of sessions
-                                if isfield(ED.v{side_hemi},'g')
-                                    ED.v{side_hemi}.g.hb{h1}.c{c1}.bcmin = interp_series(squeeze(TOPO.v{side_hemi}.g.hb{h1}.c_interp_beta(c1,:,:)),lmin,[]);
-                                    ED.v{side_hemi}.g.hb{h1}.c{c1}.bcmax = interp_series(squeeze(TOPO.v{side_hemi}.g.hb{h1}.c_interp_beta(c1,:,:)),lmax,[]);
+                                if isfield(TOPO.v{side_hemi},'g')
+                                    ED.v{side_hemi}.g.hb{h1}.c{c1}.tmin = interp_series(squeeze(TOPO.v{side_hemi}.g.hb{h1}.c{2*c1-1}.tmap_group(:,:)),lmin,[]);
+                                    ED.v{side_hemi}.g.hb{h1}.c{c1}.tmax = interp_series(squeeze(TOPO.v{side_hemi}.g.hb{h1}.c{2*c1-1}.tmap_group(:,:)),lmax,[]);
+                                    
+                                    ED.v{side_hemi}.g.hb{h1}.c{c1}.bcmin = interp_series(squeeze(TOPO.v{side_hemi}.g.hb{h1}.c{2*c1-1}.beta_group(:,:)),lmin,[]);
+                                    ED.v{side_hemi}.g.hb{h1}.c{c1}.bcmax = interp_series(squeeze(TOPO.v{side_hemi}.g.hb{h1}.c{2*c1-1}.beta_group(:,:)),lmax,[]);
                                     %normalized by standard deviation
-                                    ED.v{side_hemi}.g.hb{h1}.c{c1}.bNmin = ED.v{side_hemi}.g.hb{h1}.c{c1}.bcmin/ED.v{side_hemi}.g.hb{h1}.Ymin_Sigma;
-                                    ED.v{side_hemi}.g.hb{h1}.c{c1}.bNmax = ED.v{side_hemi}.g.hb{h1}.c{c1}.bcmax/ED.v{side_hemi}.g.hb{h1}.Ymax_Sigma;
+                                    %ED.v{side_hemi}.g.hb{h1}.c{c1}.bNmin = ED.v{side_hemi}.g.hb{h1}.c{c1}.bcmin/ED.v{side_hemi}.g.hb{h1}.Ymin_Sigma;
+                                    %ED.v{side_hemi}.g.hb{h1}.c{c1}.bNmax = ED.v{side_hemi}.g.hb{h1}.c{c1}.bcmax/ED.v{side_hemi}.g.hb{h1}.Ymax_Sigma;
                                     %interpolated covariance
-                                    ED.v{side_hemi}.g.hb{h1}.c{c1}.covmin = interp_series(squeeze(TOPO.v{side_hemi}.g.hb{h1}.c_cov_interp_beta(c1,:,:)),lmin,[]);
-                                    ED.v{side_hemi}.g.hb{h1}.c{c1}.covmax = interp_series(squeeze(TOPO.v{side_hemi}.g.hb{h1}.c_cov_interp_beta(c1,:,:)),lmax,[]);
+                                    try
+                                    ED.v{side_hemi}.g.hb{h1}.c{c1}.stdmin = interp_series(squeeze(TOPO.v{side_hemi}.g.hb{h1}.c{2*c1-1}.std_group(:,:)),lmin,[]);
+                                    ED.v{side_hemi}.g.hb{h1}.c{c1}.stdmax = interp_series(squeeze(TOPO.v{side_hemi}.g.hb{h1}.c{2*c1-1}.std_group(:,:)),lmax,[]);
+                                    end
                                     %interpolated F
-                                    ED.v{side_hemi}.g.hb{h1}.c{c1}.Fmin = interp_series(squeeze(TOPO.v{side_hemi}.g.hb{h1}.c_interp_F(c1,:,:)),lmin,[]);
-                                    ED.v{side_hemi}.g.hb{h1}.c{c1}.Fmax = interp_series(squeeze(TOPO.v{side_hemi}.g.hb{h1}.c_interp_F(c1,:,:)),lmax,[]);
+                                    %ED.v{side_hemi}.g.hb{h1}.c{c1}.Fmin = interp_series(squeeze(TOPO.v{side_hemi}.g.hb{h1}.c_interp_F(c1,:,:)),lmin,[]);
+                                    %ED.v{side_hemi}.g.hb{h1}.c{c1}.Fmax = interp_series(squeeze(TOPO.v{side_hemi}.g.hb{h1}.c_interp_F(c1,:,:)),lmax,[]);
 
                                 else
-                                    %group study proper
-                                    ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bcmin = interp_series(squeeze(TOPO.v{side_hemi}.s{f1}.hb{h1}.c_interp_beta(c1,:,:)),lmin,[]);
-                                    ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bcmax = interp_series(squeeze(TOPO.v{side_hemi}.s{f1}.hb{h1}.c_interp_beta(c1,:,:)),lmax,[]);
-                                    %normalized by standard deviation
-                                    ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bNmin = ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bcmin/ED.v{side_hemi}.s{f1}.hb{h1}.Ymin_Sigma;
-                                    ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bNmax = ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bcmax/ED.v{side_hemi}.s{f1}.hb{h1}.Ymax_Sigma;
-                                    %interpolated covariance
-                                    ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.covmin = interp_series(squeeze(TOPO.v{side_hemi}.s{f1}.hb{h1}.c_cov_interp_beta(c1,:,:)),lmin,[]);
-                                    ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.covmax = interp_series(squeeze(TOPO.v{side_hemi}.s{f1}.hb{h1}.c_cov_interp_beta(c1,:,:)),lmax,[]);
-                                    %interpolated F
-                                    ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.Fmin = interp_series(squeeze(TOPO.v{side_hemi}.s{f1}.hb{h1}.c_interp_F(c1,:,:)),lmin,[]);
-                                    ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.Fmax = interp_series(squeeze(TOPO.v{side_hemi}.s{f1}.hb{h1}.c_interp_F(c1,:,:)),lmax,[]);
-
+                                    if isfield(TOPO.v{side_hemi},'group')
+                                        %group study proper
+                                        ED.v{side_hemi}.group.hb{h1}.c{c1}.bcmin = interp_series(squeeze(TOPO.v{side_hemi}.group.hb{h1}.c{2*c1-1}.beta_group(:,:)),lmin,[]);
+                                        ED.v{side_hemi}.group.hb{h1}.c{c1}.bcmax = interp_series(squeeze(TOPO.v{side_hemi}.group.hb{h1}.c{2*c1-1}.beta_group(:,:)),lmax,[]);
+                                        %normalized by standard deviation
+                                        %ED.v{side_hemi}.group.hb{h1}.c{c1}.bNmin = ED.v{side_hemi}.group.hb{h1}.c{c1}.bcmin/ED.v{side_hemi}.group.hb{h1}.Ymin_Sigma;
+                                        %ED.v{side_hemi}.group.hb{h1}.c{c1}.bNmax = ED.v{side_hemi}.group.hb{h1}.c{c1}.bcmax/ED.v{side_hemi}.group.hb{h1}.Ymax_Sigma;
+                                        %interpolated covariance
+                                        try
+                                            ED.v{side_hemi}.group.hb{h1}.c{c1}.stdmin = interp_series(squeeze(TOPO.v{side_hemi}.group.hb{h1}.c{2*c1-1}.std_group(:,:)),lmin,[]);
+                                            ED.v{side_hemi}.group.hb{h1}.c{c1}.stdmax = interp_series(squeeze(TOPO.v{side_hemi}.group.hb{h1}.c{2*c1-1}.std_group(:,:)),lmax,[]);
+                                        end
+                                        %interpolated F
+                                        %ED.v{side_hemi}.group.hb{h1}.c{c1}.Fmin = interp_series(squeeze(TOPO.v{side_hemi}.group.hb{h1}.c_interp_F(c1,:,:)),lmin,[]);
+                                        %ED.v{side_hemi}.group.hb{h1}.c{c1}.Fmax = interp_series(squeeze(TOPO.v{side_hemi}.group.hb{h1}.c_interp_F(c1,:,:)),lmax,[]);
+                                    end
                                 end
                             end %end for h1
                         end %end for c1
+                        end
+                        %Organize data in a more convenient way
+                        try                           
+                            for h1=1:3
+                                c_min = [];
+                                c_max = [];
+                                for c1=1:length(ED.v{side_hemi}.s{1}.hb{1}.c)
+                                    tmp_min = [];
+                                    tmp_max = [];
+                                    tmp_std_min = [];
+                                    tmp_std_max = [];
+                                    tmin = [];
+                                    tmax = [];
+                                    for f1=1:length(SPM.xXn)
+                                        tmp_min = [tmp_min ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bNmin];
+                                        tmp_max = [tmp_max ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bNmax];
+                                        try
+                                            tmp_std_min = [tmp_std_min (ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.covmin).^0.5];
+                                            tmp_std_max = [tmp_std_max (ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.covmax).^0.5];
+                                        end
+                                    end
+%                                    try
+                                        %add group result to list
+                                        if isfield(TOPO.v{side_hemi},'g')
+                                            tmp_min = [tmp_min sum(tmp_min)/length(tmp_min) ED.v{side_hemi}.g.hb{h1}.c{c1}.bcmin];
+                                            tmp_max = [tmp_max sum(tmp_max)/length(tmp_max) ED.v{side_hemi}.g.hb{h1}.c{c1}.bcmax];
+                                            tmp_std_min = [tmp_std_min std(tmp_min)/length(tmp_min)^0.5 ED.v{side_hemi}.g.hb{h1}.c{c1}.stdmin];
+                                            tmp_std_max = [tmp_std_max std(tmp_max)/length(tmp_max)^0.5 ED.v{side_hemi}.g.hb{h1}.c{c1}.stdmax];
+                                            tmin = ED.v{side_hemi}.g.hb{h1}.c{c1}.tmin;
+                                            tmax = ED.v{side_hemi}.g.hb{h1}.c{c1}.tmax;
+                                        else
+                                            if isfield(TOPO.v{side_hemi},'group')
+                                                tmp_min = [tmp_min  sum(tmp_min)/length(tmp_min) ED.v{side_hemi}.group.hb{h1}.c{c1}.stdmin];
+                                                tmp_max = [tmp_max  sum(tmp_max)/length(tmp_max) ED.v{side_hemi}.group.hb{h1}.c{c1}.stdmax];
+                                                tmin = ED.v{side_hemi}.group.hb{h1}.c{c1}.tmin;
+                                                tmax = ED.v{side_hemi}.group.hb{h1}.c{c1}.tmax;
+                                            end
+                                        end
+ %                                   end
+                                    c_min = [c_min;tmp_min];
+                                    c_max = [c_max;tmp_max];
+                                    epilepsy = 1;
+                                    if epilepsy
+                                        %add ratio 
+                                        cmin(end+1,:) = c_min(1,:)./c_min(2,:);
+                                        cmax(end+1,:) = c_max(1,:)./c_max(2,:);
+                                    end
+                                end
+                                ED.v{side_hemi}.hb{h1}.bNmin = c_min;
+                                ED.v{side_hemi}.hb{h1}.bNmax = c_max; 
+                                ED.v{side_hemi}.hb{h1}.tmin = tmin;
+                                ED.v{side_hemi}.hb{h1}.tmax = tmax;
+                                ED.v{side_hemi}.hb{h1}.note = 'bNmin: normalized amplitudes by session or subject, then unweighted average and precision-weighted group result, for each contrast and perhaps ratio of first 2 contrasts'; 
+                            end
+                        end
                     end
                 end
             catch exception
