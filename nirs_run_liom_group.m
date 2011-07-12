@@ -139,9 +139,24 @@ for Idx=1:nl
             [dir1 fil1 ext1] = fileparts(ftopo);
             TOPO = [];
             load(ftopo);
+            Z.dir1 = dir1;
+        else
+            [dir0,dummy,dummy2] = fileparts(job.NIRSmat{1});
+            %extract previous directory
+            tmp = findstr(filesep,dir0);
+            dir_root = dir0(1:tmp(end));
+            dir_group = [dir_root filesep 'Group'];
+            if ~exist(dir_group,'dir'), mkdir(dir_group); end
+            %store in same directory as first subject
+            ftopo = fullfile(dir_group,'TOPO.mat');
+            %save a NIRS structure for the group
+            newNIRSlocation = fullfile(dir_group,'NIRS.mat');
+            NIRS.TOPO = ftopo;
+            save(newNIRSlocation,'NIRS');
+            job.NIRSmat{nl,1} = newNIRSlocation;
+            Z.dir1 = dir_group;
         end
-        Z.dir1 = dir1;
-        
+                       
         %Big loop over views
         for v1=1:6
             view_estimated = 0;
@@ -214,7 +229,7 @@ for Idx=1:nl
                     %Contrasts - assume same contrasts for all subjects
                     %xCon = big_TOPO{1}.xCon;
                 end
-                
+
                 TOPO.v{v1}.group.ns = ns;
                 TOPO.v{v1}.group.min_s = min_s;
                 TOPO.v{v1}.group.s1 = s1;
@@ -425,22 +440,6 @@ for Idx=1:nl
             end %if view_estimated
         end %end for v1
         %TOPO.xCon = xCon; %would not work if new contrasts are later added
-        if FFX || nS==1
-        else
-            [dir0,dummy,dummy2] = fileparts(job.NIRSmat{1});
-            %extract previous directory
-            tmp = findstr(filesep,dir0);
-            dir_root = dir0(1:tmp(end));
-            dir_group = [dir_root filesep 'Group'];
-            if ~exist(dir_group,'dir'), mkdir(dir_group); end
-            %store in same directory as first subject
-            ftopo = fullfile(dir_group,'TOPO.mat');
-            %save a NIRS structure for the group
-            newNIRSlocation = fullfile(dir_group,'NIRS.mat');
-            NIRS.TOPO = ftopo;
-            save(newNIRSlocation,'NIRS');
-            job.NIRSmat{nl,1} = newNIRSlocation;
-        end
         save(ftopo,'TOPO');
     catch exception
         disp(exception.identifier);

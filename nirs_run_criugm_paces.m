@@ -16,6 +16,17 @@ end
 %Boolean to remove channels with no heartbeat from data files
 remove_no_heartbeat = job.remove_no_heartbeat;
 
+try
+    display_heart_rate_figure = job.display_heart_rate_figure;
+catch
+    display_heart_rate_figure = 0;
+end
+try 
+    save_heart_rate_figure = job.save_heart_rate_figure;
+catch
+    save_heart_rate_figure = 1;
+end
+
 %Parameters for the FFT
 % Short Term Fourier Transform :
 try
@@ -325,11 +336,32 @@ for Idx=1:size(job.NIRSmat,1)
                         %%% a celui des canaux mais pas avant.....
                         % Affichage du resultat
                         if strcmp(NIRS.Cf.dev.n,'CW6')
-                            whpR = zeros(NC,size(whp,2)); whpR([k1 k1-(NC/2)],:) = whp; figure;imagesc(whpR);title(['Heart pace: ' rDtp{f}]);
+                            whpR = zeros(NC,size(whp,2)); whpR([k1 k1-(NC/2)],:) = whp; 
+                            
                         elseif strcmp(NIRS.Cf.dev.n,'CW5')
-                            whpR = zeros(NC,size(whp,2)); whpR([k1 k1+(NC/2)],:) = whp; %figure;imagesc(whpR);title(['Heart pace: ' rDtp{f}]);
+                            whpR = zeros(NC,size(whp,2)); whpR([k1 k1+(NC/2)],:) = whp; 
+                            %figure;imagesc(whpR);title(['Heart pace: ' rDtp{f}]);
+                        else
+                            whpR([k1 k1+(NC/2)],:) = whp;  
                         end
-                        
+                        if display_heart_rate_figure
+                            hfig = figure('visible','on');
+                        else
+                            if save_heart_rate_figure
+                                hfig = figure('visible','off');
+                            end
+                        end
+                        if display_heart_rate_figure || save_heart_rate_figure
+                            imagesc(whpR);title(['Heart pace: ' rDtp{f}]);
+                            if save_heart_rate_figure
+                                filen2 = fullfile(dir1,'HeartRate.tiff'); %save as .tiff
+                                print(hfig, '-dtiffn', filen2);
+                            end
+                            if ~display_heart_rate_figure
+                                close(hfig);
+                            end
+                        end   
+                            
                         level = graythresh(whpR(C_HbO,:));% Otsu
                         whp_b(C_HbO,:) = im2bw(whpR(C_HbO,:),level);
                         
