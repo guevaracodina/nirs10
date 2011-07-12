@@ -5,4 +5,4 @@ function nirs_readEprimeOnsets_defaults
 %______________________________________________________________________
 global nirs10
 
-nirs10.readOnsets.readEprimeOnsets.columns = {'Trig5MRI,StimOnset,StimTags'};
+nirs10.readOnsets.readEprimeOnsets.columns = {'Trig5MRI','StimOnset','StimTags'};
