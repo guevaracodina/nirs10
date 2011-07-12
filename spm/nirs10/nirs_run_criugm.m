@@ -22,7 +22,7 @@ try
     sN = size(job.subj,2);
     for is=1:sN
         
-        if isfield(job.study_cfg.respectivedata,'template_chosen')            
+        if isfield(job.study_cfg.indvdata,'template_chosen')            
             % save template T1 as anatT1
             anatT1 = fullfile(fileparts(which('spm')),'templates','T1.nii');
             job.subj(1,is).anatT1 = {anatT1};
@@ -72,7 +72,7 @@ try
         % Helmet
         if isfield(job.subj(1,is).helmet,'text_brainsight') || template4all% Reading subject-specific setup from BrainSight file
             if template4all
-                staxp = job.study_cfg.respectivedata.template_chosen.text_brainsight{:};
+                staxp = job.study_cfg.indvdata.template_chosen.text_brainsight{:};
                 NIRS.Dt.fir.stax.n = 'Brainsight(c)';
                 NIRS.Dt.fir.stax.nota = 'Brainsight template';
             else
