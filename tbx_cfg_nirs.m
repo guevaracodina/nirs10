@@ -328,46 +328,6 @@ text_brainsight.filter  = '.txt';
 text_brainsight.ufilter = '.*';
 text_brainsight.num     = [1 1];
 text_brainsight.help    = {'Select the text file from Brainsight.'};
-
-% nasion         = cfg_entry; %path
-% nasion.name    = 'Tag for nasion fiducial in Brainsight text';
-% nasion.tag     = 'nasion';       
-% nasion.strtype = 's';
-% nasion.num     = [1 Inf];     
-% nasion.def     = @(val)nirs_get_defaults('readNIRS.criugm1.generic2.subj.bs_pos.nasion', val{:}); 
-% nasion.help    = {''};
-% 
-% leftear         = cfg_entry; %path
-% leftear.name    = 'Tag for left ear fiducial in Brainsight text';
-% leftear.tag     = 'leftear';       
-% leftear.strtype = 's';
-% leftear.num     = [1 Inf];     
-% leftear.def     = @(val)nirs_get_defaults('readNIRS.criugm1.generic2.subj.bs_pos.leftear', val{:}); 
-% leftear.help    = {''};
-% 
-% rightear         = cfg_entry; %path
-% rightear.name    = 'Tag for right ear fiducial in Brainsight text';
-% rightear.tag     = 'rightear';       
-% rightear.strtype = 's';
-% rightear.num     = [1 Inf];     
-% rightear.def     = @(val)nirs_get_defaults('readNIRS.criugm1.generic2.subj.bs_pos.rightear', val{:}); 
-% rightear.help    = {''};
-
-% bs_pos         = cfg_branch;
-% bs_pos.tag     = 'bs_pos';
-% bs_pos.name    = 'Positions recording with Brainsight';
-% bs_pos.val     = {text_brainsight nasion leftear rightear};
-% bs_pos.help    = {'If the recording has been made with Brainsight.'};
-
-allSD_autosave        = cfg_menu;
-allSD_autosave.name   = 'Select all sources and detectors';
-allSD_autosave.tag    = 'allSD_autosave';
-allSD_autosave.labels = {'Yes' 'No'};
-allSD_autosave.values = {1,0};
-allSD_autosave.val    = {1};
-allSD_autosave.help   = {'ONLY with the choice : Text file from Brainsight !'
-    'If No, you have to choose points and click on Save button'
-    'If Yes, all sources and all detectors are selected (use for group analysis).'}';
  
 T1_vitamins      = cfg_branch; 
 T1_vitamins.name = 'Vitamins markers on T1';
@@ -382,17 +342,22 @@ no_helmet.help = {'Helmet informations will be extracted from ''.nirs'' file.'};
 helm_temp         = cfg_files;
 helm_temp.tag     = 'helm_temp';
 helm_temp.name    = 'Helmet template';
-helm_temp.help = {'If you have chosen before template in choice : ''Respective T1 or template''.'};
+helm_temp.help = {'If you have chosen before template in choice : ''Individual T1 or template''.'};
 helm_temp.filter  = 'dir';
 helm_temp.ufilter = '.*';
-helm_temp.num     = [1 1];
+helm_temp.val{1} = {''};
+helm_temp.num     = [0 0];
 
-helmet         = cfg_choice;
-helmet.tag     = 'helmet';
-helmet.name    = 'Helmet';
-helmet.values = {text_brainsight T1_vitamins no_helmet helm_temp};
-helmet.val     = {helm_temp};
-helmet.help    = {'If you choose a Brainsight text file, it will be used to determine all you need about sources, detectors and other points of interest.'};
+% helmet         = cfg_choice;
+% helmet.tag     = 'helmet';
+% helmet.name    = 'Helmet';
+% if indvdata.val=={indvdata_chosen}
+%     helmet.values = {helm_temp};
+% else
+%     helmet.values = {text_brainsight T1_vitamins no_helmet};
+% end
+% helmet.val     = {helm_temp};
+% helmet.help    = {'If you choose a Brainsight text file, it will be used to determine all you need about sources, detectors and other points of interest.'};
 
 nirs_files         = cfg_files;
 nirs_files.name    = '''^.nirs'' files';
@@ -462,10 +427,10 @@ study_path.values    = {existing_study choose_path};%choose_path
 study_path.val       = {existing_study}; 
 study_path.help      = {'Choose the study the subject belongs to or specify a path (entire name should look like .\study_name).'}; 
 
-respdata_chosen      = cfg_branch; 
-respdata_chosen.name = 'One set of data per subject';
-respdata_chosen.tag  = 'respdata_chosen';
-respdata_chosen.help = {'You will have to choose one T1 image in the field ''Raw anatomical image'' and one helmet in the field ''Helmet->Text file from Brainsight.''.'};
+indvdata_chosen      = cfg_branch; 
+indvdata_chosen.name = 'One set of data per subject';
+indvdata_chosen.tag  = 'indvdata_chosen';
+indvdata_chosen.help = {'You will have to choose one T1 image in the field ''Raw anatomical image'' and one helmet in the field ''Helmet->Text file from Brainsight.''.'};
 
 anatT1_template         = cfg_files; 
 anatT1_template.name    = 'Anatomical template image'; 
@@ -490,24 +455,31 @@ template_chosen.name = 'Template';
 template_chosen.val  = {anatT1_subj0 text_brainsight}; 
 template_chosen.help = {'You must have a T1 image and a Brainsight registration of the right helmet for one subject (called subject 0).'};
 
-respectivedata        = cfg_choice;
-respectivedata.name   = 'Respective data or template for all';
-respectivedata.tag    = 'respectivedata';
-respectivedata.values = {template_chosen respdata_chosen};%choose_path
-respectivedata.val    = {respdata_chosen}; 
-respectivedata.help   = {['Respective data allows you to choose data for each of the subject.'...
+indvdata        = cfg_choice;
+indvdata.name   = 'Individual data or template for all';
+indvdata.tag    = 'indvdata';
+indvdata.values = {template_chosen indvdata_chosen};%choose_path
+indvdata.val    = {indvdata_chosen};
+indvdata.help   = {['Individual data allows you to choose data for each of the subject.'...
     'Template for all allows you to use one coregistration for all your subjects. You will need one T1 image and the registration of the helmet on the same person.']}; 
 
 study_cfg         = cfg_branch;
 study_cfg.tag     = 'study_cfg';
 study_cfg.name    = 'Study configuration';
-study_cfg.val     = {study_path respectivedata}; 
+study_cfg.val     = {study_path indvdata}; 
 study_cfg.help    = {''};
+
+helmet         = cfg_choice;
+helmet.tag     = 'helmet';
+helmet.name    = 'Helmet';
+helmet.values  = {text_brainsight T1_vitamins no_helmet helm_temp};
+helmet.val     = {helm_temp};
+helmet.help    = {'If you choose a Brainsight text file, it will be used to determine all you need about sources, detectors and other points of interest.'};
 
 subj         = cfg_branch;
 subj.tag     = 'subj';
 subj.name    = 'Subject';
-subj.val     = {subj_id age1 anatT1 helmet allSD_autosave CWsystem nirs_files protocol TopoData boldmask};%config_path2
+subj.val     = {subj_id age1 anatT1 helmet CWsystem nirs_files protocol TopoData boldmask};%config_path2
 subj.help    = {'Subject'};
 
 generic2         = cfg_repeat;
@@ -2435,7 +2407,6 @@ mcim_in.tag     = 'mcim_in';       %file names
 mcim_in.filter = 'image';
 mcim_in.ufilter = '.nii';    
 mcim_in.num     = [1 1];     % Number of inputs required 
-mcim_in.def    = @(val)nirs_get_defaults('configMC1.mcim_in', val{:});
 mcim_in.help    = {'Select MC segmented volume for this subject.'}; % help text displayed
 
 % select_mcim         = cfg_branch;
