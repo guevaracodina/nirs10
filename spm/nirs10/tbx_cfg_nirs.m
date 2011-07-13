@@ -463,11 +463,7 @@ indvdata.val    = {indvdata_chosen};
 indvdata.help   = {['Individual data allows you to choose data for each of the subject.'...
     'Template for all allows you to use one coregistration for all your subjects. You will need one T1 image and the registration of the helmet on the same person.']}; 
 
-study_cfg         = cfg_branch;
-study_cfg.tag     = 'study_cfg';
-study_cfg.name    = 'Study configuration';
-study_cfg.val     = {study_path indvdata}; 
-study_cfg.help    = {''};
+
 
 helmet         = cfg_choice;
 helmet.tag     = 'helmet';
@@ -489,12 +485,18 @@ generic2.help    = {'Help'};
 generic2.values  = {subj};
 generic2.num     = [1 Inf];
 
+study_cfg         = cfg_branch;
+study_cfg.tag     = 'study_cfg';
+study_cfg.name    = 'Study configuration';
+study_cfg.val     = {study_path indvdata}; 
+study_cfg.help    = {''};
+
 % The items that belong to this branch. All items must be filled before this branch can run or produce virtual outputs
 % Executable Branch
 criugm1      = cfg_exbranch;
 criugm1.name = 'Read and format CRIUGM data';
 criugm1.tag  = 'criugm1';
-criugm1.val  = {study_cfg generic2};
+criugm1.val  = {study_cfg  generic2};
 criugm1.prog = @nirs_run_criugm;
 criugm1.vout = @nirs_cfg_vout_criugm;
 criugm1.help = {'Help'};

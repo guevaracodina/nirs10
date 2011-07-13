@@ -66,8 +66,8 @@ for iP = 1:NS+ND
             % encoding is row-major; in Matlab it is on the contrary column-major
             % thus for Matlab-generated files one must invert x and y
             % dimensions
-            fprintf(fid, 'source { pos = [%4.0f %4.0f %4.0f]\n', Pp_rmiv(1,iP), Pp_rmiv(2,iP), Pp_rmiv(3,iP));%% ici pas besoin d'inverser les colonnes x et y
-            fprintf(fid, '	 dir = [%5.4f %5.4f %5.4f] \n', Pwd_rmiv(1,iP), Pwd_rmiv(2,iP), Pwd_rmiv(3,iP));%% ici pas besoin d'inverser les colonnes x et y
+            fprintf(fid, 'source { pos = [%4.0f %4.0f %4.0f]\n', Pp_rmiv(2,iP), Pp_rmiv(1,iP), Pp_rmiv(3,iP));%% ici pas besoin d'inverser les colonnes x et y
+            fprintf(fid, '	 dir = [%5.4f %5.4f %5.4f] \n', Pwd_rmiv(2,iP), Pwd_rmiv(1,iP), Pwd_rmiv(3,iP));%% ici pas besoin d'inverser les colonnes x et y
             fprintf(fid, ' 	 rad = %1.2f       } \n\n', r(1,iP));
             
             % Time gates
