@@ -69,7 +69,8 @@ for Idx=1:size(job.NIRSmat,1)
             cs.NDkpt = NIRS.Cs.temp.NDkpt;
         else
             roi =1;
-            try cs.seg = NIRS.Cs.temp.segR{:}; %ROI from temp
+            try 
+                cs.seg = NIRS.Cs.temp.segR{:}; %ROI from temp
             catch
                 cs.seg = NIRS.Cs.temp.segR;
             end
@@ -125,14 +126,7 @@ for Idx=1:size(job.NIRSmat,1)
 
         Pfp_ancienne_rmiv = round(Pfp_ancienne_rmiv);
 
-        %%%%%%% appliquer ca sur le 8bit !!!!!!!!!
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-         if job.MC_CUDAchoice==1 % MCX : sources et detecteurs doivent etre DANS
-        % le volume
-        %%%%%%%%%%%%%%%%%%%%
-        % pour MCX, ca n'a pas d'effet... peut etre on projette pas sur la bonne
-        % image!!!!!
-        %%%%%%%%%%%%%%%%%%%%
+         if job.MC_CUDAchoice==1 
         %%%%%%%pour tMCimg : je sais pas trop...
             jobF.Pp_rmm = cs.Pp_rmm;
             jobF.Pp_c1_rmm = cs.Pp_c1_rmm;
@@ -199,14 +193,14 @@ for Idx=1:size(job.NIRSmat,1)
         for iwl = 1:size(NIRS.Cf.dev.wl,2)
             %%%%%%%%%%%% il faut vérifier les valeurs des longueurs d'ondes
             %%%%%%%%%%%% utilisées dans le code...
-            if iwl == 2 % 830 pour le code attend que 830 soit la premiere longueur d'onde JE CROIS
+            if NIRS.Cf.dev.wl(iwl) == 830 %830
                 parameters.gmPpties = job.MC_parameters.gmPpties_l1;
                 parameters.wmPpties = job.MC_parameters.wmPpties_l1;
                 parameters.csfPpties = job.MC_parameters.csfPpties_l1;
                 parameters.skullPpties = job.MC_parameters.skullPpties_l1;
                 parameters.scalpPpties = job.MC_parameters.scalpPpties_l1;
                 parameters.perturbationPpties = job.MC_parameters.perturbationPpties_l1+job.MC_parameters.gmPpties_l1;
-            else %set them all to _l2 even if more than two wavelengths
+            elseif NIRS.Cf.dev.wl(iwl) == 690 %690
                 parameters.gmPpties = job.MC_parameters.gmPpties_l2;
                 parameters.wmPpties = job.MC_parameters.wmPpties_l2;
                 parameters.csfPpties = job.MC_parameters.csfPpties_l2;
@@ -237,7 +231,7 @@ for Idx=1:size(job.NIRSmat,1)
             elseif job.MC_CUDAchoice==2
                 % MonteCarlo in a particular frame. Positions must be in mm but the
             % origin is the same as the origin of the voxel frame (these positions 
-            % don't respect SPM conventions)
+            % don't respect SPM conventions) OK
             P.p = parameters.voxelSize*Pfp_ancienne_rmiv;
             end
             

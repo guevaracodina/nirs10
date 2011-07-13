@@ -168,13 +168,13 @@ for Idx=1:size(job.NIRSmat,1)
                                 % boule autour de la position du point P
                                 vxr = 3;%voxel radius
                                 
-                                ms_N = ms(min(cs.Pfp_rmiv(1,S_Pkpt)-vxr,1):max(cs.Pfp_rmiv(1,S_Pkpt)+vxr,size(ms,1)),...
-                                    min(cs.Pfp_rmiv(2,S_Pkpt)-vxr,1):max(cs.Pfp_rmiv(2,S_Pkpt)+vxr,size(ms,2)),...
-                                    min(cs.Pfp_rmiv(3,S_Pkpt)-vxr,1):max(cs.Pfp_rmiv(3,S_Pkpt)+vxr,size(ms,3)));
+                                ms_N = ms(max(cs.Pfp_rmiv(1,S_Pkpt)-vxr,1):min(cs.Pfp_rmiv(1,S_Pkpt)+vxr,size(ms,1)),...
+                                    max(cs.Pfp_rmiv(2,S_Pkpt)-vxr,1):min(cs.Pfp_rmiv(2,S_Pkpt)+vxr,size(ms,2)),...
+                                    max(cs.Pfp_rmiv(3,S_Pkpt)-vxr,1):min(cs.Pfp_rmiv(3,S_Pkpt)+vxr,size(ms,3)));
                                 
-                                md_N = md(min(cs.Pfp_rmiv(1,D_Pktp)-vxr,1):max(cs.Pfp_rmiv(1,D_Pktp)+vxr,size(md,1)),...
-                                    min(cs.Pfp_rmiv(2,D_Pktp)-vxr,1):max(cs.Pfp_rmiv(2,D_Pktp)+vxr,size(md,2)),...
-                                    min(cs.Pfp_rmiv(3,D_Pktp)-vxr,1):max(cs.Pfp_rmiv(3,D_Pktp)+vxr,size(md,3)));
+                                md_N = md(max(cs.Pfp_rmiv(1,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(1,D_Pktp)+vxr,size(md,1)),...
+                                    max(cs.Pfp_rmiv(2,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(2,D_Pktp)+vxr,size(md,2)),...
+                                    max(cs.Pfp_rmiv(3,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(3,D_Pktp)+vxr,size(md,3)));
 
                                 phi0_S = max(ms_N(:));
                                 phi0_D = max(md_N(:));
@@ -207,15 +207,21 @@ for Idx=1:size(job.NIRSmat,1)
                                 mdR = reshape(mdP,V_segR.dim);
                                 %%% calcul de phi0
                                 vxr = 3;%voxel radius
-                                ms_N = ms(cs.Pfp_rmiv(1,Sn)-vxr:cs.Pfp_rmiv(1,Sn)+vxr,cs.Pfp_rmiv(2,Sn)-vxr:cs.Pfp_rmiv(2,Sn)+vxr,cs.Pfp_rmiv(3,Sn)-vxr:cs.Pfp_rmiv(3,Sn)+vxr);
-                                md_N = ms(cs.Pfp_rmiv(1,NS+D_Sn(i))-vxr:cs.Pfp_rmiv(1,NS+D_Sn(i))+vxr,cs.Pfp_rmiv(2,NS+D_Sn(i))-vxr:cs.Pfp_rmiv(2,NS+D_Sn(i))+vxr,cs.Pfp_rmiv(3,NS+D_Sn(i))-vxr:cs.Pfp_rmiv(3,NS+D_Sn(i))+vxr);
+                                
+                                ms_N = msR(max(cs.Pfp_rmiv(1,S_Pkpt)-vxr,1):min(cs.Pfp_rmiv(1,S_Pkpt)+vxr,size(msR,1)),...
+                                    max(cs.Pfp_rmiv(2,S_Pkpt)-vxr,1):min(cs.Pfp_rmiv(2,S_Pkpt)+vxr,size(msR,2)),...
+                                    max(cs.Pfp_rmiv(3,S_Pkpt)-vxr,1):min(cs.Pfp_rmiv(3,S_Pkpt)+vxr,size(msR,3)));
+                                
+                                md_N = mdR(max(cs.Pfp_rmiv(1,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(1,D_Pktp)+vxr,size(mdR,1)),...
+                                    max(cs.Pfp_rmiv(2,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(2,D_Pktp)+vxr,size(mdR,2)),...
+                                    max(cs.Pfp_rmiv(3,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(3,D_Pktp)+vxr,size(mdR,3)));
 
                                 phi0_S = max(ms_N(:));
                                 phi0_D = max(md_N(:));
+                                
                                 % Sensitivity matrix
-                                phi0 = (phi0_S + phi0_D)/2;
-                                disp(['phi0=' int2str(phi0)]);
-                                sens_sd = msP.*mdP / phi0;
+                                sens_sd = msP.*mdP / ((phi0_S + phi0_D)/2);
+
                                 sens(isd+1,:) = sens_sd';
                                 isd = isd+1;
                                 C = [C c]; % channels in the sensitivity matrix

@@ -88,6 +88,12 @@ for Idx=1:size(job.NIRSmat,1)
                 end
                 delete([dir1 '\mcx_det_cached.exe']);
                 
+                NIRS.Cs.mcs{ics}.MCX_t = J.MCX_t;
+                NIRS.Cs.mcs{ics}.MCX_T = J.MCX_T;
+                NIRS.Cs.mcs{ics}.MCX_r = J.MCX_r;
+                NIRS.Cs.mcs{ics}.MCX_g = J.MCX_g;
+                NIRS.Cs.mcs{ics}.MCX_l = J.MCX_l;
+                
             case 2 %tMCimg
                 [t,dummy] = spm_select('FPList',cs_dir,'.cfg');
                 
@@ -103,12 +109,7 @@ for Idx=1:size(job.NIRSmat,1)
                     res = system(str_run);
                 end
         end
-        
-        NIRS.Cs.mcs{ics}.MCX_t = J.MCX_t;
-        NIRS.Cs.mcs{ics}.MCX_T = J.MCX_T;
-        NIRS.Cs.mcs{ics}.MCX_r = J.MCX_r;
-        NIRS.Cs.mcs{ics}.MCX_g = J.MCX_g;
-        NIRS.Cs.mcs{ics}.MCX_l = J.MCX_l;
+
         if NewDirCopyNIRS
             newNIRSlocation = fullfile(dir2,'NIRS.mat');
             save(newNIRSlocation,'NIRS');
