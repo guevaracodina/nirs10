@@ -59,7 +59,21 @@ catch
         extract_mode = 0;
     end
 end
-
+try
+    Volterra_ratio = job.Volterra_ratio;
+catch
+    Volterra_ratio = 1;
+end
+try
+    extract_manual_modality = job.extract_select_mode.extract_manual_mode.extract_manual_modality;
+catch
+    extract_manual_modality = 1;
+end
+try
+    extract_auto_modality = job.extract_select_mode.extract_auto_mode.extract_select_auto_mode.extract_max_HbR.extract_auto_modality;
+catch
+    extract_auto_modality = 2;
+end
 %Store all extracted data in ED structure
 ED.job = job;
 %Loop over all subjects
@@ -208,9 +222,9 @@ for Idx=1:size(job.NIRSmat,1)
                                             if h1 == 1 && c1 == 1 %only go through once
                                                 switch study_type
                                                     case 2
-                                                        m = TOPO.v{side_hemi}.group.hb{2}.c{base_con}.Tmap;
+                                                        m = TOPO.v{side_hemi}.group.hb{extract_manual_modality}.c{base_con}.Tmap;
                                                     case {0,1}
-                                                        m = TOPO.v{side_hemi}.g.hb{2}.c{base_con}.Tmap;
+                                                        m = TOPO.v{side_hemi}.g.hb{extract_manual_modality}.c{base_con}.Tmap;
                                                     case -1
                                                     otherwise
                                                 end
@@ -225,9 +239,9 @@ for Idx=1:size(job.NIRSmat,1)
                                         case 1 %extract_max_HbR - might be recalculating
                                             switch study_type
                                                 case 2
-                                                    m = TOPO.v{side_hemi}.group.hb{2}.c{base_con}.Tmap;
+                                                    m = TOPO.v{side_hemi}.group.hb{extract_auto_modality}.c{base_con}.Tmap;
                                                 case {0,1}
-                                                    m = TOPO.v{side_hemi}.g.hb{2}.c{base_con}.Tmap;
+                                                    m = TOPO.v{side_hemi}.g.hb{extract_auto_modality}.c{base_con}.Tmap;
                                                 case -1
                                                 otherwise
                                             end
@@ -327,6 +341,10 @@ for Idx=1:size(job.NIRSmat,1)
                                                 ED.v{side_hemi}.s{f1}.hb{h1}.Ymin_Sigma = std(ED.v{side_hemi}.s{f1}.hb{h1}.Ymin);
                                                 ED.v{side_hemi}.s{f1}.hb{h1}.Ymax_Sigma = std(ED.v{side_hemi}.s{f1}.hb{h1}.Ymax);
                                                 ED.v{side_hemi}.s{f1}.hb{h1}.filteredOK = filteredOK;
+                                            catch exception
+                                                disp(exception.identifier);
+                                                disp(exception.stack(1));
+                                                disp('Perhaps HbT was not run - error is harmless then');
                                             end
                                         end
                                         %group Std
@@ -344,6 +362,9 @@ for Idx=1:size(job.NIRSmat,1)
                                                 ED.v{side_hemi}.g.hb{h1}.Ymax_Sigma = std(Ymax);
                                                 ED.v{side_hemi}.g.hb{h1}.filteredOK = filteredOK;
                                             end
+                                        catch exception
+                                            disp(exception.identifier);
+                                            disp(exception.stack(1));
                                         end
                                     end
                                     %Extract statistics data from maps
@@ -375,6 +396,10 @@ for Idx=1:size(job.NIRSmat,1)
                                             %interpolated F
                                             ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.Fmin = interp_series(squeeze(TOPO.v{side_hemi}.s{f1}.hb{h1}.c_interp_F(c1,:,:)),lmin,[]);
                                             ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.Fmax = interp_series(squeeze(TOPO.v{side_hemi}.s{f1}.hb{h1}.c_interp_F(c1,:,:)),lmax,[]);
+                                            
+                                        catch exception
+                                            disp(exception.identifier);
+                                            disp(exception.stack(1));
                                         end
                                         
                                         %                                 W.var = SPM.xX.var; %careful, var can be a Matlab function,
@@ -447,13 +472,14 @@ for Idx=1:size(job.NIRSmat,1)
                                 c_max = [];
                                 std_min = [];
                                 std_max = [];
+                                tmin = [];
+                                tmax = [];
                                 for c1=1:length(ED.v{side_hemi}.s{1}.hb{1}.c)
                                     tmp_min = [];
                                     tmp_max = [];
                                     tmp_std_min = [];
                                     tmp_std_max = [];
-                                    tmin = [];
-                                    tmax = [];
+                                    
                                     for f1=1:length(SPM.xXn)
                                         tmp_min = [tmp_min ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bNmin];
                                         tmp_max = [tmp_max ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bNmax];
@@ -466,36 +492,43 @@ for Idx=1:size(job.NIRSmat,1)
                                     %add group result to list
                                     switch study_type
                                         case {0,1}
-                                            tmp_min = [tmp_min mean(tmp_min) ED.v{side_hemi}.g.hb{h1}.c{c1}.bcmin/ED.v{side_hemi}.g.hb{h1}.Ymin_Sigma];
-                                            tmp_max = [tmp_max mean(tmp_max) ED.v{side_hemi}.g.hb{h1}.c{c1}.bcmax/ED.v{side_hemi}.g.hb{h1}.Ymax_Sigma];
                                             tmp_std_min = [tmp_std_min std(tmp_min)/length(tmp_min)^0.5 ED.v{side_hemi}.g.hb{h1}.c{c1}.stdmin];
                                             tmp_std_max = [tmp_std_max std(tmp_max)/length(tmp_max)^0.5 ED.v{side_hemi}.g.hb{h1}.c{c1}.stdmax];
-                                            tmin = ED.v{side_hemi}.g.hb{h1}.c{c1}.tmin;
-                                            tmax = ED.v{side_hemi}.g.hb{h1}.c{c1}.tmax;
+                                            tmp_min = [tmp_min mean(tmp_min) ED.v{side_hemi}.g.hb{h1}.c{c1}.bcmin/ED.v{side_hemi}.g.hb{h1}.Ymin_Sigma];
+                                            tmp_max = [tmp_max mean(tmp_max) ED.v{side_hemi}.g.hb{h1}.c{c1}.bcmax/ED.v{side_hemi}.g.hb{h1}.Ymax_Sigma];
                                         case 2
                                             %if
                                             %isfield(TOPO.v{side_hemi},'group')
-                                            tmp_min = [tmp_min  mean(tmp_min) ED.v{side_hemi}.group.hb{h1}.c{c1}.stdmin];
-                                            tmp_max = [tmp_max  mean(tmp_max) ED.v{side_hemi}.group.hb{h1}.c{c1}.stdmax];
                                             tmp_std_min = [tmp_std_min std(tmp_min)/length(tmp_min)^0.5 ED.v{side_hemi}.group.hb{h1}.c{c1}.stdmin];
                                             tmp_std_max = [tmp_std_max std(tmp_max)/length(tmp_max)^0.5 ED.v{side_hemi}.group.hb{h1}.c{c1}.stdmax];
-                                            tmin = ED.v{side_hemi}.group.hb{h1}.c{c1}.tmin;
-                                            tmax = ED.v{side_hemi}.group.hb{h1}.c{c1}.tmax;
+                                            tmp_min = [tmp_min  mean(tmp_min) ED.v{side_hemi}.group.hb{h1}.c{c1}.stdmin];
+                                            tmp_max = [tmp_max  mean(tmp_max) ED.v{side_hemi}.group.hb{h1}.c{c1}.stdmax];
                                         otherwise
                                     end
-                                    %                                 
+                                    switch study_type
+                                        case {0,1}
+                                            tmin = [tmin; ED.v{side_hemi}.g.hb{h1}.c{c1}.tmin];
+                                            tmax = [tmax; ED.v{side_hemi}.g.hb{h1}.c{c1}.tmax];
+                                            
+                                        case 2
+                                            tmin = [tmin; ED.v{side_hemi}.group.hb{h1}.c{c1}.tmin];
+                                            tmax = [tmax; ED.v{side_hemi}.group.hb{h1}.c{c1}.tmax];
+                                            
+                                        otherwise
+                                            
+                                    end
                                     c_min = [c_min;tmp_min];
                                     c_max = [c_max;tmp_max];
                                     std_min = [std_min; tmp_std_min];
                                     std_max = [std_max; tmp_std_max];
-                                    
                                 end
                                 try
-                                    epilepsy = 1;
-                                    if epilepsy
+                                    if Volterra_ratio
                                         %add ratio of 2nd to 1st Volterra
                                         c_min(end+1,:) = c_min(2,:)./c_min(1,:);
                                         c_max(end+1,:) = c_max(2,:)./c_max(1,:);
+                                        ED.v{side_hemi}.hb{h1}.V2V1r_SEMmin = std(c_min(end,1:end-2))/length(c_min(end,1:end-2))^0.5;
+                                        ED.v{side_hemi}.hb{h1}.V2V1r_SEMmax = std(c_max(end,1:end-2))/length(c_max(end,1:end-2))^0.5;
                                     end
                                 end
                                 ED.v{side_hemi}.hb{h1}.bNmin = c_min;
@@ -508,7 +541,7 @@ for Idx=1:size(job.NIRSmat,1)
                             end
                         catch exception
                             disp(exception.identifier);
-                            disp(exception.stack(1));                            
+                            disp(exception.stack(1));
                         end
                     end
                 end
