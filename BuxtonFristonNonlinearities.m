@@ -1,13 +1,40 @@
 %Buxton-Friston VS Volterra expansion - forward model
 %Load stims
-%load('W:\epiNIRSb\epi127SD\dataSPM\Std\StatV0.004ord5\SPM.mat');
-%Pos_Volt_Contrast_in_X = 3;
-load('W:\epiNIRSb\epi133EA\dataSPM\Std\StatV0.004ord5\SPM.mat');
-Pos_Volt_Contrast_in_X = 2;
+%cases
+%1: fNIRS SD
+%2: fNIRS EA
+%3: fNIRS ASC
+%4: fMRI SD
+%5: fMRI EA
+%6: fMRI ASC
+mode = 4;
+switch mode
+    case 1
+        load('W:\epiNIRSb\epi127SD\dataSPM\Std\StatV0.004ord5\SPM.mat');
+        Pos_Volt_Contrast_in_X = 3;
+        Slen = 900; %session length, in seconds
+    case 2
+        load('W:\epiNIRSb\epi133EA\dataSPM\Std\StatV0.004ord5\SPM.mat');
+        Pos_Volt_Contrast_in_X = 2;
+        Slen = 900; %session length, in seconds
+    case 3        
+        load('W:\epiNIRSb\epi134ASC\dataSPM\Std\StatV0.004\SPM.mat');
+        Pos_Volt_Contrast_in_X = 2;
+        Slen = 900; %session length, in seconds
+    case 4
+        load('W:\epifMRIa\a_epiSD_nodup\Stat_au\SPM.mat');
+        Pos_Volt_Contrast_in_X = 3;
+        Slen = 900; %session length, in seconds
+        nreg = 8; %regressors by session
+    case 5
+        Slen = 360; %session length, in seconds
+    case 6
+        Slen = 360; %session length, in seconds
+end
 Z = []; Z.b = []; Z.r = [];
 %Boolean for figures
 gen_fig = 0;
-Slen = 900; %session length, in seconds
+
 %loop over sessions
 for s = 1:length(SPM.Sess) %session
     U = SPM.Sess(s).U(1);
@@ -33,6 +60,7 @@ for s = 1:length(SPM.Sess) %session
     M.dt    = U.dt;
     M.IS    = 'spm_int';
     M.ns    = ns; 
+    M.P = pE;
     y   = Y.y;
     IS  = inline([M.IS '(P,M,U)'],'P','M','U');
     nr   = length(spm_vec(y))/ns;       % number of samples and responses
@@ -55,7 +83,14 @@ for s = 1:length(SPM.Sess) %session
     f = spm_int(Ep,M,U);
     %GLM using 1st and 2nd Volterra
     %f = X b
-    X = SPM.xXn{s}.X(:,[1 Pos_Volt_Contrast_in_X]);
+    switch mode
+        case {1,2,3}
+            X = SPM.xXn{s}.X(:,[1 Pos_Volt_Contrast_in_X]);
+        case {4,5,6}
+            X = SPM.xX.X(SPM.Sess(s).row',nreg*(s-1)+[1 Pos_Volt_Contrast_in_X]);
+            %X = SPM.xX.X(SPM.Sess(s).row',nreg*(s-1)+[1:nreg]);
+            %X = SPM.xX.X(SPM.Sess(s).row',[nreg*(s-1)+[1 Pos_Volt_Contrast_in_X] 24+s]);
+    end
     K = spm_sp('Set', X);
     K.X = X;
     pX = spm_sp('x-', K);
@@ -70,6 +105,7 @@ for s = 1:length(SPM.Sess) %session
     Z.f{s} = f;
     Z.b = [Z.b b];
     Z.r = [Z.r b(2)/b(1)];
+    %Z.r = [Z.r b(Pos_Volt_Contrast_in_X)/b(1)];
     Z.X{s} = X;
     Z.pX{s} = pX;
 end

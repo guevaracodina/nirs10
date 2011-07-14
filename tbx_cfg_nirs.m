@@ -5494,7 +5494,7 @@ compute_LU.val       = {0};
 compute_LU.help      = {'Usually, No.'}';
 
 runFtest           = cfg_menu;
-runFtest.name      = 'Give test result by iteration';
+runFtest.name      = 'Run F test';
 runFtest.tag       = 'runFtest';
 runFtest.labels    = {'No' 'Yes'};
 runFtest.values    = {0,1};
@@ -5642,10 +5642,18 @@ map_file.help    = {'Select statistical map of interest (file '
 %Extract map data from group and session analyses
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+extract_auto_modality   = cfg_menu;
+extract_auto_modality.tag  = 'extract_auto_modality';
+extract_auto_modality.name = 'Modality map to extract from';
+extract_auto_modality.labels = {'HbO','HbR','HbT'};
+extract_auto_modality.values = {1,2,3};
+extract_auto_modality.val = {2};
+extract_auto_modality.help = {'Modality map to extract from.'};
+
 extract_max_HbR           = cfg_branch;
 extract_max_HbR.name      = 'extract_max_HbR';
 extract_max_HbR.tag       = 'extract_max_HbR';
-%extract_max_HbR.val       = {}; 
+extract_max_HbR.val       = {extract_auto_modality}; 
 extract_max_HbR.help      = {''};
 
 extract_max_all           = cfg_branch;
@@ -5691,10 +5699,18 @@ extract_auto_mode.tag       = 'extract_auto_mode';
 extract_auto_mode.val       = {extract_select_auto_mode}; 
 extract_auto_mode.help      = {''};
 
+extract_manual_modality   = cfg_menu;
+extract_manual_modality.tag  = 'extract_manual_modality';
+extract_manual_modality.name = 'Modality map to extract from';
+extract_manual_modality.labels = {'HbO','HbR','HbT'};
+extract_manual_modality.values = {1,2,3};
+extract_manual_modality.val = {2};
+extract_manual_modality.help = {'Modality map to extract from.'};
+
 extract_manual_mode           = cfg_branch;
 extract_manual_mode.name      = 'extract_manual_mode';
 extract_manual_mode.tag       = 'extract_manual_mode';
-%extract_manual_mode.val       = {}; 
+extract_manual_mode.val       = {extract_manual_modality}; 
 extract_manual_mode.help      = {''};
 
 extract_select_mode           = cfg_choice;
@@ -5770,13 +5786,21 @@ extract_average_mode.values    = {extract_radius extract_threshold};
 extract_average_mode.val       = {extract_radius}; 
 extract_average_mode.help      = {'Extraction Averaging Mode.'}'; 
 
+Volterra_ratio   = cfg_menu;
+Volterra_ratio.tag  = 'Volterra_ratio';
+Volterra_ratio.name = 'Calculate Volterra ratio';
+Volterra_ratio.labels = {'Yes','No'};
+Volterra_ratio.values = {1,0};
+Volterra_ratio.val = {0};
+Volterra_ratio.help = {'Add ratio of 2nd to 1st Volterra to bNmin, bNmax info.'};
+
 % Executable Branch
 extract_map_data      = cfg_exbranch;      
 extract_map_data.name = 'Extract map data';            
 extract_map_data.tag  = 'extract_map_data';
 extract_map_data.val  = {NIRSmat view extract_base_contrast ...
     extract_contrast extract_select_mode ...
-    extract_average_mode extract_struct_name}; 
+    extract_average_mode extract_struct_name Volterra_ratio}; 
 extract_map_data.prog = @nirs_run_extract_map_data;  
 extract_map_data.vout = @nirs_cfg_vout_extract_map_data; 
 extract_map_data.help = {'Extract_map_data.'};

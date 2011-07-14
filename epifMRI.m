@@ -102,7 +102,7 @@ function epifMRI
 %The code will enforce grouping onsets if onset names are inconsistent
 %between sessions. If onsets have been grouped, the stats folder(s) will have
 %a "G" (for group) to help indicate that fact
-force_group_onsets = 0; %Boolean: 0: off; 1: on
+force_group_onsets = 1; %Boolean: 0: off; 1: on
 %onsets to remove
 %Code allows up to 3 onset types to be removed - this is useful if onset
 %files contains onsets that we want to exclude. 
@@ -117,7 +117,7 @@ TR0 = 3.0; %13; %default TR value, in case code is unable to calculate it from
 nslices = 47;
 %the onsets files
 %Run GLM without time and dispersion derivatives
-noDerivs = 2; %Integer: 0: off (Derivs included); 1: on (noDerivs); 2: both
+noDerivs = 0; %Integer: 0: off (Derivs included); 1: on (noDerivs); 2: both
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Advanced options
@@ -151,7 +151,7 @@ Analyze_sessions = [];
 
 SaveStatsBatch = 1; %Boolean: 0: off; 1: on
 SaveReportBatch = 1; %Boolean: 0: off; 1: on
-SkipUncorrected = 0; %Integer: 0: FWE & none: 1: FWE; 2: none
+SkipUncorrected = 1; %Integer: 0: FWE & none: 1: FWE; 2: none
 SkipGroupOnsets = 0; %Boolean: 0: (do not skip): off; 1: on (skip)
 SkipNegativeBOLD = 0; %Boolean: 0: (do not skip): off; 1: on (skip)
 
@@ -182,9 +182,9 @@ normalizeOn = 0; %Integer: 0: off; 1: on; 2: both
 %by session
 reportContrastsBySession = 0; %Boolean: 0: off; 1: on
 %Generate stats with HRF peaking at different times with respect to onsets
-McGilldelaysOn = 0; %Boolean: 0: off; 1: on
+McGilldelaysOn = 1; %Boolean: 0: off; 1: on
 %Delays in seconds - to use with 
-delay = [-1 1]; % -2 -1 1 3 6]; % [-9 -6 -3 -2 -1 1 2 3 6 9]; %[-7 -8 -5 -4]; %[-9 -6 -3 3 6 9];
+delay = [-3 -2 -1 1 2 3]; % -2 -1 1 3 6]; % [-9 -6 -3 -2 -1 1 2 3 6 9]; %[-7 -8 -5 -4]; %[-9 -6 -3 3 6 9];
 %remove negative onsets entirely - negative onsets may arise when using
 %a negative delay; it is best to remove such onsets
 McGill_remove_negative = 1; %Boolean: 0: off; 1: on
@@ -207,7 +207,7 @@ add_pulse_regressor = 0; %Boolean: 0: off; 1: on
 %Volterra - nonlinearities
 VolterraOn = 2; %Integer: 0: off; 1: on; 2: both
 %Window size for Gamma function HRF 
-GammaOn = 2; %Integer: 0: off; 1: on; 2: both
+GammaOn = 0; %Integer: 0: off; 1: on; 2: both
 gamma_window = 20; %in seconds
 gamma_order = 1; %number of gamma function bases
 default_analysis_dir = 1; %Boolean: 0: let user choose analysis dir; 1: automatic default
@@ -1312,7 +1312,7 @@ try
         end
     end
     
-    if permute_onsets && ~GroupOnsets
+    if permute_onsets && ~f{i}.GroupOnsets
         %Onset file, Movement
         load(f{i}.fOnset{1});
         names2 = names;      
@@ -1389,7 +1389,9 @@ try
             f{i}.fOnset{j} = fullfile(DirOtherOnsets,[fil '_grouped' ext]);
         end
     end
-catch
+catch exception
+    disp(exception.identifier);
+    disp(exception.stack(1));
     write_log(flog,'Could not group onset files');
 end
 
@@ -1514,11 +1516,11 @@ if ~TyvOn
                 for i4=1:length(GammaRun)
                     GLM.f = f{i};
                     GLM.Glabel = Glabel{GammaRun{i4}};
-                    run_stats_and_results(GLM);
+                    %run_stats_and_results(GLM);
 
                     try
                         if McGilldelaysOn && i4 == 1
-                            GLM.Glabel = Glabel{2};
+                            %GLM.Glabel = Glabel{2};
                             %delays 
                             for d=1:size(delay,2)
                                 g = f{i};
@@ -1557,7 +1559,9 @@ if ~TyvOn
 
                             end %end for d=1:size(delays,2)
                         end
-                    catch
+                    catch exception
+                        disp(exception.identifier);
+                        disp(exception.stack(1));
                         write_log(flog,'McGill delays stats failed to run');
                     end
                     GLM.Mlabel = '';
