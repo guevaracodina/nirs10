@@ -113,7 +113,7 @@ for Idx=1:size(job.NIRSmat,1)
 
                 case 2 % tMCimg
                     fid=fopen(fS{fiS,:},'rb');
-                    ms = fread(fid,V_segR.dim(1)*V_segR.dim(2)*V_segR.dim(3),'float32');
+                    ms = fread(fid,V_segR.dim(1)*V_segR.dim(2)*V_segR.dim(3));%,'float32');
                     fclose(fid);
                     % Bonnery from Boas et al.
                     %                 sum_Jout = sum(ms(ms<0)/(cs.par.nphotons*10));
@@ -187,7 +187,7 @@ for Idx=1:size(job.NIRSmat,1)
 
                             case 2 % tMCimg
                                 fid=fopen(fullfile(cs_dir,[Dfn Oe]),'rb');
-                                md = fread(fid,V_segR.dim(1)*V_segR.dim(2)*V_segR.dim(3),'float32');
+                                md = fread(fid,V_segR.dim(1)*V_segR.dim(2)*V_segR.dim(3));%,'float32');
                                 fclose(fid);
                                 % Bonnery from Boas et al.
                                 sum_Jout = sum(md(md<0)/(cs.par.nphotons*10));
@@ -236,7 +236,7 @@ for Idx=1:size(job.NIRSmat,1)
         sens_index = [C' sens];
         sensC = sortrows(sens_index);
         sensC(isnan(sensC))=0;
-        disp([int2str(sum(isnan(sensC))) ' NaNs have been corrected in sensitivity matrix (' int2str(numel(sensC)) ' values)']);
+        disp([int2str(sum(sum(sum(isnan(sensC))))) ' NaNs have been corrected in sensitivity matrix (' int2str(numel(sensC)) ' values)']);
         sens = sensC(:,2:end);
         save(fullfile(cs_dir,'sens.mat'),'sens');
 
@@ -255,18 +255,10 @@ for Idx=1:size(job.NIRSmat,1)
 
         V = spm_create_vol(V);
         spm_write_vol(V,log(sens_reshaped));
-%         V1 = struct('fname',fullfile(cs_dir,['ms1' '.nii']),...
-%             'dim',  V_segR.dim,...
-%             'dt',   [16,0],...
-%             'pinfo',V_segR.pinfo,...
-%             'mat',  V_segR.mat);
+%         V1 = struct('fname',fullfile(cs_dir,['ms1' '.nii']),'dim',V_segR.dim,'dt',[16,0],'pinfo',V_segR.pinfo,'mat',V_segR.mat);
 %         V1 = spm_create_vol(V1);
 %         spm_write_vol(V1,log(ms));
-%         V2 = struct('fname',fullfile(cs_dir,['md1' '.nii']),...
-%             'dim',  V_segR.dim,...
-%             'dt',   [16,0],...
-%             'pinfo',V_segR.pinfo,...
-%             'mat',  V_segR.mat);
+%         V2 = struct('fname',fullfile(cs_dir,['md1' '.nii']),'dim',V_segR.dim,'dt',[16,0],'pinfo',V_segR.pinfo,'mat',V_segR.mat);
 %         V2 = spm_create_vol(V2);
 %         spm_write_vol(V2,log(md));
         %%%
@@ -302,7 +294,6 @@ for Idx=1:size(job.NIRSmat,1)
 %                 'dt',   V_segR.dt,...
 %                 'pinfo',V_segR.pinfo,...
 %                 'mat',  V_segR.mat);
-% 
 %             V_c1 = spm_create_vol(V_c1);
 %             spm_write_vol(V_c1,reshape(sens_c1(i,:),V_segR.dim));%sens_sd_c1i,V_segR.dim));
 
