@@ -352,9 +352,10 @@ for Idx=1:size(job.NIRSmat,1)
                             end
                         end
                         if display_heart_rate_figure || save_heart_rate_figure
-                            imagesc(whpR);title(['Heart pace: ' rDtp{f}]);
+                            [dummy,namef,dummy2] = fileparts(rDtp{f});
+                            imagesc(whpR);title(['Heart pace: ' namef]);
                             if save_heart_rate_figure
-                                filen2 = fullfile(dir1,'HeartRate.tiff'); %save as .tiff
+                                filen2 = fullfile(dir1,[namef '_HeartRate.tiff']); %save as .tiff
                                 print(hfig, '-dtiffn', filen2);
                             end
                             if ~display_heart_rate_figure
