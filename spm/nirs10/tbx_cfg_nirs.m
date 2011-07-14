@@ -2403,19 +2403,13 @@ latest_mcim.name    = 'Latest ROI';
 latest_mcim.val     = {'latestROI'}; 
 latest_mcim.help    = {'Latest ROI generated selected.'};
 
-mcim_in         = cfg_files; %Select MC segmented volume for this subject 
-mcim_in.name    = 'MC segmented volume'; % The displayed name
-mcim_in.tag     = 'mcim_in';       %file names
+mcim_in         = cfg_files;
+mcim_in.name    = 'MC segmented volume';
+mcim_in.tag     = 'mcim_in';
 mcim_in.filter = 'image';
 mcim_in.ufilter = '.nii';    
-mcim_in.num     = [1 1];     % Number of inputs required 
-mcim_in.help    = {'Select MC segmented volume for this subject.'}; % help text displayed
-
-% select_mcim         = cfg_branch;
-% select_mcim.tag     = 'select_mcim';
-% select_mcim.name    = 'Selected image';
-% select_mcim.val     = {mcim_in};
-% select_mcim.help    = {'Choose image.'};
+mcim_in.num     = [1 1];
+mcim_in.help    = {'Select MC segmented volume for this subject.'};
 
 mcim_cfg           = cfg_choice;
 mcim_cfg.name      = 'Image';
@@ -2431,6 +2425,26 @@ MC_CUDAchoice.labels = {'MCX: Monte Carlo Extreme','tMCimg','Both'};
 MC_CUDAchoice.values = {1,2,3};
 MC_CUDAchoice.def    = @(val)nirs_get_defaults('configMC1.MC_CUDAchoice', val{:});
 MC_CUDAchoice.help   = {'Choose type of configuration files to generate.'};
+
+no_pve      = cfg_branch; 
+no_pve.name = 'No';
+no_pve.tag  = 'no_pve';
+no_pve.help = {'PVE won''t be calculated.'};
+
+calc_pve         = cfg_files;
+calc_pve.name    = 'Mask for PVE';
+calc_pve.tag     = 'calc_pve';
+calc_pve.filter  = 'image';
+calc_pve.ufilter = '.nii';    
+calc_pve.num     = [1 1];
+calc_pve.help    = {'BOLD, ASL or any anatomical mask (from create mask module).'};
+
+pve_cfg           = cfg_choice;
+pve_cfg.name      = 'PVE';
+pve_cfg.tag       = 'pve_cfg';
+pve_cfg.values    = {no_pve calc_pve};
+pve_cfg.val       = {calc_pve}; 
+pve_cfg.help      = {'.'};
 
 % est ce qu'il y a pas un pb du au fait qu'il attend un directory ???
 MC_configdir         = cfg_entry;
@@ -2462,10 +2476,10 @@ nphotons.def = @(val)nirs_get_defaults('configMC1.nphotons', val{:});
 nphotons.help    = {'Input number of photons (not currently used).'}; 
              
 seed         = cfg_entry; 
-seed.name    = 'Random seed'; % The displayed name
-seed.tag     = 'seed';       %file names
+seed.name    = 'Random seed';
+seed.tag     = 'seed';
 seed.strtype = 'r';  
-seed.num     = [1 1];     % Number of inputs required 
+seed.num     = [1 1];
 seed.def = @(val)nirs_get_defaults('configMC1.seed', val{:});
 seed.help    = {'Input random seed.'}; 
 
@@ -2627,7 +2641,7 @@ MC_parameters.help = {'Parameters'};
 configMC1      = cfg_exbranch;       
 configMC1.name = 'Configure Monte Carlo inputs';            
 configMC1.tag  = 'configMC1'; 
-configMC1.val  = {NIRSmat MC_nam mcim_cfg MC_CUDAchoice MC_configdir MC_parameters};    
+configMC1.val  = {NIRSmat MC_nam mcim_cfg MC_CUDAchoice pve_cfg MC_configdir MC_parameters};    
 configMC1.prog = @nirs_run_configMC;  
 configMC1.vout = @nirs_cfg_vout_configMC; 
 configMC1.help = {'Generate configuration input files for Monte Carlo simulation.'};
