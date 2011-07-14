@@ -21,7 +21,7 @@ for Idx=1:size(job.NIRSmat,1)
     try
         NIRS = [];
         load(job.NIRSmat{Idx,1});
-
+        
         if ~isempty(job.outMCfiles)
             f = job.outMCfiles;
             cs_dir =  fileparts(f{1,:});
@@ -44,7 +44,7 @@ for Idx=1:size(job.NIRSmat,1)
         end
         segR = cs.segR;
         V_segR = spm_vol(segR);
-
+        
         % lecture du fichier binaire pour avoir les mu_a
         b8i = cs.b8i;
         fid=fopen(b8i,'rb');
@@ -57,19 +57,19 @@ for Idx=1:size(job.NIRSmat,1)
         Yb8i_l1(Yb8i==3)= cs.par.csfPpties_l1(1,1);
         Yb8i_l1(Yb8i==4)= cs.par.skullPpties_l1(1,1);
         Yb8i_l1(Yb8i==5)= cs.par.scalpPpties_l1(1,1);
-
+        
         Yb8i_l2 = zeros(size(Yb8i));
         Yb8i_l2(Yb8i==1)= cs.par.gmPpties_l2(1,1);
         Yb8i_l2(Yb8i==2)= cs.par.wmPpties_l2(1,1);
         Yb8i_l2(Yb8i==3)= cs.par.csfPpties_l2(1,1);
         Yb8i_l2(Yb8i==4)= cs.par.skullPpties_l2(1,1);
         Yb8i_l2(Yb8i==5)= cs.par.scalpPpties_l2(1,1);
-
+        
         if size(Yb8i_l1,1)==1%cs.alg==2
             Yb8i_l1 = Yb8i_l1';
             Yb8i_l2 = Yb8i_l2';
         end
-
+        
         wl = NIRS.Cf.dev.wl; %= [830 690];
         Cid = NIRS.Cf.H.C.id;
         Cwl = NIRS.Cf.H.C.wl;
@@ -80,15 +80,15 @@ for Idx=1:size(job.NIRSmat,1)
         
         Skpt = cs.Pkpt(1:cs.NSkpt);
         Dkpt = cs.Pkpt(cs.NSkpt+1:cs.NSkpt+cs.NDkpt)-8;
-
+        
         %%%%%%%%%%
         for fi = 1:size(f,1)
             [dummy,fn,dummy2] = fileparts(f{fi,:});
-
+            
             if strcmp(fn(1:1),'D')% stores all ''D_No.._...nm.2pt'' files in a list
                 fD{NfD+1,:} = f{fi,:};
                 NfD = NfD+1;
-
+                
             elseif strcmp(fn(1:1),'S')% same with ''S_No.._...nm.2pt'' files
                 fS{NfS+1,:} = f{fi,:};
                 NfS = NfS+1;
@@ -96,7 +96,7 @@ for Idx=1:size(job.NIRSmat,1)
         end
         ND = NfD/2;
         NS = NfS/2;
-
+        
         for fiS = 1:NfS
             [dummy,fSn,dummy2] = fileparts(fS{fiS,:});
             [dummy,Pwl] = find(wl==str2double(fSn(8:10)));
@@ -105,15 +105,16 @@ for Idx=1:size(job.NIRSmat,1)
                 case 1 % MCX
                     % already normalized (http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/README : 6.1 output files)
                     %%%%%%%%%ERREUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUR
-                   numgates = min(cs.numTimeGates,MCX_g);
-%                    numgates = min(cs.numTimeGates);
-
+                    numgates = min(cs.numTimeGates,MCX_g);
+                    %                    numgates = min(cs.numTimeGates);
+                    
                     ms4=loadmc2(fS{fiS,:},[V_segR.dim numgates],'float');
                     ms=sum(ms4,4);
-
+                    
                 case 2 % tMCimg
                     fid=fopen(fS{fiS,:},'rb');
-                    ms = fread(fid,V_segR.dim(1)*V_segR.dim(2)*V_segR.dim(3));%,'float32');
+%                     T = spm_type(fid,'bits');
+                    ms = fread(fid,V_segR.dim(1)*V_segR.dim(2)*V_segR.dim(3),'float64');%,'float32');
                     fclose(fid);
                     % Bonnery from Boas et al.
                     %                 sum_Jout = sum(ms(ms<0)/(cs.par.nphotons*10));
@@ -130,6 +131,13 @@ for Idx=1:size(job.NIRSmat,1)
                     %                 msP = msP*norm_ms;
                     %%%% version 2
                     % ms = ms/(cs.par.nphotons*10);
+                    
+                    %%%%%%%%%%%%%%%%%%%%%%%
+% % % % %                     code ;ich sur les fluences voir aussi le code
+% de Boas
+% % % % %                                                     % Fluence au détecteur selon éq. (3) de Boas 2002
+% % % % %                                 fluence(pi) = sum(photons_weight)./nbPhotonsTotSimu;
+                    %%%%%%%%%%%%%%%%%%%%%%%
                     sum_Jout = sum(ms(ms<0)/(cs.par.nphotons));
                     Svx = 5*5;
                     Vvx = 5*5*5;
@@ -137,25 +145,25 @@ for Idx=1:size(job.NIRSmat,1)
                     msP = zeros(size(ms));
                     msP(indices,1)=ms(indices,1);
                     if Pwl==1
-                        norm_ms = (1-Svx*abs(sum_Jout))/(Vvx*sum(msP.*Yb8i_l1));
+                        norm_ms = (1-Svx*sum_Jout)/(Vvx*sum(msP.*Yb8i_l1));
                     else
-                        norm_ms = (1-Svx*abs(sum_Jout))/(Vvx*sum(msP.*Yb8i_l2));
+                        norm_ms = (1-Svx*sum_Jout)/(Vvx*sum(msP.*Yb8i_l2));
                     end
                     msP = msP*norm_ms;
             end
-
+            
             D_Sn =  unique(Cid(3,Cid(2,:)== Sn));% Detectors seeing source Sn
-            for i = 1:size(D_Sn,2)% overview of detectors seen by source thanks to Cid
+            for i = 1:size(D_Sn,2)% overview of detectors seen by source according to Cid
                 for j = 1:NfD% only if detector has been selected by user...
                     [dummy,fD_n,dummy2] = fileparts(fD{j,:});
-
+                    
                     if D_Sn(1,i) < 10, Ds_Sn = ['0' int2str(D_Sn(1,i))]; else Ds_Sn = int2str(D_Sn(1,i));end
                     Dfn = ['D_No' Ds_Sn '_' int2str(wl(Pwl)) 'nm'];
                     b = strcmp(fD_n,Dfn);
                     if b % one pair found : processing goes on !
                         c = find(Cid(2,:)== Sn & Cid(3,:)==D_Sn(i) & Cwl==Pwl);
                         disp(['Sn=' int2str(Sn) ' et D_Sn=[' int2str(D_Sn) '] et wl=' int2str(Pwl) ' , DONC : ' int2str(c)]);
-
+                        
                         D_Pktp = NS+sum((1:length(Dkpt)).*(Dkpt==D_Sn(i)));
                         S_Pkpt = sum((1:length(Skpt)).*(Skpt==Sn));
                         switch cs.alg
@@ -163,7 +171,7 @@ for Idx=1:size(job.NIRSmat,1)
                                 % already normalized (http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/README : 6.1 output files)
                                 md4=loadmc2(fullfile(cs_dir,[Dfn Oe]),[V_segR.dim numgates],'float');
                                 md=sum(md4,4);
-
+                                
                                 %%% calcul de phi0
                                 % boule autour de la position du point P
                                 vxr = 3;%voxel radius
@@ -175,7 +183,7 @@ for Idx=1:size(job.NIRSmat,1)
                                 md_N = md(max(cs.Pfp_rmiv(1,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(1,D_Pktp)+vxr,size(md,1)),...
                                     max(cs.Pfp_rmiv(2,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(2,D_Pktp)+vxr,size(md,2)),...
                                     max(cs.Pfp_rmiv(3,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(3,D_Pktp)+vxr,size(md,3)));
-
+                                
                                 phi0_S = max(ms_N(:));
                                 phi0_D = max(md_N(:));
                                 
@@ -184,10 +192,10 @@ for Idx=1:size(job.NIRSmat,1)
                                 sens(isd+1,:) = reshape(sens_sd,[numel(sens_sd),1]);
                                 isd = isd+1;
                                 C = [C c]; % channels in the sensitivity matrix
-
+                                
                             case 2 % tMCimg
                                 fid=fopen(fullfile(cs_dir,[Dfn Oe]),'rb');
-                                md = fread(fid,V_segR.dim(1)*V_segR.dim(2)*V_segR.dim(3));%,'float32');
+                                md = fread(fid,V_segR.dim(1)*V_segR.dim(2)*V_segR.dim(3),'float64');%,'float32');
                                 fclose(fid);
                                 % Bonnery from Boas et al.
                                 sum_Jout = sum(md(md<0)/(cs.par.nphotons*10));
@@ -197,12 +205,12 @@ for Idx=1:size(job.NIRSmat,1)
                                 mdP = zeros(size(md));
                                 mdP(indices,1)=md(indices,1);
                                 if Pwl==1
-                                    norm_md = (1-Svx*abs(sum_Jout))/(Vvx*sum(mdP.*Yb8i_l1));
+                                    norm_md = (1-Svx*sum_Jout)/(Vvx*sum(mdP.*Yb8i_l1));
                                 else
-                                    norm_md = (1-Svx*abs(sum_Jout))/(Vvx*sum(mdP.*Yb8i_l2));
+                                    norm_md = (1-Svx*sum_Jout)/(Vvx*sum(mdP.*Yb8i_l2));
                                 end
                                 mdP = mdP*norm_md;
-
+                                
                                 msR = reshape(msP,V_segR.dim);
                                 mdR = reshape(mdP,V_segR.dim);
                                 %%% calcul de phi0
@@ -215,13 +223,13 @@ for Idx=1:size(job.NIRSmat,1)
                                 md_N = mdR(max(cs.Pfp_rmiv(1,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(1,D_Pktp)+vxr,size(mdR,1)),...
                                     max(cs.Pfp_rmiv(2,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(2,D_Pktp)+vxr,size(mdR,2)),...
                                     max(cs.Pfp_rmiv(3,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(3,D_Pktp)+vxr,size(mdR,3)));
-
+                                
                                 phi0_S = max(ms_N(:));
                                 phi0_D = max(md_N(:));
                                 
                                 % Sensitivity matrix
                                 sens_sd = msP.*mdP / ((phi0_S + phi0_D)/2);
-
+                                
                                 sens(isd+1,:) = sens_sd';
                                 isd = isd+1;
                                 C = [C c]; % channels in the sensitivity matrix
@@ -232,77 +240,77 @@ for Idx=1:size(job.NIRSmat,1)
         end
         NIRS.Cs.mcs{ics}.C = C;
         save(job.NIRSmat{1,1},'NIRS');
-
+        
         sens_index = [C' sens];
         sensC = sortrows(sens_index);
         sensC(isnan(sensC))=0;
         disp([int2str(sum(sum(sum(isnan(sensC))))) ' NaNs have been corrected in sensitivity matrix (' int2str(numel(sensC)) ' values)']);
         sens = sensC(:,2:end);
         save(fullfile(cs_dir,'sens.mat'),'sens');
-
+        
         sens_reshaped = zeros(V_segR.dim);
         for i=1:size(sens,1)
             sens_reshaped = sens_reshaped + reshape(sens(i,:),V_segR.dim);
         end
         save(fullfile(cs_dir,'sensReshaped.mat'),'sens_reshaped');
-
+        
         %%% a mettre en option
         V = struct('fname',fullfile(cs_dir,['sens' '.nii']),...
             'dim',  V_segR.dim,...
-            'dt',   [16,0],...
+            'dt',   [64,0],...
             'pinfo',V_segR.pinfo,...
             'mat',  V_segR.mat);
-
+        
         V = spm_create_vol(V);
         spm_write_vol(V,log(sens_reshaped));
-%         V1 = struct('fname',fullfile(cs_dir,['ms1' '.nii']),'dim',V_segR.dim,'dt',[16,0],'pinfo',V_segR.pinfo,'mat',V_segR.mat);
-%         V1 = spm_create_vol(V1);
-%         spm_write_vol(V1,log(ms));
-%         V2 = struct('fname',fullfile(cs_dir,['md1' '.nii']),'dim',V_segR.dim,'dt',[16,0],'pinfo',V_segR.pinfo,'mat',V_segR.mat);
-%         V2 = spm_create_vol(V2);
-%         spm_write_vol(V2,log(md));
+        %         V1 = struct('fname',fullfile(cs_dir,['ms1' '.nii']),'dim',V_segR.dim,'dt',[16,0],'pinfo',V_segR.pinfo,'mat',V_segR.mat);
+        %         V1 = spm_create_vol(V1);
+        %         spm_write_vol(V1,log(ms));
+        %         V2 = struct('fname',fullfile(cs_dir,['md1' '.nii']),'dim',V_segR.dim,'dt',[16,0],'pinfo',V_segR.pinfo,'mat',V_segR.mat);
+        %         V2 = spm_create_vol(V2);
+        %         spm_write_vol(V2,log(md));
         %%%
-
+        
         m_c1 = zeros(size(Yb8i));
         m_c1(Yb8i==1)=1;
-
+        
         % sens_sd_c1i = zeros(1,size(sens,2));
-        sens_c1 =  zeros(size(sens));
-        sens_reshaped_c1 =  zeros(size(sens_reshaped));
-
+%         sens_c1 =  zeros(size(sens));
+%         sens_reshaped_c1 =  zeros(size(sens_reshaped));
+        
         for i=1:size(sens,1)
             sens_sd = reshape(sens(i,:),V_segR.dim);
             V = struct('fname',fullfile(cs_dir,['banane_' int2str(sensC(i,1)) '.nii']),...
                 'dim',  V_segR.dim,...
-                'dt',   V_segR.dt,...
+                'dt',   [64,0],...
                 'pinfo',V_segR.pinfo,...
                 'mat',  V_segR.mat);
-
+            
             V = spm_create_vol(V);
             spm_write_vol(V,sens_sd);
-
-            for j=1:size(sens,2)
-                if m_c1(j,1)==1
-                    %             sens_sd_c1i(1,j) = sens(i,j);
-                    sens_c1(i,j) = sens(i,j);
-                end
-            end
-            sens_reshaped_c1 = sens_reshaped_c1 + reshape(sens_c1(i,:),V_segR.dim);
-
-%             V_c1 = struct('fname',fullfile(cs_dir,['banane_c1_' int2str(sensC(i,1)) '.nii']),...
-%                 'dim',  V_segR.dim,...
-%                 'dt',   V_segR.dt,...
-%                 'pinfo',V_segR.pinfo,...
-%                 'mat',  V_segR.mat);
-%             V_c1 = spm_create_vol(V_c1);
-%             spm_write_vol(V_c1,reshape(sens_c1(i,:),V_segR.dim));%sens_sd_c1i,V_segR.dim));
-
+            
+%             for j=1:size(sens,2)
+%                 if m_c1(j,1)==1
+%                     %             sens_sd_c1i(1,j) = sens(i,j);
+%                     sens_c1(i,j) = sens(i,j);
+%                 end
+%             end
+%             sens_reshaped_c1 = sens_reshaped_c1 + reshape(sens_c1(i,:),V_segR.dim);
+            
+            %             V_c1 = struct('fname',fullfile(cs_dir,['banane_c1_' int2str(sensC(i,1)) '.nii']),...
+            %                 'dim',  V_segR.dim,...
+            %                 'dt',   V_segR.dt,...
+            %                 'pinfo',V_segR.pinfo,...
+            %                 'mat',  V_segR.mat);
+            %             V_c1 = spm_create_vol(V_c1);
+            %             spm_write_vol(V_c1,reshape(sens_c1(i,:),V_segR.dim));%sens_sd_c1i,V_segR.dim));
+            
         end
-        save(job.NIRSmat{Idx,1},'NIRS');       
+        save(job.NIRSmat{Idx,1},'NIRS');
     catch exception
         disp(exception.identifier);
         disp(exception.stack(1));
         disp(['Could not run MonteCarlo sensitivity matrix for subject' int2str(Idx)]);
-    end  
+    end
 end
 out.NIRSmat = job.NIRSmat;

@@ -228,18 +228,21 @@ for Idx=1:size(job.NIRSmat,1)
                 % ou on serait avec des voxels de taille custom, il faudrait 
                 % diviser la taille des voxels voulu par la taille courante)
                 P.p =Pfp_ancienne_rmiv;%/(parameters.voxelSize); DEFINITIFFFFFF
+                P.wd = -Pwd_rmiv(1:3,:); %to point toward the inside of brain
+                
             elseif job.MC_CUDAchoice==2
                 % MonteCarlo in a particular frame. Positions must be in mm but the
             % origin is the same as the origin of the voxel frame (these positions 
             % don't respect SPM conventions) OK
             P.p = parameters.voxelSize*Pfp_ancienne_rmiv;
+            P.wd = -Pwd_rmm;
             end
             
             for i=1:size(cs.Pwd_rmm,2)
                 Pwd_rmiv(:,i) = V_rmiv.mat(1:3,1:3)\cs.Pwd_rmm(:,i);           
             end
             P.Pkpt = cs.Pkpt;
-            P.wd = -Pwd_rmiv(1:3,:); %to point toward the inside of brain
+            
             P.r = [Sr' Dr' zeros(1,NP -(cs.NSkpt+cs.NDkpt))];
             P.Dr = job.MC_parameters.radiid;
             jobW.P =P;
