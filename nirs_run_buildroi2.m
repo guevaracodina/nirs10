@@ -57,8 +57,12 @@ for Idx=1:size(job.NIRSmat,1)
             Ckpt = Cid(1,:);
             NewNIRSdir = 'roi_all-channels';
         end
-        Skpt = unique(Cid(2,Cid(1,:) == Ckpt));
-        Dkpt = unique(Cid(3,Cid(1,:) == Ckpt));
+        
+        for i=1:length(Ckpt)
+            Cbloup = Cid(1,:).*(Cid(1,:) == Ckpt(i));
+            Skpt = unique(Cid(2,sum(Cbloup)));
+            Dkpt = unique(Cid(3,sum(Cbloup)));
+        end
         Pkpt=[Skpt Dkpt+NS];
         
         if NewDirCopyNIRS

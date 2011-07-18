@@ -43,7 +43,7 @@ switch job.lby
             Pfp_rmm(:,Pi) = Pfp_rmm(:,Pi) + prec*Pd_rmm(:,Pi);
         end
         
-    case 'configMC'% after resizing, some S might be inside the volume
+    case 'configMC_MCX'% after resizing, some S might be inside the volume
         Pfp_rmiv = round(job.Pfp_ancienne_rmiv);
         
         for Pi = 1:NP
@@ -57,6 +57,25 @@ switch job.lby
 %                     Pfp_rmm_i =  V.mat*Pfp_rmiv_i;
 %                 end
                 Pfp_rmm_i = Pfp_rmm_i - prec*[Pd_rmm(:,Pi);0];
+                Pfp_rmiv_i = round(V.mat\Pfp_rmm_i);
+            end
+            Pfp_rmm(:,Pi) = Pfp_rmiv_i(1:3,:);
+        end
+        
+        case 'configMC_tMC'% after resizing, some S might be inside the volume
+        Pfp_rmiv = round(job.Pfp_ancienne_rmiv);
+        
+        for Pi = 1:NP
+            Pfp_rmiv_i = Pfp_rmiv(:,Pi);
+            Pfp_rmm_i =  V.mat*[Pfp_rmiv_i;1];
+            
+            while Y(Pfp_rmiv_i(1),Pfp_rmiv_i(2),Pfp_rmiv_i(3))==0
+%                 if size(Pfp_rmiv_i,1)==3
+%                     Pfp_rmm_i =  V.mat*[Pfp_rmiv_i;1];
+%                 else
+%                     Pfp_rmm_i =  V.mat*Pfp_rmiv_i;
+%                 end
+                Pfp_rmm_i = Pfp_rmm_i + prec*[Pd_rmm(:,Pi);0];
                 Pfp_rmiv_i = round(V.mat\Pfp_rmm_i);
             end
             Pfp_rmm(:,Pi) = Pfp_rmiv_i(1:3,:);
