@@ -25,6 +25,18 @@ function out = nirs_run_configMC(job)
 % Copyright (C) 2010 Laboratoire d'Imagerie Optique et Moleculaire
 % Clement Bonnery
 
+prmts.gmPpties_l1 =    [0.0186   11.1   0.9   1.4];
+prmts.wmPpties_l1 =    [0.0186   11.1   0.9   1.4];
+prmts.csfPpties_l1 =   [0.0026   0.10   0.9   1.4];
+prmts.skullPpties_l1 = [0.0136   8.60   0.9   1.4];
+prmts.scalpPpties_l1 = [0.0191   6.60   0.9   1.4];
+
+prmts.gmPpties_l2 =    [0.0178   12.5   0.9   1.4];
+prmts.wmPpties_l2 =    [0.0178   12.5   0.9   1.4];
+prmts.csfPpties_l2 =   [0.0004   0.10   0.9   1.4];
+prmts.skullPpties_l2 = [0.0101   10.0   0.9   1.4];
+prmts.scalpPpties_l2 = [0.0159   8.00   0.9   1.4];
+
 %Overwrite to fix path
 job.MC_configdir = 'MC';
 
@@ -101,7 +113,7 @@ for Idx=1:size(job.NIRSmat,1)
         jobRS.out_dt = 'same';
         jobRS.out_autonaming = 0;
         jobRS.out_prefix = 'prefix';
-         outRS =nirs_resize(jobRS);     
+        outRS =nirs_resize(jobRS);     
 
         clear NIRS
 
@@ -125,19 +137,7 @@ for Idx=1:size(job.NIRSmat,1)
         end
 
         Pfp_ancienne_rmiv = round(Pfp_ancienne_rmiv);
-
-         if job.MC_CUDAchoice==1 
-        %%%%%%%pour tMCimg : je sais pas trop...
-            jobF.Pp_rmm = cs.Pp_rmm;
-            jobF.Pp_c1_rmm = cs.Pp_c1_rmm;
-            jobF.NP = NP;
-            jobF.image_in = {outRS};
-            jobF.Pfp_ancienne_rmiv = Pfp_ancienne_rmiv;
-            jobF.lby = 'configMC';
-            outF = nirs_fit_probe(jobF);
-            Pfp_ancienne_rmiv = outF{1};
-         end
-
+        
         % Directions
         Pd_rmm = cs.Pp_rmm - cs.Pp_c1_rmm;
         Pwd_rmm = zeros(3,NP);
@@ -146,6 +146,26 @@ for Idx=1:size(job.NIRSmat,1)
             lgth = (temp_dir(1)^2 + temp_dir(2)^2 + temp_dir(3)^2)^(1/2);
             Pwd_rmm(:,iP) = temp_dir/lgth;
         end
+
+          if job.MC_CUDAchoice==1 
+            jobF.Pp_rmm = cs.Pp_rmm;
+            jobF.Pp_c1_rmm = cs.Pp_c1_rmm;
+            jobF.NP = NP;
+            jobF.image_in = {outRS};
+            jobF.Pfp_ancienne_rmiv = Pfp_ancienne_rmiv;
+            jobF.lby = 'configMC_MCX';
+            outF = nirs_fit_probe(jobF);
+            Pfp_ancienne_rmiv = outF{1};
+          elseif job.MC_CUDAchoice==2 % pour tMC, les points doivent etre dans le volume (peut etre est-ce juste une question de direction de lq propagation...)
+              jobF.Pp_rmm = cs.Pp_rmm;
+            jobF.Pp_c1_rmm = cs.Pp_c1_rmm;
+            jobF.NP = NP;
+            jobF.image_in = {outRS};
+            jobF.Pfp_ancienne_rmiv = Pfp_ancienne_rmiv;
+            jobF.lby = 'configMC_tMC';
+            outF = nirs_fit_probe(jobF);
+            Pfp_ancienne_rmiv = outF{1};              
+          end
 
         % on prepare la sauvegarde de cs
         cs.Pfp_rmiv = Pfp_ancienne_rmiv;
@@ -169,10 +189,6 @@ for Idx=1:size(job.NIRSmat,1)
         fwrite(fid, Y8_rmiv, 'uint8');
         fclose(fid);
 
-
-        %Generate the .cfg (tMCimg) or .inp (CUDA MCX) configuration files
-        %Required data: optodes.positionsInROI.s, optodes.directions.s, radii.s and
-        %for sources, and same for detectors, with .d
         if ~roi && isfield(NIRS.Cf.H.P,'void')
             Pvoid = NIRS.Cf.H.P.void;% Keep track of non-existent sources/detectors, to exclude them explicitly later
         else
@@ -188,26 +204,37 @@ for Idx=1:size(job.NIRSmat,1)
 
         parameters.numTimeGates = job.MC_parameters.numTimeGates;
         parameters.deltaT = job.MC_parameters.deltaT;
+        
+        
+        %%%% Thresholded BOLD image is concidered as layer 6
+        %%%% it might be also a perturbation included by user... any use ??
+%         if ~isempty(job.pve_cfg.calc_pve{:})
+% %             V_pve = spm_vol(job.pve_cfg.calc_pve{:});
+% %             Y_pve = spm_read_vols(V_pve);
+%             [hReg,xSPM,SPM] = spm_results_ui('Setup');
+%         else%%%
+%             %%%NIRS.Cm.bold ???
+%         end
+        %%%%
 
         % Create a .cfg or .inp file for each optode and each wavelength
         for iwl = 1:size(NIRS.Cf.dev.wl,2)
-            %%%%%%%%%%%% il faut vérifier les valeurs des longueurs d'ondes
-            %%%%%%%%%%%% utilisées dans le code...
             if NIRS.Cf.dev.wl(iwl) == 830 %830
-                parameters.gmPpties = job.MC_parameters.gmPpties_l1;
-                parameters.wmPpties = job.MC_parameters.wmPpties_l1;
-                parameters.csfPpties = job.MC_parameters.csfPpties_l1;
-                parameters.skullPpties = job.MC_parameters.skullPpties_l1;
-                parameters.scalpPpties = job.MC_parameters.scalpPpties_l1;
-                parameters.perturbationPpties = job.MC_parameters.perturbationPpties_l1+job.MC_parameters.gmPpties_l1;
+                parameters.gmPpties           = prmts.gmPpties_l1;
+                parameters.wmPpties           = prmts.wmPpties_l1;
+                parameters.csfPpties          = prmts.csfPpties_l1;
+                parameters.skullPpties        = prmts.skullPpties_l1;
+                parameters.scalpPpties        = prmts.scalpPpties_l1;
+                parameters.perturbationPpties = job.MC_parameters.perturbationPpties_l1+ prmts.gmPpties_l1;
             elseif NIRS.Cf.dev.wl(iwl) == 690 %690
-                parameters.gmPpties = job.MC_parameters.gmPpties_l2;
-                parameters.wmPpties = job.MC_parameters.wmPpties_l2;
-                parameters.csfPpties = job.MC_parameters.csfPpties_l2;
-                parameters.skullPpties = job.MC_parameters.skullPpties_l2;
-                parameters.scalpPpties = job.MC_parameters.scalpPpties_l2;
-                parameters.perturbationPpties = job.MC_parameters.perturbationPpties_l2+job.MC_parameters.gmPpties_l2;
+                parameters.gmPpties           = prmts.gmPpties_l2;
+                parameters.wmPpties           = prmts.wmPpties_l2;
+                parameters.csfPpties          = prmts.csfPpties_l2;
+                parameters.skullPpties        = prmts.skullPpties_l2;
+                parameters.scalpPpties        = prmts.scalpPpties_l2;
+                parameters.perturbationPpties = job.MC_parameters.perturbationPpties_l2+ prmts.gmPpties_l2;
             end
+            
 
             %%%% attention la on est avec l'image resizee...........
             jobW.algo = job.MC_CUDAchoice;
@@ -220,6 +247,11 @@ for Idx=1:size(job.NIRSmat,1)
             jobW.NS = cs.NSkpt;
             jobW.ND = cs.NDkpt;
             jobW.Pvoid = Pvoid;
+            
+            for i=1:size(cs.Pwd_rmm,2)
+                Pwd_rmiv(:,i) = V_rmiv.mat(1:3,1:3)\cs.Pwd_rmm(:,i);
+%                 Pfp_tMC(:,i) = V_rmiv.mat*[Pfp_ancienne_rmiv(:,i);1];
+            end
 
             if job.MC_CUDAchoice==1
                 %%% MCX en voxel /////!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -234,16 +266,17 @@ for Idx=1:size(job.NIRSmat,1)
                 % MonteCarlo in a particular frame. Positions must be in mm but the
             % origin is the same as the origin of the voxel frame (these positions 
             % don't respect SPM conventions) OK
-            P.p = parameters.voxelSize*Pfp_ancienne_rmiv;
-            P.wd = -Pwd_rmm;
+             P.p = parameters.voxelSize*Pfp_ancienne_rmiv;
+% P.p = Pfp_tMC(1:3,:);
+             P.wd = -V_rmiv.mat(1:3,1:3)*Pwd_rmm;
+%             P.wd = -Pwd_rmm;
             end
             
-            for i=1:size(cs.Pwd_rmm,2)
-                Pwd_rmiv(:,i) = V_rmiv.mat(1:3,1:3)\cs.Pwd_rmm(:,i);           
-            end
+
             P.Pkpt = cs.Pkpt;
             
             P.r = [Sr' Dr' zeros(1,NP -(cs.NSkpt+cs.NDkpt))];
+            P.Sr = job.MC_parameters.radiis;
             P.Dr = job.MC_parameters.radiid;
             jobW.P =P;
             jobW.wl = NIRS.Cf.dev.wl(iwl);

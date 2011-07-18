@@ -39,16 +39,18 @@ for iP = 1:NS+ND
         if algo==2 % tMCimg
             n_cfg = fullfile(mc_dir,[PNo '_' num2str(wl) 'nm.cfg']);
             fid = fopen(n_cfg,'w');
+            disp('Generating files for sensitivity profiles computation')
+            
             % Title
             fprintf(fid, ';; Fichier de configuration\n');
             % ID subject
             fprintf(fid, [';; Sujet # : ' char(job.n_b8i) '\n\n']);
             % ROI limits relative to whole MRI
             fprintf(fid, ';; ROI limits relative to whole MRI\n');
-            fprintf(fid, [';; xmin : ' num2str(job.ROIlimits(1,1)) '\n']);
-            fprintf(fid, [';; xmax : ' num2str(job.ROIlimits(2,1)) '\n']);
-            fprintf(fid, [';; ymin : ' num2str(job.ROIlimits(1,2)) '\n']);
-            fprintf(fid, [';; ymax : ' num2str(job.ROIlimits(2,2)) '\n']);
+            fprintf(fid, [';; xmin : ' num2str(job.ROIlimits(1,2)) '\n']);
+            fprintf(fid, [';; xmax : ' num2str(job.ROIlimits(2,2)) '\n']);
+            fprintf(fid, [';; ymin : ' num2str(job.ROIlimits(1,1)) '\n']);
+            fprintf(fid, [';; ymax : ' num2str(job.ROIlimits(2,1)) '\n']);
             fprintf(fid, [';; zmin : ' num2str(job.ROIlimits(1,3)) '\n']);
             fprintf(fid, [';; zmax : ' num2str(job.ROIlimits(2,3)) '\n\n']);
             % Number of photons
@@ -116,8 +118,13 @@ for iP = 1:NS+ND
             Rp_rmiv = Pp_rmiv(:,[1:iP-1 iP+1:NS+ND]);
             Rwd_rmiv = Pwd_rmiv(:,[1:iP-1 iP+1:NS+ND]);
             Rp_rmiv = Rp_rmiv(1:3,:);
+            
+            temp_Rp_rmiv = Rp_rmiv(1,:);
+            Rp_rmiv(1,:) = Rp_rmiv(2,:);
+            Rp_rmiv(2,:) = temp_Rp_rmiv;
+            
             Rwd_rmiv = Rwd_rmiv(1:3,:);
-            Rr = r(1,[1:iP-1 iP+1:NS+ND]);
+             Rr = r(1,[1:iP-1 iP+1:NS+ND]);
             fprintf(fid, '\ndetector { pos = [%4.0f %4.0f %4.0f]\n dir = [%5.4f %5.4f %5.4f]\n rad = %1.2f }\n',...
                 [Rp_rmiv;Rwd_rmiv;Rr]);
             fclose(fid);
