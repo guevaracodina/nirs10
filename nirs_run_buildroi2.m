@@ -47,6 +47,7 @@ for Idx=1:size(job.NIRSmat,1)
         NC = NIRS.Cf.H.C.N;
         wl = NIRS.Cf.dev.wl;
         nc = NC/length(wl);
+        
         try
             Ckpt = job.keepAllChannels.keepChannels;
             for iwl=2:length(wl)
@@ -66,7 +67,6 @@ for Idx=1:size(job.NIRSmat,1)
         Pkpt=[Skpt Dkpt+NS];
         
         if NewDirCopyNIRS
-            
             dir2 = [dir0 filesep NewNIRSdir];
             if ~exist(dir2,'dir'), mkdir(dir2); end;
         else
