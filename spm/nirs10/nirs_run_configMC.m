@@ -25,6 +25,9 @@ function out = nirs_run_configMC(job)
 % Copyright (C) 2010 Laboratoire d'Imagerie Optique et Moleculaire
 % Clement Bonnery
 
+%%%%%%% WARNING: possible erreur lorsqu on choisit latestROI que l on se
+%%%%%%% trouve dans le bon repertoire... (buildROI2 laisse la possibilite de creer un sous directory peut etre que c est pas une si bonne idee !!!!! a verifier !!!!!)
+
 prmts.gmPpties_l1 =    [0.0186   11.1   0.9   1.4];
 prmts.wmPpties_l1 =    [0.0186   11.1   0.9   1.4];
 prmts.csfPpties_l1 =   [0.0026   0.10   0.9   1.4];
@@ -49,13 +52,44 @@ for Idx=1:size(job.NIRSmat,1)
         if ~isfield(NIRS,'Cs')
             NIRS.Cs ={};
         end
+        
+        %%%% Thresholded BOLD image is concidered as layer 6
+        %%%% it might be also a perturbation included by user... any use ??
+         if job.pve_cfg==1
+             % on cherche toutes les sessions qui pourraient mener a un
+             % calcul de PVE
+             Nsess = size(NIRS.Dt.fir.pp.p,1);
+             
+             % on genere une simulation MonteCarlo par contraste BOLD ///
+            [hReg,xSPM,SPM] = spm_results_ui('Setup');
+            [dir,dummy] = fileparts(job.NIRSmat{:});
+            save(fullfile(dir,'SPM.mat'),'SPM');
+            NIRS.Dt.fmri.xSPM = fullfile(dir,'SPM.mat');
+            save(fullfile(dir,'xSPM.mat'),'xSPM');
+            NIRS.SPM = fullfile(dir,'xSPM.mat');
+            
+            xSPM_boldmask(1,:) = xSPM.Z;
+%             xSPM_boldmask(2:4,:) = xSPM.XYZmm;
+            xSPM_boldmask(2,:) =(1:length(xSPM.Z));
+            
+            xSPM_boldmask_sorted = sortrows(xSPM_boldmask')';
+            i=1;
+            while sum(xSPM_boldmask_sorted(1,end+1-i:end)) < 0.8*sum(xSPM_boldmask(1,:)), i = i+1;end
+            level = xSPM_boldmask_sorted(1,i);
+            
+            boldmask = zeros(1,length(xSPM.Z));
+            boldmask(xSPM_boldmask(1,:)>level)=1; 
+            
+            parameters.bold.boldmask = boldmask;
+            parameters.bold.XYZmm = xSPM.XYZmm;
+         end
 
         if isfield(NIRS.Cs,'mcs')
             i_cs = size(NIRS.Cs.mcs,2)+1;
             if ~sum(strcmp(NIRS.Cs.n,job.MC_nam))
                 csn = job.MC_nam;
             else
-                csn = [job.MC_nam strrep(datestr(now),':','-')];
+                csn = [job.MC_nam strrep(datestr(now),':','-') '_' xSPM.title];
             end
         else
             i_cs=1;
@@ -204,18 +238,6 @@ for Idx=1:size(job.NIRSmat,1)
 
         parameters.numTimeGates = job.MC_parameters.numTimeGates;
         parameters.deltaT = job.MC_parameters.deltaT;
-        
-        
-        %%%% Thresholded BOLD image is concidered as layer 6
-        %%%% it might be also a perturbation included by user... any use ??
-%         if ~isempty(job.pve_cfg.calc_pve{:})
-% %             V_pve = spm_vol(job.pve_cfg.calc_pve{:});
-% %             Y_pve = spm_read_vols(V_pve);
-%             [hReg,xSPM,SPM] = spm_results_ui('Setup');
-%         else%%%
-%             %%%NIRS.Cm.bold ???
-%         end
-        %%%%
 
         % Create a .cfg or .inp file for each optode and each wavelength
         for iwl = 1:size(NIRS.Cf.dev.wl,2)
@@ -265,14 +287,11 @@ for Idx=1:size(job.NIRSmat,1)
             elseif job.MC_CUDAchoice==2
                 % MonteCarlo in a particular frame. Positions must be in mm but the
             % origin is the same as the origin of the voxel frame (these positions 
-            % don't respect SPM conventions) OK
+            % don't respect SPM conventions) %%definitif ////
              P.p = parameters.voxelSize*Pfp_ancienne_rmiv;
-% P.p = Pfp_tMC(1:3,:);
              P.wd = -V_rmiv.mat(1:3,1:3)*Pwd_rmm;
-%             P.wd = -Pwd_rmm;
             end
             
-
             P.Pkpt = cs.Pkpt;
             
             P.r = [Sr' Dr' zeros(1,NP -(cs.NSkpt+cs.NDkpt))];

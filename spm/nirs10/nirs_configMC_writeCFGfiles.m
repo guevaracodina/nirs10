@@ -113,6 +113,9 @@ for iP = 1:NS+ND
                 fprintf(fid, 'tissue { mua = %5.4f mus = %3.2f g = %2.1f n = %3.2f } ; 6 = perturbation \n',...
                     job.parameters.perturbationPpties);
             end
+            if isfield(job.parameters,'boldmask')
+                
+            end
             
             % Detectors (all other optodes)
             Rp_rmiv = Pp_rmiv(:,[1:iP-1 iP+1:NS+ND]);
