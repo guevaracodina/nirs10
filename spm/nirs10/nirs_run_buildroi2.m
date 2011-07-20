@@ -116,10 +116,10 @@ for Idx=1:size(job.NIRSmat,1)
         V_roi.mat = V.mat*mat_roi2raw;
         
         V_roi = struct('fname',fullfile(dir2,[job.output_prefix,name,'.nii']),...
-            'dim',  V_roi.dim,...
-            'dt',   V.dt,...
-            'pinfo',V.pinfo,...
-            'mat',V_roi.mat);
+            'dim',    V_roi.dim,...
+            'dt',     V.dt,...
+            'pinfo',  V.pinfo,...
+            'mat',    V_roi.mat);
         
         Y_roi = Y(bbv(1,1):bbv(1,2),bbv(2,1):bbv(2,2),bbv(3,1):bbv(3,2));
         
@@ -142,6 +142,8 @@ for Idx=1:size(job.NIRSmat,1)
         NIRS.Cs.temp.Pp_roi_rmm = Pp_roi_rmm;
         NIRS.Cs.temp.Pp_roi_c1_rmm = Pp_roi_c1_rmm;
         NIRS.Cs.temp.segR = fullfile(dir2,[job.output_prefix,name,'.nii']);
+%         NIRS.Cs.temp.mat_roi2raw = fullfile(dir2,[name '-mat_roi2raw.mat']);
+%         save(fullfile(dir2,[job.output_prefix,name '-roi2raw.mat']),'mat_roi2raw');
         
         if NewDirCopyNIRS
             newNIRSlocation = fullfile(dir2,'NIRS.mat');

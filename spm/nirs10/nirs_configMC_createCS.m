@@ -115,7 +115,7 @@ elseif cs.alg==2
     % MonteCarlo in a particular frame. Positions must be in mm but the
     % origin is the same as the origin of the voxel frame (these positions
     % don't respect SPM conventions) %%definitif ////
-    P.p = parameters.voxelSize*Pfp_ancienne_rmiv;
+    P.p = cs.par.voxelSize*Pfp_ancienne_rmiv;
     P.wd = -V_rmiv.mat(1:3,1:3)*Pwd_rmm;
 end
 
