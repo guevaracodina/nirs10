@@ -83,10 +83,10 @@ for Idx=1:size(job.NIRSmat,1)
                 % on genere une simulation MonteCarlo par contraste BOLD ///
                 [hReg,xSPM,SPM] = spm_results_ui('Setup');
                 [dir,dummy] = fileparts(job.NIRSmat{:});
-                save(fullfile(dir,'SPM.mat'),'SPM');
-                NIRS.Dt.fmri.xSPM = fullfile(dir,'SPM.mat');
                 save(fullfile(dir,'xSPM.mat'),'xSPM');
-                NIRS.SPM = fullfile(dir,'xSPM.mat');
+                NIRS.Dt.fmri.xSPM = fullfile(dir,'xSPM.mat');
+                save(fullfile(dir,'SPM.mat'),'SPM');
+                NIRS.SPM = fullfile(dir,'SPM.mat');
                 
                 cs_title = xSPM.title;
                 csn = [alg_nam '_' cs_title '_' daate];
@@ -95,7 +95,7 @@ for Idx=1:size(job.NIRSmat,1)
                 end
                 NIRS.Cs.mcs{i_cs} = cs;
                 NIRS.Cs.n{i_cs} = csn;
-                cs.dir =csn;
+                cs.dir =csn;%fullfile(cs.p,csn)
                 
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% on prepare la partie PVE
                 xSPM_boldmask(1,:) = xSPM.Z;
@@ -109,7 +109,8 @@ for Idx=1:size(job.NIRSmat,1)
                 boldmask(xSPM_boldmask(1,:)>level)=1;
                 
                 jobP.boldmask = boldmask;
-                jobP.XYZ = xSPM.XYZ;
+                jobP.XYZmm = xSPM.XYZmm;
+                jobP.M = xSPM.M;
                 jobP.T1seg = cs.seg;
                 outP = nirs_MCsegment_PVE(jobP);
                 cs.seg = outP;
@@ -119,6 +120,10 @@ for Idx=1:size(job.NIRSmat,1)
                 jobCS.cs = cs;
                 outCS = nirs_configMC_createCS(jobCS);%images,positions and directions
                 jobW = outCS;
+                jobW.G.nummed =11;
+                jobW.G.dir = fullfile(cs.p,csn);
+                jobW.G.wl_dev = NIRS.Cf.dev.wl;
+                %jobW.G.Cwl = NIRS.Cf.H.C.wl;
                 nirs_configMC_writeCFGfiles2(jobW);
             end
         else
@@ -136,6 +141,10 @@ for Idx=1:size(job.NIRSmat,1)
             jobCS.cs = cs;
             outCS = nirs_configMC_createCS(jobCS);%images,positions and directions
             jobW = outCS;
+            jobW.G.nummed =6;
+            jobW.G.dir = fullfile(cs.p,csn);
+            jobW.G.wl_dev = NIRS.Cf.dev.wl;
+            %jobW.G.Cwl = NIRS.Cf.H.C.wl;
             nirs_configMC_writeCFGfiles2(jobW);
         end
         

@@ -18,19 +18,24 @@ function nirs_configMC_writeCFGfiles2(job)
 % Copyright (C) 2010 Laboratoire d'Imagerie Optique et Moleculaire
 % mise a jour Clement 07/2011
 
-prmts.gmPpties_l1 =    [0.0186   11.1   0.9   1.4];
-prmts.wmPpties_l1 =    [0.0186   11.1   0.9   1.4];
-prmts.csfPpties_l1 =   [0.0026   0.10   0.9   1.4];
-prmts.skullPpties_l1 = [0.0136   8.60   0.9   1.4];
-prmts.scalpPpties_l1 = [0.0191   6.60   0.9   1.4];
+%830
+opt_ppts{2,1} = [0.0186   11.1   0.9   1.4];
+opt_ppts{2,2} = [0.0186   11.1   0.9   1.4];
+opt_ppts{2,3} = [0.0026   0.10   0.9   1.4];
+opt_ppts{2,4} = [0.0136   8.60   0.9   1.4];
+opt_ppts{2,5} = [0.0191   6.60   0.9   1.4];
+opt_ppts_perturb{2} =  opt_ppts{2,1};%job.MC_parameters.perturbationPpties_l1+
 
-prmts.gmPpties_l2 =    [0.0178   12.5   0.9   1.4];
-prmts.wmPpties_l2 =    [0.0178   12.5   0.9   1.4];
-prmts.csfPpties_l2 =   [0.0004   0.10   0.9   1.4];
-prmts.skullPpties_l2 = [0.0101   10.0   0.9   1.4];
-prmts.scalpPpties_l2 = [0.0159   8.00   0.9   1.4];
+%690
+opt_ppts{1,1} = [0.0178   12.5   0.9   1.4];
+opt_ppts{1,2} = [0.0178   12.5   0.9   1.4];
+opt_ppts{1,3} = [0.0004   0.10   0.9   1.4];
+opt_ppts{1,4} = [0.0101   10.0   0.9   1.4];
+opt_ppts{1,5} = [0.0159   8.00   0.9   1.4];
+opt_ppts_perturb{1} =  opt_ppts{1,1};%job.MC_parameters.perturbationPpties_l1+
 
-pve_cfg = G.pve_cfg;
+
+pve_cfg = job.G.pve_cfg;
 algo = job.G.alg;
 NSinit = job.P.NSinit;
 NS = job.P.NS;
@@ -40,10 +45,10 @@ Pkpt = job.P.Pkpt;
 Pp_rmiv = job.P.p;
 Pwd_rmiv = job.P.wd;
 r = job.P.r;
-mc_dir = job.G.cs_dir;
+mc_dir = job.G.dir;
 
 % Create a .cfg or .inp file for each optode and each wavelength
-for iwl = 1:size(NIRS.Cf.dev.wl,2)
+for iwl = 1:size(job.G.wl_dev,2)
     for iP = 1:NS+ND
         if isempty(Pvoid) || ~Pvoid(1,iP) %skip optodes with no data &&&'nS',iS,wl(iwl)
             if iP<=NS
@@ -53,7 +58,7 @@ for iwl = 1:size(NIRS.Cf.dev.wl,2)
             end
             
             if algo==2 % tMCimg
-                n_cfg = fullfile(mc_dir,[PNo '_' num2str(iwl) 'nm.cfg']);
+                n_cfg = fullfile(mc_dir,[PNo '_' num2str(job.G.wl_dev(iwl)) 'nm.cfg']);
                 fid = fopen(n_cfg,'w');
                 disp('Generating files for sensitivity profiles computation')
                 
@@ -116,30 +121,29 @@ for iwl = 1:size(NIRS.Cf.dev.wl,2)
                 
                 % Optical properties
                 fprintf(fid, 'tissue { mua = %5.4f mus = %3.2f g = %2.1f n = %3.2f } ; 1 = gray matter \n',...
-                    job.G.par.gmPpties);
+                    opt_ppts{iwl,1});
                 fprintf(fid, 'tissue { mua = %5.4f mus = %3.2f g = %2.1f n = %3.2f } ; 2 = white matter \n',...
-                    job.G.par.wmPpties);
+                    opt_ppts{iwl,2});
                 fprintf(fid, 'tissue { mua = %5.4f mus = %3.2f g = %2.1f n = %3.2f } ; 3 = CSF \n',...
-                    job.G.par.csfPpties);
+                    opt_ppts{iwl,3});
                 fprintf(fid, 'tissue { mua = %5.4f mus = %3.2f g = %2.1f n = %3.2f } ; 4 = skull \n',...
-                    job.G.par.skullPpties);
+                    opt_ppts{iwl,4});
                 fprintf(fid, 'tissue { mua = %5.4f mus = %3.2f g = %2.1f n = %3.2f } ; 5 = scalp \n',...
-                    job.G.par.scalpPpties);
-                if isfield(job.G.par,'perturbationPpties')
-                    fprintf(fid, 'tissue { mua = %5.4f mus = %3.2f g = %2.1f n = %3.2f } ; 6 = perturbation \n',...
-                        job.G.par.perturbationPpties);
-                end
+                    opt_ppts{iwl,5});
+                fprintf(fid, 'tissue { mua = %5.4f mus = %3.2f g = %2.1f n = %3.2f } ; 6 = perturbation \n',...
+                    opt_ppts_perturb{iwl});
+
                 if pve_cfg==1
-                    fprintf(fid, 'tissue { mua = %5.4f mus = %3.2f g = %2.1f n = %3.2f } ; 7 = gray matter \n',...
-                    job.G.par.gmPpties);
-                fprintf(fid, 'tissue { mua = %5.4f mus = %3.2f g = %2.1f n = %3.2f } ; 8 = white matter \n',...
-                    job.G.par.wmPpties);
-                fprintf(fid, 'tissue { mua = %5.4f mus = %3.2f g = %2.1f n = %3.2f } ; 9 = CSF \n',...
-                    job.G.par.csfPpties);
-                fprintf(fid, 'tissue { mua = %5.4f mus = %3.2f g = %2.1f n = %3.2f } ; 10 = skull \n',...
-                    job.G.par.skullPpties);
-                fprintf(fid, 'tissue { mua = %5.4f mus = %3.2f g = %2.1f n = %3.2f } ; 11 = scalp \n',...
-                    job.G.par.scalpPpties);                
+                    fprintf(fid, 'tissue { mua = %5.4f mus = %3.2f g = %2.1f n = %3.2f } ; 7 = gray matter and bold response \n',...
+                    opt_ppts{iwl,1});
+                fprintf(fid, 'tissue { mua = %5.4f mus = %3.2f g = %2.1f n = %3.2f } ; 8 = white matter and bold response \n',...
+                    opt_ppts{iwl,2});
+                fprintf(fid, 'tissue { mua = %5.4f mus = %3.2f g = %2.1f n = %3.2f } ; 9 = CSF and bold response \n',...
+                    opt_ppts{iwl,3});
+                fprintf(fid, 'tissue { mua = %5.4f mus = %3.2f g = %2.1f n = %3.2f } ; 10 = skull and bold response \n',...
+                    opt_ppts{iwl,4});
+                fprintf(fid, 'tissue { mua = %5.4f mus = %3.2f g = %2.1f n = %3.2f } ; 11 = scalp and bold response \n',...
+                    opt_ppts{iwl,5});                
                 end
                 
                 % Detectors (all other optodes)
@@ -184,32 +188,30 @@ for iwl = 1:size(NIRS.Cf.dev.wl,2)
                     job.G.par.voxelSize,job.G.ROIlimits(2,2),1,job.G.ROIlimits(2,2));
                 fprintf(fid,'%1.0f %3.0f %3.0f %3.0f            # z: voxel size, dim, start/end indices\n',...
                     job.G.par.voxelSize,job.G.ROIlimits(2,3),1,job.G.ROIlimits(2,3));
-                fprintf(fid, '%s %s \n','6',' # num of media'); %%%%%% a changer /////////
+                fprintf(fid, '%g %s \n',job.G.nummed,' # num of media'); %%%%%% a changer /////////
                 fprintf(fid, '%3.2f %2.1f %5.4f %3.2f %s\n', ...
-                    job.G.par.gmPpties([2 3 1 4]),'# GM: scat(1/mm), g, mua (1/mm), n');
+                    opt_ppts{iwl,1}([2 3 1 4]),'# GM: scat(1/mm), g, mua (1/mm), n');
                 fprintf(fid, '%3.2f %2.1f %5.4f %3.2f %s\n', ...
-                    job.G.par.wmPpties([2 3 1 4]),'# WM: scat(1/mm), g, mua (1/mm), n');
+                    opt_ppts{iwl,2}([2 3 1 4]),'# WM: scat(1/mm), g, mua (1/mm), n');
                 fprintf(fid, '%3.2f %2.1f %5.4f %3.2f %s\n', ...
-                    job.G.par.csfPpties([2 3 1 4]),'# CSF: scat(1/mm), g, mua (1/mm), n');
+                    opt_ppts{iwl,3}([2 3 1 4]),'# CSF: scat(1/mm), g, mua (1/mm), n');
                 fprintf(fid, '%3.2f %2.1f %5.4f %3.2f %s\n', ...
-                    job.G.par.skullPpties([2 3 1 4]),'# Skull: scat(1/mm), g, mua (1/mm), n');
+                    opt_ppts{iwl,4}([2 3 1 4]),'# Skull: scat(1/mm), g, mua (1/mm), n');
                 fprintf(fid, '%3.2f %2.1f %5.4f %3.2f %s\n', ...
-                    job.G.par.scalpPpties([2 3 1 4]),'# Scalp: scat(1/mm), g, mua (1/mm), n');
-                if isfield(job.G.par,'perturbationPpties')
-                    fprintf(fid, '%3.2f %2.1f %5.4f %3.2f %s\n', ...
-                        job.G.par.perturbationPpties([2 3 1 4]),'# Perturbation: scat(1/mm), g, mua (1/mm), n');
-                end
+                    opt_ppts{iwl,5}([2 3 1 4]),'# Scalp: scat(1/mm), g, mua (1/mm), n');
+                fprintf(fid, '%3.2f %2.1f %5.4f %3.2f %s\n', ...
+                    opt_ppts_perturb{iwl}([2 3 1 4]),'# Perturbation: scat(1/mm), g, mua (1/mm), n');
                 if pve_cfg==1
                         fprintf(fid, '%3.2f %2.1f %5.4f %3.2f %s\n', ...
-                    job.G.par.gmPpties([2 3 1 4]),'# GM: scat(1/mm), g, mua (1/mm), n');
+                    opt_ppts{iwl,1}([2 3 1 4]),'# GM (BOLD): scat(1/mm), g, mua (1/mm), n');
                 fprintf(fid, '%3.2f %2.1f %5.4f %3.2f %s\n', ...
-                    job.G.par.wmPpties([2 3 1 4]),'# WM: scat(1/mm), g, mua (1/mm), n');
+                    opt_ppts{iwl,2}([2 3 1 4]),'# WM (BOLD): scat(1/mm), g, mua (1/mm), n');
                 fprintf(fid, '%3.2f %2.1f %5.4f %3.2f %s\n', ...
-                    job.G.par.csfPpties([2 3 1 4]),'# CSF: scat(1/mm), g, mua (1/mm), n');
+                    opt_ppts{iwl,3}([2 3 1 4]),'# CSF (BOLD): scat(1/mm), g, mua (1/mm), n');
                 fprintf(fid, '%3.2f %2.1f %5.4f %3.2f %s\n', ...
-                    job.G.par.skullPpties([2 3 1 4]),'# Skull: scat(1/mm), g, mua (1/mm), n');
+                    opt_ppts{iwl,4}([2 3 1 4]),'# Skull (BOLD): scat(1/mm), g, mua (1/mm), n');
                 fprintf(fid, '%3.2f %2.1f %5.4f %3.2f %s\n', ...
-                    job.G.par.scalpPpties([2 3 1 4]),'# Scalp: scat(1/mm), g, mua (1/mm), n');                
+                    opt_ppts{iwl,5}([2 3 1 4]),'# Scalp (BOLD): scat(1/mm), g, mua (1/mm), n');                
                 end
                 
                 % Detectors (all other optodes)
