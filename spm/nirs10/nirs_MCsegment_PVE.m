@@ -11,7 +11,7 @@ Y = spm_read_vols(V);
 % load(fullfile(dir,[name '-roi2raw.mat']));
 count=0;
 for i=1:size(XYZmm,2)
-    XYZ = round(V.mat\[XYZmm(:,i);1]);%- mat_roi2raw(:,4);
+    XYZ(:,i) = round(V.mat\[XYZmm(:,i);1]);%- mat_roi2raw(:,4);
     try
     Y(XYZ(1,i),XYZ(2,i),XYZ(3,i)) = Y(XYZ(1,i),XYZ(2,i),XYZ(3,i))+6;
     catch

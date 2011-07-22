@@ -163,7 +163,7 @@ for iwl = 1:size(job.G.wl_dev,2)
                 
                 
             elseif algo==1 % MCX
-                n_cfg = fullfile(mc_dir,[PNo '_' num2str(iwl) 'nm.inp']);
+                n_cfg = fullfile(mc_dir,[PNo '_' num2str(job.G.wl_dev(iwl)) 'nm.inp']);
                 fid = fopen(n_cfg,'w');
                 
                 disp('Generating files for sensitivity profiles computation')

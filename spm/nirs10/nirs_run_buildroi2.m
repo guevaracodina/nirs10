@@ -50,20 +50,28 @@ for Idx=1:size(job.NIRSmat,1)
         
         try
             Ckpt = job.keepAllChannels.keepChannels;
-            for iwl=2:length(wl)
-                Ckpt = [Ckpt Ckpt+(iwl-1)*nc];
-            end
+%             for iwl=2:length(wl)
+%                 Ckpt = [Ckpt Ckpt+(iwl-1)*nc];
+%             end
             NewNIRSdir = ['roi_channels-' strrep(int2str(job.keepAllChannels.keepChannels),'  ','-')];
         catch
             Ckpt = Cid(1,:);
             NewNIRSdir = 'roi_all-channels';
         end
         
+        Ckpt_owl = [];
+        Skpt =[];
+        Dkpt=[];
         for i=1:length(Ckpt)
-            Cbloup = Cid(1,:).*(Cid(1,:) == Ckpt(i));
-            Skpt = unique(Cid(2,sum(Cbloup)));
-            Dkpt = unique(Cid(3,sum(Cbloup)));
+            Cbloup = (1:length(Cid(1,:))).*(Cid(1,:) == Ckpt(i));
+            Skpt = [Skpt Cid(2,sum(Cbloup))];
+            Dkpt = [Dkpt Cid(3,sum(Cbloup))];
+            Ckpt_owl = [Ckpt_owl Cid(1,Cid(2,:)==Cid(2,sum(Cbloup)) & Cid(3,:)==Cid(3,sum(Cbloup)))];%other wavelengths
         end
+        
+        Ckpt = unique([Ckpt Ckpt_owl]);
+        Skpt = unique(Skpt);
+        Dkpt = unique(Dkpt);
         Pkpt=[Skpt Dkpt+NS];
         
         if NewDirCopyNIRS
