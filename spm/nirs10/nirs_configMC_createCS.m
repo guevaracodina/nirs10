@@ -18,9 +18,7 @@ jobRS.out_autonaming = 0;
 jobRS.out_prefix = 'prefix';
 outRS =nirs_resize(jobRS);
 
-cs.segR = outRS;
-
-V_rmiv = spm_vol(cs.segR);
+V_rmiv = spm_vol(outRS);
 Y_rmiv = spm_read_vols(V_rmiv);
 Y8_rmiv = uint8(Y_rmiv);
 
@@ -51,7 +49,7 @@ if cs.alg==1
     jobF.Pp_rmm = cs.Pp_rmm;
     jobF.Pp_c1_rmm = cs.Pp_c1_rmm;
     jobF.NP = NP;
-    jobF.image_in = {cs.segR};
+    jobF.image_in = {outRS};
     jobF.Pfp_ancienne_rmiv = Pfp_ancienne_rmiv;
     jobF.lby = 'configMC_MCX';
     outF = nirs_fit_probe(jobF);
@@ -60,7 +58,7 @@ elseif cs.alg==2 % pour tMC, les points doivent etre dans le volume (peut etre e
     jobF.Pp_rmm = cs.Pp_rmm;
     jobF.Pp_c1_rmm = cs.Pp_c1_rmm;
     jobF.NP = NP;
-    jobF.image_in = {cs.segR};
+    jobF.image_in = {outRS};
     jobF.Pfp_ancienne_rmiv = Pfp_ancienne_rmiv;
     jobF.lby = 'configMC_tMC';
     outF = nirs_fit_probe(jobF);
@@ -119,7 +117,8 @@ elseif cs.alg==2
     P.wd = -V_rmiv.mat(1:3,1:3)*Pwd_rmm;
 end
 
-
+G.segR = outRS;
+G.b8i = cs.b8i;
 G.alg = cs.alg;
 G.cs_dir = cs.dir;
 G.n_b8i = cs.n_b8i;
