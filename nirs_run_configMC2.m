@@ -77,9 +77,11 @@ for Idx=1:size(job.NIRSmat,1)
             %%%% it might be also a perturbation included by user... any use ??
             % on cherche toutes les sessions qui pourraient mener a un
             % calcul de PVE
-            NSess = size(NIRS.Dt.fir.pp.p,1);
+            last = size(NIRS.Dt.fir.pp,2);
+            NSess = size(NIRS.Dt.fir.pp(1,last).p,1);
             
             for iSess =1:NSess
+                clear xSPM_boldmask xSPM_boldmask_sorted
                 % on genere une simulation MonteCarlo par contraste BOLD ///
                 [hReg,xSPM,SPM] = spm_results_ui('Setup');
                 [dir,dummy] = fileparts(job.NIRSmat{:});
@@ -98,20 +100,21 @@ for Idx=1:size(job.NIRSmat,1)
                 cs.dir =csn;%fullfile(cs.p,csn)
                 
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% on prepare la partie PVE
-                xSPM_boldmask(1,:) = xSPM.Z;
-                xSPM_boldmask(2,:) =(1:length(xSPM.Z));
-                xSPM_boldmask_sorted = sortrows(xSPM_boldmask')';
-                i=1;
-                while sum(xSPM_boldmask_sorted(1,end+1-i:end)) < thresh*sum(xSPM_boldmask(1,:)), i = i+1;end
-                level = xSPM_boldmask_sorted(1,i);
+                try
+%                 xSPM_boldmask(1,:) = xSPM.Z;
+%                 xSPM_boldmask(2,:) =(1:length(xSPM.Z));
+%                 xSPM_boldmask_sorted = sortrows(xSPM_boldmask')';
+%                 i=1;
+%                 while sum(xSPM_boldmask_sorted(1,end+1-i:end)) < thresh*sum(xSPM_boldmask(1,:)), i = i+1;end
+%                 level = xSPM_boldmask_sorted(1,i);
+%                 
+%                 boldmask = zeros(1,length(xSPM.Z));
+%                 boldmask(xSPM_boldmask(1,:)>=level)=1;
                 
-                boldmask = zeros(1,length(xSPM.Z));
-                boldmask(xSPM_boldmask(1,:)>level)=1;
-                
-                jobP.boldmask = boldmask;
+                jobP.boldmask = xSPM.Z;
                 jobP.XYZmm = xSPM.XYZmm;
                 jobP.M = xSPM.M;
-                jobP.T1seg = cs.seg;
+                jobP.T1seg = cs.seg;%NIRS.Dt.ana.T1seg;
                 outP = nirs_MCsegment_PVE(jobP);
                 cs.seg = outP;
                 cs.pve_cfg = 1;
@@ -125,6 +128,9 @@ for Idx=1:size(job.NIRSmat,1)
                 jobW.G.wl_dev = NIRS.Cf.dev.wl;
                 %jobW.G.Cwl = NIRS.Cf.H.C.wl;
                 nirs_configMC_writeCFGfiles2(jobW);
+                catch
+                    disp(['PVE failed for session ' iSess]);
+                end
             end
         else
             csn = [alg_nam '_' daate];
