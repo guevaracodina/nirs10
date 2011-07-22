@@ -25,7 +25,8 @@ for Idx=1:size(job.NIRSmat,1)
         if ~isempty(job.outMCfiles)
             f = job.outMCfiles;
             cs_dir =  fileparts(f{1,:});
-            cs_ldir = cs_dir(max(strfind(cs_dir,'\'))+(length('MC')+1):end);
+            [dummy cs_ldir] = fileparts(cs_dir);
+%             cs_ldir = cs_dir(max(strfind(cs_dir,'\'))+(length('MC')+1):end);
             
             ics =1;
             while ~strcmp(cs_ldir,NIRS.Cs.n{ics})

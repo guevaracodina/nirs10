@@ -122,6 +122,10 @@ for Idx=1:size(job.NIRSmat,1)
                 % fin de config et ecriture
                 jobCS.cs = cs;
                 outCS = nirs_configMC_createCS(jobCS);%images,positions and directions
+                cs.segR = outCS.G.segR;
+                cs.b8i = outCS.G.b8i;
+                NIRS.Cs.mcs{i_cs} = cs;
+                NIRS.Cs.n{i_cs} = csn;
                 jobW = outCS;
                 jobW.G.nummed =11;
                 jobW.G.dir = fullfile(cs.p,csn);
@@ -138,14 +142,15 @@ for Idx=1:size(job.NIRSmat,1)
             if ~exist(fullfile(cs.p,csn),'dir')
                 mkdir(fullfile(cs.p,csn));
             end
-            NIRS.Cs.mcs{i_cs} = cs;
-            NIRS.Cs.n{i_cs} = csn;
             cs.dir =csn;
             cs.pve_cfg = 0;
             
             % fin de config et ecriture
             jobCS.cs = cs;
             outCS = nirs_configMC_createCS(jobCS);%images,positions and directions
+            cs.segR = outCS.G.segR;
+            NIRS.Cs.mcs{i_cs} = cs;
+            NIRS.Cs.n{i_cs} = csn;
             jobW = outCS;
             jobW.G.nummed =6;
             jobW.G.dir = fullfile(cs.p,csn);
