@@ -16,33 +16,59 @@ function out = nirs_run_generate_sensitivity_matrix(job)
 % Copyright (C) 2010 Laboratoire d'Imagerie Optique et Moleculaire
 % Clément Bonnéry 03/2011
 
+%830
+opt_ppts{2,1} = [0.0186   11.1   0.9   1.4];
+opt_ppts{2,2} = [0.0186   11.1   0.9   1.4];
+opt_ppts{2,3} = [0.0026   0.10   0.9   1.4];
+opt_ppts{2,4} = [0.0136   8.60   0.9   1.4];
+opt_ppts{2,5} = [0.0191   6.60   0.9   1.4];
+opt_ppts_perturb{2} =  opt_ppts{2,1};%job.MC_parameters.perturbationPpties_l1+
+
+%690
+opt_ppts{1,1} = [0.0178   12.5   0.9   1.4];
+opt_ppts{1,2} = [0.0178   12.5   0.9   1.4];
+opt_ppts{1,3} = [0.0004   0.10   0.9   1.4];
+opt_ppts{1,4} = [0.0101   10.0   0.9   1.4];
+opt_ppts{1,5} = [0.0159   8.00   0.9   1.4];
+opt_ppts_perturb{1} =  opt_ppts{1,1};%job.MC_parameters.perturbationPpties_l1+
+
 for Idx=1:size(job.NIRSmat,1)
     %Load NIRS.mat information
     try
         NIRS = [];
         load(job.NIRSmat{Idx,1});
         
-        if ~isempty(job.outMCfiles)
+        
+        
+        if ~isempty(job.outMCfiles{1,1})
             f = job.outMCfiles;
             cs_dir =  fileparts(f{1,:});
             [dummy cs_ldir] = fileparts(cs_dir);
-%             cs_ldir = cs_dir(max(strfind(cs_dir,'\'))+(length('MC')+1):end);
+            %             cs_ldir = cs_dir(max(strfind(cs_dir,'\'))+(length('MC')+1):end);
             
             ics =1;
             while ~strcmp(cs_ldir,NIRS.Cs.n{ics})
                 ics =ics+1;
             end
+            cs = NIRS.Cs.mcs{ics};
+            if cs.alg==1, Oe='.mc2'; elseif cs.alg==2, Oe='.2pt';end
+            
         else
+            [cs_dir dummy dummy1] = fileparts(job.NIRSmat{Idx,1});
             ics = length(NIRS.Cs.n);
+            cs_ldir = NIRS.Cs.n{1,ics};
+            cs = NIRS.Cs.mcs{ics};
+            if cs.alg==1, Oe='.mc2'; elseif cs.alg==2, Oe='.2pt';end
+            
+            [fchar,dummy] = spm_select('FPList',cs_dir,Oe);
+            for i=1:size(fchar,1)
+                f{i,1} = fchar(i,:);
+            end
         end
         
-        cs = NIRS.Cs.mcs{ics};
         try MCX_g = NIRS.Cs.mcs{ics}.MCX_g; catch, MCX_g =1; end
-        if cs.alg==1
-            Oe='.mc2';
-        elseif cs.alg==2
-            Oe='.2pt';
-        end
+        
+        
         segR = cs.segR;
         V_segR = spm_vol(segR);
         
@@ -53,18 +79,18 @@ for Idx=1:size(job.NIRSmat,1)
         fclose(fid);
         % : mua mus' ... on prend les mu_a
         Yb8i_l1 = zeros(size(Yb8i));
-        Yb8i_l1(Yb8i==1)= cs.par.gmPpties_l1(1,1);
-        Yb8i_l1(Yb8i==2)= cs.par.wmPpties_l1(1,1);
-        Yb8i_l1(Yb8i==3)= cs.par.csfPpties_l1(1,1);
-        Yb8i_l1(Yb8i==4)= cs.par.skullPpties_l1(1,1);
-        Yb8i_l1(Yb8i==5)= cs.par.scalpPpties_l1(1,1);
+        Yb8i_l1(Yb8i==1)= opt_ppts{1,1}(1,1);
+        Yb8i_l1(Yb8i==2)= opt_ppts{1,2}(1,1);
+        Yb8i_l1(Yb8i==3)= opt_ppts{1,3}(1,1);
+        Yb8i_l1(Yb8i==4)= opt_ppts{1,4}(1,1);
+        Yb8i_l1(Yb8i==5)= opt_ppts{1,5}(1,1);
         
         Yb8i_l2 = zeros(size(Yb8i));
-        Yb8i_l2(Yb8i==1)= cs.par.gmPpties_l2(1,1);
-        Yb8i_l2(Yb8i==2)= cs.par.wmPpties_l2(1,1);
-        Yb8i_l2(Yb8i==3)= cs.par.csfPpties_l2(1,1);
-        Yb8i_l2(Yb8i==4)= cs.par.skullPpties_l2(1,1);
-        Yb8i_l2(Yb8i==5)= cs.par.scalpPpties_l2(1,1);
+        Yb8i_l2(Yb8i==1)= opt_ppts{2,1}(1,1);
+        Yb8i_l2(Yb8i==2)= opt_ppts{2,2}(1,1);
+        Yb8i_l2(Yb8i==3)= opt_ppts{2,3}(1,1);
+        Yb8i_l2(Yb8i==4)= opt_ppts{2,4}(1,1);
+        Yb8i_l2(Yb8i==5)= opt_ppts{2,5}(1,1);
         
         if size(Yb8i_l1,1)==1%cs.alg==2
             Yb8i_l1 = Yb8i_l1';
@@ -95,8 +121,22 @@ for Idx=1:size(job.NIRSmat,1)
                 NfS = NfS+1;
             end
         end
-        ND = NfD/2;
-        NS = NfS/2;
+        %%%% bug dans le cas ou on a une longueur d onde qui a buggee
+        if rem(NfD,2)
+            %%% on cherche quelle sim a echouee et on supprime le point +
+            %%% message
+            disp('a faire')
+        else
+            ND = NfD/2;
+        end
+        if rem(NfS,2)
+            %%% on cherche quelle sim a echouee et on supprime le point +
+            %%% message
+            disp('a faire')
+        else
+            NS = NfS/2;
+        end
+        
         
         for fiS = 1:NfS
             [dummy,fSn,dummy2] = fileparts(fS{fiS,:});
@@ -105,16 +145,18 @@ for Idx=1:size(job.NIRSmat,1)
             switch cs.alg
                 case 1 % MCX
                     % already normalized (http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/README : 6.1 output files)
-                    %%%%%%%%%ERREUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUR
-                    numgates = min(cs.numTimeGates,MCX_g);
-                    %                    numgates = min(cs.numTimeGates);
+                    try %%%%%%%PROVISOIRE PROVISOIRE PROVISOIRE
+                        numgates = min(cs.numTimeGates,MCX_g);
+                    catch
+                        numgates = MCX_g;
+                    end
                     
                     ms4=loadmc2(fS{fiS,:},[V_segR.dim numgates],'float');
                     ms=sum(ms4,4);
                     
                 case 2 % tMCimg
                     fid=fopen(fS{fiS,:},'rb');
-%                     T = spm_type(fid,'bits');
+                    %                     T = spm_type(fid,'bits');
                     ms = fread(fid,V_segR.dim(1)*V_segR.dim(2)*V_segR.dim(3),'float64');%,'float32');
                     fclose(fid);
                     % Bonnery from Boas et al.
@@ -134,10 +176,10 @@ for Idx=1:size(job.NIRSmat,1)
                     % ms = ms/(cs.par.nphotons*10);
                     
                     %%%%%%%%%%%%%%%%%%%%%%%
-% % % % %                     code ;ich sur les fluences voir aussi le code
-% de Boas
-% % % % %                                                     % Fluence au détecteur selon éq. (3) de Boas 2002
-% % % % %                                 fluence(pi) = sum(photons_weight)./nbPhotonsTotSimu;
+                    % % % % %                     code ;ich sur les fluences voir aussi le code
+                    % de Boas
+                    % % % % %                                                     % Fluence au détecteur selon éq. (3) de Boas 2002
+                    % % % % %                                 fluence(pi) = sum(photons_weight)./nbPhotonsTotSimu;
                     %%%%%%%%%%%%%%%%%%%%%%%
                     sum_Jout = sum(ms(ms<0)/(cs.par.nphotons));
                     Svx = 5*5;
@@ -276,8 +318,8 @@ for Idx=1:size(job.NIRSmat,1)
         m_c1(Yb8i==1)=1;
         
         % sens_sd_c1i = zeros(1,size(sens,2));
-%         sens_c1 =  zeros(size(sens));
-%         sens_reshaped_c1 =  zeros(size(sens_reshaped));
+        %         sens_c1 =  zeros(size(sens));
+        %         sens_reshaped_c1 =  zeros(size(sens_reshaped));
         
         for i=1:size(sens,1)
             sens_sd = reshape(sens(i,:),V_segR.dim);
@@ -290,13 +332,13 @@ for Idx=1:size(job.NIRSmat,1)
             V = spm_create_vol(V);
             spm_write_vol(V,sens_sd);
             
-%             for j=1:size(sens,2)
-%                 if m_c1(j,1)==1
-%                     %             sens_sd_c1i(1,j) = sens(i,j);
-%                     sens_c1(i,j) = sens(i,j);
-%                 end
-%             end
-%             sens_reshaped_c1 = sens_reshaped_c1 + reshape(sens_c1(i,:),V_segR.dim);
+            %             for j=1:size(sens,2)
+            %                 if m_c1(j,1)==1
+            %                     %             sens_sd_c1i(1,j) = sens(i,j);
+            %                     sens_c1(i,j) = sens(i,j);
+            %                 end
+            %             end
+            %             sens_reshaped_c1 = sens_reshaped_c1 + reshape(sens_c1(i,:),V_segR.dim);
             
             %             V_c1 = struct('fname',fullfile(cs_dir,['banane_c1_' int2str(sensC(i,1)) '.nii']),...
             %                 'dim',  V_segR.dim,...

@@ -33,7 +33,7 @@ for Idx=1:size(job.NIRSmat,1)
         dir_in = job.dir_in{:};
         
         % gets the simulation cs used for the reconstruction
-        sep = strfind(dir_in,'\');
+        sep = strfind(dir_in,filesep);
         csn = dir_in(sep(end-1)+3:sep(end)-1);
         itest=1;
         while itest<length(NIRS.Cs.n) && (isempty(strfind(csn,NIRS.Cs.n{itest})) || length(csn)~=length(NIRS.Cs.n{itest}))

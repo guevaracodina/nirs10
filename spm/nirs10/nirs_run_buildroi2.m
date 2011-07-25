@@ -142,6 +142,7 @@ for Idx=1:size(job.NIRSmat,1)
         %then saved
         if ~isfield(NIRS,'Cs'), NIRS.Cs={}; end
         if isfield(NIRS.Cs,'temp'), clear NIRS.Cs.temp; end
+        NIRS.Cs.temp.Ckpt = Ckpt;
         NIRS.Cs.temp.Pkpt = Pkpt;
         NIRS.Cs.temp.NSkpt = size(Skpt,2);
         NIRS.Cs.temp.NDkpt = size(Dkpt,2);

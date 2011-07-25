@@ -2865,7 +2865,7 @@ outMCfiles.name    = 'Select MC output files';
 outMCfiles.tag     = 'outMCfiles';
 outMCfiles.ufilter = {'.2pt','.mc2'};    
 outMCfiles.num     = [0 Inf];
-outMCfiles.val     = {};
+outMCfiles.val{1}  = {''};
 outMCfiles.help    = {'Select .mc2 or .2pt files for this subject.'}; 
 
 % Executable Branch

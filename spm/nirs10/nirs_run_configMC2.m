@@ -1,5 +1,5 @@
 function out = nirs_run_configMC2(job)
-% Manages the writing of the configurqtion files for either MCX or tMCimg
+% Manages the writing of the configuration files for either MCX or tMCimg
 % FORMAT nirs_configMC_writeCFGfiles(jobW) = nirs_run_configMC(MC_nam,NIRSmat,NewDirCopyNIRS,mcim_cfg,MC_CUDAchoice,MC_configdir,MC_parameters)
 % MC_nam         - Name of the MC simulation
 % NIRSmat        - NIRS matrix
@@ -28,8 +28,6 @@ function out = nirs_run_configMC2(job)
 %%%%%%% WARNING: possible erreur lorsqu on choisit latestROI que l on se
 %%%%%%% trouve dans le bon repertoire... (buildROI2 laisse la possibilite de creer un sous directory peut etre que c est pas une si bonne idee !!!!! a verifier !!!!!)
 
-thresh = 0.8;
-
 for Idx=1:size(job.NIRSmat,1)
     try
         NIRS = [];
@@ -44,31 +42,46 @@ for Idx=1:size(job.NIRSmat,1)
         
         % cs current simulation
         cs ={};
+        G={};%%% juste pour le code
+        P={};%%% juste pour le code
         if isfield(job.mcim_cfg,'mcim_in')% image segmentee de l'anatomique de base
-            cs.roi =0;% image choisie
-            cs.seg = job.mcim_cfg.mcim_in{:};
+            G.roi =0;% image choisie
+            G.seg = job.mcim_cfg.mcim_in{:};
         else
-            cs.roi =1; %ROI from temp
+            G.roi =1; %ROI from temp
             try
-                cs.seg = NIRS.Cs.temp.segR{:};
+                G.seg = NIRS.Cs.temp.segR{:};%% ici segR pour ROI
             catch
-                cs.seg = NIRS.Cs.temp.segR;
+                G.seg = NIRS.Cs.temp.segR;%% ici segR pour ROI
             end
         end
-        cs.p = cs.seg(1:max(strfind(cs.seg,'\'))-1);
+        G.seg_p = G.seg(1:max(strfind(G.seg,filesep))-1);
         
         cs.alg = job.MC_CUDAchoice;%1=MCX ; 2=tMCimg
         if cs.alg==1, alg_nam='MCX'; else alg_nam ='tMC';end
         
         cs.par = job.MC_parameters;
         cs.NSinit = NIRS.Cf.H.S.N;
-        cs.Pfp_rmv = NIRS.Cs.temp.Pfp_roi_rmv;
-        cs.Pfp_rmm = NIRS.Cs.temp.Pfp_roi_rmm;
-        cs.Pp_rmm = NIRS.Cs.temp.Pp_roi_rmm;
-        cs.Pp_c1_rmm = NIRS.Cs.temp.Pp_roi_c1_rmm;
+%         cs.Ckpt = NIRS.Cs.temp.Ckpt;
         cs.Pkpt = NIRS.Cs.temp.Pkpt;
         cs.NSkpt = NIRS.Cs.temp.NSkpt;
         cs.NDkpt = NIRS.Cs.temp.NDkpt;
+        
+        P.Pfp_rmv = NIRS.Cs.temp.Pfp_roi_rmv;
+        P.Pfp_rmm = NIRS.Cs.temp.Pfp_roi_rmm;
+        P.Pp_rmm = NIRS.Cs.temp.Pp_roi_rmm;
+        P.Pp_c1_rmm = NIRS.Cs.temp.Pp_roi_c1_rmm;
+        
+        if ~G.roi && isfield(NIRS.Cf.H.P,'void')
+            Pvoid = NIRS.Cf.H.P.void;% Keep track of non-existent sources/detectors, to exclude them explicitly later
+        else
+            Pvoid = {};
+        end
+        cs.Pvoid = Pvoid;
+        
+        Sr = cs.par.radiis * ones(cs.NSkpt,1);
+        cs.Dr = cs.par.radiid * ones(cs.NDkpt,1);
+        cs.r = [Sr' cs.Dr' zeros(1,size(cs.Pkpt,1) -(cs.NSkpt+cs.NDkpt))];
         
         daate = strrep(datestr(now),':','-');
         
@@ -81,85 +94,91 @@ for Idx=1:size(job.NIRSmat,1)
             NSess = size(NIRS.Dt.fir.pp(1,last).p,1);
             
             for iSess =1:NSess
-                clear xSPM_boldmask xSPM_boldmask_sorted
-                % on genere une simulation MonteCarlo par contraste BOLD ///
-                [hReg,xSPM,SPM] = spm_results_ui('Setup');
-                [dir,dummy] = fileparts(job.NIRSmat{:});
-                save(fullfile(dir,'xSPM.mat'),'xSPM');
-                NIRS.Dt.fmri.xSPM = fullfile(dir,'xSPM.mat');
-                save(fullfile(dir,'SPM.mat'),'SPM');
-                NIRS.SPM = fullfile(dir,'SPM.mat');
+                arun=1;
+                
+                if arun==0
+                    clear xSPM_boldmask xSPM_boldmask_sorted
+                    % on genere une simulation MonteCarlo par contraste BOLD ///
+                    [dummy,xSPM,SPM] = spm_results_ui('Setup');
+                    [dir,dummy] = fileparts(job.NIRSmat{:});
+                    save(fullfile(dir,'xSPM.mat'),'xSPM');
+                    NIRS.Dt.fmri.xSPM = fullfile(dir,'xSPM.mat');
+                    save(fullfile(dir,'SPM.mat'),'SPM');
+                    NIRS.SPM = fullfile(dir,'SPM.mat');
+                else%%%% cas ou on a deja la matrice xSPM
+                    load('D:\Users\Clément\Projet_ReML\donnees\test_MCX\S531\xSPM.mat');
+                end
                 
                 cs_title = xSPM.title;
                 csn = [alg_nam '_' cs_title '_' daate];
-                if ~exist(fullfile(cs.p,csn),'dir')%Directory for configuration files
-                    mkdir(fullfile(cs.p,csn));
+                cs.dir =fullfile(G.seg_p,csn);
+                if ~exist(cs.dir,'dir')%Directory for configuration files
+                    mkdir(cs.dir);
                 end
-                NIRS.Cs.mcs{i_cs} = cs;
-                NIRS.Cs.n{i_cs} = csn;
-                cs.dir =csn;%fullfile(cs.p,csn)
                 
-                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% on prepare la partie PVE
                 try
-%                 xSPM_boldmask(1,:) = xSPM.Z;
-%                 xSPM_boldmask(2,:) =(1:length(xSPM.Z));
-%                 xSPM_boldmask_sorted = sortrows(xSPM_boldmask')';
-%                 i=1;
-%                 while sum(xSPM_boldmask_sorted(1,end+1-i:end)) < thresh*sum(xSPM_boldmask(1,:)), i = i+1;end
-%                 level = xSPM_boldmask_sorted(1,i);
-%                 
-%                 boldmask = zeros(1,length(xSPM.Z));
-%                 boldmask(xSPM_boldmask(1,:)>=level)=1;
-                
-                jobP.boldmask = xSPM.Z;
-                jobP.XYZmm = xSPM.XYZmm;
-                jobP.M = xSPM.M;
-                jobP.T1seg = cs.seg;%NIRS.Dt.ana.T1seg;
-                outP = nirs_MCsegment_PVE(jobP);
-                cs.seg = outP;
-                cs.pve_cfg = 1;
-                
-                % fin de config et ecriture
-                jobCS.cs = cs;
-                outCS = nirs_configMC_createCS(jobCS);%images,positions and directions
-                cs.segR = outCS.G.segR;
-                cs.b8i = outCS.G.b8i;
-                NIRS.Cs.mcs{i_cs} = cs;
-                NIRS.Cs.n{i_cs} = csn;
-                jobW = outCS;
-                jobW.G.nummed =11;
-                jobW.G.dir = fullfile(cs.p,csn);
-                jobW.G.wl_dev = NIRS.Cf.dev.wl;
-                %jobW.G.Cwl = NIRS.Cf.H.C.wl;
-                nirs_configMC_writeCFGfiles2(jobW);
+                    jobP.boldmask = xSPM.Z;
+                    jobP.XYZmm = xSPM.XYZmm;
+                    jobP.M = xSPM.M;
+                    jobP.T1seg = G.seg;%NIRS.Dt.ana.T1seg;
+                    outP = nirs_MCsegment_PVE(jobP);
+                    G.seg = outP;
+                    cs.pve_cfg = 1;
+                    
+                    % fin de config et ecriture
+                    jobF.G = G;
+                    jobF.G.dir = cs.dir;
+                    jobF.G.voxelSize =cs.par.voxelSize;
+                    jobF.G.alg = cs.alg;
+                    jobF.P = P;
+                    outF = nirs_configMC_toMCframe(jobF);%images,positions and directions
+                    cs.segR = outF.G.segR;
+                    cs.b8i = outF.G.b8i;
+                    cs.ROIlimits = outF.G.ROIlimits;
+                    cs.P = outF.P;
+                    cs.Pfp_rmiv = outF.P.Pfp_rmiv;
+                    cs.Pwd_rmm = outF.P.Pwd_rmm;
+                    cs.nummed = 11;
+                    
+                    NIRS.Cs.mcs{i_cs} = cs;
+                    NIRS.Cs.n{i_cs} = csn;
+                    
+                    jobW = cs;
+                    jobW.wl_dev = NIRS.Cf.dev.wl;
+                    nirs_configMC_writeCFGfiles2(jobW);
                 catch
                     disp(['PVE failed for session ' iSess]);
                 end
             end
         else
             csn = [alg_nam '_' daate];
+            cs.dir =fullfile(G.seg_p,csn);
             %Directory for configuration files
-            if ~exist(fullfile(cs.p,csn),'dir')
-                mkdir(fullfile(cs.p,csn));
+            if ~exist(cs.dir,'dir')
+                mkdir(cs.dir);
             end
-            cs.dir =csn;
             cs.pve_cfg = 0;
             
             % fin de config et ecriture
-            jobCS.cs = cs;
-            outCS = nirs_configMC_createCS(jobCS);%images,positions and directions
-            cs.segR = outCS.G.segR;
+            jobF.G = G;
+            jobF.P = P;
+            outF = nirs_configMC_toMCframe(jobF);%images,positions and directions
+            cs.segR = outF.G.segR;
+            cs.b8i = outF.G.b8i;
+            cs.P = outF.P;
+            cs.Pfp_rmiv = outF.P.Pfp_rmiv;
+            cs.Pwd_rmm = outF.P.Pwd_rmm;
+            cs.nummed =6;
+            
             NIRS.Cs.mcs{i_cs} = cs;
             NIRS.Cs.n{i_cs} = csn;
-            jobW = outCS;
-            jobW.G.nummed =6;
-            jobW.G.dir = fullfile(cs.p,csn);
-            jobW.G.wl_dev = NIRS.Cf.dev.wl;
-            %jobW.G.Cwl = NIRS.Cf.H.C.wl;
+            
+            jobW = cs;
+            jobW.wl_dev = NIRS.Cf.dev.wl;
             nirs_configMC_writeCFGfiles2(jobW);
         end
         
-        newNIRSlocation = fullfile(cs.p,csn,'NIRS.mat');
+        newNIRSlocation = fullfile(cs.dir,'NIRS.mat');
         save(newNIRSlocation,'NIRS');
         job.NIRSmat{Idx,1} = newNIRSlocation;
     catch exception
@@ -278,7 +297,7 @@ out.NIRSmat = job.NIRSmat;
 %         if isfield(job.mcim_cfg,'mcim_in')% image segmentee de l'anatomique de base
 %             roi =0;% image choisie
 %             cs.seg = job.mcim_cfg.mcim_in{:};
-%             cs.p = cs.seg(1:max(strfind(cs.seg,'\'))-1);
+%             cs.p = cs.seg(1:max(strfind(cs.seg,filesep))-1);
 %             cs.Pfp_rmv = NIRS.Cs.temp.Pfp_roi_rmv;
 %             cs.Pfp_rmm = NIRS.Cs.temp.Pfp_roi_rmm;
 %             cs.Pp_rmm = NIRS.Cs.temp.Pp_roi_rmm;
@@ -293,7 +312,7 @@ out.NIRSmat = job.NIRSmat;
 %             catch
 %                 cs.seg = NIRS.Cs.temp.segR;
 %             end
-%             cs.p = cs.seg(1:max(strfind(cs.seg,'\'))-1);
+%             cs.p = cs.seg(1:max(strfind(cs.seg,filesep))-1);
 %             cs.Pfp_rmv = NIRS.Cs.temp.Pfp_roi_rmv;
 %             cs.Pfp_rmm = NIRS.Cs.temp.Pfp_roi_rmm;
 %             cs.Pp_rmm = NIRS.Cs.temp.Pp_roi_rmm;
