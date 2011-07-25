@@ -58,7 +58,7 @@ for iSubj=1:size(job.NIRSmat,1)
         end
         
         % gets current simulation cs
-        sep = strfind(dir_in,'\');
+        sep = strfind(dir_in,filesep);
         csn = dir_in(sep(end-1)+3:sep(end)-1);
         itest=1;
         while itest<length(NIRS.Cs.n) && (isempty(strfind(csn,NIRS.Cs.n{itest})) || length(csn)~=length(NIRS.Cs.n{itest}))
@@ -73,11 +73,9 @@ for iSubj=1:size(job.NIRSmat,1)
                 for i=1:size(t,1)
                     [data, header]=loadmch(t(i,:));
                 end
-                
-                
-                
+
             case 2 %tMCimg
-                if strcmp(job.dir_in{:}(end),'\')
+                if strcmp(job.dir_in{:}(end),filesep)
                     job.dir_in{:} = job.dir_in{:}(1:end-1);
                 end
                 [t,dummy] = spm_select('FPList',job.dir_in{:},'.his');
@@ -105,88 +103,88 @@ for iSubj=1:size(job.NIRSmat,1)
                                 Cphore(2).Name = 'Hb';
                                 Cphore(2).Conc =40e-6;
                                 [mua] = GetMua(tk_wl,Cphore);
-                               
+                                
                                 [fluence, nPhoton] = lirehis_clm(tk_file,muas,1);
                                 
                             case 'mich'
                                 ntissues = 6;
-                                [history] = lirehis_clm(t(k1,:),cs.par.nphotons,cs.NDkpt,ntissues,cs.par.numTimeGates);
+                                [history] = lirehis_clm(t(k1,:), .par.nphotons,cs.NDkpt,ntissues,cs.par.numTimeGates);
                                 count = count+1;
                         end
                         History{count,1} = tk_file;
                         History{count,2} = history;
                     end
                 end
-                
-                % cas caca, il faudra REFAIRE PLUS PROPRE
-                Cid = NIRS.Cf.H.C.id;
-                Cgp = NIRS.Cf.H.C.gp;
-                for Ci=1:NIRS.Cf.H.C.N
-                    try
-                        S_Ci = unique(Cid(2,Cid(1,:)== Ci));
-                        D_Ci = unique(Cid(3,Cid(1,:)== Ci));
-                        
-                        for iwl =1:length(NIRS.Cf.dev.wl)
-                            %%% on reconstruit le nom
-                            if S_Ci < 10, S_Cin = ['0' int2str(S_Ci)]; else S_Cin = int2str(S_Ci);end
-                            tk_n = ['S_No' S_Cin '_' int2str(NIRS.Cf.dev.wl(iwl)) 'nm'];
-                            i=1;
-                            while strcmp(tk_n,History{i,1})==0
-                                i=i+1;
-                            end
-                            tk_Ci = i;% indice de la bonne ligne pour le canal Ci
-                            
-                            % maintenant les detecteurs sont ranges comme
-                            % dans le fichier de config, il y en a le
-                            % nombre de P-1 et c est dans lordre en
-                            % enlevant la bonne source
-                            %%% on veut D_Ci
-                            D_Ci_cfg = 7+D_Ci;
-                            
-                            idx = History{tk_Ci,2}(:,1)==D_Ci_cfg;
-                            if sum(idx)==0
-                                if tk_wl==690
-                                    PVF(1,Ci)=0;
-                                else
-                                    PVF(2,Ci)=0;
-                                end
-                            else
-                                photons_opl(:,Ci) = sum(History{tk_Ci,2}(idx,3:size(History{tk_Ci,2},2)),1);% Parcours total (somme sur chaque tissu) de chaque photon issu de S et compté par D (chaque photon de la paire), en mm
-                                
-                                % Il faut pondérer la moyenne sur les photons par le poids de chaque photon, donné par son atténuation dans le milieu. La probabilité qu'un photon ne soit pas absorbé dans un tissu est (exp(mua*parcours dans tissu)) (Hiraoka 1993).
-                                photons_weight = exp(-1 * photons_opl(:,Ci).*muas');
-                                
-                                % Pour la paire pi (sm-dn), le DPF est la moyenne sur tous les
-                                % photons, pondérée par leur atténuation, , de ce parcours
-                                if tk_wl==690
-                                    DPL(1,Ci) = photons_opl'* photons_weight ./ sum(photons_weight);
-                                    DPF(1,Ci) = DPL(1,Ci)/Cgp(1,Ci);% ...divisée par la distance source-détecteur en mm
-                                    
-                                    % Parcours moyen dans la perturbation
-                                    PPL(1,Ci) = photons_opl(6,1) * photons_weight(6,1) ./ sum(photons_weight(6,1));
-                                    PPF(1,Ci) = PPL(1,Ci)/Cgp(1,Ci);
-                                    
-                                    PVF(1,Ci) = DPF(1,Ci)./PPF(1,Ci);% Partial pathlength factor and partial volume factor (PVF := DPF/PPF);
-                                    
-                                elseif tk_wl ==830
-                                    DPL(2,Ci) = photons_opl'* photons_weight ./ sum(photons_weight);
-                                    DPF(2,Ci) = DPL(2,Ci)/Cgp(1,Ci);% ...divisée par la distance source-détecteur en mm
-                                    
-                                    % Parcours moyen dans la perturbation
-                                    PPL(2,Ci) = photons_opl(6,1) * photons_weight(6,1) ./ sum(photons_weight(6,1));
-                                    PPF(2,Ci) = PPL(2,Ci)/Cgp(1,Ci);
-                                    
-                                    PVF(2,Ci) = DPF(2,Ci)./PPF(2,Ci);% Partial pathlength factor and partial volume factor (PVF := DPF/PPF);
-                                end
-                            end
-                        end
-                        
-                    catch % le fichier d histoire n a pas ete trouve...
-                        disp(['PVE failed for channel : ' Ci]);
-                    end
-                end
             otherwise
                 disp('The algorithm with which the simulation has been runned is not recognised.')
+        end
+        
+        % cas caca, il faudra REFAIRE PLUS PROPRE
+        Cid = NIRS.Cf.H.C.id;
+        Cgp = NIRS.Cf.H.C.gp;
+        for Ci=1:NIRS.Cf.H.C.N
+            try
+                S_Ci = unique(Cid(2,Cid(1,:)== Ci));
+                D_Ci = unique(Cid(3,Cid(1,:)== Ci));
+                
+                for iwl =1:length(NIRS.Cf.dev.wl)
+                    %%% on reconstruit le nom
+                    if S_Ci < 10, S_Cin = ['0' int2str(S_Ci)]; else S_Cin = int2str(S_Ci);end
+                    tk_n = ['S_No' S_Cin '_' int2str(NIRS.Cf.dev.wl(iwl)) 'nm'];
+                    i=1;
+                    while strcmp(tk_n,History{i,1})==0
+                        i=i+1;
+                    end
+                    tk_Ci = i;% indice de la bonne ligne pour le canal Ci
+                    
+                    % maintenant les detecteurs sont ranges comme
+                    % dans le fichier de config, il y en a le
+                    % nombre de P-1 et c est dans lordre en
+                    % enlevant la bonne source
+                    %%% on veut D_Ci
+                    D_Ci_cfg = 7+D_Ci;
+                    
+                    idx = History{tk_Ci,2}(:,1)==D_Ci_cfg;
+                    if sum(idx)==0
+                        if tk_wl==690
+                            PVF(1,Ci)=0;
+                        else
+                            PVF(2,Ci)=0;
+                        end
+                    else
+                        photons_opl(:,Ci) = sum(History{tk_Ci,2}(idx,3:size(History{tk_Ci,2},2)),1);% Parcours total (somme sur chaque tissu) de chaque photon issu de S et compté par D (chaque photon de la paire), en mm
+                        
+                        % Il faut pondérer la moyenne sur les photons par le poids de chaque photon, donné par son atténuation dans le milieu. La probabilité qu'un photon ne soit pas absorbé dans un tissu est (exp(mua*parcours dans tissu)) (Hiraoka 1993).
+                        photons_weight = exp(-1 * photons_opl(:,Ci).*muas');
+                        
+                        % Pour la paire pi (sm-dn), le DPF est la moyenne sur tous les
+                        % photons, pondérée par leur atténuation, , de ce parcours
+                        if tk_wl==690
+                            DPL(1,Ci) = photons_opl'* photons_weight ./ sum(photons_weight);
+                            DPF(1,Ci) = DPL(1,Ci)/Cgp(1,Ci);% ...divisée par la distance source-détecteur en mm
+                            
+                            % Parcours moyen dans la perturbation
+                            PPL(1,Ci) = photons_opl(6,1) * photons_weight(6,1) ./ sum(photons_weight(6,1));
+                            PPF(1,Ci) = PPL(1,Ci)/Cgp(1,Ci);
+                            
+                            PVF(1,Ci) = DPF(1,Ci)./PPF(1,Ci);% Partial pathlength factor and partial volume factor (PVF := DPF/PPF);
+                            
+                        elseif tk_wl ==830
+                            DPL(2,Ci) = photons_opl'* photons_weight ./ sum(photons_weight);
+                            DPF(2,Ci) = DPL(2,Ci)/Cgp(1,Ci);% ...divisée par la distance source-détecteur en mm
+                            
+                            % Parcours moyen dans la perturbation
+                            PPL(2,Ci) = photons_opl(6,1) * photons_weight(6,1) ./ sum(photons_weight(6,1));
+                            PPF(2,Ci) = PPL(2,Ci)/Cgp(1,Ci);
+                            
+                            PVF(2,Ci) = DPF(2,Ci)./PPF(2,Ci);% Partial pathlength factor and partial volume factor (PVF := DPF/PPF);
+                        end
+                    end
+                end
+                
+            catch % le fichier d histoire n a pas ete trouve...
+                disp(['PVE failed for channel : ' Ci]);
+            end
         end
         
         % ----------------------------------------------------------------------- %

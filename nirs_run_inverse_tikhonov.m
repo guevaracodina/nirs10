@@ -30,7 +30,7 @@ for Idx=1:size(job.NIRSmat,1)
         mkdir(dir_in,daate);
         
         % gets current simulation cs
-        sep = strfind(dir_in,'\');
+        sep = strfind(dir_in,filesep);
         csn = dir_in(sep(end-1)+3:sep(end)-1);
         itest=1;
         while itest<length(NIRS.Cs.n) && (isempty(strfind(csn,NIRS.Cs.n{itest})) || length(csn)~=length(NIRS.Cs.n{itest}))

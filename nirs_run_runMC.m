@@ -47,11 +47,11 @@ for Idx=1:size(job.NIRSmat,1)
         end
         
         %%%%%attention errreur !!!!!
-%         if strcmp(cs_dir(max(strfind(cs_dir,'\'))+1:max(strfind(cs_dir,'\'))+3),'roi')
-%             seps = strfind(cs_dir,'\');
+%         if strcmp(cs_dir(max(strfind(cs_dir,filesep))+1:max(strfind(cs_dir,filesep))+3),'roi')
+%             seps = strfind(cs_dir,filesep);
 %             cs_ldir = cs_dir(max(seps(1:end-1))+(length('MC')+1):max(seps)-1);
 %         else
-%             cs_ldir = cs_dir(max(strfind(cs_dir,'\'))+(length('MC')+1):end);
+%             cs_ldir = cs_dir(max(strfind(cs_dir,filesep))+(length('MC')+1):end);
 %         end
         [dummy,cs_ldir] = fileparts(cs_dir);
         ics =1;
@@ -77,7 +77,7 @@ for Idx=1:size(job.NIRSmat,1)
                     codeexe = 'mcx_det.exe';
                     
                     if k1 == 1
-                         copyfile([spm('Dir') '\toolbox\nirs10\mc_exe\' codeexe],[dir1 '\' codeexe]);
+                         copyfile([spm('Dir') '\toolbox\nirs10\mc_exe\' codeexe],[dir1 filesep codeexe]);
                     end
                     %                 str_run1 = ['mcx.exe -t ' int2str(J.MCX_t) ' -T ' int2str(J.MCX_T) ' -n ' int2str(cs.par.nphotons)];
                     str_run1 = [codeexe ' -A 2 -n ' int2str(cs.par.nphotons)];
@@ -89,7 +89,7 @@ for Idx=1:size(job.NIRSmat,1)
                     str_run2 = [' -r ' int2str(J.MCX_r) ' -g ' int2str(J.MCX_g) ' -U 1 -S 1 -d 1 -H 1e7 -a 0 -b 0'];
                     res = system([str_run1 ' -f ' file2 ' -s ' file1 str_run2 str_log]);
                 end
-                delete([dir1 '\' codeexe]);
+                delete([dir1 filesep codeexe]);
                 
                 NIRS.Cs.mcs{ics}.MCX_t = J.MCX_t;
                 NIRS.Cs.mcs{ics}.MCX_T = J.MCX_T;

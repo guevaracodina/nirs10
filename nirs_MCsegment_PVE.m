@@ -13,7 +13,7 @@ count=0;
 for i=1:size(XYZmm,2)
     XYZ(:,i) = round(V.mat\[XYZmm(:,i);1]);%- mat_roi2raw(:,4);
     try
-    Y(XYZ(1,i),XYZ(2,i),XYZ(3,i)) = Y(XYZ(1,i),XYZ(2,i),XYZ(3,i))+6;
+        Y(XYZ(1,i),XYZ(2,i),XYZ(3,i)) = Y(XYZ(1,i),XYZ(2,i),XYZ(3,i))+6;
     catch
         count = count+1;
     end
