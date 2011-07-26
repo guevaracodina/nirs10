@@ -38,8 +38,6 @@ for Idx=1:size(job.NIRSmat,1)
         NIRS = [];
         load(job.NIRSmat{Idx,1});
         
-        
-        
         if ~isempty(job.outMCfiles{1,1})
             f = job.outMCfiles;
             cs_dir =  fileparts(f{1,:});

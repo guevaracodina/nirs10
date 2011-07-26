@@ -46,27 +46,27 @@ else
         matlabbatch{1}.spm.tools.preproc8.tissue(1).warped = warped_tissue;
         
         % Whitter matter
-        matlabbatch{1}.spm.tools.preproc8.tissue(2).tpm = {fullfile(DirSPM, 'toolbox\Seg\TPM.nii,2')};
+        matlabbatch{1}.spm.tools.preproc8.tissue(2).tpm = {fullfile(DirSPM, 'toolbox','Seg','TPM.nii,2')};
         matlabbatch{1}.spm.tools.preproc8.tissue(2).ngaus = 2;
         matlabbatch{1}.spm.tools.preproc8.tissue(2).native = native_space;
         matlabbatch{1}.spm.tools.preproc8.tissue(2).warped = warped_tissue;
         % CSF
-        matlabbatch{1}.spm.tools.preproc8.tissue(3).tpm = {fullfile(DirSPM, 'toolbox\Seg\TPM.nii,3')};
+        matlabbatch{1}.spm.tools.preproc8.tissue(3).tpm = {fullfile(DirSPM, 'toolbox','Seg','TPM.nii,3')};
         matlabbatch{1}.spm.tools.preproc8.tissue(3).ngaus = 2;
         matlabbatch{1}.spm.tools.preproc8.tissue(3).native = native_space;
         matlabbatch{1}.spm.tools.preproc8.tissue(3).warped = warped_tissue;
         % Bone
-        matlabbatch{1}.spm.tools.preproc8.tissue(4).tpm = {fullfile(DirSPM, 'toolbox\Seg\TPM.nii,4')};
+        matlabbatch{1}.spm.tools.preproc8.tissue(4).tpm = {fullfile(DirSPM, 'toolbox','Seg','TPM.nii,4')};
         matlabbatch{1}.spm.tools.preproc8.tissue(4).ngaus = 3;
         matlabbatch{1}.spm.tools.preproc8.tissue(4).native = native_space;
         matlabbatch{1}.spm.tools.preproc8.tissue(4).warped = warped_tissue;
         % Soft tissue
-        matlabbatch{1}.spm.tools.preproc8.tissue(5).tpm = {fullfile(DirSPM, 'toolbox\Seg\TPM.nii,5')};
+        matlabbatch{1}.spm.tools.preproc8.tissue(5).tpm = {fullfile(DirSPM, 'toolbox','Seg','TPM.nii,5')};
         matlabbatch{1}.spm.tools.preproc8.tissue(5).ngaus = 4;
         matlabbatch{1}.spm.tools.preproc8.tissue(5).native = native_space;
         matlabbatch{1}.spm.tools.preproc8.tissue(5).warped = warped_tissue;
         % Air/background
-        matlabbatch{1}.spm.tools.preproc8.tissue(6).tpm = {fullfile(DirSPM, 'toolbox\Seg\TPM.nii,6')};
+        matlabbatch{1}.spm.tools.preproc8.tissue(6).tpm = {fullfile(DirSPM, 'toolbox','Seg','TPM.nii,6')};
         matlabbatch{1}.spm.tools.preproc8.tissue(6).ngaus = 2;
         matlabbatch{1}.spm.tools.preproc8.tissue(6).native = native_space;
         matlabbatch{1}.spm.tools.preproc8.tissue(6).warped = warped_tissue;
