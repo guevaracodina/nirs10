@@ -44,8 +44,10 @@ Pvoid = job.Pvoid;
 Pkpt = job.Pkpt;
 Pp_rmiv = job.P.p;
 Pwd_rmiv = job.P.wd;
-r = job.r;
+r = job.P.r;
 mc_dir = job.dir;
+
+n_b8i = job.n_b8i;
 
 % Create a .cfg or .inp file for each optode and each wavelength
 for iwl = 1:size(job.wl_dev,2)
@@ -65,7 +67,7 @@ for iwl = 1:size(job.wl_dev,2)
                 % Title
                 fprintf(fid, ';; Fichier de configuration\n');
                 % ID subject
-                fprintf(fid, [';; Sujet # : ' char(job.n_b8i) '\n\n']);
+                fprintf(fid, [';; Sujet # : ' n_b8i '\n\n']);
                 % ROI limits relative to whole MRI
                 fprintf(fid, ';; ROI limits relative to whole MRI\n');
                 fprintf(fid, [';; xmin : ' num2str(job.ROIlimits(1,2)) '\n']);
@@ -102,7 +104,7 @@ for iwl = 1:size(job.wl_dev,2)
                 % Name of segmentation file
                 fprintf(fid, ';; Segmentation file to load\n');
                 %[~,file,ext] = fileparts(job.n);
-                fprintf(fid, 'segfile  %s \n\n', job.n_b8i);%[file ext]);
+                fprintf(fid, 'segfile  %s \n\n', n_b8i);%[file ext]);
                 
                 % Voxel size
                 fprintf(fid, ';; Voxel size.  Square voxels only, for now (dz = dy = dx)\n');
@@ -180,7 +182,7 @@ for iwl = 1:size(job.wl_dev,2)
                 fprintf(fid,'%s %2.2e %1.2e   # time-gates(s): start, end, step\n','0.00e-9', end_time, job.par.deltaT);
                 %fprintf(fid,'%s %s %s   # time-gates(s): start, end, step\n', '0','1e-9','1e-9');
                 %[~,file,ext] = fileparts(job.n);%%% le .bin
-                fprintf(fid,'%s     # volume (''uchar'' format)\n', job.n_b8i);%[file, ext]);
+                fprintf(fid,'%s     # volume (''uchar'' format)\n', n_b8i);%[file, ext]);
                 
                 fprintf(fid,'%1.0f %3.0f %3.0f %3.0f            # x: voxel size, dim, start/end indices\n',...
                     job.par.voxelSize,job.ROIlimits(2,1),1,job.ROIlimits(2,1));
@@ -222,7 +224,7 @@ for iwl = 1:size(job.wl_dev,2)
                 Rr = r(1,[1:iP-1 iP+1:NS+ND]);
                 Rn = (1:size(Rr,2));
                 fprintf(fid,'%g %g            # detector number and radius (mm)\n',...
-                    size(Rr,2),job.P.Dr);
+                    size(Rr,2),r(1,NS+1));
                 for iR=1:size(Rr,2)
                     fprintf(fid,'%.1f	%.1f	%.1f  # detector %g position (mm)\n',...
                         Rp_rmiv(:,iR),Rn(iR));

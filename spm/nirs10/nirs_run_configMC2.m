@@ -77,11 +77,6 @@ for Idx=1:size(job.NIRSmat,1)
         else
             Pvoid = {};
         end
-        cs.Pvoid = Pvoid;
-        
-        Sr = cs.par.radiis * ones(cs.NSkpt,1);
-        cs.Dr = cs.par.radiid * ones(cs.NDkpt,1);
-        cs.r = [Sr' cs.Dr' zeros(1,size(cs.Pkpt,1) -(cs.NSkpt+cs.NDkpt))];
         
         daate = strrep(datestr(now),':','-');
         
@@ -134,12 +129,18 @@ for Idx=1:size(job.NIRSmat,1)
                     outF = nirs_configMC_toMCframe(jobF);%images,positions and directions
                     cs.segR = outF.G.segR;
                     cs.b8i = outF.G.b8i;
+                    cs.n_b8i = outF.G.n_b8i;
                     cs.ROIlimits = outF.G.ROIlimits;
                     cs.P = outF.P;
+                    cs.Pvoid = Pvoid;
                     cs.Pfp_rmiv = outF.P.Pfp_rmiv;
                     cs.Pwd_rmm = outF.P.Pwd_rmm;
                     cs.nummed = 11;
                     
+                    Sr = cs.par.radiis * ones(cs.NSkpt,1);
+                    Dr = cs.par.radiid * ones(cs.NDkpt,1);
+                    cs.P.r = [Sr' Dr' zeros(1,size(cs.Pkpt,1) -(cs.NSkpt+cs.NDkpt))];
+            
                     NIRS.Cs.mcs{i_cs} = cs;
                     NIRS.Cs.n{i_cs} = csn;
                     
@@ -161,14 +162,24 @@ for Idx=1:size(job.NIRSmat,1)
             
             % fin de config et ecriture
             jobF.G = G;
+            jobF.G.dir = cs.dir;
+            jobF.G.voxelSize =cs.par.voxelSize;
+            jobF.G.alg = cs.alg;
             jobF.P = P;
             outF = nirs_configMC_toMCframe(jobF);%images,positions and directions
             cs.segR = outF.G.segR;
             cs.b8i = outF.G.b8i;
+            cs.n_b8i = outF.G.n_b8i;
+            cs.ROIlimits = outF.G.ROIlimits;
             cs.P = outF.P;
+            cs.Pvoid = Pvoid;
             cs.Pfp_rmiv = outF.P.Pfp_rmiv;
             cs.Pwd_rmm = outF.P.Pwd_rmm;
-            cs.nummed =6;
+            cs.nummed = 6;
+            
+            Sr = cs.par.radiis * ones(cs.NSkpt,1);
+            Dr = cs.par.radiid * ones(cs.NDkpt,1);
+            cs.P.r = [Sr' Dr' zeros(1,size(cs.Pkpt,1) -(cs.NSkpt+cs.NDkpt))];
             
             NIRS.Cs.mcs{i_cs} = cs;
             NIRS.Cs.n{i_cs} = csn;

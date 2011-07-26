@@ -9,14 +9,15 @@ try
     outNIRSmat ={};
     
     % Study configuration
-    if isfield(job.study_cfg.study_path,'choose_path')
-        study_p = job.study_cfg.study_path.choose_path;
-        if ~exist(study_p,'dir'),
-            mkdir(study_p);
-        end
-    else
-        study_p = job.study_cfg.study_path.existing_study{:};
-    end
+    study_p = job.study_cfg.study_path{:};
+%     if isfield(job.study_cfg.study_path,'choose_path')
+%         study_p = job.study_cfg.study_path.choose_path;
+%         if ~exist(study_p,'dir'),
+%             mkdir(study_p);
+%         end
+%     else
+%         study_p = job.study_cfg.study_path.existing_study{:};
+%     end
     
     % Loop over all subjects
     sN = size(job.subj,2);
@@ -171,23 +172,24 @@ try
                 
                 
                 %%%%%
+                %%% MODIFIER POUR INTEGRER LES ONSETS DIFFEREMMENT %%%
                 % Protocol
-                if ~isempty(job.subj(1,is).protocol{iU,:})
-                    % Read "multiple conditions" file (.mat)
-                    clear names onsets durations;
-                    load(job.subj(1,is).protocol{iU,:},'-mat');
-                    for kk = 1:size(names, 2)
-                        NIRS.Dt.fir.Sess(iU).U(kk).name = names(kk);
-                        NIRS.Dt.fir.Sess(iU).U(kk).ons = onsets{kk};
-                        NIRS.Dt.fir.Sess(iU).U(kk).dur = durations{kk};
-                        NIRS.Dt.fir.Sess(iU).U(kk).P = P;
-                    end
-                else
-                    NIRS.Dt.fir.Sess(iU).U.name = {};
-                    NIRS.Dt.fir.Sess(iU).U.ons = [];
-                    NIRS.Dt.fir.Sess(iU).U.dur = [];
-                    NIRS.Dt.fir.Sess(iU).U.P = P;
-                end
+%                 if ~isempty(job.subj(1,is).protocol{iU,:})
+%                     % Read "multiple conditions" file (.mat)
+%                     clear names onsets durations;
+%                     load(job.subj(1,is).protocol{iU,:},'-mat');
+%                     for kk = 1:size(names, 2)
+%                         NIRS.Dt.fir.Sess(iU).U(kk).name = names(kk);
+%                         NIRS.Dt.fir.Sess(iU).U(kk).ons = onsets{kk};
+%                         NIRS.Dt.fir.Sess(iU).U(kk).dur = durations{kk};
+%                         NIRS.Dt.fir.Sess(iU).U(kk).P = P;
+%                     end
+%                 else
+%                     NIRS.Dt.fir.Sess(iU).U.name = {};
+%                     NIRS.Dt.fir.Sess(iU).U.ons = [];
+%                     NIRS.Dt.fir.Sess(iU).U.dur = [];
+%                     NIRS.Dt.fir.Sess(iU).U.P = P;
+%                 end
             end
         end
         
@@ -199,7 +201,7 @@ try
             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.DelPreviousData = 0;
             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.NewDirCopyNIRS.CreateNIRSCopy_false = struct([]);
             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.anatT1 = {[fullfile(fileparts(which('spm')),'templates','T1.nii') ',1']};
-            matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.segT1_4fit = {[fullfile(fileparts(which('spm')),'\toolbox\nirs10\nirs10_templates','00044_segmented_T1.nii') ',1']};
+            matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.segT1_4fit = {[fullfile(fileparts(which('spm')),'toolbox','nirs10','nirs10_templates','00044_segmented_T1.nii') ',1']};
             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.anatT1_template = {[fullfile(fileparts(which('spm')),'templates','T1.nii') ',1']};
             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.fid_in_subject_MNI = 0;
             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.nasion_wMNI = [0 84 -48];
