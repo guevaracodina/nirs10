@@ -62,7 +62,7 @@ for Idx=1:size(job.NIRSmat,1)
         
         cs.par = job.MC_parameters;
         cs.NSinit = NIRS.Cf.H.S.N;
-%         cs.Ckpt = NIRS.Cs.temp.Ckpt;
+        cs.Ckpt = NIRS.Cs.temp.Ckpt;
         cs.Pkpt = NIRS.Cs.temp.Pkpt;
         cs.NSkpt = NIRS.Cs.temp.NSkpt;
         cs.NDkpt = NIRS.Cs.temp.NDkpt;
@@ -81,17 +81,17 @@ for Idx=1:size(job.NIRSmat,1)
         daate = strrep(datestr(now),':','-');
         
         %%% on definit un nom
-        if job.pve_cfg==1 %%%% Thresholded BOLD image is concidered as layer 6
+        if sum(isfield(job.pve_cfg,{'pve_bold','pve_asl','pve_anat'})) %%%% Thresholded BOLD image is concidered as layer 6
             %%%% it might be also a perturbation included by user... any use ??
             % on cherche toutes les sessions qui pourraient mener a un
+            
             % calcul de PVE
             last = size(NIRS.Dt.fir.pp,2);
             NSess = size(NIRS.Dt.fir.pp(1,last).p,1);
             
             for iSess =1:NSess
                 arun=1;
-                
-                if arun==0
+                if arun==0 %%% prevoir la sauvegarde des differentes matrices xSPM
                     clear xSPM_boldmask xSPM_boldmask_sorted
                     % on genere une simulation MonteCarlo par contraste BOLD ///
                     [dummy,xSPM,SPM] = spm_results_ui('Setup');
@@ -151,7 +151,7 @@ for Idx=1:size(job.NIRSmat,1)
                     disp(['PVE failed for session ' iSess]);
                 end
             end
-        else
+        elseif isfield(job.pve_cfg,'no_pve')
             csn = [alg_nam '_' daate];
             cs.dir =fullfile(G.seg_p,csn);
             %Directory for configuration files

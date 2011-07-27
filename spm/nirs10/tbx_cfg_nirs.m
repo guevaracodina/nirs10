@@ -2427,38 +2427,51 @@ MC_CUDAchoice.values = {1,2,3};
 MC_CUDAchoice.def    = @(val)nirs_get_defaults('configMC1.MC_CUDAchoice', val{:});
 MC_CUDAchoice.help   = {'Choose type of configuration files to generate.'};
 
-% no_pve      = cfg_branch; 
-% no_pve.name = 'No';
-% no_pve.tag  = 'no_pve';
-% no_pve.help = {'PVE won''t be calculated.'};
-% 
-% % calc_pve         = cfg_files;
-% % calc_pve.name    = 'Mask for PVE';
-% % calc_pve.tag     = 'calc_pve';
-% % calc_pve.filter  = 'image';
-% % calc_pve.ufilter = '.nii';    
-% % calc_pve.num     = [1 1];
-% % calc_pve.help    = {'BOLD, ASL or any anatomical mask (from create mask module).'};
-% 
-% calc_pve      = cfg_branch; 
-% calc_pve.name = 'Yes';
-% calc_pve.tag  = 'calc_pve';
-% calc_pve.help = {'PVE will be calculated.'};
-% 
-% pve_cfg           = cfg_choice;
-% pve_cfg.name      = 'PVE';
-% pve_cfg.tag       = 'pve_cfg';
-% pve_cfg.values    = {no_pve calc_pve};
-% pve_cfg.val       = {calc_pve}; 
-% pve_cfg.help      = {'.'};
+no_pve      = cfg_branch; 
+no_pve.name = 'No';
+no_pve.tag  = 'no_pve';
+no_pve.help = {'PVE won''t be calculated.'};
 
-pve_cfg    = cfg_menu;
-pve_cfg.name   = 'Calcul PVE';
-pve_cfg.tag    = 'pve_cfg';
-pve_cfg.labels = {'Yes','No'};
-pve_cfg.values = {1,0};
-pve_cfg.val{1} = 1;
-pve_cfg.help   = {'.'};
+% calc_pve         = cfg_files;
+% calc_pve.name    = 'Mask for PVE';
+% calc_pve.tag     = 'calc_pve';
+% calc_pve.filter  = 'image';
+% calc_pve.ufilter = '.nii';    
+% calc_pve.num     = [1 1];
+% calc_pve.help    = {'BOLD, ASL or any anatomical mask (from create mask module : not coded yet).'};
+% 
+pve_bold      = cfg_branch; 
+pve_bold.name = 'BOLD mask';
+pve_bold.tag  = 'pve_bold';
+pve_bold.help = {'PVE will be calculated with respect to BOLD mask.'};
+
+pve_asl      = cfg_branch; 
+pve_asl.name = 'ASL mask';
+pve_asl.tag  = 'pve_asl';
+pve_asl.help = {'PVE will be calculated with respect to ASL mask.'};
+
+pve_anat         = cfg_files;
+pve_anat.name    = 'Anatomical image';
+pve_anat.tag     = 'pve_anat';
+pve_anat.filter  = 'image';
+pve_anat.ufilter = '.nii';    
+pve_anat.num     = [1 1];
+pve_anat.help    = {'PVE will be calculated with respect to a selected anatomical mask.'};
+
+pve_cfg           = cfg_choice;
+pve_cfg.name      = 'PVE';
+pve_cfg.tag       = 'pve_cfg';
+pve_cfg.values    = {no_pve pve_bold pve_asl pve_anat};
+pve_cfg.val       = {pve_bold}; 
+pve_cfg.help      = {'.'};
+
+dpf_cfg        = cfg_menu;
+dpf_cfg.name   = 'Evaluate DPF';
+dpf_cfg.tag    = 'dpf_cfg';
+dpf_cfg.labels = {'Yes','No'};
+dpf_cfg.values = {1,0};
+dpf_cfg.val{1} = 1;
+dpf_cfg.help   = {'Evaluate DPF thanks to MonteCarlo simulation.'};
 
 % est ce qu'il y a pas un pb du au fait qu'il attend un directory ???
 MC_configdir         = cfg_entry;
@@ -2654,7 +2667,7 @@ MC_parameters.help = {'Parameters'};
 configMC1      = cfg_exbranch;       
 configMC1.name = 'Configure Monte Carlo inputs';            
 configMC1.tag  = 'configMC1'; 
-configMC1.val  = {NIRSmat MC_nam mcim_cfg MC_CUDAchoice pve_cfg MC_configdir MC_parameters};    
+configMC1.val  = {NIRSmat MC_nam mcim_cfg MC_CUDAchoice dpf_cfg pve_cfg MC_configdir MC_parameters};    
 configMC1.prog = @nirs_run_configMC2;  
 configMC1.vout = @nirs_cfg_vout_configMC; 
 configMC1.help = {'Generate configuration input files for Monte Carlo simulation.'};

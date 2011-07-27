@@ -74,7 +74,11 @@ for Idx=1:size(job.NIRSmat,1)
                     file2 = [file1 '.inp'];
                     cd(dir1);
                     
+                    % if his/mch needed
                     codeexe = 'mcx_det.exe';
+                    %else
+                    %codeexe = 'mcx.exe';
+                    %end
                     
                     if k1 == 1
                          copyfile([spm('Dir') '\toolbox\nirs10\mc_exe\' codeexe],[dir1 filesep codeexe]);
