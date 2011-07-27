@@ -1,4 +1,7 @@
 function out = nirs_run_calculatePVE(job)
+%%%%%%%%
+% les Inf sont quand la lumiere ne passe pas par les zones du masque (BOLD par exemple)
+%%%%%%%%
 % Calcul du facteur de volume partiel
 %
 % BOlDdata;  (SEULEMENT SI ON VEUT EFFECTUER UN PROBLÈME DIRECT, i.e. PROJETER CES DONNÉES DANS L'ESPACE DES PAIRES)
@@ -143,7 +146,7 @@ for iSubj=1:size(job.NIRSmat,1)
             otherwise
                 disp('The algorithm with which the simulation has been runned is not recognised.')
         end
-        clear tk_wl tk_file tk_dir
+        clear tk_wl tk_file tk_dir history header
         
         % cas caca, il faudra REFAIRE PLUS PROPRE
         Cid = NIRS.Cf.H.C.id;
@@ -152,14 +155,13 @@ for iSubj=1:size(job.NIRSmat,1)
             try
                 S_Ci = unique(Cid(2,Cid(1,:)== Ci));
                 D_Ci = unique(Cid(3,Cid(1,:)== Ci));
-                
-                
-                for iwl =1:length(NIRS.Cf.dev.wl)
+                Cbloup = sum((1:length(Cid(1,:))).*(Cid(1,:) == Ci));
                     %%% on reconstruit le nom
                     if S_Ci < 10, S_Cin = ['0' int2str(S_Ci)]; else S_Cin = int2str(S_Ci);end
-                    tk_n = ['S_No' S_Cin '_' int2str(NIRS.Cf.dev.wl(iwl)) 'nm'];
+                    tk_wl = NIRS.Cf.dev.wl(NIRS.Cf.H.C.wl(Cbloup));
+                    tk_n = ['S_No' S_Cin '_' int2str(tk_wl) 'nm'];
                     [dummy, tk_file, dummy1] = fileparts(tk_n);
-                    tk_wl = str2num(tk_file(end-4:end-2));
+                    
                     i=1;
                     while strcmp(tk_n,History{i,1})==0
                         i=i+1;
@@ -206,7 +208,7 @@ for iSubj=1:size(job.NIRSmat,1)
                         % Pour la paire pi (sm-dn), le DPF est la moyenne sur tous les
                         % photons, pondérée par leur atténuation, , de ce parcours
                         if tk_wl==690
-                            DPL(1,Ci) = photons_opl(:,Ci)'* photons_weight ./ sum(photons_weight);
+                            DPL(1,Ci) = photons_opl(:,Ci)'* photons_weight ./ sum(photons_weight); % barycentre
                             DPF(1,Ci) = DPL(1,Ci)/Cgp(1,Ci);% ...divisée par la distance source-détecteur en mm                                     %%%%%%% Differential Pathlength Factor
                             
 %                             % Parcours moyen dans la perturbation
@@ -233,7 +235,6 @@ for iSubj=1:size(job.NIRSmat,1)
                             PVF(2,Ci) = DPF(2,Ci)./PPF(2,Ci);% Partial pathlength factor and partial volume factor (PVF := DPF/PPF);
                         end
                     end
-                end
             catch % le fichier d histoire n a pas ete trouve...
 %                 disp(['PVE failed for channel : ' int2str(Ci)]);
             end
