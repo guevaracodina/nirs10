@@ -23,11 +23,6 @@ function out = nirs_run_calculatePVE(job)
 % 	DPF (differential pathlength factor);
 % 	PPF (partial pathlength factor dans la perturbation, si on a roulé une simulation
 % avec perturbation (on suppose que le dernier tissu est une perturbation)***);
-% 	AA la matrice de sensitivité
-%
-% *** Dans la simulation perturbée, le volume (milieu de propagation) est comme suit :
-% tissu 0=air, 1-5 = GM,WM,CSF,skull,scalp, tissu 6 = "perturbation" (avec propriétés
-% optiques modifiées à partir de celles de GM)
 %
 % V0 = 0.05; % venous blood volume fraction
 % OEF0 = 1-0.6975; % baseline oxygen extraction fraction
@@ -38,7 +33,7 @@ function out = nirs_run_calculatePVE(job)
 %
 %_________________________________________________________________________
 % Clément Bonnéry June 2011 : intégration à NIRS10 du code de Michèle
-% Desjardins computeDirectProblem.m (pour tMCimg)
+% Desjardins computeDirectProblem.m
 
 %830
 opt_ppts{2,1} = [0.0186   11.1   0.9   1.4];
@@ -69,6 +64,10 @@ for iSubj=1:size(job.NIRSmat,1)
     try
         NIRS = [];
         load(job.NIRSmat{iSubj,1});
+        
+        NIRS.Dt.fir.DPF =[];
+        NIRS.Dt.fir.PVE =[];
+        
         
         if ~isempty(job.dir_in{1,1})
             f = job.outMCfiles;
@@ -101,7 +100,7 @@ for iSubj=1:size(job.NIRSmat,1)
                 for i=1:size(f,1)
                     [history, header]=loadmch(f{i,1});
                     [tk_dir, tk_file, tk_ext] = fileparts(f{i,1});
-                    tk_wl = str2num(tk_file(end-4:end-2));
+%                     tk_wl = str2double(tk_file(end-4:end-2));
                     count = count+1;
                     History{count,1} = tk_file;
                     History{count,3} = header;
@@ -146,7 +145,7 @@ for iSubj=1:size(job.NIRSmat,1)
             otherwise
                 disp('The algorithm with which the simulation has been runned is not recognised.')
         end
-        clear tk_wl tk_file tk_dir history header
+        clear tk_wl tk_file tk_dir tk_ext history header
         
         % cas caca, il faudra REFAIRE PLUS PROPRE
         Cid = NIRS.Cf.H.C.id;
@@ -156,87 +155,66 @@ for iSubj=1:size(job.NIRSmat,1)
                 S_Ci = unique(Cid(2,Cid(1,:)== Ci));
                 D_Ci = unique(Cid(3,Cid(1,:)== Ci));
                 Cbloup = sum((1:length(Cid(1,:))).*(Cid(1,:) == Ci));
-                    %%% on reconstruit le nom
-                    if S_Ci < 10, S_Cin = ['0' int2str(S_Ci)]; else S_Cin = int2str(S_Ci);end
-                    tk_wl = NIRS.Cf.dev.wl(NIRS.Cf.H.C.wl(Cbloup));
-                    tk_n = ['S_No' S_Cin '_' int2str(tk_wl) 'nm'];
-                    [dummy, tk_file, dummy1] = fileparts(tk_n);
+                %%% on reconstruit le nom
+                if S_Ci < 10, S_Cin = ['0' int2str(S_Ci)]; else S_Cin = int2str(S_Ci);end
+                tk_wl = NIRS.Cf.dev.wl(NIRS.Cf.H.C.wl(Cbloup));
+                tk_n = ['S_No' S_Cin '_' int2str(tk_wl) 'nm'];
+%                 [dummy, tk_file, dummy1] = fileparts(tk_n);
+                
+                iH=1;
+                while strcmp(tk_n,History{iH,1})==0
+                    iH=iH+1;
+                end
+                tk_Ci = iH;% indice de la bonne ligne pour le canal Ci
+                
+                % maintenant les detecteurs sont ranges comme
+                % dans le fichier de config, il y en a le
+                % nombre de P-1 et cest dans lordre en
+                % enlevant la bonne source
+                %%% on veut D_Ci
+                %%%% on cherche le nombre total de sources et on enleve
+                %%%% 1 :
+                offset_cfgfile = cs.NSkpt-1;
+                D_Ci_cfg = offset_cfgfile+sum((1:size(cs.Pkpt,2)).*(cs.Pkpt==D_Ci+cs.NSinit))-cs.NSkpt;
+                
+                idx = History{tk_Ci,2}(:,1)==D_Ci_cfg;
+                if sum(idx)==0
+                    PVF(1,Ci)=0;
+                    DPF(1,Ci)=0;
+                else
+                    disp(['PVE calculated for channel : ' int2str(Ci)]);
+                    Rphotons_ppl(:,Ci) = sum(History{tk_Ci,2}(idx,3:size(History{tk_Ci,2},2)),1);% Parcours total (somme sur chaque tissu) de chaque photon issu de S et compté par D (chaque photon de la paire), en mm
                     
-                    i=1;
-                    while strcmp(tk_n,History{i,1})==0
-                        i=i+1;
+                    if tk_wl==690
+                        muas = [opt_ppts{1,1}(1,1),opt_ppts{1,2}(1,1),opt_ppts{1,3}(1,1),opt_ppts{1,4}(1,1),opt_ppts{1,5}(1,1),opt_ppts_perturb{1}(1,1)];
+                    elseif tk_wl ==830
+                        muas = [opt_ppts{2,1}(1,1),opt_ppts{2,2}(1,1),opt_ppts{2,3}(1,1),opt_ppts{2,4}(1,1),opt_ppts{2,5}(1,1),opt_ppts_perturb{2}(1,1)];
                     end
-                    tk_Ci = i;% indice de la bonne ligne pour le canal Ci
                     
-                    % maintenant les detecteurs sont ranges comme
-                    % dans le fichier de config, il y en a le
-                    % nombre de P-1 et cest dans lordre en
-                    % enlevant la bonne source
-                    %%% on veut D_Ci
-                    %%%% on cherche le nombre totql de sources et on enleve
-                    %%%% 1 :
-                    offset_cfgfile = cs.NSkpt-1;
-                    D_Ci_cfg = offset_cfgfile+sum((1:size(cs.Pkpt,2)).*(cs.Pkpt==D_Ci+cs.NSinit))-cs.NSkpt;
-                    
-                    idx = History{tk_Ci,2}(:,1)==D_Ci_cfg;
-                    if sum(idx)==0
-                        if tk_wl==690
-                            PVF(1,Ci)=0;
-                        else
-                            PVF(2,Ci)=0;
-                        end
-                    else
-                        disp(['PVE calculated for channel : ' int2str(Ci)]);
-                        photons_opl(:,Ci) = sum(History{tk_Ci,2}(idx,3:size(History{tk_Ci,2},2)),1);% Parcours total (somme sur chaque tissu) de chaque photon issu de S et compté par D (chaque photon de la paire), en mm
-                        
-                        if cs.nummed==6
-                            if tk_wl==690
-                                muas = [opt_ppts{1,1}(1,1),opt_ppts{1,2}(1,1),opt_ppts{1,3}(1,1),opt_ppts{1,4}(1,1),opt_ppts{1,5}(1,1),opt_ppts_perturb{1}(1,1)];
-                            elseif tk_wl ==830
-                                muas = [opt_ppts{2,1}(1,1),opt_ppts{2,2}(1,1),opt_ppts{2,3}(1,1),opt_ppts{2,4}(1,1),opt_ppts{2,5}(1,1),opt_ppts_perturb{2}(1,1)];
-                            end
-                        elseif cs.nummed==11
-                            if tk_wl==690
-                                muas = [opt_ppts{1,1}(1,1),opt_ppts{1,2}(1,1),opt_ppts{1,3}(1,1),opt_ppts{1,4}(1,1),opt_ppts{1,5}(1,1),opt_ppts_perturb{1}(1,1),opt_ppts{1,1}(1,1),opt_ppts{1,2}(1,1),opt_ppts{1,3}(1,1),opt_ppts{1,4}(1,1),opt_ppts{1,5}(1,1)];
-                            elseif tk_wl ==830
-                                muas = [opt_ppts{2,1}(1,1),opt_ppts{2,2}(1,1),opt_ppts{2,3}(1,1),opt_ppts{2,4}(1,1),opt_ppts{2,5}(1,1),opt_ppts_perturb{2}(1,1),opt_ppts{2,1}(1,1),opt_ppts{2,2}(1,1),opt_ppts{2,3}(1,1),opt_ppts{2,4}(1,1),opt_ppts{2,5}(1,1)];
-                            end
-                        end
-                        % Il faut pondérer la moyenne sur les photons par le poids de chaque photon, donné par son atténuation dans le milieu. La probabilité qu'un photon ne soit pas absorbé dans un tissu est (exp(mua*parcours dans tissu)) (Hiraoka 1993).
-                        photons_weight = exp(-1 * photons_opl(:,Ci).*muas');
-                        
-                        % Pour la paire pi (sm-dn), le DPF est la moyenne sur tous les
-                        % photons, pondérée par leur atténuation, , de ce parcours
-                        if tk_wl==690
-                            DPL(1,Ci) = photons_opl(:,Ci)'* photons_weight ./ sum(photons_weight); % barycentre
-                            DPF(1,Ci) = DPL(1,Ci)/Cgp(1,Ci);% ...divisée par la distance source-détecteur en mm                                     %%%%%%% Differential Pathlength Factor
-                            
-%                             % Parcours moyen dans la perturbation
-%                             PPL(1,Ci) = photons_opl(6,Ci) * photons_weight(6,1) ./ sum(photons_weight(6,1));
-%                             PPF(1,Ci) = PPL(1,Ci)/Cgp(1,Ci);
-                            % Parcours moyen dans la zone BOLD
-                            PPL(1,Ci) = photons_opl(7:11,Ci)'* photons_weight(7:11,1) ./ sum(photons_weight(7:11,1));
-                            PPF(1,Ci) = PPL(1,Ci)/Cgp(1,Ci);
-                            
-                            PVF(1,Ci) = DPF(1,Ci)./PPF(1,Ci);% Partial pathlength factor and partial volume factor (PVF := DPF/PPF);
-                            
-                        elseif tk_wl ==830
-                            DPL(2,Ci) = photons_opl(:,Ci)'* photons_weight ./ sum(photons_weight);
-                            DPF(2,Ci) = DPL(2,Ci)/Cgp(1,Ci);% ...divisée par la distance source-détecteur en mm                                     %%%%%%% Differential Pathlength Factor
-                            
-                            
-%                             % Parcours moyen dans la perturbation
-%                             PPL(2,Ci) = photons_opl(6,1) * photons_weight(6,1) ./ sum(photons_weight(6,1));
-%                             PPF(2,Ci) = PPL(2,Ci)/Cgp(1,Ci);
-                            % Parcours moyen dans la zone BOLD
-                            PPL(2,Ci) = photons_opl(7:11,Ci)'* photons_weight(7:11,1) ./ sum(photons_weight(7:11,1));
-                            PPF(2,Ci) = PPL(2,Ci)/Cgp(1,Ci);
-                            
-                            PVF(2,Ci) = DPF(2,Ci)./PPF(2,Ci);% Partial pathlength factor and partial volume factor (PVF := DPF/PPF);
-                        end
+                    if cs.nummed==6
+                        photons_ppl(:,Ci) = Rphotons_ppl(:,Ci);
+                    elseif cs.nummed==11
+                        photons_ppl(:,Ci) = Rphotons_ppl(1:6,Ci)+[Rphotons_ppl(7:11,Ci);0];
                     end
+                    % Il faut pondérer la moyenne sur les photons par le poids de chaque photon, donné par son atténuation dans le milieu. La probabilité qu'un photon ne soit pas absorbé dans un tissu est (exp(mua*parcours dans tissu)) (Hiraoka 1993).
+                    photons_weight = exp(-1 * photons_ppl(:,Ci).*muas');
+                    
+                    % Pour la paire pi (sm-dn), le DPF est la moyenne sur tous les
+                    % photons, pondérée par leur atténuation, , de ce parcours
+                    DPL(1,Ci) = photons_ppl(:,Ci)'* photons_weight ./ sum(photons_weight); % barycentre
+                    DPF(1,Ci) = DPL(1,Ci)/Cgp(1,Ci)*10;% ...divisée par la distance source-détecteur en mm                                     %%%%%%% Differential Pathlength Factor
+                    
+                    %                             % Parcours moyen dans la perturbation
+                    %                             PPL(1,Ci) = photons_opl(6,Ci) * photons_weight(6,1) ./ sum(photons_weight(6,1));
+                    %                             PPF(1,Ci) = PPL(1,Ci)/Cgp(1,Ci);
+                    % Parcours moyen dans la zone BOLD
+                    PPL(1,Ci) = Rphotons_ppl(7:11,Ci)'* photons_weight(1:5,1) ./ sum(photons_weight(1:5,1));
+                    PPF(1,Ci) = PPL(1,Ci)/Cgp(1,Ci);
+                    
+                    PVF(1,Ci) = DPF(1,Ci)./PPF(1,Ci);% Partial pathlength factor and partial volume factor (PVF := DPF/PPF);
+                end
             catch % le fichier d histoire n a pas ete trouve...
-%                 disp(['PVE failed for channel : ' int2str(Ci)]);
+                %                 disp(['PVE failed for channel : ' int2str(Ci)]);
             end
         end
         
@@ -251,16 +229,16 @@ for iSubj=1:size(job.NIRSmat,1)
             if ~exist(dir2,'dir'), mkdir(dir2); end;
             newNIRSlocation = fullfile(dir2,'NIRS.mat');
             save(newNIRSlocation,'NIRS');
-            job.NIRSmat{iSubj,1} = newNIRSlocation;          
+            job.NIRSmat{iSubj,1} = newNIRSlocation;
         else
-            save(job.NIRSmat{iSubj,1},'NIRS'); 
+            save(job.NIRSmat{iSubj,1},'NIRS');
         end
         
-%         if DelPreviousData
-%             delete(rDtp{f,1});
-%         end
-
-        catch exception
+        %         if DelPreviousData
+        %             delete(rDtp{f,1});
+        %         end
+        
+    catch exception
         disp(exception.identifier);
         disp(exception.stack(1));
         disp(['Calculus of PVE failed for subject ' int2str(iSubj)]);

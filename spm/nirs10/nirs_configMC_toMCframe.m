@@ -10,6 +10,7 @@ G = job.G;
 P = job.P;
 
 % transform image from anisotropic voxels space to isotropic voxels space
+
 jobRS.image_in = {G.seg};
 jobRS.out_dir = G.dir;
 jobRS.out_dim = [1 1 1];
@@ -18,6 +19,7 @@ jobRS.out_dt = 'same';
 jobRS.out_autonaming = 0;
 jobRS.out_prefix = 'prefix';
 outRS =nirs_resize(jobRS);
+
 
 V_rmiv = spm_vol(outRS);
 Y_rmiv = spm_read_vols(V_rmiv);
@@ -38,7 +40,10 @@ for i=1:size(P.Pfp_rmm,2)
     Pfp_ancienne_rmiv(:,i) = abs(inv_mat(7:9)').*(Pfp_ancienne_rmv(1:3,i)/G.voxelSize);
 end
 
-Pfp_ancienne_rmiv = round(Pfp_ancienne_rmiv);
+%%%% MODIFICATION 29 07 2011 %%%% %%%% %%%% %%%% %%%% %%%% %%%% %%%
+% Pfp_ancienne_rmiv = round(Pfp_ancienne_rmiv);
+Pfp_ancienne_rmiv = Pfp_ancienne_rmiv;
+%%%% MODIFICATION 29 07 2011 %%%% %%%% %%%% %%%% %%%% %%%% %%%% %%%
 
 % Directions
 Pd_rmm = P.Pp_rmm - P.Pp_c1_rmm;
@@ -50,6 +55,7 @@ for iP=1:NP
 end
 
 if G.alg==1
+    jobF.Pwd_rmm = Pwd_rmm;
     jobF.Pp_rmm = P.Pp_rmm;
     jobF.Pp_c1_rmm = P.Pp_c1_rmm;
     jobF.NP = NP;
@@ -58,7 +64,7 @@ if G.alg==1
     jobF.lby = 'configMC_MCX';
     outF = nirs_fit_probe(jobF);
     Pfp_ancienne_rmiv = outF{1};
-elseif G.alg==2 % pour tMC, les points doivent etre dans le volume (peut etre est-ce juste une question de direction de lq propagation...)
+elseif G.alg==2 % pour tMC, les points doivent etre dans le volume (peut etre est-ce juste une question de direction de la propagation...)
     jobF.Pp_rmm = G.Pp_rmm;
     jobF.Pp_c1_rmm = G.Pp_c1_rmm;
     jobF.NP = NP;
@@ -101,7 +107,7 @@ elseif G.alg==2
     % origin is the same as the origin of the voxel frame (these positions
     % don't respect SPM conventions) %%definitif ////
     P.p = G.voxelSize*Pfp_ancienne_rmiv;
-    P.wd = -V_rmiv.mat(1:3,1:3)*Pwd_rmm;
+    P.wd = -V_rmiv.mat(1:3,1:3)*Pwd_rmm;% towards inside
 end
 
 P.Pfp_rmiv = Pfp_ancienne_rmiv;
