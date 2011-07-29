@@ -319,34 +319,34 @@ for Idx=1:size(job.NIRSmat,1)
         %         sens_c1 =  zeros(size(sens));
         %         sens_reshaped_c1 =  zeros(size(sens_reshaped));
         
-        for i=1:size(sens,1)
-            sens_sd = reshape(sens(i,:),V_segR.dim);
-            V = struct('fname',fullfile(cs_dir,['banane_' int2str(sensC(i,1)) '.nii']),...
-                'dim',  V_segR.dim,...
-                'dt',   [64,0],...
-                'pinfo',V_segR.pinfo,...
-                'mat',  V_segR.mat);
-            
-            V = spm_create_vol(V);
-            spm_write_vol(V,sens_sd);
-            
-            %             for j=1:size(sens,2)
-            %                 if m_c1(j,1)==1
-            %                     %             sens_sd_c1i(1,j) = sens(i,j);
-            %                     sens_c1(i,j) = sens(i,j);
-            %                 end
-            %             end
-            %             sens_reshaped_c1 = sens_reshaped_c1 + reshape(sens_c1(i,:),V_segR.dim);
-            
-            %             V_c1 = struct('fname',fullfile(cs_dir,['banane_c1_' int2str(sensC(i,1)) '.nii']),...
-            %                 'dim',  V_segR.dim,...
-            %                 'dt',   V_segR.dt,...
-            %                 'pinfo',V_segR.pinfo,...
-            %                 'mat',  V_segR.mat);
-            %             V_c1 = spm_create_vol(V_c1);
-            %             spm_write_vol(V_c1,reshape(sens_c1(i,:),V_segR.dim));%sens_sd_c1i,V_segR.dim));
-            
-        end
+%         for i=1:size(sens,1)
+%             sens_sd = reshape(sens(i,:),V_segR.dim);
+%             V = struct('fname',fullfile(cs_dir,['banane_' int2str(sensC(i,1)) '.nii']),...
+%                 'dim',  V_segR.dim,...
+%                 'dt',   [64,0],...
+%                 'pinfo',V_segR.pinfo,...
+%                 'mat',  V_segR.mat);
+%             
+%             V = spm_create_vol(V);
+%             spm_write_vol(V,sens_sd);
+%             
+%             %             for j=1:size(sens,2)
+%             %                 if m_c1(j,1)==1
+%             %                     %             sens_sd_c1i(1,j) = sens(i,j);
+%             %                     sens_c1(i,j) = sens(i,j);
+%             %                 end
+%             %             end
+%             %             sens_reshaped_c1 = sens_reshaped_c1 + reshape(sens_c1(i,:),V_segR.dim);
+%             
+%             %             V_c1 = struct('fname',fullfile(cs_dir,['banane_c1_' int2str(sensC(i,1)) '.nii']),...
+%             %                 'dim',  V_segR.dim,...
+%             %                 'dt',   V_segR.dt,...
+%             %                 'pinfo',V_segR.pinfo,...
+%             %                 'mat',  V_segR.mat);
+%             %             V_c1 = spm_create_vol(V_c1);
+%             %             spm_write_vol(V_c1,reshape(sens_c1(i,:),V_segR.dim));%sens_sd_c1i,V_segR.dim));
+%             
+%         end
         save(job.NIRSmat{Idx,1},'NIRS');
     catch exception
         disp(exception.identifier);

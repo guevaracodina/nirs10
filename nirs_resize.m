@@ -25,7 +25,10 @@ if PO_dim == [1 1 1];%isotropic voxels
     if eq(abs(scalings)/vxsize,eye(3))
         dimf = dimi;
     else
-        dimf = ceil((dimi-1)/vxsize * abs(scalings));
+        %%%% MODIFICATION 29 07 2011 %%%% %%%% %%%% %%%% %%%% %%%% %%%% %%%
+        %dimf = ceil((dimi-1)/vxsize * abs(scalings));
+        dimf = floor((dimi)/vxsize * abs(scalings));
+        %%%% MODIFICATION 29 07 2011 %%%% %%%% %%%% %%%% %%%% %%%% %%%% %%%
     end
     %%%%%%
     for i =1:3, RZS(:,i) = vxsize*(V.mat(:,i)./norm(V.mat(:,i))); end
