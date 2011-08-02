@@ -113,9 +113,6 @@ for Idx=1:size(job.NIRSmat,1)
                 
                 try
                     jobP.xSPM = xSPM;
-%                     jobP.boldmask = xSPM.Z;
-%                     jobP.XYZmm = xSPM.XYZmm;
-%                     jobP.M = xSPM.M;
                     jobP.T1seg = G.seg;%NIRS.Dt.ana.T1seg;
                     jobP.cs_dir = cs.dir;
                     outP = nirs_MCsegment_PVE(jobP);

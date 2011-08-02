@@ -68,13 +68,15 @@ switch job.lby
                 boundC1_i = outF{1};
                 neighvox1_i = outF{2};
                 
-                outF = do_fit('find_bound_o',Y,boundC1_i,Pwd_rmiv(:,Pi));
+%                 outF = do_fit('find_bound_o',Y,boundC1_i,Pwd_rmiv(:,Pi));
+                outF = do_fit('find_bound_o',Y,neighvox1_i,Pwd_rmiv(:,Pi));
                 boundC2_i = outF{1};
                 neighvox2_i = outF{2};
                 %2)
 %                 if Y(round(neighvox1_i(1)),round(neighvox1_i(2)),round(neighvox1_i(3)))==0
 %                     disp('we stop');
-                    Pfp_rmiv(1:3,Pi) = boundC2_i;
+%                     Pfp_rmiv(1:3,Pi) = boundC2_i;
+Pfp_rmiv(1:3,Pi) = neighvox2_i;
 %                 else
 %                     outF = do_fit('find_bound_o',Y,Pfp_rmiv(:,Pi),-Pd_rmiv(:,Pi));
 %                     boundC2_i = outF{1};
@@ -102,7 +104,8 @@ switch job.lby
 %                     %3)
 %                     if Y(round(neighvox2_i(1)),round(neighvox2_i(2)),round(neighvox2_i(3)))~=0
 %                         disp('we stop');
-                         Pfp_rmiv(1:3,Pi) = boundC2_i;
+%                          Pfp_rmiv(1:3,Pi) = boundC2_i;
+                         Pfp_rmiv(1:3,Pi) = neighvox2_i;
 %                     else
 %                         outF = do_fit('find_bound_o',Y,neighvox1_i(:,Pi),-Pd_rmiv(:,Pi));
 %                         boundC2_i = outF{1};
