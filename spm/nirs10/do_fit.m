@@ -27,7 +27,7 @@ switch varargin{1}
             Pfp_rmiv_i = Pfp_rmiv_i + prec*Pd_rmiv_i;
         end
         out{1} = (2*Pfp_rmiv_i - prec*Pd_rmiv_i)/2; % boundary sur la direction de Pi et passant par Pi
-        out{2} = Pfp_rmiv_i;
+        out{2} = Pfp_rmiv_i+ 5*prec*Pd_rmiv_i;
         
     otherwise
         disp('Whaaat !!!!');
