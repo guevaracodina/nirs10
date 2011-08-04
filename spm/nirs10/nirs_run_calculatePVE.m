@@ -35,21 +35,15 @@ function out = nirs_run_calculatePVE(job)
 % Clément Bonnéry June 2011 : intégration à NIRS10 du code de Michèle
 % Desjardins computeDirectProblem.m
 
-%830
-opt_ppts{2,1} = [0.0186   11.1   0.9   1.4];
-opt_ppts{2,2} = [0.0186   11.1   0.9   1.4];
-opt_ppts{2,3} = [0.0026   0.10   0.9   1.4];
-opt_ppts{2,4} = [0.0136   8.60   0.9   1.4];
-opt_ppts{2,5} = [0.0191   6.60   0.9   1.4];
-opt_ppts_perturb{2} =  opt_ppts{2,1};%job.MC_parameters.perturbationPpties_l1+
+% DPF 690 = 5.38 + 0.049 A 0.877
+% DPF 744 = 5.11 + 0.106 A 0.723
+% DPF 807 = 4.99 + 0.067 A 0.814
+% DPF 832 = 4.67 + 0.062 A 0.819
+%
 
-%690
-opt_ppts{1,1} = [0.0178   12.5   0.9   1.4];
-opt_ppts{1,2} = [0.0178   12.5   0.9   1.4];
-opt_ppts{1,3} = [0.0004   0.10   0.9   1.4];
-opt_ppts{1,4} = [0.0101   10.0   0.9   1.4];
-opt_ppts{1,5} = [0.0159   8.00   0.9   1.4];
-opt_ppts_perturb{1} =  opt_ppts{1,1};%job.MC_parameters.perturbationPpties_l1+
+outOP = GetOpt_ppts('wl');
+opt_ppts = outOP{1};
+opt_ppts_perturb = outOP{2};
 
 DelPreviousData  = job.DelPreviousData;
 try
@@ -218,9 +212,9 @@ for iSubj=1:size(job.NIRSmat,1)
             end
         end
         
-        save(cs_dir,'DPF');
+        save(fullfile(cs_dir,'DPF.mat'),'DPF');
         NIRS.Dt.fir.PVE = PVF;
-        save(cs_dir,'PVF');
+        save(fullfile(cs_dir,'PVE.mat'),'PVF');
         NIRS.Dt.fir.DPF = DPF;
         % ----------------------------------------------------------------------- %
         if NewDirCopyNIRS

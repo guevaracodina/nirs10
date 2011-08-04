@@ -16,21 +16,9 @@ function out = nirs_run_generate_sensitivity_matrix(job)
 % Copyright (C) 2010 Laboratoire d'Imagerie Optique et Moleculaire
 % Clément Bonnéry 03/2011
 
-%830
-opt_ppts{2,1} = [0.0186   11.1   0.9   1.4];
-opt_ppts{2,2} = [0.0186   11.1   0.9   1.4];
-opt_ppts{2,3} = [0.0026   0.10   0.9   1.4];
-opt_ppts{2,4} = [0.0136   8.60   0.9   1.4];
-opt_ppts{2,5} = [0.0191   6.60   0.9   1.4];
-opt_ppts_perturb{2} =  opt_ppts{2,1};%job.MC_parameters.perturbationPpties_l1+
-
-%690
-opt_ppts{1,1} = [0.0178   12.5   0.9   1.4];
-opt_ppts{1,2} = [0.0178   12.5   0.9   1.4];
-opt_ppts{1,3} = [0.0004   0.10   0.9   1.4];
-opt_ppts{1,4} = [0.0101   10.0   0.9   1.4];
-opt_ppts{1,5} = [0.0159   8.00   0.9   1.4];
-opt_ppts_perturb{1} =  opt_ppts{1,1};%job.MC_parameters.perturbationPpties_l1+
+outOP = GetOpt_ppts('wl');
+opt_ppts = outOP{1};
+opt_ppts_perturb = outOP{2};
 
 for Idx=1:size(job.NIRSmat,1)
     %Load NIRS.mat information
@@ -217,13 +205,8 @@ for Idx=1:size(job.NIRSmat,1)
                                 % boule autour de la position du point P
                                 vxr = 3;%voxel radius
                                 
-                                ms_N = ms(max(cs.Pfp_rmiv(1,S_Pkpt)-vxr,1):min(cs.Pfp_rmiv(1,S_Pkpt)+vxr,size(ms,1)),...
-                                    max(cs.Pfp_rmiv(2,S_Pkpt)-vxr,1):min(cs.Pfp_rmiv(2,S_Pkpt)+vxr,size(ms,2)),...
-                                    max(cs.Pfp_rmiv(3,S_Pkpt)-vxr,1):min(cs.Pfp_rmiv(3,S_Pkpt)+vxr,size(ms,3)));
-                                
-                                md_N = md(max(cs.Pfp_rmiv(1,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(1,D_Pktp)+vxr,size(md,1)),...
-                                    max(cs.Pfp_rmiv(2,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(2,D_Pktp)+vxr,size(md,2)),...
-                                    max(cs.Pfp_rmiv(3,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(3,D_Pktp)+vxr,size(md,3)));
+                                ms_N = ms(max(cs.Pfp_rmiv(1,S_Pkpt)-vxr,1):min(cs.Pfp_rmiv(1,S_Pkpt)+vxr,size(ms,1)), max(cs.Pfp_rmiv(2,S_Pkpt)-vxr,1):min(cs.Pfp_rmiv(2,S_Pkpt)+vxr,size(ms,2)), max(cs.Pfp_rmiv(3,S_Pkpt)-vxr,1):min(cs.Pfp_rmiv(3,S_Pkpt)+vxr,size(ms,3)));
+                                md_N = md(max(cs.Pfp_rmiv(1,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(1,D_Pktp)+vxr,size(md,1)), max(cs.Pfp_rmiv(2,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(2,D_Pktp)+vxr,size(md,2)), max(cs.Pfp_rmiv(3,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(3,D_Pktp)+vxr,size(md,3)));
                                 
                                 phi0_S = max(ms_N(:));
                                 phi0_D = max(md_N(:));

@@ -65,8 +65,9 @@ if G.alg==1
     outF = nirs_fit_probe(jobF);
     Pfp_ancienne_rmiv = outF{1};
 elseif G.alg==2 % pour tMC, les points doivent etre dans le volume (peut etre est-ce juste une question de direction de la propagation...)
-    jobF.Pp_rmm = G.Pp_rmm;
-    jobF.Pp_c1_rmm = G.Pp_c1_rmm;
+    jobF.Pwd_rmm = Pwd_rmm;
+    jobF.Pp_rmm = P.Pp_rmm;
+    jobF.Pp_c1_rmm = P.Pp_c1_rmm;
     jobF.NP = NP;
     jobF.image_in = {outRS};
     jobF.Pfp_ancienne_rmiv = Pfp_ancienne_rmiv;
