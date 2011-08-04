@@ -113,16 +113,9 @@ Pfp_rmiv(1:3,Pi) = neighvox2_i;
 %                     end
 %                 end
             end
-            
-            
             %3)s
             Pfp_rmm(:,Pi) = Pfp_rmiv(1:3,Pi);
         end
-        
-        
-        
-        
-        
         % % % % % % % % % % % % % % % % %         Pfp_rmiv = round(job.Pfp_ancienne_rmiv);
         % % % % % % % % % % % % % % % % %
         % % % % % % % % % % % % % % % % %         for Pi = 1:NP
