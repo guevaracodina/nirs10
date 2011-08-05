@@ -176,7 +176,7 @@ for iSubj=1:size(job.NIRSmat,1)
                     PVF(1,Ci)=0;
                     DPF(1,Ci)=0;
                 else
-                    disp(['PVE calculated for channel : ' int2str(Ci)]);
+                    
                     Rphotons_ppl(:,Ci) = sum(History{tk_Ci,2}(idx,3:size(History{tk_Ci,2},2)),1);% Parcours total (somme sur chaque tissu) de chaque photon issu de S et compté par D (chaque photon de la paire), en mm
                     
                     if tk_wl==690
@@ -196,19 +196,20 @@ for iSubj=1:size(job.NIRSmat,1)
                     % Pour la paire pi (sm-dn), le DPF est la moyenne sur tous les
                     % photons, pondérée par leur atténuation, , de ce parcours
                     DPL(1,Ci) = photons_ppl(:,Ci)'* photons_weight ./ sum(photons_weight); % barycentre
-                    DPF(1,Ci) = DPL(1,Ci)/Cgp(1,Ci)*10;% ...divisée par la distance source-détecteur en mm                                     %%%%%%% Differential Pathlength Factor
+                    DPF(1,Ci) = DPL(1,Ci)/(Cgp(1,Ci)*10);% ...divisée par la distance source-détecteur en mm                                     %%%%%%% Differential Pathlength Factor
                     
                     %                             % Parcours moyen dans la perturbation
                     %                             PPL(1,Ci) = photons_opl(6,Ci) * photons_weight(6,1) ./ sum(photons_weight(6,1));
                     %                             PPF(1,Ci) = PPL(1,Ci)/Cgp(1,Ci);
                     % Parcours moyen dans la zone BOLD
                     PPL(1,Ci) = Rphotons_ppl(7:11,Ci)'* photons_weight(1:5,1) ./ sum(photons_weight(1:5,1));
-                    PPF(1,Ci) = PPL(1,Ci)/Cgp(1,Ci);
+                    PPF(1,Ci) = PPL(1,Ci)/(Cgp(1,Ci)*10);
                     
                     PVF(1,Ci) = DPF(1,Ci)./PPF(1,Ci);% Partial pathlength factor and partial volume factor (PVF := DPF/PPF);
+                    disp(['PVE calculated for channel : ' int2str(Ci)]);
                 end
             catch % le fichier d histoire n a pas ete trouve...
-                %                 disp(['PVE failed for channel : ' int2str(Ci)]);
+                                 disp(['PVE failed for channel : ' int2str(Ci)]);
             end
         end
         
