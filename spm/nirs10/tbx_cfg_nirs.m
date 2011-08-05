@@ -6065,6 +6065,27 @@ runMOB1.help = {'.'};
     end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Overtraining ; Olivier Dupuis
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+runOT1      = cfg_exbranch;
+runOT1.name = 'Run Overtraining analysis';
+runOT1.tag  = 'runOT1';
+runOT1.val  = {};
+runOT1.prog = @nirs_run_runOvertraining;
+runOT1.vout = @nirs_cfg_vout_runOvertraining;
+runOT1.help = {'.'};
+
+    function vout = nirs_cfg_vout_runOvertraining(job)
+        vout = cfg_dep;
+        vout.sname      = 'NIRS.mat';
+        vout.src_output = substruct('.','NIRSmat');
+        vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
+    end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Configuration main modules  
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

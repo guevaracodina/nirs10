@@ -138,7 +138,11 @@ for Idx=1:size(job.NIRSmat,1)
                     end
                     
                     ms4=loadmc2(fS{fiS,:},[V_segR.dim numgates],'float');
-                    ms=sum(ms4,4);
+                    if numgates~=1
+                        ms=sum(ms4,4);
+                    else
+                        ms=ms4;
+                    end
                     
                 case 2 % tMCimg
                     fid=fopen(fS{fiS,:},'rb');
@@ -199,7 +203,11 @@ for Idx=1:size(job.NIRSmat,1)
                             case 1 % MCX
                                 % already normalized (http://mcx.sourceforge.net/cgi-bin/index.cgi?Doc/README : 6.1 output files)
                                 md4=loadmc2(fullfile(cs_dir,[Dfn Oe]),[V_segR.dim numgates],'float');
-                                md=sum(md4,4);
+                                if numgates~=1
+                                    md=sum(md4,4);
+                                else
+                                    md=md4;
+                                end
                                 
                                 %%% calcul de phi0
                                 % boule autour de la position du point P
