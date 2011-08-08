@@ -92,7 +92,9 @@ for iSubj=1:size(job.NIRSmat,1)
             case 1 %MCX
                 count=0;
                 for i=1:size(f,1)
-                    [history, header]=loadmch(f{i,1});
+                     [history, header]=loadmch(f{i,1});
+% [history, header]=loadmch([f{i,1}(1:end-1) 'h']);
+%                     [tk_dir, tk_file, tk_ext] = fileparts([f{i,1}(1:end-1) 'h']);
                     [tk_dir, tk_file, tk_ext] = fileparts(f{i,1});
 %                     tk_wl = str2double(tk_file(end-4:end-2));
                     count = count+1;
