@@ -5862,7 +5862,7 @@ spmmat.tag     = 'spmmat';       %file names
 spmmat.filter = 'mat';
 spmmat.ufilter = '^SPM.mat$';    
 spmmat.num     = [1 1];     % Number of inputs required 
-spmmat.help    = {'Select SPM.mat of BOLD estimation for this subject.'}; 
+spmmat.help    = {'Select SPM.mat of BOLD estimation for this subject (or group).'}; 
 
 spmmat_ASL         = cfg_files; 
 spmmat_ASL.name    = 'Select SPM.mat (for ASL)'; % The displayed name
@@ -5870,7 +5870,7 @@ spmmat_ASL.tag     = 'spmmat_ASL';       %file names
 spmmat_ASL.filter = 'mat';
 spmmat_ASL.ufilter = '^SPM.mat$';    
 spmmat_ASL.num     = [1 1];     % Number of inputs required 
-spmmat_ASL.help    = {'Select SPM.mat of ASL estimation for this subject.'}; 
+spmmat_ASL.help    = {'Select SPM.mat of ASL estimation for this subject (or group).'}; 
 
 BOLD           = cfg_branch;
 BOLD.name      = 'BOLD only';
@@ -5965,22 +5965,21 @@ Modalities.help      = {'Choose data type: BOLD, BOLD + ASL, ASL only, HbO+HbR'}
 Model_Choice           = cfg_menu;
 Model_Choice.name      = 'Choice of Model';
 Model_Choice.tag       = 'Model_Choice';
-Model_Choice.labels    = {'Buxton-Friston' 'Zheng-Mayhew' 'Huppert1'};
+Model_Choice.labels    = {'Buxton-Friston' 'Zheng-Mayhew' 'Boas-Huppert'};
 Model_Choice.values    = {0,1,2};
 Model_Choice.val       = {0};
 %Model_Choice.def  = @(val)nirs_get_defaults('readNIRS.boxy1.save_bin_dot', val{:});
 Model_Choice.help      = {'Choose hemodynamic model: Buxton-Friston, '
-    'Zheng-Mayhew, or 1-Compartment Huppert Model'}';
+    'Zheng-Mayhew, or 1-Compartment Boas-Huppert Model'}';
 
 Stimuli     = cfg_entry; 
 Stimuli.name    = 'Stimuli identification numbers'; 
 Stimuli.tag     = 'Stimuli';       
 Stimuli.strtype = 'r'; 
 Stimuli.val     = {1};
-Stimuli.num     = [1 Inf];     
+Stimuli.num     = [0 Inf];     
 Stimuli.help    = {'Enter stimuli numbers to include as a Matlab row '
     'vector (get from the design matrix associated with the data file)'}'; 
-
 
 % Executable Branch
 NIRS_HDM      = cfg_exbranch;       
@@ -5992,6 +5991,146 @@ NIRS_HDM.vout = @nirs_cfg_vout_NIRS_HDM;
 NIRS_HDM.help = {'NIRS_SPM Hemodynamic Modeling.'};
 
 function vout = nirs_cfg_vout_NIRS_HDM(job)
+vout = cfg_dep;                     
+vout.sname      = 'NIRS.mat';       
+vout.src_output = substruct('.','NIRSmat'); 
+vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Hemodynamic modeling - new version
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+xSPM_spmmat         = cfg_files; %Select NIRS.mat for this subject 
+xSPM_spmmat.name    = 'Select xSPM.mat (for BOLD)'; % The displayed name
+xSPM_spmmat.tag     = 'xSPM_spmmat';       %file names
+xSPM_spmmat.filter = 'mat';
+xSPM_spmmat.ufilter = '^xSPM';    
+xSPM_spmmat.num     = [0 1];     % Number of inputs required 
+xSPM_spmmat.help    = {'Select xSPM.mat of BOLD estimation for this subject or group.'}; 
+
+xSPM_spmmat_ASL         = cfg_files; 
+xSPM_spmmat_ASL.name    = 'Select xSPM.mat (for ASL)'; % The displayed name
+xSPM_spmmat_ASL.tag     = 'xSPM_spmmat_ASL';       %file names
+xSPM_spmmat_ASL.filter = 'mat';
+xSPM_spmmat_ASL.ufilter = '^xSPM';    
+xSPM_spmmat_ASL.num     = [0 1];     % Number of inputs required 
+xSPM_spmmat_ASL.help    = {'Select xSPM.mat of ASL estimation for this subject or group.'}; 
+
+% VOI_spmmat         = cfg_files; %Select NIRS.mat for this subject 
+% VOI_spmmat.name    = 'Select VOI_....mat (for BOLD)'; % The displayed name
+% VOI_spmmat.tag     = 'VOI_spmmat';       %file names
+% VOI_spmmat.filter = 'mat';
+% VOI_spmmat.ufilter = '^VOI';    
+% VOI_spmmat.num     = [0 1];     % Number of inputs required 
+% VOI_spmmat.help    = {'Select VOI_....mat of BOLD estimation for this subject (or group).'}; 
+% 
+% VOI_spmmat_ASL         = cfg_files; 
+% VOI_spmmat_ASL.name    = 'Select VOI_....mat (for ASL)'; % The displayed name
+% VOI_spmmat_ASL.tag     = 'VOI_spmmat_ASL';       %file names
+% VOI_spmmat_ASL.filter = 'mat';
+% VOI_spmmat_ASL.ufilter = '^VOI';    
+% VOI_spmmat_ASL.num     = [0 1];     % Number of inputs required 
+% VOI_spmmat_ASL.help    = {'Select VOI_....mat of ASL estimation for this subject (or group).'}; 
+
+xSPM_BOLD           = cfg_branch;
+xSPM_BOLD.name      = 'BOLD only';
+xSPM_BOLD.tag       = 'xSPM_BOLD';
+xSPM_BOLD.val       = {spmmat xSPM_spmmat}; % VOI_spmmat}; 
+xSPM_BOLD.help      = {''};
+
+xSPM_ASL           = cfg_branch;
+xSPM_ASL.name      = 'ASL only';
+xSPM_ASL.tag       = 'ASL';
+xSPM_ASL.val       = {spmmat_ASL xSPM_spmmat_ASL}; % VOI_spmmat_ASL}; 
+xSPM_ASL.help      = {''};
+
+xSPM_BOLD_ASL           = cfg_branch;
+xSPM_BOLD_ASL.name      = 'BOLD and ASL';
+xSPM_BOLD_ASL.tag       = 'BOLD_ASL';
+xSPM_BOLD_ASL.val       = {spmmat spmmat_ASL xSPM_spmmat xSPM_spmmat_ASL}; % VOI_spmmat VOI_spmmat_ASL}; 
+xSPM_BOLD_ASL.help      = {''};
+
+xSPM_Modalities           = cfg_choice;
+xSPM_Modalities.name      = 'Modalities: BOLD, BOLD + ASL estimation, ASL only, HbO+HbR:';
+xSPM_Modalities.tag       = 'xSPM_Modalities';
+xSPM_Modalities.values    = {xSPM_BOLD xSPM_BOLD_ASL xSPM_ASL};
+xSPM_Modalities.val       = {xSPM_BOLD}; 
+xSPM_Modalities.help      = {'Choose data type: BOLD, BOLD + ASL, ASL only, HbO+HbR'}; 
+
+which_session     = cfg_entry; 
+which_session.name    = 'Which session?'; 
+which_session.tag     = 'which_session';       
+which_session.strtype = 'r'; 
+which_session.val     = {1};
+which_session.num     = [0 1];     
+which_session.help    = {'Enter session to analyze'}'; 
+
+which_subjects         = cfg_files; %Select NIRS.mat for this subject 
+which_subjects.name    = 'Select SPM folders for each subject'; % The displayed name
+which_subjects.tag     = 'which_subjects';       %file names
+which_subjects.filter = 'dir';
+which_subjects.ufilter = '.*';    
+which_subjects.num     = [1 Inf];     % Number of inputs required 
+which_subjects.help    = {'Select folders for each subject containing'
+    'first level GLM SPM analysis.'}'; 
+
+nameROI         = cfg_entry;
+nameROI.name    = 'ROI name';
+nameROI.tag     = 'nameROI';       
+nameROI.strtype = 's';
+nameROI.num     = [0 Inf];  
+nameROI.val     = {''};
+nameROI.help    = {'Enter name for ROI. If left blank, ROIs will be enumerated.'}'; 
+
+radiusROI         = cfg_entry;
+radiusROI.name    = 'ROI radius value';
+radiusROI.tag     = 'radiusROI';       
+radiusROI.strtype = 'r';
+radiusROI.num     = [1 1];  
+radiusROI.val     = {5};
+radiusROI.help    = {'Radius value in mm'}'; 
+
+coordinateROI         = cfg_entry;
+coordinateROI.name    = 'ROI coordinates';
+coordinateROI.tag     = 'coordinateROI';       
+coordinateROI.strtype = 'r';
+coordinateROI.num     = [1 3];  
+%coordinateROI.val     = {};
+coordinateROI.help    = {'Enter MNI coordinates [x y z] in mm for center of ROI'}'; 
+
+whichROI         = cfg_branch;
+whichROI.tag     = 'whichROI';
+whichROI.name    = 'Define ROI';
+whichROI.val     = {nameROI coordinateROI radiusROI};
+whichROI.help    = {'Define ROI'}';
+
+genericROI         = cfg_repeat;
+genericROI.tag     = 'genericROI';
+genericROI.name    = 'Define ROIs';
+genericROI.help    = {'Define here the ROIs to be analyzed'}';
+genericROI.values  = {whichROI};
+genericROI.num     = [1 Inf];
+
+HDMdisplay           = cfg_menu;
+HDMdisplay.name      = 'Display individual results';
+HDMdisplay.tag       = 'HDMdisplay';
+HDMdisplay.labels    = {'Yes' 'No'};
+HDMdisplay.values    = {1,0};
+HDMdisplay.val       = {0};
+HDMdisplay.help      = {'Display output for each subject'}';
+
+% Executable Branch
+liom_HDM      = cfg_exbranch;       
+liom_HDM.name = 'LIOM Hemodynamic Modelling';             
+liom_HDM.tag  = 'liom_HDM'; 
+liom_HDM.val  = {xSPM_Modalities Model_Choice Stimuli which_session ...
+    which_subjects genericROI HDMdisplay}; 
+liom_HDM.prog = @nirs_run_liom_HDM;  
+liom_HDM.vout = @nirs_cfg_vout_liom_HDM; 
+liom_HDM.help = {'NIRS_SPM Hemodynamic Modeling.'};
+
+function vout = nirs_cfg_vout_liom_HDM(job)
 vout = cfg_dep;                     
 vout.sname      = 'NIRS.mat';       
 vout.src_output = substruct('.','NIRSmat'); 
@@ -6152,7 +6291,6 @@ model_estimate.values = {wls_bglm_estimate liom_contrast  ...
             liom_group extract_map_data AnalyzeGLM ROCtest}; 
 model_estimate.help   = {'These modules estimate a GLM.'};
  
-
 %module 13
 CRIUGM        = cfg_choice; %cfg_repeat; 
 CRIUGM.name   = 'CRIUGM';
@@ -6167,5 +6305,5 @@ nirs10.tag    = 'nirs10'; %Careful, this tag nirs10 must be the same as
 %the name of the toolbox and when called by spm_jobman in nirs10.m
 nirs10.values = {readNIRS readOnsets preprocessNIRS preprocANAT coregNIRS ...
     configMC1 runMC1 makesens1 calculatePVE1 model_reconstruct model_specify ...
-    model_estimate NIRS_HDM CRIUGM}; %model_display
+    model_estimate NIRS_HDM liom_HDM CRIUGM}; %model_display
 end
