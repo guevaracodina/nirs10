@@ -6208,11 +6208,10 @@ runMOB1.help = {'.'};
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-
 runOT1      = cfg_exbranch;
 runOT1.name = 'Run Overtraining analysis';
 runOT1.tag  = 'runOT1';
-runOT1.val  = {};
+runOT1.val  = {NIRSmat};
 runOT1.prog = @nirs_run_runOvertraining;
 runOT1.vout = @nirs_cfg_vout_runOvertraining;
 runOT1.help = {'.'};
@@ -6295,7 +6294,7 @@ model_estimate.help   = {'These modules estimate a GLM.'};
 CRIUGM        = cfg_choice; %cfg_repeat; 
 CRIUGM.name   = 'CRIUGM';
 CRIUGM.tag    = 'CRIUGM';
-CRIUGM.values = {runVOIRE1 runMOB1};
+CRIUGM.values = {runVOIRE1 runMOB1 runOT1};
 CRIUGM.help   = {'Data analysis for CRIUGM projects'};
 
 %-----------------------------------------------------------------------
