@@ -227,7 +227,8 @@ for iSubj=1:size(job.NIRSmat,1)
             try
                 fsegT1_4fit = NIRS.Dt.ana.T1seg;
             catch
-                disp('Could not find a segmented image to fit positions on scalp.');
+                fsegT1_4fit = NIRS.Dt.ana.T1;
+%                 disp('Could not find a segmented image to fit positions on scalp.');
             end
         else
             % Store segmented image file location
