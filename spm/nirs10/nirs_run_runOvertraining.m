@@ -32,7 +32,7 @@ for iSubj=1:size(job.NIRSmat,1)
             ind_end = (max(D_time.t)-20)*25+1;
             ind_start =20*25+1;
             
-            names        = {'baseline',['cond_' n(end-1,end)]};
+            names        = {'baseline',['cond_' n(end)]};
             
             onsets{1}    = [1,ind_end];
             durations{1} = [20,20];
