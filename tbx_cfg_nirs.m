@@ -343,11 +343,18 @@ no_helmet.help = {'Helmet informations will be extracted from ''.nirs'' file.'};
 helm_temp         = cfg_files;
 helm_temp.tag     = 'helm_temp';
 helm_temp.name    = 'Helmet template';
-helm_temp.help = {'If you have chosen before template in choice : ''Individual T1 or template''.'};
-helm_temp.filter  = 'dir';
-helm_temp.ufilter = '.*';
-helm_temp.val{1} = {''};
-helm_temp.num     = [0 0];
+helm_temp.filter  = 'mat';
+helm_temp.ufilter = 'NIRS.mat';    
+helm_temp.val{1}  = {''};
+helm_temp.num     = [0 1];
+helm_temp.help = {['If you have chosen before ''template'' in choice : ''Individual T1 or template''.'...
+    'If you have generated a template for a special helmet and that you want to coregister it with the subject anatomical image, please choose the NIRS.mat you have generated.']};
+
+% helm_temp      = cfg_branch;
+% helm_temp.tag  = 'helm_temp';
+% helm_temp.name = 'Template';
+% helm_temp.val  = {helm_temp_COREG text_brainsight}; 
+% helm_temp.help = {};
 
 % helmet         = cfg_choice;
 % helmet.tag     = 'helmet';
@@ -1555,6 +1562,26 @@ coreg2.help = {'Automatic coregistration with T1 template. Use this choice in th
 
 %make NIRS.mat available as a dependency
 function vout = nirs_cfg_vout_coreg2(job)
+vout = cfg_dep;                     
+vout.sname      = 'NIRS.mat';       
+vout.src_output = substruct('.','NIRSmat'); 
+vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Coreg d un helmet template sur la T1 sujet
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+coreg3      = cfg_exbranch;       
+coreg3.name = 'NIRScoreg with helmet template';             
+coreg3.tag  = 'coreg3'; 
+coreg3.val  = {NIRSmat DelPreviousData NewDirCopyNIRS anatT1 segT1_4fit ...
+    anatT1_template fid_in_subject_MNI nasion_wMNI AL_wMNI AR_wMNI GenDataTopo};    
+coreg3.prog = @nirs_run_coreg_helmtemp;  
+coreg3.vout = @nirs_cfg_vout_coreg3; 
+coreg3.help = {'Automatic coregistration with T1 template. Use this choice in the case you don''t have the anatomical T1 images of the subject.'};
+
+%make NIRS.mat available as a dependency
+function vout = nirs_cfg_vout_coreg3(job)
 vout = cfg_dep;                     
 vout.sname      = 'NIRS.mat';       
 vout.src_output = substruct('.','NIRSmat'); 
@@ -5408,7 +5435,7 @@ liom_group.tag  = 'liom_group';
 liom_group.val  = {NIRSmat FFX_or_RFX contrast_figures contrast_p_value ...
         GenerateInverted GroupColorbars override_colorbar figures_visible ...
         GroupFiguresIntoSubplots output_unc SmallFigures write_neg_pos ...
-        group_session_to_average}; % factorial_design}; 
+        group_session_to_average factorial_design}; 
 liom_group.prog = @nirs_run_liom_group;  
 liom_group.vout = @nirs_cfg_vout_liom_group; 
 liom_group.help = {'Liom Group level model estimation.'};
@@ -6254,7 +6281,7 @@ preprocANAT.help   = {'These modules pre-process anatomical images '
 coregNIRS        = cfg_choice; %cfg_repeat; 
 coregNIRS.name   = 'Coregister NIRS data';
 coregNIRS.tag    = 'coregNIRS';
-coregNIRS.values = {coreg1 coreg2 coreg_manual1 view3d1 resize1};
+coregNIRS.values = {coreg1 coreg2 coreg3 coreg_manual1 view3d1 resize1};
 coregNIRS.help   = {'These modules perform coregistration ',...
             'between NIRS and an anatomical image.'};
 

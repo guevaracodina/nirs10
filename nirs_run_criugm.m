@@ -108,17 +108,40 @@ try
         elseif isfield(job.subj(1,is).helmet,'no_helmet') && ~template4all
             NIRS.Dt.fir.stax.n = 'no_helmet';
             
-            %     elseif  isfield(job.subj(1,is).helmet,'custom')
-            %         NIRS.Dt.fir.stax.n = 'custom';
-            %         % H : NIRS.Cf.H already done, just have to save it in the NIRS.mat
-            %         load(fullfile(job.subj(1,is).helmet.custom{:},'Hcoregistered.mat'));
-            %         NIRS.Cf.H = Hcoregistered;
-            %         % Topo Data : nirs_run_coreg has already been executed to generate
-            %         % once and for all the subjects the TopoData matrix.
-            %         NIRS.Dt.ana.rend = fullfile(job.subj(1,is).helmet.custom{:},'TopoData.mat');
-            %         % save template T1 as ana T1
-            %         anatT1 = fullfile(fileparts(which('spm')),'templates','T1.nii');
-            %         job.subj(1,is).anatT1 = {anatT1};
+        elseif isfield(job.subj(1,is).helmet,'helm_temp') &&...
+                ~isempty(job.subj(1,is).helmet.helm_temp) && ~template4all
+            %%% on a l anatomique et un template pour le helmet...
+            % il faut coller les deux dans l espace normalise et la
+            % coregistration necessaire n est que partielle !!!!
+            NIRS.Dt.fir.stax.n = 'Brainsight(c)';
+            NIRS.Dt.fir.stax.nota = 'Helmet template';
+            NIRS_ht = load(job.subj(1,is).helmet.helm_temp{:});
+            NIRS.Cf.H.P.w = NIRS_ht.NIRS.Cf.H.P.w;
+            NIRS.Cf.H.C = NIRS_ht.NIRS.Cf.H.C;
+            NIRS.Cf.H.p = NIRS_ht.NIRS.Cf.H.p;
+            NIRS.Cf.H.n = NIRS_ht.NIRS.Cf.H.n;
+            
+            f = load(job.subj(1,is).nirs_files{:},'-mat');
+            NIRS.Cf.H.S.n = f.SD.SrcNam;
+            NIRS.Cf.H.S.N = size(f.SD.SrcPos,1);
+            NIRS.Cf.H.D.n = f.SD.SrcNam;
+            NIRS.Cf.H.D.N = size(f.SD.DetPos,1);
+            NIRS.Cf.H.P.N = NIRS.Cf.H.S.N + NIRS.Cf.H.D.N;
+            
+            matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.NIRSmat = {fullfile(study_p,'NIRS4all.mat')};
+            matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.DelPreviousData = 0;
+            matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.NewDirCopyNIRS.CreateNIRSCopy_false = struct([]);
+            matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.anatT1 = {[fullfile(fileparts(which('spm')),'templates','T1.nii') ',1']};
+            matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.segT1_4fit = {[fullfile(fileparts(which('spm')),'toolbox','nirs10','nirs10_templates','00044_segmented_T1.nii') ',1']};
+            matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.anatT1_template = {[fullfile(fileparts(which('spm')),'templates','T1.nii') ',1']};
+            matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.fid_in_subject_MNI = 0;
+            matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.nasion_wMNI = [0 84 -48];
+            matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.AL_wMNI = [-83 -19 -38];
+            matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.AR_wMNI = [83 -19 -38];
+            matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.GenDataTopo = 1;
+            matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.render_choice.render_template = struct([]);
+            matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.View6Projections = 0;
+            spm_jobman('run_nogui',matlabbatch);
         end
         
         % Anatomical image
