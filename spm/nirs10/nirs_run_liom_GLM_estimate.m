@@ -137,11 +137,15 @@ for Idx=1:size(job.NIRSmat,1)
                     tSPM.Sess = SPM.Sess(s);                
                     tSPM.xX = SPM.xX;
                     try 
-                        %find elements of X for session s
-                        nbeta = size(SPM.xX.X,2);
-                        nbetaS = (nbeta-nsess)/nsess;
-                        %last entry is the constant regressor
-                            beta = [(s-1)*nbetaS+1:s*nbetaS nbeta-nsess+s];
+                        %This only worked for constant number of regressors
+                        %across sessions
+%                         %find elements of X for session s
+%                         nbeta = size(SPM.xX.X,2);
+%                         nbetaS = (nbeta-nsess)/nsess;
+%                         %last entry is the constant regressor
+%                             beta = [(s-1)*nbetaS+1:s*nbetaS nbeta-nsess+s];
+
+                        beta = [SPM.Sess(s).col SPM.Sess(nsess).col(end)+s];
 
                         if markers_available
                             svec = SPM.Sess(s).row(si(iSubSess):ei(iSubSess)); 
@@ -249,7 +253,7 @@ for Idx=1:size(job.NIRSmat,1)
                     try
                         %filtered data less estimated beta times filtered design
                         %matrix = adjusted data
-                        if nbetaS == 6 %HARD CODED - Careful! to catch case with 2 types of onsets for patient 1
+                        if length(beta) == 6 %HARD CODED - Careful! to catch case with 2 types of onsets for patient 1
                             V2r = 3; %position of 2nd Volterra regressor 
                         else
                             V2r = 2;
