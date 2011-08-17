@@ -353,9 +353,13 @@ for Idx=1:size(job.NIRSmat,1)
                         end
                         if display_heart_rate_figure || save_heart_rate_figure
                             [dummy,namef,dummy2] = fileparts(rDtp{f});
-                            imagesc(whpR);title(['Heart pace: ' namef]);
+                            imagesc(whpR);title(['Heart pace: ' namef],'Interpreter', 'none');
                             if save_heart_rate_figure
-                                filen2 = fullfile(dir1,[namef '_HeartRate.tiff']); %save as .tiff
+                                if NewDirCopyNIRS
+                                    filen2 = fullfile(dir2,[namef '_HeartRate.tiff']); %save as .tiff
+                                else
+                                    filen2 = fullfile(dir1,[namef '_HeartRate.tiff']); %save as .tiff
+                                end
                                 print(hfig, '-dtiffn', filen2);
                             end
                             if ~display_heart_rate_figure
@@ -432,7 +436,7 @@ for Idx=1:size(job.NIRSmat,1)
                     reg(1:size(hp,2)) = interp1(interpx,interpY,interpxi,'linear');
                 end
                 NIRS.Dt.fir.Sess(f).fR{1} = reg';
-                save(job.NIRSmat{Idx,1},'NIRS');
+                %save(job.NIRSmat{Idx,1},'NIRS');
             end
         end
         
