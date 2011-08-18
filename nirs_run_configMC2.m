@@ -40,6 +40,7 @@ for Idx=1:size(job.NIRSmat,1)
             i_cs=1;
         end
         
+       
         % cs current simulation
         cs ={};
         G={};%%% juste pour le code
