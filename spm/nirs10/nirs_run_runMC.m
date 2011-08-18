@@ -84,14 +84,17 @@ for Idx=1:size(job.NIRSmat,1)
                          copyfile([spm('Dir') '\toolbox\nirs10\mc_exe\' codeexe],[dir1 filesep codeexe]);
                     end
                     %                 str_run1 = ['mcx.exe -t ' int2str(J.MCX_t) ' -T ' int2str(J.MCX_T) ' -n ' int2str(cs.par.nphotons)];
-                    str_run1 = [codeexe ' -A 2 -n ' int2str(cs.par.nphotons)];
-                    if J.MCX_l
-                        str_log = ' -l'; %'MCX_logfile';
-                    else
-                        str_log = '';
-                    end
-                    str_run2 = [' -r ' int2str(J.MCX_r) ' -g ' int2str(J.MCX_g) ' -U 1 -S 1 -d 1 -a 0 -b 0 -B 1 -z 1'];
-                    res = system([str_run1 ' -f ' file2 ' -s ' file1 str_run2 str_log]);
+% % % % % % % % % % %                     str_run1 = [codeexe ' -A 2 -n ' int2str(cs.par.nphotons)];
+% % % % % % % % % % %                     if J.MCX_l
+% % % % % % % % % % %                         str_log = ' -l'; %'MCX_logfile';
+% % % % % % % % % % %                     else
+% % % % % % % % % % %                         str_log = '';
+% % % % % % % % % % %                     end
+% % % % % % % % % % %                     str_run2 = [' -r ' int2str(J.MCX_r) ' -g ' int2str(J.MCX_g) ' -U 1 -S 1 -d 1 -a 0 -b 0 -B 1 -z 1'];
+% % % % % % % % % % %                     res = system([str_run1 ' -f ' file2 ' -s ' file1 str_run2 str_log]);
+
+% % % % % % % % % % %                     str_run2 = [' -r ' int2str(J.MCX_r) ' -g ' int2str(J.MCX_g) ' -U 1 -S 1 -d 1 -a 0 -b 0 -B 1 -z 1'];
+                    res = system(['mcx_det -A -f ' file2 ' -s ' file1 ' -r 10 -g 1 -b 0 -d 1']);
                 end
                 delete([dir1 filesep codeexe]);
                 

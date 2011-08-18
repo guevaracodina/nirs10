@@ -229,6 +229,9 @@ for Idx=1:nsubj
             Ysegmented( belongs2n_Y<0.5 & head_shadow_Y==1 & Y1>=Y2 & Y1>=Y3 & Y1>=Y4m & Y1>=Y5m & Y1~=0 ) = 1;
             Ysegmented( belongs2n_Y<0.5 & head_shadow_Y==1 & Y3>=Y1 & Y3>=Y2 & Y3>=Y4m & Y3>=Y5m & Y3~=0 ) = 3;
             spm_progress_bar('Set',30);
+            
+            
+            
             %--> for rebel voxels
             rebel_count = 0;
             % rebel_count_processed = 0;

@@ -107,7 +107,7 @@ for Idx=1:size(job.NIRSmat,1)
         
         % the size of the plotted image can be bigger than the size read in
         % the header, in such case the value kept is the one of header
-        marge = 20;
+        marge = 5;
         for i =1:3
             bbv(i,1) = max(1,bbv(i,1)-marge);
             bbv(i,2) = min(V.dim(i),bbv(i,2)+marge);
