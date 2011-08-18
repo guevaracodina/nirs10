@@ -71,6 +71,7 @@ G.beta_group = beta_group;
 G.std_group = std_group;
 catch  exception
     disp(exception.identifier);
+    disp(exception.stack(1));
 end
     
 end

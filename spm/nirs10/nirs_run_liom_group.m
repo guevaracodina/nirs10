@@ -143,8 +143,8 @@ for Idx=1:nl
         else
             [dir0,dummy,dummy2] = fileparts(job.NIRSmat{1});
             %extract previous directory
-            tmp = findstr(filesep,dir0);
-            dir_root = dir0(1:tmp(end));
+            tmp = strfind(dir0,filesep);
+            dir_root = dir0(1:tmp(end-2));
             dir_group = [dir_root filesep 'Group'];
             if ~exist(dir_group,'dir'), mkdir(dir_group); end
             %store in same directory as first subject
@@ -159,20 +159,23 @@ for Idx=1:nl
                        
         %Big loop over views
         for v1=1:6
-            view_estimated = 0;
-            try
+            view_estimated = 0;            
                 if FFX || nS==1
-                    s1 = TOPO.v{v1}.s1;
-                    s2 = TOPO.v{v1}.s2;
-                    ns = length(TOPO.v{v1}.s); %number of sessions
+                    if isfield(TOPO.v{v1},'s1')
+                        s1 = TOPO.v{v1}.s1;
+                        s2 = TOPO.v{v1}.s2;
+                        ns = length(TOPO.v{v1}.s); %number of sessions
+                        view_estimated = 1;
+                    end
                 else
-                    s1 = big_TOPO{1}.v{v1}.s1;
-                    s2 = big_TOPO{1}.v{v1}.s2;
-                    ns = nS; %number of subjects
-                end
-                view_estimated = 1;
-            catch
-            end
+                    if isfield(big_TOPO{1}.v{v1},'s1')
+                        s1 = big_TOPO{1}.v{v1}.s1;
+                        s2 = big_TOPO{1}.v{v1}.s2;
+                        ns = nS; %number of subjects
+                        view_estimated = 1;
+                    end
+                end             
+           
             if view_estimated
                 switch v1
                     case 1 % 'ventral'
@@ -329,7 +332,12 @@ for Idx=1:nl
                                 %Positive contrasts
                                 %Generate group result as t-stat
                                 if GInv || strcmp(hb,'HbO') || strcmp(hb,'HbT')
-                                    try, G = liom_group(cbeta,ccov_beta,s1,s2,ns,min_s,FFX); end
+                                    try 
+                                        G = liom_group(cbeta,ccov_beta,s1,s2,ns,min_s,FFX); 
+                                    catch exception2
+                                        disp(exception2.identifier);
+                                        disp(exception2.stack(1));
+                                    end
                                     if FFX || nS==1
                                         TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.Tmap = G.tmap_group;
                                         TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.erdf = G.erdf_group;
@@ -362,8 +370,18 @@ for Idx=1:nl
                                     F.eidf = xCon(c1).eidf;
                                     F.tstr = xCon(c1).STAT; %tstr;
                                     F.hb = hb;
-                                    try, DF = nirs_draw_figure(4,F,W,Z); end
-                                    try, if GFIS, [Pu,Nu,Cu] = nirs_copy_figure(Pu,Nu,Cu,DF,CF,c1,hb,1,F.tstr); end; end
+                                    try
+                                        DF = nirs_draw_figure(4,F,W,Z); 
+                                    catch exception2
+                                        disp(exception2.identifier);
+                                        disp(exception2.stack(1));
+                                    end
+                                    try
+                                        if GFIS, [Pu,Nu,Cu] = nirs_copy_figure(Pu,Nu,Cu,DF,CF,c1,hb,1,F.tstr); end; 
+                                    catch exception2
+                                        disp(exception2.identifier);
+                                        disp(exception2.stack(1));
+                                    end
                                 end
                                 %Negative contrasts
                                 for f1=1:ns
@@ -383,7 +401,12 @@ for Idx=1:nl
                                 end
                                 if GInv || strcmp(hb,'HbR')
                                     %Generate group result as t-stat
-                                    try, G = liom_group(cbeta,ccov_beta,s1,s2,ns,min_s,FFX); end
+                                    try
+                                        G = liom_group(cbeta,ccov_beta,s1,s2,ns,min_s,FFX); 
+                                    catch exception2
+                                        disp(exception2.identifier);
+                                        disp(exception2.stack(1));
+                                    end
                                     if FFX || nS==1
                                         TOPO.v{v1}.g.hb{h1}.c{2*c1}.Tmap = G.tmap_group;
                                         TOPO.v{v1}.g.hb{h1}.c{2*c1}.erdf = G.erdf_group;
@@ -415,8 +438,17 @@ for Idx=1:nl
                                     F.eidf = xCon(c1).eidf;
                                     F.tstr = xCon(c1).STAT; %tstr;
                                     F.hb = hb;
-                                    try, DF = nirs_draw_figure(4,F,W,Z); end
-                                    try, if GFIS, [Pu,Nu,Cu] = nirs_copy_figure(Pu,Nu,Cu,DF,CF,c1,hb,0,F.tstr); end; end
+                                    try DF = nirs_draw_figure(4,F,W,Z); 
+                                    catch exception2
+                                        disp(exception2.identifier);
+                                        disp(exception2.stack(1));
+                                    end
+                                    try 
+                                        if GFIS, [Pu,Nu,Cu] = nirs_copy_figure(Pu,Nu,Cu,DF,CF,c1,hb,0,F.tstr); end; 
+                                    catch exception2
+                                        disp(exception2.identifier);
+                                        disp(exception2.stack(1));
+                                    end
                                 end
                             end
                         catch exception
