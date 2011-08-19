@@ -21,7 +21,6 @@ for Idx=1:size(job.NIRSmat,1)
         %threshold = job.threshold;%Threshold for cutting off small values of signal
         PVF = job.PVF; % Partial volume correction factor
         age = NIRS.Dt.s.age;
-        fs = NIRS.Cf.dev.fs;
         % Perform computation on output of the last step of preprocessing
         % that has been performed
         lst = length(NIRS.Dt.fir.pp);
@@ -32,32 +31,10 @@ for Idx=1:size(job.NIRSmat,1)
         wl = NIRS.Cf.dev.wl; % device wavenlengths
         
         try
-            fwhm = job.nirs_lpf2.lpf_gauss2.fwhm1;
-            df = job.nirs_lpf2.lpf_gauss2.downsamplingFactor;
-            DS_When = job.nirs_lpf2.lpf_gauss2.downsampleWhen;
-            %DS_When values:
-            %1: apply on raw OD
-            %2: apply on log of OD
-            %3: apply on concentrations
-            %Boolean for applying low-pass filtering
-            LPFon = 1;
-            %Boolean for applying downsampling
-            if df > 1
-                DSon = 1;
-            else
-                DSon = 0;
-            end
-        catch
-            LPFon = 0;
-            DSon = 0;
-        end
-        
-        try
             %exs(:,1): HbO for each wavelength; exs(:,2): HbR for each wavelength
             %Alexis's choice of extinction coefficients corresponds to case 1 in
             %Homer, which appears to be their preferred choice too
-            [exs,NIRS.Dt.pro.extcoeff_ref] = GetExtinctions(wl,1);
-            
+            [exs,NIRS.Dt.pro.extcoeff_ref] = GetExtinctions(wl,1);            
         catch
             disp('Problem loading extinction coefficients in nirs_run_ODtoHbOHbR.');
         end
@@ -88,7 +65,7 @@ for Idx=1:size(job.NIRSmat,1)
         %try
         %loop over data files
         for f=1:size(rDtp,1)
-            [dir1 fil1 ext1] = fileparts(rDtp{f});
+            %[dir1 fil1 ext1] = fileparts(rDtp{f});
             %if ~strcmp(fil1(1:3),prefix)       %???
             d = fopen_NIR(rDtp{f},NC);
             %bring in markers - to write out to the next NIRS.Dt.fir.pp
@@ -109,22 +86,6 @@ for Idx=1:size(job.NIRSmat,1)
                 markers_available = 0;
             end
             
-            %Define filter
-            if LPFon
-                K = [];
-                K.LParam.type = 'Gaussian';
-                K.LParam.FWHM = fwhm;
-                K.RT = 1/fs;
-                K.row = [1:size(d,2)];
-                K.HParam.type = 'none';
-                K = spm_filter_HPF_LPF_WMDL(K); %get filter structure
-            end
-            
-            if LPFon && (DS_When == 1)
-                [NIRS d bpi bpd] = NIRS_SPM_filter(NIRS,K,d,DSon,...
-                    df,bpi,bpd,markers_available);
-            end
-            
             %Multiply by 1e6 to get micromolar units
             %negative sign so that an increase in chromophore
             %concentration corresponds to a decrease in intensity due
@@ -135,12 +96,7 @@ for Idx=1:size(job.NIRSmat,1)
                 end
             else
                 d = -1e6 * real(log(d));
-            end
-            
-            if LPFon && (DS_When == 2)
-                [NIRS d bpi bpd] = NIRS_SPM_filter(NIRS,K,d,DSon,...
-                    df,bpi,bpd,markers_available);
-            end
+            end           
             
             %Effective path length
             EPF2 = ones(size(d,2),1)*EPF; %PP used to be EPF2 = EPF *ones(1,size(d,2));
@@ -180,11 +136,11 @@ for Idx=1:size(job.NIRSmat,1)
                     NIRS.WARNING = 'Some NaN elements in data - GLMs will fail!';
                 end
             end
-            
-            if LPFon && (DS_When == 3)
-                [NIRS c bpi bpd] = NIRS_SPM_filter(NIRS,K,c,DSon,...
-                    df,bpi,bpd,markers_available);
-            end
+%             
+%             if LPFon && (DS_When == 3)
+%                 [NIRS c bpi bpd] = NIRS_SPM_filter(NIRS,K,c,DSon,...
+%                     df,bpi,bpd,markers_available);
+%             end
             [dir1,fil1,ext1] = fileparts(rDtp{f});
             if NewDirCopyNIRS
                 dir2 = [dir1 filesep NewNIRSdir];
