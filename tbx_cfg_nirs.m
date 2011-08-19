@@ -5485,8 +5485,7 @@ liom_1way_anova      = cfg_exbranch;
 liom_1way_anova.name = 'Liom Anova Estimation';             
 liom_1way_anova.tag  = 'liom_1way_anova'; 
 liom_1way_anova.val  = {NIRSmat anova_dir_name anova_level level_repeat contrast_figures contrast_p_value ...
-        GenerateInverted GroupColorbars override_colorbar figures_visible ...
-        GroupFiguresIntoSubplots output_unc SmallFigures write_neg_pos}; % factorial_design}; 
+         GroupColorbars override_colorbar figures_visible SmallFigures}; % factorial_design}; 
 liom_1way_anova.prog = @nirs_run_liom_1way_anova;  
 liom_1way_anova.vout = @nirs_cfg_vout_liom_1way_anova; 
 liom_1way_anova.help = {'Liom 1way anova estimation.'};

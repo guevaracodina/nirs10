@@ -25,11 +25,7 @@ try
 catch
     SmallFigures = 0;
 end
-try
-    write_neg_pos = job.write_neg_pos;
-catch
-    write_neg_pos = 0;
-end
+write_neg_pos = 0;
 try
     group_session_to_average = job.group_session_to_average;
 catch
@@ -59,11 +55,8 @@ try
 catch
     cbar.colorbar_override = 0;
 end
-try %not used currently as false positives correction not implemented yet
-    output_unc = 1; %job.output_unc;
-catch
-    output_unc = 1;
-end
+
+output_unc = 1;
 try
     switch job.figures_visible
         case 1
@@ -75,16 +68,8 @@ catch
     cbar.visible = 'off';
 end
 %Generate contrasts for inverted responses
-try
-    GInv = job.GenerateInverted;
-catch
-    GInv = 1;
-end
-try
-    GFIS = job.GroupFiguresIntoSubplots;
-catch
-    GFIS = 1;
-end
+GInv = 1;
+GFIS = 1;
 try
     anova_dir_name = job.anova_dir_name;
 catch
@@ -201,11 +186,8 @@ try
             nC = length(xCon);
             if GFIS
                 Pu = figure('Visible',cbar.visible,'Name',['Group' '_' num2str(p_value) '_Pos'],'NumberTitle','off');
-                %subplot(fh0P,nC,3,1);
-                if GInv
-                    Nu = figure('Visible',cbar.visible,'Name',['Group' '_' num2str(p_value) '_Neg'],'NumberTitle','off');
-                    Cu = figure('Visible',cbar.visible,'Name',['Group' '_' num2str(p_value)],'NumberTitle','off');
-                end
+                Nu = figure('Visible',cbar.visible,'Name',['Group' '_' num2str(p_value) '_Neg'],'NumberTitle','off');
+                Cu = figure('Visible',cbar.visible,'Name',['Group' '_' num2str(p_value)],'NumberTitle','off');
             end
             load Split
             F.split = split;
@@ -224,45 +206,54 @@ try
                         if xCon(c1).STAT == 'T'
                             %fill in cbeta and ccov_beta
                             for f1=1:ns
-                                if ~isfield(big_TOPO{f1}.v{v1},'s')
-                                    %group analysis of a group of
-                                    %sessions analysis
-                                    tmp = squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_interp_beta(c1,:,:));
-                                    cbeta(f1,:) = tmp(:);
-                                    tmp = squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_cov_interp_beta(c1,:,:));
-                                    ccov_beta(f1,:) = tmp(:);
-                                else
-                                    %for is1=1:length(big_TOPO{f1}.v{v1}.s)
-                                    is1 = group_session_to_average;
-                                    %do each session separately
-                                    tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_beta(c1,:,:));
-                                    cbeta(f1,:) = tmp(:);
-                                    tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_cov_interp_beta(c1,:,:));
-                                    ccov_beta(f1,:) = tmp(:);
-                                    %end
+                                try
+                                    if ~isfield(big_TOPO{f1}.v{v1},'s')
+                                        %group analysis of a group of
+                                        %sessions analysis
+                                        
+                                        tmp = squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_interp_beta(c1,:,:));
+                                        cbeta(f1,:) = tmp(:);
+                                        tmp = squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_cov_interp_beta(c1,:,:));
+                                        ccov_beta(f1,:) = tmp(:);
+                                        
+                                    else
+                                        %for is1=1:length(big_TOPO{f1}.v{v1}.s)
+                                        is1 = group_session_to_average;
+                                        %do each session separately
+                                        tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_beta(c1,:,:));
+                                        cbeta(f1,:) = tmp(:);
+                                        tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_cov_interp_beta(c1,:,:));
+                                        ccov_beta(f1,:) = tmp(:);
+                                        %end
+                                    end
+                                catch
+                                    disp(['No data for subject ' int2str(f1) ' contrast ' int2str(c1)  ' chromophore ' hb ' and view ' int2str(v1)]);
                                 end
                             end
                         else %quick fix for F stats
                             for f1=1:ns
-                                
-                                if ~isfield(big_TOPO{f1}.v{v1},'s')
-                                    %group analysis of a group of
-                                    %sessions analysis
-                                    tmp = squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_interp_F(c1,:,:));
-                                    cbeta(f1,:) = tmp(:);
-                                    sz = size(squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_interp_F(c1,:,:)));
-                                    tmp = ones(sz(1), sz(2));
-                                    ccov_beta(f1,:) = tmp(:);
-                                else
-                                    %do each session separately
-                                    is1 = group_session_to_average;
-                                    %for is1=1:length(big_TOPO{f1}.v{v1}.s)
-                                    tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_F(c1,:,:));
-                                    cbeta(f1,:) = tmp(:);
-                                    sz = size(squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_F(c1,:,:)));
-                                    tmp = ones(sz(1), sz(2));
-                                    ccov_beta(f1,:) = tmp(:);
-                                    %end
+                                try
+                                    if ~isfield(big_TOPO{f1}.v{v1},'s')
+                                        %group analysis of a group of
+                                        %sessions analysis
+                                        tmp = squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_interp_F(c1,:,:));
+                                        cbeta(f1,:) = tmp(:);
+                                        sz = size(squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_interp_F(c1,:,:)));
+                                        tmp = ones(sz(1), sz(2));
+                                        ccov_beta(f1,:) = tmp(:);
+                                    else
+                                        %do each session separately
+                                        is1 = group_session_to_average;
+                                        %for is1=1:length(big_TOPO{f1}.v{v1}.s)
+                                        tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_F(c1,:,:));
+                                        cbeta(f1,:) = tmp(:);
+                                        sz = size(squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_F(c1,:,:)));
+                                        tmp = ones(sz(1), sz(2));
+                                        ccov_beta(f1,:) = tmp(:);
+                                        %end
+                                    end
+                                catch
+                                    disp(['No data for subject ' int2str(f1) ' contrast ' int2str(c1)  ' chromophore ' hb ' and view ' int2str(v1)]);
                                 end
                             end
                         end
@@ -301,7 +292,7 @@ try
                         catch exception2
                             disp(exception2.identifier);
                             disp(exception2.stack(1));
-                        end                                                                       
+                        end
                     catch exception
                         disp(exception.identifier);
                         disp(exception.stack(1));
@@ -310,24 +301,10 @@ try
                 end
             end
             %save assembled figures
-            if GFIS
-                if Z.write_neg_pos || ~GInv
-                    save_assembled_figures(Z,W,Pu,'Pos','unc',0);
-                else
-                    try close(Pu); end
-                end
-                if GInv
-                    if Z.write_neg_pos
-                        save_assembled_figures(Z,W,Nu,'Neg','unc',0);
-                    else
-                        try close(Nu); end
-                    end
-                    save_assembled_figures(Z,W,Cu,'','unc',0);
-                else
-                    try close(Nu); end
-                    try close(Cu); end
-                end
-            end
+            save_assembled_figures(Z,W,Cu,'','unc',0);
+            try close(Pu); end
+            try close(Nu); end
+            try close(Cu); end
         end %if view_estimated
     end %end for v1
     save(ftopo,'TOPO');
