@@ -140,7 +140,7 @@ if ~isempty(DF) %&& DF.GroupColorbars %Separated colorbars too far from working 
             end            
         end
         %Repeat for combined positive + negative figure:
-        if exist('fh2','var')
+        if exist('fh2','var') 
             if GInv && Inv
                 switch hb
                     case 'HbO'
@@ -230,6 +230,97 @@ if ~isempty(DF) %&& DF.GroupColorbars %Separated colorbars too far from working 
                 close(fh2); %For F contrasts, this will be the same as fh1
             end
         end
+        
+        %Repeat for combined positive + negative figure:
+        if ~exist('fh2','var') && strcmp(tstr,'F')
+            %if GInv && Inv
+                figure(fh0C); %actual increases or decreases, no sign reversals
+                switch hb
+                    case 'HbO'
+                        axNew=subplot(nC,3,3*(c1-1)+2);
+                    case 'HbT'
+                        axNew=subplot(nC,3,3*(c1-1)+3);
+                    case 'HbR'
+                        axNew=subplot(nC,3,3*(c1-1)+1);
+                end
+                set(fh1,'CurrentAxes',ax1);
+                copyobj(allchild(ax1),axNew);
+                if DF.GroupColorbars
+                    colormap(axNew,split1);
+                else
+                    colormap(axNew,split1);
+                end
+                
+                axis(axNew, 'off')
+                axis(axNew, 'image')
+                axis(axNew, 'ij') %otherwise bottom and up are inverted
+%                 if cbar1
+%                     clear hcNew
+% %                     if ~DF.GroupColorbars
+% %                         hcNew = colorbar('EastOutside');
+% %                     else
+%                         hcNew = colorbar;
+% %                     end
+%                 end
+%                 if cbar2 && ~cbar1
+% %                     if ~DF.GroupColorbars
+% %                         hcNew2 = colorbar('WestOutside');
+% %                     else
+%                         hcNew2 = colorbar;
+% %                     end
+%                 end
+                hcNew = colorbar; 
+                %make the subplots larger
+                if DF.GroupColorbars
+                    p = get(axNew, 'pos');
+                    p(3) = p(3)+0.05;
+                    p(4) = p(4)+0.05;
+                    set(axNew, 'pos', p);
+                end
+                drawnow
+                freezeColors(axNew)
+                %caxis manual
+%                 if cbar1
+%                     if ~DF.GroupColorbars
+%                         set(hcNew,'YLim', [hc1_min hc1_max]);
+%                         y_tick = linspace(hc1_min, hc1_max, tick_number)';
+%                         set(hcNew, 'YTick', y_tick);
+%                         set(hcNew, 'FontSize', fontsize_choice);
+%                         %Customize here number of decimals
+%                         set(hcNew,'YTickLabel',sprintf('%.1f |',get(hcNew,'YTick')'));
+%                         %hold on
+%                         %caxis([hc1_min hc1_max]);
+%                         %v1 = caxis(hcNew);
+%                         cbfreeze(hcNew);
+%                     end
+%                 end
+
+%                 if cbar2
+                    %if DF.GroupColorbars
+%                     set(hcNew2,'YLim', [hc2_min hc2_max]);
+%                     y_tick = linspace(hc2_min, hc2_max, tick_number)';
+%                 if ~exist('hc2_min','var')
+%                     hc2_min = hc1_min;
+%                 end
+%                 if ~exist('hc1_max','var')
+%                     hc1_max = hc2_max;
+%                 end
+                set(hcNew,'YLim', [hc1_min hc1_max]);
+                y_tick = linspace(hc1_min, hc1_max, tick_number)';
+                set(hcNew, 'YTick', y_tick);
+                set(hcNew, 'FontSize', fontsize_choice);
+                %Customize here number of decimals
+                set(hcNew,'YTickLabel',sprintf('%.1f |',get(hcNew,'YTick')'));
+                %v2 = caxis(hcNew2);
+                %hold on
+                %caxis([hc2_min hc2_max+(hc2_max-hc2_min)])
+                %cbfreeze(hcNew);
+%                 end
+                %
+                close(fh1); %For F contrasts, this will be the same as fh1
+            end
+        %end
+        
     catch exception
         disp(exception.identifier);
         disp(exception.stack(1));
