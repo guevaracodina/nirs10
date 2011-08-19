@@ -30,6 +30,11 @@ try
 catch
     group_session_to_average = 1;
 end
+try 
+    group_dir_name = job.group_dir_name;
+catch
+    group_dir_name = 'Group';
+end
 %Booleans to choose which figures to write to disk, if any
 switch job.contrast_figures
     case 0
@@ -145,7 +150,7 @@ for Idx=1:nl
             %extract previous directory
             tmp = strfind(dir0,filesep);
             dir_root = dir0(1:tmp(end-2));
-            dir_group = [dir_root filesep 'Group'];
+            dir_group = fullfile(dir_root, group_dir_name);
             if ~exist(dir_group,'dir'), mkdir(dir_group); end
             %store in same directory as first subject
             ftopo = fullfile(dir_group,'TOPO.mat');
@@ -159,7 +164,8 @@ for Idx=1:nl
                        
         %Big loop over views
         for v1=1:6
-            view_estimated = 0;            
+            view_estimated = 0;  
+            try
                 if FFX || nS==1
                     if isfield(TOPO.v{v1},'s1')
                         s1 = TOPO.v{v1}.s1;
@@ -174,30 +180,13 @@ for Idx=1:nl
                         ns = nS; %number of subjects
                         view_estimated = 1;
                     end
-                end             
+                end 
+            catch
+                view_estimated = 0;
+            end
            
             if view_estimated
-                switch v1
-                    case 1 % 'ventral'
-                        spec_hemi = 'ventral';
-                        side_hemi = 1;
-                    case 2 % 'dorsal'
-                        spec_hemi = 'dorsal';
-                        side_hemi = 2;
-                    case 3 %'right_lateral'
-                        spec_hemi = 'right';
-                        side_hemi = 3;
-                    case 4 %'left_lateral'
-                        spec_hemi = 'left';
-                        side_hemi = 4;
-                    case 5 %'frontal'
-                        spec_hemi = 'frontal';
-                        side_hemi = 5;
-                    case 6 %'occipital'
-                        spec_hemi = 'occipital';
-                        side_hemi = 6;
-                end
-                
+                [side_hemi spec_hemi] = nirs_get_brain_view(v1);                             
                 %View dependent info for figures
                 %brain = rend{v1}.ren;
                 brain = rendered_MNI{v1}.ren;
@@ -277,7 +266,7 @@ for Idx=1:nl
                                         tmp = squeeze(TOPO.v{v1}.s{f1}.hb{h1}.c_cov_interp_beta(c1,:,:));
                                         ccov_beta(f1,:) = tmp(:);
                                     else
-                                        if isfield(big_TOPO{f1}.v{v1},'g')
+                                        if ~isfield(big_TOPO{f1}.v{v1},'s')
                                             %group analysis of a group of
                                             %sessions analysis
                                             tmp = squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_interp_beta(c1,:,:));
@@ -306,7 +295,7 @@ for Idx=1:nl
                                         tmp = ones(sz(1), sz(2));
                                         ccov_beta(f1,:) = tmp(:);
                                     else
-                                        if isfield(big_TOPO{f1}.v{v1},'g')
+                                        if ~isfield(big_TOPO{f1}.v{v1},'s')
                                             %group analysis of a group of
                                             %sessions analysis
                                             tmp = squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_interp_F(c1,:,:));
@@ -389,7 +378,7 @@ for Idx=1:nl
                                         tmp = -squeeze(TOPO.v{v1}.s{f1}.hb{h1}.c_interp_beta(c1,:,:));
                                         cbeta(f1,:,:) = tmp(:);
                                     else
-                                        if isfield(big_TOPO{f1}.v{v1},'g')
+                                        if ~isfield(big_TOPO{f1}.v{v1},'s')
                                             tmp = -squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_interp_beta(c1,:,:));
                                             cbeta(f1,:,:) = tmp(:);
                                         else

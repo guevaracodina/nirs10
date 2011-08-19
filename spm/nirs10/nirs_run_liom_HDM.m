@@ -48,6 +48,7 @@ try
         if isfield(job.xSPM_Modalities,'xSPM_BOLD_ASL')
             modal = 2;
             xSPM_BOLD = job.xSPM_Modalities.xSPM_BOLD_ASL;
+            %currently not used
             xSPM_ASL = job.xSPM_Modalities.xSPM_BOLD_ASL;
         else
             if isfield(job.xSPM_Modalities,'xSPM_ASL')

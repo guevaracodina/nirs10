@@ -176,7 +176,7 @@ Lambda.help    = {'Near Infrared laser wavelengths. Note order is critical and'
 %             'and for the configuration of Monte Carlo files.'}'; 
 
 %Input frequency
-input2         = cfg_entry; 
+input2 = cfg_entry; 
 input2.name    = 'Input frequency';
 input2.tag     = 'freq';       
 input2.strtype = 'r';   
@@ -343,18 +343,11 @@ no_helmet.help = {'Helmet informations will be extracted from ''.nirs'' file.'};
 helm_temp         = cfg_files;
 helm_temp.tag     = 'helm_temp';
 helm_temp.name    = 'Helmet template';
-helm_temp.filter  = 'mat';
-helm_temp.ufilter = 'NIRS.mat';    
-helm_temp.val{1}  = {''};
-helm_temp.num     = [0 1];
-helm_temp.help = {['If you have chosen before ''template'' in choice : ''Individual T1 or template''.'...
-    'If you have generated a template for a special helmet and that you want to coregister it with the subject anatomical image, please choose the NIRS.mat you have generated.']};
-
-% helm_temp      = cfg_branch;
-% helm_temp.tag  = 'helm_temp';
-% helm_temp.name = 'Template';
-% helm_temp.val  = {helm_temp_COREG text_brainsight}; 
-% helm_temp.help = {};
+helm_temp.help = {'If you have chosen before template in choice : ''Individual T1 or template''.'};
+helm_temp.filter  = 'dir';
+helm_temp.ufilter = '.*';
+helm_temp.val{1} = {''};
+helm_temp.num     = [0 0];
 
 % helmet         = cfg_choice;
 % helmet.tag     = 'helmet';
@@ -1569,26 +1562,6 @@ vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Coreg d un helmet template sur la T1 sujet
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-coreg3      = cfg_exbranch;       
-coreg3.name = 'NIRScoreg with helmet template';             
-coreg3.tag  = 'coreg3'; 
-coreg3.val  = {NIRSmat DelPreviousData NewDirCopyNIRS anatT1 segT1_4fit ...
-    anatT1_template fid_in_subject_MNI nasion_wMNI AL_wMNI AR_wMNI render_choice GenDataTopo};    
-coreg3.prog = @nirs_run_coreg_helmtemp;  
-coreg3.vout = @nirs_cfg_vout_coreg3; 
-coreg3.help = {'Automatic coregistration with T1 template. Use this choice in the case you don''t have the anatomical T1 images of the subject.'};
-
-%make NIRS.mat available as a dependency
-function vout = nirs_cfg_vout_coreg3(job)
-vout = cfg_dep;                     
-vout.sname      = 'NIRS.mat';       
-vout.src_output = substruct('.','NIRSmat'); 
-vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
-end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Configuration for coregistration: coreg MANUAL 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -2277,7 +2250,7 @@ nirs_lpf2.help      = {'Choose low-pass filter.'};
 ODtoHbOHbR      = cfg_exbranch;       
 ODtoHbOHbR.name = 'Convert OD to HbO/HbR ';             
 ODtoHbOHbR.tag  = 'ODtoHbOHbR'; 
-ODtoHbOHbR.val  = {NIRSmat DelPreviousData NewDirCopyNIRS PVF nirs_lpf2}; 
+ODtoHbOHbR.val  = {NIRSmat DelPreviousData NewDirCopyNIRS PVF}; % nirs_lpf2}; 
 ODtoHbOHbR.prog = @nirs_run_ODtoHbOHbR;  
 ODtoHbOHbR.vout = @nirs_cfg_vout_ODtoHbOHbR; 
 ODtoHbOHbR.help = {'Convert OD to HbO/HbR.'}';
@@ -5428,14 +5401,22 @@ group_session_to_average.help    = {'This is only used for multi-session group s
     'Specify here which session the group analysis should be done upon. '
     'Only one session can be specified.'}'; 
 
+group_dir_name        = cfg_entry;
+group_dir_name.name    = 'Name of folder to store the analysis';
+group_dir_name.tag     = 'group_dir_name';       
+group_dir_name.strtype = 's';
+group_dir_name.num     = [1 Inf];   
+group_dir_name.val{1}  = 'Group';
+group_dir_name.help    = {'Enter name of folder to store the analysis.'}'; 
+
 % Executable Branch
 liom_group      = cfg_exbranch;       
 liom_group.name = 'Liom Group Model Estimation';             
 liom_group.tag  = 'liom_group'; 
-liom_group.val  = {NIRSmat FFX_or_RFX contrast_figures contrast_p_value ...
+liom_group.val  = {NIRSmat group_dir_name FFX_or_RFX contrast_figures contrast_p_value ...
         GenerateInverted GroupColorbars override_colorbar figures_visible ...
         GroupFiguresIntoSubplots output_unc SmallFigures write_neg_pos ...
-        group_session_to_average factorial_design}; 
+        group_session_to_average}; % factorial_design}; 
 liom_group.prog = @nirs_run_liom_group;  
 liom_group.vout = @nirs_cfg_vout_liom_group; 
 liom_group.help = {'Liom Group level model estimation.'};
@@ -5443,6 +5424,76 @@ liom_group.help = {'Liom Group level model estimation.'};
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function vout = nirs_cfg_vout_liom_group(job)
+vout = cfg_dep;                     
+vout.sname      = 'NIRS.mat';       
+vout.src_output = substruct('.','NIRSmat'); 
+vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
+end
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% One-way anova
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%
+anova_level         = cfg_entry;
+anova_level.name    = 'Number of levels';
+anova_level.tag     = 'anova_level';       
+anova_level.strtype = 'r';
+anova_level.num     = [1 1];   
+anova_level.val     = {2};
+anova_level.help    = {'Enter number of levels (e.g. 2 for young vs old).'
+    'For a one-way anova, there is only one factor.'}'; 
+
+level_name        = cfg_entry;
+level_name.name    = 'Name for this level';
+level_name.tag     = 'level_name';       
+level_name.strtype = 's';
+level_name.num     = [1 Inf];   
+level_name.help    = {'Enter name of this level.'}'; 
+
+level_subj        = cfg_entry;
+level_subj.name    = 'Subjects at this level';
+level_subj.tag     = 'level_subj';       
+level_subj.strtype = 'r';
+level_subj.num     = [1 Inf];   
+level_subj.help    = {'Enter subject numbers for this level.'}'; 
+
+level         = cfg_branch;
+level.tag     = 'level';
+level.name    = 'Add level';
+level.val     = {level_name level_subj};
+level.help    = {'Add level'}';
+
+level_repeat         = cfg_repeat;
+level_repeat.tag     = 'level_repeat';
+level_repeat.name    = 'New level';
+level_repeat.help    = {'Add a level for this factor'}';
+level_repeat.values  = {level};
+level_repeat.num     = [1 Inf];
+
+anova_dir_name        = cfg_entry;
+anova_dir_name.name    = 'Name of folder to store the analysis';
+anova_dir_name.tag     = 'anova_dir_name';       
+anova_dir_name.strtype = 's';
+anova_dir_name.num     = [1 Inf];   
+anova_dir_name.val{1}  = 'Anova';
+anova_dir_name.help    = {'Enter name of folder to store the analysis.'}'; 
+
+% Executable Branch
+liom_1way_anova      = cfg_exbranch;       
+liom_1way_anova.name = 'Liom Anova Estimation';             
+liom_1way_anova.tag  = 'liom_1way_anova'; 
+liom_1way_anova.val  = {NIRSmat anova_dir_name anova_level level_repeat contrast_figures contrast_p_value ...
+        GenerateInverted GroupColorbars override_colorbar figures_visible ...
+        GroupFiguresIntoSubplots output_unc SmallFigures write_neg_pos}; % factorial_design}; 
+liom_1way_anova.prog = @nirs_run_liom_1way_anova;  
+liom_1way_anova.vout = @nirs_cfg_vout_liom_1way_anova; 
+liom_1way_anova.help = {'Liom 1way anova estimation.'};
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function vout = nirs_cfg_vout_liom_1way_anova(job)
 vout = cfg_dep;                     
 vout.sname      = 'NIRS.mat';       
 vout.src_output = substruct('.','NIRSmat'); 
@@ -6281,7 +6332,7 @@ preprocANAT.help   = {'These modules pre-process anatomical images '
 coregNIRS        = cfg_choice; %cfg_repeat; 
 coregNIRS.name   = 'Coregister NIRS data';
 coregNIRS.tag    = 'coregNIRS';
-coregNIRS.values = {coreg1 coreg2 coreg3 coreg_manual1 view3d1 resize1};
+coregNIRS.values = {coreg1 coreg2 coreg_manual1 view3d1 resize1};
 coregNIRS.help   = {'These modules perform coregistration ',...
             'between NIRS and an anatomical image.'};
 
@@ -6314,7 +6365,7 @@ model_estimate        = cfg_choice; %cfg_repeat;
 model_estimate.name   = 'GLM Estimation';
 model_estimate.tag    = 'model_estimate';
 model_estimate.values = {wls_bglm_estimate liom_contrast  ...
-            liom_group extract_map_data AnalyzeGLM ROCtest}; 
+            liom_group extract_map_data liom_1way_anova AnalyzeGLM ROCtest}; 
 model_estimate.help   = {'These modules estimate a GLM.'};
  
 %module 13
