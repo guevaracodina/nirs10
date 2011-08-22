@@ -6197,6 +6197,14 @@ HDMdisplay.values    = {1,0};
 HDMdisplay.val       = {0};
 HDMdisplay.help      = {'Display output for each subject'}';
 
+% StimuliSign     = cfg_entry; 
+% StimuliSign.name    = 'Stimuli sign'; 
+% StimuliSign.tag     = 'Stimuli';       
+% StimuliSign.strtype = 'r'; 
+% StimuliSign.val     = {1};
+% StimuliSign.num     = [0 Inf];     
+% StimuliSign.help    = {'Enter sign of response to each stimulus, as a vector.'}'; 
+
 % Executable Branch
 liom_HDM      = cfg_exbranch;       
 liom_HDM.name = 'LIOM Hemodynamic Modelling';             

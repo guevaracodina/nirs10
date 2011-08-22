@@ -88,6 +88,7 @@ try
     Model = job.Model_Choice;
     %Stimuli:
     Stimuli = job.Stimuli;
+    %StimuliSign = job.StimuliSign;
     %Sessions:
     sessions = job.which_session;
     %subjects:
