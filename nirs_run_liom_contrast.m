@@ -193,7 +193,7 @@ for Idx=1:size(job.NIRSmat,1)
         Ct = []; %positive and negative combined, tube
         Cu = []; %uncorrected
         %get contrasts
-        [xCon SSxCon] = nirs_get_contrasts(SPM,job,automated_contrasts);
+        [SPM xCon SSxCon] = nirs_get_contrasts(SPM,job,automated_contrasts);
         
         %Big loop over views
         for v1=1:size(views_to_run,2)
