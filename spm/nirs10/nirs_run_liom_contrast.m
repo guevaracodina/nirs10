@@ -2,9 +2,6 @@ function out = nirs_run_liom_contrast(job)
 %Contrasts are generated in 3 different ways
 %If no contrast is user-specified, automated contrasts are generated
 %If contrasts are user-speficied, automated contrasts are not generated
-%There are 2 ways for the user to specify contrasts:
-%an old mechanism, for T-contrasts only, using contrast_data in the GUI
-%the standard SPM contrasts, for T and F stats, using consess in the GUI
 
 %Contrasts need to be put in the SPM xCon structures
 %If there is more than one session, contrasts can be run by session or
@@ -19,14 +16,6 @@ views_to_run = job.view;
 % 5: 'frontal'
 % 6: 'occipital'
 
-%User-specified contrasts - old-type only - T-contrasts only - option no longer used
-%Was useful to generate additional contrasts on top of automated contrasts
-%But did not include F-contrasts
-try
-    contrast_data = job.contrast_data;
-catch
-    contrast_data = [];
-end
 %Options
 try
     GroupColorbars = job.GroupColorbars;
@@ -129,7 +118,7 @@ if ~isfield(job,'consess')
     job.consess = [];
 end
 %automated contrasts if no user-specified contrast
-if ~isempty(contrast_data) || ~isempty(job.consess)
+if ~isempty(job.consess)
     automated_contrasts = 0;
 else
     automated_contrasts = 1;
@@ -1007,15 +996,6 @@ try
                         contrastF_name{2} = 'F2';
                     end
                 end
-        end
-    else
-        %user specified contrast specification
-        %simple T contrasts
-        for ic1=1:size(contrast_data,2)
-            tmp_c = contrast_data(ic1).contrast_c;
-            %pad with zeros
-            contrastT{ic1} = [tmp_c zeros(1,nr-size(tmp_c,2))];
-            contrastT_name{ic1} = contrast_data(ic1).contrast_name;
         end
     end
 catch exception
