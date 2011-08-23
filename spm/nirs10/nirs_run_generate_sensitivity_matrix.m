@@ -213,8 +213,12 @@ for Idx=1:size(job.NIRSmat,1)
                                 % boule autour de la position du point P
                                 vxr = 3;%voxel radius
                                 
-                                ms_N = ms(max(cs.Pfp_rmiv(1,S_Pkpt)-vxr,1):min(cs.Pfp_rmiv(1,S_Pkpt)+vxr,size(ms,1)), max(cs.Pfp_rmiv(2,S_Pkpt)-vxr,1):min(cs.Pfp_rmiv(2,S_Pkpt)+vxr,size(ms,2)), max(cs.Pfp_rmiv(3,S_Pkpt)-vxr,1):min(cs.Pfp_rmiv(3,S_Pkpt)+vxr,size(ms,3)));
-                                md_N = md(max(cs.Pfp_rmiv(1,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(1,D_Pktp)+vxr,size(md,1)), max(cs.Pfp_rmiv(2,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(2,D_Pktp)+vxr,size(md,2)), max(cs.Pfp_rmiv(3,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(3,D_Pktp)+vxr,size(md,3)));
+                                ms_N = ms(round(max(cs.Pfp_rmiv(1,S_Pkpt)-vxr,1)):round(min(cs.Pfp_rmiv(1,S_Pkpt)+vxr,size(ms,1))),... 
+                                    round(max(cs.Pfp_rmiv(2,S_Pkpt)-vxr,1)):round(min(cs.Pfp_rmiv(2,S_Pkpt)+vxr,size(ms,2))),...
+                                    round(max(cs.Pfp_rmiv(3,S_Pkpt)-vxr,1)):round(min(cs.Pfp_rmiv(3,S_Pkpt)+vxr,size(ms,3))));
+                                md_N = md(round(max(cs.Pfp_rmiv(1,D_Pktp)-vxr,1)):round(min(cs.Pfp_rmiv(1,D_Pktp)+vxr,size(md,1))),...
+                                    round(max(cs.Pfp_rmiv(2,D_Pktp)-vxr,1)):round(min(cs.Pfp_rmiv(2,D_Pktp)+vxr,size(md,2))),...
+                                    round(max(cs.Pfp_rmiv(3,D_Pktp)-vxr,1)):round(min(cs.Pfp_rmiv(3,D_Pktp)+vxr,size(md,3))));
                                 
                                 phi0_S = max(ms_N(:));
                                 phi0_D = max(md_N(:));

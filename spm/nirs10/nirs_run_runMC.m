@@ -99,7 +99,8 @@ for Idx=1:size(job.NIRSmat,1)
 % % % % % % % % % % %                     res = system([str_run1 ' -f ' file2 ' -s ' file1 str_run2 str_log]);
 
 % % % % % % % % % % %                     str_run2 = [' -r ' int2str(J.MCX_r) ' -g ' int2str(J.MCX_g) ' -U 1 -S 1 -d 1 -a 0 -b 0 -B 1 -z 1'];
-                    res = system(['mcx_det -A -n ' int2str(cs.par.nphotons) ' -f ' file2 ' -s ' file1 ' -r ' int2str(J.MCX_r) ' -E -290123 -g 1 -b 0 -d 1']);
+% -z 1 EST ESSENTIEL !!!!!!!!!!!!!!!!!!!
+                    res = system(['mcx_det -A -n ' int2str(cs.par.nphotons) ' -f ' file2 ' -s ' file1 ' -r ' int2str(J.MCX_r) ' -E -290123 -g 1 -b 0 -d 1 -z 1']);
                 end
                 delete([dir1 filesep codeexe]);
                 
