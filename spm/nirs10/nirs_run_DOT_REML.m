@@ -10,7 +10,7 @@ if(~exist('maxIter'))
     maxIter=35;  %Max # of iterations of REML code
 end
 
-if(size(X,1)<size(X,2))
+if(size(X,1)<size(X,2)) %PP not a good test of rank?!
    % If X is not full rank, then we can make this MUCH faster
    %  noting that the hyper-parameters of the reduced problem are the same as
    %  the original forward model.  Note- this was not done in the paper, but is
@@ -89,17 +89,31 @@ else
             Ce = Ce + Q{i}*exp(lambda(i));
         end
 
-        iCe = inv(Ce);
-        Xt_iCe = X' * iCe;
-        Xt_iCe_X = Xt_iCe * X;
-        C_beta_y = inv(Xt_iCe_X);  %Estimate of covariance of beta given the measurements
-
+%         iCe = inv(Ce);
+%         Xt_iCe = X' * iCe;
+%         Xt_iCe_X = Xt_iCe * X;
+%         C_beta_y = inv(Xt_iCe_X);  %Estimate of covariance of beta given the measurements
+% 
+%         
+%         % M-step:
+%         P = iCe - (iCe*X)*C_beta_y*Xt_iCe;
         
+        %PP
+        % iCe = inv(Ce);
+        %Xt_iCe = X' / Ce;
+        CeX = Ce\X;
+        Xt_iCe = CeX';
+        %Xt_iCe_X = Xt_iCe * X;
+        Xt_iCe_X = X' * CeX;
+        %C_beta_y = inv(Xt_iCe_X);  %Estimate of covariance of beta given the measurements
+
+        t1 = CeX*(Xt_iCe_X\Xt_iCe);
         % M-step:
-        P = iCe - (iCe*X)*C_beta_y*Xt_iCe;
-        PY=P*Y;
+        %P = iCe - CeX*(Xt_iCe_X\Xt_iCe);
+        
+        PY=Ce\Y-t1*Y;
         for i=1:size(Q,1)
-            PQ_i{i}=P*Q{i};
+            PQ_i{i}=Ce\Q{i}-t1*Q{i};
         end
 
         for i = 1:size(Q,1)
@@ -115,7 +129,7 @@ else
 
         %Now update the lambda.  dLambda = -inv(H)*g
         I=eye(size(H,1));
-        dL = (expm(H*t) - I)*inv(H)*g;
+        dL = (expm(H*t) - I)*(H\g); %PP
         lambda = lambda + dL;
 
         df    = g'*dL;

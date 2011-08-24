@@ -116,7 +116,7 @@ for Idx=1:size(job.NIRSmat,1)
         ext2 = GetExtinctions(NIRS.Cf.dev.wl(1,2));
         
         Xsens = sparse([Xwl{1} zeros(size(Xwl{1}));zeros(size(Xwl{1})) Xwl{2}]);
-        E11 = sparse(ext1(1,1)*eye(Nvx));
+        E11 = sparse(ext1(1,1)*eye(Nvx)); %4 large calculations, lasting about 1 minute
         E12 = sparse(ext1(1,2)*eye(Nvx));
         E21 = sparse(ext2(1,1)*eye(Nvx));
         E22 = sparse(ext2(1,2)*eye(Nvx));
@@ -126,13 +126,13 @@ for Idx=1:size(job.NIRSmat,1)
         
         %%% systeme hierarchique by the book !
         clear E11 E12 E21 E22 Egrande Xsens X%%%%%%%% SHBTB
-        tic%%%%%%%% SHBTB
+        tic%%%%%%%% SHBTB %This requires a lot of memory, takes about 1 minute
         Xbar = sparse([sXmc sX ; speye(Nvx) sparse(zeros(Nvx,2*Nvx)) ; sparse(zeros(2*Nvx,Nvx)) speye(2*Nvx)]);%%%%%%%% SHBTB
         toc%%%%%%%% SHBTB
         
-        for ifnirs=1:size(NIRS.Dt.fir.pp,2)
-            fnirs = load(NIRS.Dt.fir.pp.p{1,ifnirs},'-mat');
-            ctm.Y = NIRS.Dt.fir.pp.p{1,ifnirs};
+        for ifnirs=1:size(NIRS.Dt.fir.pp(end),2)
+            fnirs = load(NIRS.Dt.fir.pp(end).p{1,ifnirs},'-mat');
+            ctm.Y = NIRS.Dt.fir.pp(end).p{1,ifnirs};
             
             %%% covariances %%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % Qn : Covariance du bruit de mesure
@@ -157,11 +157,11 @@ for Idx=1:size(job.NIRSmat,1)
             for itp=1:length(job.temp_pts)
                 disp(['current : ' int2str(job.temp_pts(itp))])
                 %%% Y %%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                %                 Y_t0 = fnirs.d(job.temp_pts(itp),C_cs)';
+                                 Y_t0 = fnirs.d(job.temp_pts(itp),C_cs)';
                 
-                ctm.Y = 'fantom';
-                Yt0 = load('Yt0.nirs','-mat');
-                Y_t0 = Yt0.Yt0;
+                %ctm.Y = 'fantom';
+                %Yt0 = load('Yt0.nirs','-mat');
+                %Y_t0 = Yt0.Yt0;
                 Y_bar_t0 = sparse([Y_t0; zeros(3*Nvx,1)]);%%%%%%%% SHBTB
                 switch job.ReML_method
                     case 0
@@ -169,8 +169,8 @@ for Idx=1:size(job.NIRSmat,1)
                         ctm.alg = 'HUP';
                         % on doit envoyer X et Y pas les bar !!!!!
                         
-                        [lambda,beta_W,Stats]=nirs_run_DOT_REML(Y_t0,X,beta_prior,Qn,Qp);
-                        %                         [lambda,beta_W,Stats]=nirs_run_DOT_REML(Y_t0,X*W',beta_prior,Qn,Qp);
+                        [lambda,beta_W,Stats]=nirs_run_DOT_REML(Y_t0,Xbar,beta_prior,Qn,Qp);
+                        %                         [lambda,beta_W,Stats]=nirs_run_DOT_REML(Y_t0,Xbar*W',beta_prior,Qn,Qp);
                         %Convert to the image domain and display
                         %                         beta = W'*beta_W;
                         beta = beta_W;
@@ -187,11 +187,11 @@ for Idx=1:size(job.NIRSmat,1)
                         
                         %%%% ACHTUNG : les Q sont des matrices carres du
                         %%%% grandeur le nombre de canaux...
-                        %%%% On leur applique la mem svd qu a X !
+                        %%%% On leur applique la mem svd qu a Xbar !
                         %  Y = U*S*V'*Beta
                         %  Y = U*(S*V'*Beta) --> Y=U*S*Beta2;
                         %  cov(Beta2) = S*V'*Q*V*S';
-                        [U,S,V]=svd(full(X),'econ');
+                        [U,S,V]=svd(full(Xbar),'econ');
                         
                         for idx=1:length(Qp)
                             Qp2{idx}=S*V'*Qp{idx}*V*S';
@@ -210,12 +210,12 @@ for Idx=1:size(job.NIRSmat,1)
                         
                         % sample covariance matrix Y*Y'
                         YY = (Y_t0-mean(Y_t0))*(Y_t0-mean(Y_t0))';
-                        %                         [C,h,Ph,F,Fa,Fc]=spm_reml_hijacked(YY,X,Q);
-                        [C,h,Ph,F,Fa,Fc]=nirs_spm_reml(YY,X,Q);
+                        %                         [C,h,Ph,F,Fa,Fc]=spm_reml_hijacked(YY,Xbar,Q);
+                        [C,h,Ph,F,Fa,Fc]=nirs_spm_reml(YY,Xbar,Q);
                         iC     = spm_inv(C);
-                        iCX    = iC*X; 
-                        Cq = spm_inv(X'*iCX);
-                        beta = Cq*X'*iC*Y_t0;
+                        iCX    = iC*Xbar; 
+                        Cq = spm_inv(Xbar'*iCX);
+                        beta = Cq*Xbar'*iC*Y_t0;
                 end
                 
                 betaR_HbO = reshape(beta(1:Nvx,1),[VsegRR.dim]);
@@ -276,4 +276,5 @@ for Idx=1:size(job.NIRSmat,1)
         disp(['Could not run MonteCarlo reconstruction for subject' int2str(Idx)]);
     end
 end
+clear out %careful, variable out was used with another meaning previously!
 out.NIRSmat = job.NIRSmat;
