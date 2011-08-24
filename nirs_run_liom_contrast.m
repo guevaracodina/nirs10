@@ -160,7 +160,7 @@ for Idx=1:size(job.NIRSmat,1)
         load(fullfile(dir1,'SPM.mat'));
         %load TOPO (topographic maps) if already (partially) generated
         ftopo = fullfile(dir1,'TOPO.mat');
-        clear TOPO
+        TOPO = [];
         if exist(ftopo,'file'), load(ftopo); end
         if NewDirCopyNIRS
             [dirN fil1 ext1] =fileparts(job.NIRSmat{Idx,1});

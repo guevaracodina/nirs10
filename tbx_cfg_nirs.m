@@ -6110,6 +6110,15 @@ xSPM_spmmat_ASL.help    = {'Select xSPM.mat of ASL estimation for this subject o
 % VOI_spmmat_ASL.num     = [0 1];     % Number of inputs required 
 % VOI_spmmat_ASL.help    = {'Select VOI_....mat of ASL estimation for this subject (or group).'}; 
 
+which_subjects_ASL         = cfg_files; %Select NIRS.mat for this subject 
+which_subjects_ASL.name    = 'Select SPM folders for each subject'; % The displayed name
+which_subjects_ASL.tag     = 'which_subjects_ASL';       %file names
+which_subjects_ASL.filter = 'dir';
+which_subjects_ASL.ufilter = '.*';    
+which_subjects_ASL.num     = [1 Inf];     % Number of inputs required 
+which_subjects_ASL.help    = {'Select folders for each subject containing'
+    'first level GLM SPM analysis for ASL (UR1 folders).'}'; 
+
 xSPM_BOLD           = cfg_branch;
 xSPM_BOLD.name      = 'BOLD only';
 xSPM_BOLD.tag       = 'xSPM_BOLD';
@@ -6118,22 +6127,29 @@ xSPM_BOLD.help      = {''};
 
 xSPM_ASL           = cfg_branch;
 xSPM_ASL.name      = 'ASL only';
-xSPM_ASL.tag       = 'ASL';
+xSPM_ASL.tag       = 'xSPM_ASL';
 xSPM_ASL.val       = {spmmat_ASL xSPM_spmmat_ASL}; % VOI_spmmat_ASL}; 
 xSPM_ASL.help      = {''};
 
 xSPM_BOLD_ASL           = cfg_branch;
-xSPM_BOLD_ASL.name      = 'BOLD and ASL';
-xSPM_BOLD_ASL.tag       = 'BOLD_ASL';
-xSPM_BOLD_ASL.val       = {spmmat spmmat_ASL xSPM_spmmat xSPM_spmmat_ASL}; % VOI_spmmat VOI_spmmat_ASL}; 
-xSPM_BOLD_ASL.help      = {''};
+xSPM_BOLD_ASL.name      = 'BOLD and ASL from stat maps';
+xSPM_BOLD_ASL.tag       = 'xSPM_BOLD_ASL';
+xSPM_BOLD_ASL.val       = {spmmat spmmat_ASL xSPM_spmmat xSPM_spmmat_ASL which_subjects_ASL}; 
+xSPM_BOLD_ASL.help      = {'Not coded yet'};
+
+xSPM_BOLD_ASL_V2           = cfg_branch;
+xSPM_BOLD_ASL_V2.name      = 'BOLD and ASL from flow and BOLD data';
+xSPM_BOLD_ASL_V2.tag       = 'xSPM_BOLD_ASL_V2';
+xSPM_BOLD_ASL_V2.val       = {spmmat xSPM_spmmat}; % flow_subj1 bold_subj1}; 
+xSPM_BOLD_ASL_V2.help      = {'Location and selection of Flow and BOLD '
+    'functional data is hard-coded for Michele''s Project'}';
 
 xSPM_Modalities           = cfg_choice;
-xSPM_Modalities.name      = 'Modalities: BOLD, BOLD + ASL estimation, ASL only, HbO+HbR:';
+xSPM_Modalities.name      = 'Modalities: BOLD, BOLD + ASL estimation, ASL only';
 xSPM_Modalities.tag       = 'xSPM_Modalities';
-xSPM_Modalities.values    = {xSPM_BOLD xSPM_BOLD_ASL xSPM_ASL};
+xSPM_Modalities.values    = {xSPM_BOLD xSPM_BOLD_ASL xSPM_BOLD_ASL_V2 xSPM_ASL};
 xSPM_Modalities.val       = {xSPM_BOLD}; 
-xSPM_Modalities.help      = {'Choose data type: BOLD, BOLD + ASL, ASL only, HbO+HbR'}; 
+xSPM_Modalities.help      = {'Choose data type: BOLD, BOLD + ASL, ASL only'}; 
 
 which_session     = cfg_entry; 
 which_session.name    = 'Which session?'; 
@@ -6150,7 +6166,7 @@ which_subjects.filter = 'dir';
 which_subjects.ufilter = '.*';    
 which_subjects.num     = [1 Inf];     % Number of inputs required 
 which_subjects.help    = {'Select folders for each subject containing'
-    'first level GLM SPM analysis.'}'; 
+    'first level GLM SPM analysis (UR0 or UR3 folders).'}'; 
 
 nameROI         = cfg_entry;
 nameROI.name    = 'ROI name';
