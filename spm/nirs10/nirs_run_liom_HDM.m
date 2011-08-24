@@ -54,20 +54,25 @@ try
             if isfield(job.xSPM_Modalities,'xSPM_ASL')
                 modal = 3;
                 xSPM_ASL = job.xSPM_Modalities.xSPM_ASL;
+            else 
+                if isfield(job.xSPM_Modalities,'xSPM_BOLD_ASL_V2')
+                    modal = 5;
+                    xSPM_BOLD = job.xSPM_Modalities.xSPM_BOLD_ASL_V2;
+                end
             end
         end
     end
     %load SPM and xSPM
     clear SPM xSPM
     switch modal
-        case {1,2}
+        case {1,2,5}
             spmmat = xSPM_BOLD.spmmat{1};
+            xSPMmat = xSPM_BOLD.xSPM_spmmat{1};
             load(spmmat);
             SPM_BOLD = SPM;
-            xSPMmat = xSPM_BOLD.xSPM_spmmat{1};
             load(xSPMmat);
             xSPM_BOLD = xSPM;
-    end
+    end           
     clear SPM xSPM
     switch modal
         case {3,2}
@@ -115,12 +120,17 @@ try
                 [Sess s] = get_session(SPM,cs1);
                 U = get_causes(Sess,Stimuli);
                 %extract VOI
-                VOI = get_VOI(SPMfile,ROIs(r1),cs1);
+                switch modal
+                    case 1
+                        VOI = get_VOI(SPMfile,ROIs(r1),cs1);
+                    case 5
+                        VOI = get_VOI5(SPMfile,ROIs(r1),cs1);
+                end
                 xY = VOI.xY;
                 y = VOI.Y; %/100;
                 switch modal
-                    case {2,3}
-                        Y.y(:,2)    = y/100;
+                    case {2,3,5}
+                        %Y.y(:,2)    = y/100;
                 end
                 
                 Y.y = y;
@@ -133,6 +143,7 @@ try
                         Y.y(:,1) = y;
                     case 4
                         Y.y      = y;
+                    case 5
                     otherwise
                 end
                 
@@ -580,6 +591,25 @@ end
 end
 
 function VOI = get_VOI(SPMfile,ROI,s)
+clear matlabbatch
+matlabbatch{1}.spm.util.voi.spmmat = {SPMfile};
+matlabbatch{1}.spm.util.voi.adjust = 0;
+matlabbatch{1}.spm.util.voi.session = s;
+matlabbatch{1}.spm.util.voi.name = ROI.nameROI;
+matlabbatch{1}.spm.util.voi.roi{1}.sphere.centre = ROI.coordinateROI;
+matlabbatch{1}.spm.util.voi.roi{1}.sphere.radius = ROI.radiusROI;
+matlabbatch{1}.spm.util.voi.roi{1}.sphere.move.fixed = 1;
+matlabbatch{1}.spm.util.voi.expression = 'i1';
+spm_jobman('run',matlabbatch);
+%load VOI
+[dir1 dummy] = fileparts(SPMfile);
+load(fullfile(dir1,['VOI_' ROI.nameROI '_' int2str(s) '.mat']));
+VOI.Y = Y;
+VOI.xY = xY;
+end
+
+
+function VOI = get_VOI5(SPMfile,ROI,s)
 clear matlabbatch
 matlabbatch{1}.spm.util.voi.spmmat = {SPMfile};
 matlabbatch{1}.spm.util.voi.adjust = 0;
