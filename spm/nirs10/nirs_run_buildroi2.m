@@ -50,9 +50,6 @@ for Idx=1:size(job.NIRSmat,1)
         
         try
             Ckpt = job.keepAllChannels.keepChannels;
-%             for iwl=2:length(wl)
-%                 Ckpt = [Ckpt Ckpt+(iwl-1)*nc];
-%             end
             NewNIRSdir = ['roi_channels-' strrep(int2str(job.keepAllChannels.keepChannels),'  ','-')];
         catch
             Ckpt = Cid(1,:);
@@ -82,32 +79,65 @@ for Idx=1:size(job.NIRSmat,1)
         end
         
         %%%  vérifier que ça a de l'intérêt de garder tout ça
+        Pfp_roi_rmm     = zeros(3,size(Pkpt,2));
+        Pp_roi_rmm      = zeros(3,size(Pkpt,2));
+        Pp_roi_c1_rmm   = zeros(3,size(Pkpt,2));
+        PfpR_roi_rmv    = zeros(3,size(Pkpt,2));
+        Pfp_roi_rmvtemp = zeros(4,size(Pkpt,2));
+        
         for i=1:size(Pkpt,2)
             Pfp_roi_rmm(:,i) = Pfp_rmm(:,Pkpt(i));
+            Pfp_roi_rmvtemp(:,i) = V.mat\[Pfp_roi_rmm(:,i);1];
+            
             Pp_roi_rmm(:,i) = Pp_rmm(:,Pkpt(i));
             Pp_roi_c1_rmm(:,i) = Pp_c1_rmm(:,Pkpt(i));
         end
-        
-        Pfp_roi_rmvtemp = zeros(4,size(Pfp_roi_rmm,2));
-        for i=1:size(Pfp_roi_rmm,2)
-            Pfp_roi_rmvtemp(:,i) = V.mat\[Pfp_roi_rmm(:,i);1];
-        end
         Pfp_roi_rmv = Pfp_roi_rmvtemp(1:3,:);
         
-        bbv(1,1) = min(Pfp_roi_rmv(1,:));
-        bbv(1,2) = max(Pfp_roi_rmv(1,:));
-        
-        bbv(2,1) = min(Pfp_roi_rmv(2,:));
-        bbv(2,2) = max(Pfp_roi_rmv(2,:));
-        
-        bbv(3,1) = min(Pfp_roi_rmv(3,:));
-        bbv(3,2) = max(Pfp_roi_rmv(3,:));
-        
-        bbv = round(bbv);
-        
+        method = 'S_cubecenter';
+        switch method
+            case 'ancienne'
+                bbv(1,1) = min(Pfp_roi_rmv(1,:));
+                bbv(1,2) = max(Pfp_roi_rmv(1,:));
+                
+                bbv(2,1) = min(Pfp_roi_rmv(2,:));
+                bbv(2,2) = max(Pfp_roi_rmv(2,:));
+                
+                bbv(3,1) = min(Pfp_roi_rmv(3,:));
+                bbv(3,2) = max(Pfp_roi_rmv(3,:));
+                
+                bbv = round(bbv);
+                marge = 5;
+                
+            case 'S_cubecenter'
+                ray =40;
+                bbm = zeros(3,iS);
+                bbM = zeros(3,iS);
+                for iS=1:length(Skpt);
+                    % cube a 4cm du centre S
+                    S_cc = Pfp_roi_rmm(:,iS);
+                    bbm(:,iS) = S_cc-ray*ones(3,1);
+                    bbM(:,iS) = S_cc+ray*ones(3,1);
+                    % on le coupe la ou il depasse trop
+                    %A FAIRE
+                    
+                    bbmv = round(V.mat\bbm);
+                    bbMv = round(V.mat\bbM);
+                end
+                
+                bbv(1,1) = min(bbmv(1,:));
+                bbv(1,2) = max(bbMv(1,:));
+                
+                bbv(2,1) = min(bbmv(2,:));
+                bbv(2,2) = max(bbMv(2,:));
+                
+                bbv(3,1) = min(bbmv(3,:));
+                bbv(3,2) = max(bbMv(3,:));
+                
+                marge =0;
+        end
         % the size of the plotted image can be bigger than the size read in
         % the header, in such case the value kept is the one of header
-        marge = 5;
         for i =1:3
             bbv(i,1) = max(1,bbv(i,1)-marge);
             bbv(i,2) = min(V.dim(i),bbv(i,2)+marge);
@@ -151,8 +181,6 @@ for Idx=1:size(job.NIRSmat,1)
         NIRS.Cs.temp.Pp_roi_rmm = Pp_roi_rmm;
         NIRS.Cs.temp.Pp_roi_c1_rmm = Pp_roi_c1_rmm;
         NIRS.Cs.temp.segR = fullfile(dir2,[job.output_prefix,name,'.nii']);
-%         NIRS.Cs.temp.mat_roi2raw = fullfile(dir2,[name '-mat_roi2raw.mat']);
-%         save(fullfile(dir2,[job.output_prefix,name '-roi2raw.mat']),'mat_roi2raw');
         
         if NewDirCopyNIRS
             newNIRSlocation = fullfile(dir2,'NIRS.mat');

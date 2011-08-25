@@ -51,13 +51,6 @@ for Idx=1:size(job.NIRSmat,1)
             cs_dir = dir2;
         end
         
-        %%%%%attention errreur !!!!!
-%         if strcmp(cs_dir(max(strfind(cs_dir,filesep))+1:max(strfind(cs_dir,filesep))+3),'roi')
-%             seps = strfind(cs_dir,filesep);
-%             cs_ldir = cs_dir(max(seps(1:end-1))+(length('MC')+1):max(seps)-1);
-%         else
-%             cs_ldir = cs_dir(max(strfind(cs_dir,filesep))+(length('MC')+1):end);
-%         end
         [dummy,cs_ldir] = fileparts(cs_dir);
         ics =1;
         while ~strcmp(cs_ldir,NIRS.Cs.n{ics})
@@ -74,20 +67,31 @@ for Idx=1:size(job.NIRSmat,1)
                     t = t(1,:); %This gives one detector, but also need at least one source, with the same wavelength, for the one channel
                 end
                 J = job.MC_runCUDAchoice.MCX1;
+                countS =0;
+                countD =0;
                 for k1=1:size(t,1)
                     [dir1,file1,dummy] = fileparts(t(k1,:));
                     file2 = [file1 '.inp'];
                     cd(dir1);
                     
                     % if his/mch needed
-                    codeexe = 'mcx_det.exe';
+                    if strcmp(file1(1),'S')
+                        codeexe = 'mcx_det';
+                        if countS ==0
+                         copyfile([spm('Dir') '\toolbox\nirs10\mc_exe\' codeexe '.exe'],[dir1 filesep codeexe '.exe']);
+                         countS = countS+1;
+                        end
+                    else
+                        codeexe = 'mcx';
+                        if countD ==0
+                         copyfile([spm('Dir') '\toolbox\nirs10\mc_exe\' codeexe '.exe'],[dir1 filesep codeexe '.exe']);
+                         countD = countD+1;
+                        end
+                    end
                     %else
                     %codeexe = 'mcx.exe';
                     %end
                     
-                    if k1 == 1
-                         copyfile([spm('Dir') '\toolbox\nirs10\mc_exe\' codeexe],[dir1 filesep codeexe]);
-                    end
                     %                 str_run1 = ['mcx.exe -t ' int2str(J.MCX_t) ' -T ' int2str(J.MCX_T) ' -n ' int2str(cs.par.nphotons)];
 % % % % % % % % % % %                     str_run1 = [codeexe ' -A 2 -n ' int2str(cs.par.nphotons)];
 % % % % % % % % % % %                     if J.MCX_l
@@ -100,9 +104,11 @@ for Idx=1:size(job.NIRSmat,1)
 
 % % % % % % % % % % %                     str_run2 = [' -r ' int2str(J.MCX_r) ' -g ' int2str(J.MCX_g) ' -U 1 -S 1 -d 1 -a 0 -b 0 -B 1 -z 1'];
 % -z 1 EST ESSENTIEL !!!!!!!!!!!!!!!!!!!
-                    res = system(['mcx_det -A -n ' int2str(cs.par.nphotons) ' -f ' file2 ' -s ' file1 ' -r ' int2str(J.MCX_r) ' -E -290123 -g 1 -b 0 -d 1 -z 1']);
+                    res = system([codeexe ' -A -n ' int2str(cs.par.nphotons) ' -f ' file2 ' -s ' file1 ' -r ' int2str(J.MCX_r) ' -g 1 -b 0 -d 1 -z 1 -l']);
                 end
-                delete([dir1 filesep codeexe]);
+                
+                if countD>0, delete([dir1 filesep 'mcx.exe']);end
+                if countS>0, delete([dir1 filesep 'mcx_det.exe']);end
                 
                 NIRS.Cs.mcs{ics}.MCX_t = J.MCX_t;
                 NIRS.Cs.mcs{ics}.MCX_T = J.MCX_T;
