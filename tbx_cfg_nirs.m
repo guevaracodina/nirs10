@@ -4818,7 +4818,7 @@ anova.help    = {
 fd         = cfg_branch;
 fd.tag     = 'fd';
 fd.name    = 'Full factorial';
-fd.val     = {generic generic1 };
+fd.val     = {generic generic1};
 fd.help    = {
               'This option is best used when you wish to test for all main effects and interactions in one-way, two-way or three-way ANOVAs. Design specification proceeds in 2 stages. Firstly, by creating new factors and specifying the number of levels and name for each. Nonsphericity, ANOVA-by-factor and scaling options can also be specified at this stage. Secondly, scans are assigned separately to each cell. This accomodates unbalanced designs.'
               ''
