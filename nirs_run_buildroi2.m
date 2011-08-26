@@ -82,7 +82,7 @@ for Idx=1:size(job.NIRSmat,1)
         Pfp_roi_rmm     = zeros(3,size(Pkpt,2));
         Pp_roi_rmm      = zeros(3,size(Pkpt,2));
         Pp_roi_c1_rmm   = zeros(3,size(Pkpt,2));
-        PfpR_roi_rmv    = zeros(3,size(Pkpt,2));
+        PfpR_roi_rmv    = zeros(4,size(Pkpt,2));
         Pfp_roi_rmvtemp = zeros(4,size(Pkpt,2));
         
         for i=1:size(Pkpt,2)
@@ -111,8 +111,8 @@ for Idx=1:size(job.NIRSmat,1)
                 
             case 'S_cubecenter'
                 ray =40;
-                bbm = zeros(3,iS);
-                bbM = zeros(3,iS);
+                bbm = zeros(3,length(Skpt));
+                bbM = zeros(3,length(Skpt));
                 for iS=1:length(Skpt);
                     % cube a 4cm du centre S
                     S_cc = Pfp_roi_rmm(:,iS);
@@ -120,21 +120,21 @@ for Idx=1:size(job.NIRSmat,1)
                     bbM(:,iS) = S_cc+ray*ones(3,1);
                     % on le coupe la ou il depasse trop
                     %A FAIRE
+                    bbmv1 = V.mat\[bbm;1];
+                    bbMv1 = V.mat\[bbM;1];
                     
-                    bbmv = round(V.mat\bbm);
-                    bbMv = round(V.mat\bbM);
+                    bbmv(1:3,iS) = round(bbmv1(1:3));
+                    bbMv(1:3,iS) = round(bbMv1(1:3));
                 end
+                bbv(1,1) = min(bbmv(1,:),bbMv(1,:));
+                bbv(1,2) = max(bbmv(1,:),bbMv(1,:));
                 
-                bbv(1,1) = min(bbmv(1,:));
-                bbv(1,2) = max(bbMv(1,:));
+                bbv(2,1) = min(bbmv(2,:),bbMv(2,:));
+                bbv(2,2) = max(bbmv(2,:),bbMv(2,:));
                 
-                bbv(2,1) = min(bbmv(2,:));
-                bbv(2,2) = max(bbMv(2,:));
-                
-                bbv(3,1) = min(bbmv(3,:));
-                bbv(3,2) = max(bbMv(3,:));
-                
-                marge =0;
+                bbv(3,1) = min(bbmv(3,:),bbMv(3,:));
+                bbv(3,2) = max(bbmv(3,:),bbMv(3,:));
+                marge =20;
         end
         % the size of the plotted image can be bigger than the size read in
         % the header, in such case the value kept is the one of header
