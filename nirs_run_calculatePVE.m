@@ -189,9 +189,11 @@ for iSubj=1:size(job.NIRSmat,1)
                     % on prepare les calculs puisque des photons ont ete
                     % detectes par le canal
                     if tk_wl==690
-                        muas = [opt_ppts{1,1}(1,1),opt_ppts{1,2}(1,1),opt_ppts{1,3}(1,1),opt_ppts{1,4}(1,1),opt_ppts{1,5}(1,1),opt_ppts_perturb{1}(1,1)];
+%                         muas = [opt_ppts{1,1}(1,1),opt_ppts{1,2}(1,1),opt_ppts{1,3}(1,1),opt_ppts{1,4}(1,1),opt_ppts{1,5}(1,1),opt_ppts_perturb{1}(1,1)];
+                        muas = [opt_ppts{1,1}(1,1),opt_ppts{1,2}(1,1),opt_ppts{1,3}(1,1),opt_ppts{1,4}(1,1),opt_ppts{1,5}(1,1),opt_ppts{1,6}(1,1)];
                     elseif tk_wl ==830
-                        muas = [opt_ppts{2,1}(1,1),opt_ppts{2,2}(1,1),opt_ppts{2,3}(1,1),opt_ppts{2,4}(1,1),opt_ppts{2,5}(1,1),opt_ppts_perturb{2}(1,1)];
+%                         muas = [opt_ppts{2,1}(1,1),opt_ppts{2,2}(1,1),opt_ppts{2,3}(1,1),opt_ppts{2,4}(1,1),opt_ppts{2,5}(1,1),opt_ppts_perturb{2}(1,1)];
+                        muas = [opt_ppts{2,1}(1,1),opt_ppts{2,2}(1,1),opt_ppts{2,3}(1,1),opt_ppts{2,4}(1,1),opt_ppts{2,5}(1,1),opt_ppts{2,6}(1,1)];
                     end
                     
                     chord = norm(cs.P.Pfp_rmm(:,D_Ci_csPkpt)-cs.P.Pfp_rmm(:,S_Ci),2);
@@ -206,8 +208,10 @@ for iSubj=1:size(job.NIRSmat,1)
                             %                     end
                             if cs.nummed==6
                                 L_Vi_Vphts = History{tk_Ci,2}(idx,3:size(History{tk_Ci,2},2));
-                            elseif cs.nummed==11
-                                L_Vi_Vphts = History{tk_Ci,2}(idx,3:8)+[History{tk_Ci,2}(idx,9:13),zeros(size(History{tk_Ci,2}(idx,9:13),1),1)];
+%                                 elseif cs.nummed==12
+%                                 L_Vi_Vphts = History{tk_Ci,2}(idx,3:8)+[History{tk_Ci,2}(idx,9:13),zeros(size(History{tk_Ci,2}(idx,9:13),1),1)];
+                            elseif cs.nummed==12
+                                L_Vi_Vphts = History{tk_Ci,2}(idx,3:8)+[History{tk_Ci,2}(idx,9:14),zeros(size(History{tk_Ci,2}(idx,9:14),1),1)];
                             end
                             W_phts = W0*exp(-sum(L_Vi_Vphts*muas',2));
                             

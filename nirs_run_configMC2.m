@@ -39,8 +39,7 @@ for Idx=1:size(job.NIRSmat,1)
         else
             i_cs=1;
         end
-        
-       
+
         % cs current simulation
         cs ={};
         G={};%%% juste pour le code
@@ -135,7 +134,7 @@ for Idx=1:size(job.NIRSmat,1)
                     cs.Pvoid = Pvoid;
                     cs.Pfp_rmiv = outF.P.Pfp_rmiv;
                     cs.Pwd_rmm = outF.P.Pwd_rmm;
-                    cs.nummed = 11;
+                    cs.nummed = 12;
                     
                     Sr = cs.par.radiis * ones(cs.NSkpt,1);
                     Dr = cs.par.radiid * ones(cs.NDkpt,1);
