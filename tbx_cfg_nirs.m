@@ -343,11 +343,12 @@ no_helmet.help = {'Helmet informations will be extracted from ''.nirs'' file.'};
 helm_temp         = cfg_files;
 helm_temp.tag     = 'helm_temp';
 helm_temp.name    = 'Helmet template';
-helm_temp.help = {'If you have chosen before template in choice : ''Individual T1 or template''.'};
-helm_temp.filter  = 'dir';
-helm_temp.ufilter = '.*';
-helm_temp.val{1} = {''};
-helm_temp.num     = [0 0];
+helm_temp.filter  = 'mat';
+helm_temp.ufilter = 'NIRS.mat';    
+helm_temp.val{1}  = {''};
+helm_temp.num     = [0 1];
+helm_temp.help = {['If you have chosen before ''template'' in choice : ''Individual T1 or template''.'...
+    'If you have generated a template for a special helmet and that you want to coregister it with the subject anatomical image, please choose the NIRS.mat you have generated.']};
 
 % helmet         = cfg_choice;
 % helmet.tag     = 'helmet';
@@ -463,8 +464,6 @@ indvdata.values = {template_chosen indvdata_chosen};%choose_path
 indvdata.val    = {indvdata_chosen};
 indvdata.help   = {['Individual data allows you to choose data for each of the subject.'...
     'Template for all allows you to use one coregistration for all your subjects. You will need one T1 image and the registration of the helmet on the same person.']}; 
-
-
 
 helmet         = cfg_choice;
 helmet.tag     = 'helmet';
@@ -6375,7 +6374,7 @@ preprocANAT.help   = {'These modules pre-process anatomical images '
 coregNIRS        = cfg_choice; %cfg_repeat; 
 coregNIRS.name   = 'Coregister NIRS data';
 coregNIRS.tag    = 'coregNIRS';
-coregNIRS.values = {coreg1 coreg2 coreg_manual1 view3d1 resize1};
+coregNIRS.values = {coreg1 coreg2 coreg3 coreg_manual1 view3d1 resize1};
 coregNIRS.help   = {'These modules perform coregistration ',...
             'between NIRS and an anatomical image.'};
 
