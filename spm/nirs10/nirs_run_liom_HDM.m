@@ -37,27 +37,29 @@ try
     %Modalities:
     %1: BOLD
     %2: BOLD+ASL
-    %3: ASL
+    %3: ASL (not coded up)
     %4: HbO HbR (not implemented in this version)
+    %5: BOLD+ASL v2 (not coded up)
     
     %Step 1: checking which modality to run
     if isfield(job.xSPM_Modalities,'xSPM_BOLD')
         modal = 1;
-        xSPM_BOLD = job.xSPM_Modalities.xSPM_BOLD;
+        sBOLD = job.xSPM_Modalities.xSPM_BOLD;
     else
         if isfield(job.xSPM_Modalities,'xSPM_BOLD_ASL')
             modal = 2;
-            xSPM_BOLD = job.xSPM_Modalities.xSPM_BOLD_ASL;
+            sBOLD = job.xSPM_Modalities.xSPM_BOLD_ASL;
             %currently not used
-            xSPM_ASL = job.xSPM_Modalities.xSPM_BOLD_ASL;
+            sASL = job.xSPM_Modalities.xSPM_BOLD_ASL;
+            subjectsASL = sASL.which_subjects_ASL;
         else
             if isfield(job.xSPM_Modalities,'xSPM_ASL')
                 modal = 3;
-                xSPM_ASL = job.xSPM_Modalities.xSPM_ASL;
+                sASL = job.xSPM_Modalities.xSPM_ASL;
             else 
                 if isfield(job.xSPM_Modalities,'xSPM_BOLD_ASL_V2')
                     modal = 5;
-                    xSPM_BOLD = job.xSPM_Modalities.xSPM_BOLD_ASL_V2;
+                    sBOLD = job.xSPM_Modalities.xSPM_BOLD_ASL_V2;
                 end
             end
         end
@@ -66,8 +68,8 @@ try
     clear SPM xSPM
     switch modal
         case {1,2,5}
-            spmmat = xSPM_BOLD.spmmat{1};
-            xSPMmat = xSPM_BOLD.xSPM_spmmat{1};
+            spmmat = sBOLD.spmmat{1};
+            xSPMmat = sBOLD.xSPM_spmmat{1};
             load(spmmat);
             SPM_BOLD = SPM;
             load(xSPMmat);
@@ -76,10 +78,10 @@ try
     clear SPM xSPM
     switch modal
         case {3,2}
-            spmmat = xSPM_ASL.spmmat_ASL{1};
+            spmmat = sASL.spmmat_ASL{1};
             load(spmmat);
             SPM_ASL = SPM;
-            xSPMmat = xSPM_BOLD.xSPM_spmmat_ASL{1};
+            xSPMmat = sASL.xSPM_spmmat_ASL{1};
             load(xSPMmat);
             xSPM_ASL = xSPM;
     end
@@ -114,48 +116,40 @@ try
             for SubjIdx=1:length(subjects)
                 %load data
                 clear SPM Y
-                SPMfile = fullfile(subjects{SubjIdx},'SPM.mat');
-                load(SPMfile);
+                fBOLD= fullfile(subjects{SubjIdx},'SPM.mat');
+                load(fBOLD);
                 %if r1 == 1 && SubjIdx == 1 %some generic information to get
                 [Sess s] = get_session(SPM,cs1);
                 U = get_causes(Sess,Stimuli);
-                %extract VOI
+                %extract VOI for BOLD
                 switch modal
-                    case 1
-                        VOI = get_VOI(SPMfile,ROIs(r1),cs1);
+                    case {1,2}
+                        VOI = get_VOI(fBOLD,ROIs(r1),cs1);
                     case 5
-                        VOI = get_VOI5(SPMfile,ROIs(r1),cs1);
+                        VOI = get_VOI5(fBOLD,ROIs(r1),cs1);
                 end
-                xY = VOI.xY;
-                y = VOI.Y; %/100;
+                %extract VOI for ASL
+                switch modal
+                    case 2
+                        fASL = fullfile(subjectsASL{SubjIdx},'SPM.mat');
+                        VOI_ASL = get_VOI(fASL,ROIs(r1),cs1);
+                end
+                %xY = VOI.xY;
+                %y = VOI.Y; %/100;
                 switch modal
                     case {2,3,5}
-                        %Y.y(:,2)    = y/100;
+                        Y.y(:,2)    = VOI_ASL.Y; %y/100;
                 end
-                
-                Y.y = y;
-              
-               
-                switch modal
-                    case 1
-                        Y.y      = y;
-                    case 2
-                        Y.y(:,1) = y;
-                    case 4
-                        Y.y      = y;
-                    case 5
-                    otherwise
-                end
+                Y.y(:,1) = VOI.Y;
                 
                 %-place response and confounds in response structure
                 %--------------------------------------------------------------------------
                 %-
                 switch modal
                     case {1,2,3}
-                        y      = xY.u;
-                        Y.dt   = SPM.xY.RT;
-                        Y.X0   = xY.X0;
-                   
+                        %y      = VOI.xY.u;
+                        Y.dt   = VOI.xY.RT; %SPM.xY.RT;
+                        Y.X0   = VOI.xY.X0;                   
                 end
                 
                 % estimate
