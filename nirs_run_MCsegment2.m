@@ -1,4 +1,4 @@
-function out = nirs_run_MCsegment(job)
+function out = nirs_run_MCsegment2(job)
 % Complete image segmentation after New Segment
 %_______________________________________________________________________
 % Copyright (C) 2010 Laboratoire d'Imagerie Optique et Moleculaire
@@ -40,7 +40,6 @@ for Idx=1:nsubj
             disp(['Could not find anatomical image for ' int2str(Idx) 'th subject.']);
         end
     end
-    
     
     % USER OPTIONS %
     thresh_as = job.thresh_as;

@@ -36,23 +36,26 @@ switch cimethod
             Y(i,:,:) = imdilate(squeeze(Y(i,:,:)),se);
         end
         
-    case 2%'gaussNdilate'
+    case 2%'gaussNdilate' devenu : gauss poids ;odifie median otsu
         % Gaussian Filter
-        masqueGauss = zeros(gaussfilt_size);
+        masqueGauss = zeros(gaussfilt_size,gaussfilt_size,gaussfilt_size);
         for i=1:gaussfilt_size
             for j=1:gaussfilt_size
-                masqueGauss(i,j) = 1/((2*pi)^(1/2)*gaussfilt_sdev)*exp(-1/20*((floor(gaussfilt_size/2)+1-i)^2+(floor(gaussfilt_size/2)+1-j)^2)/gaussfilt_sdev^2);
+                for k=1:gaussfilt_size
+                    masqueGauss(i,j,k) = 1/((2*pi)^(1/2)*gaussfilt_sdev)*exp(-1/20*((floor(gaussfilt_size/2)+1-i)^2+(floor(gaussfilt_size/2)+1-j)^2+(floor(gaussfilt_size/2)+1-k)^2)/gaussfilt_sdev^2);
+                end
             end
         end
-        %%%%%% A VERIFIER SI ON MET UNE NORME 2, L'INFLUENCE SUR LES
-        %%%%%% TRAITEMENTS
-        masqueGauss = masqueGauss/sum(sum(masqueGauss));
+        %         %%%%%% A VERIFIER SI ON MET UNE NORME 2, L'INFLUENCE SUR LES
+        %         %%%%%% TRAITEMENTS
+        masqueGauss = masqueGauss/sum(sum(sum(masqueGauss)));
+        C = convn(Y,masqueGauss,'same');
+        Y2 = Y.*C;
         
         for i=1:size(Y,1)
-            Y(i,:,:) = medfilt2(squeeze(Y(i,:,:)));
-            Y_slice = squeeze(Y(i,:,:));
-            Y(i,:,:) = conv2(Y_slice,masqueGauss,'same');
-            Y(i,:,:) = imdilate(squeeze(Y(i,:,:)),se);
+            Y2(i,:,:) = medfilt2(squeeze(Y2(i,:,:)));
+            level = graythresh(squeeze(Y2(i,:,:)));
+            Y(i,:,:) = im2bw(squeeze(Y2(i,:,:)),level);
         end
         
     case 3%'otsu'

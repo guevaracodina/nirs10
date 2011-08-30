@@ -84,10 +84,11 @@ for i=1+surnd:size(Ysegmented,1)-surnd
                 v_c1 = Y1(i,posAlpha(j),posAleph(j));
                 v_c2 = Y2(i,posAlpha(j),posAleph(j));
                 v_c3 = Y3(i,posAlpha(j),posAleph(j));
+
                 v_c4 = Y4(i,posAlpha(j),posAleph(j));
                 v_c5 = Y5(i,posAlpha(j),posAleph(j));
-                [dummy,layer2] = max([v_c1,v_c2,v_c3,v_c4,v_c5]);
-                if layer2~=0
+                [confidence,layer2] = max([v_c1,v_c2,v_c3,v_c4,v_c5]);
+                if layer2~=0 && confidence>0.3
                     Ysegmented(i,posAlpha(j),posAleph(j)) = layer2;
                 else
                     Ysegmented(i,posAlpha(j),posAleph(j)) = 6;
