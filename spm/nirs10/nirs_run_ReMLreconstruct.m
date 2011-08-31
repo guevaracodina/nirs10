@@ -27,29 +27,32 @@ function out = nirs_run_ReMLreconstruct(job)
 for Idx=1:size(job.NIRSmat,1)
     
     try
-        NIRS = [];
+        clear NIRS
         load(job.NIRSmat{Idx,1});
-        
-        dir_in = job.dir_in{:};
-        
-        % gets the simulation cs used for the reconstruction
-        sep = strfind(dir_in,filesep);
-%         csn = dir_in(sep(end-1)+3:sep(end)-1);
-csn = dir_in(sep(end-1):sep(end)-1);
-        itest=1;
-        while itest<length(NIRS.Cs.n) && (isempty(strfind(csn,NIRS.Cs.n{itest})) || length(csn)~=length(NIRS.Cs.n{itest}))
-            itest =itest+1;
+        %selection of working directory
+        if ~isempty(job.dir_in{1})
+            f = job.dir_in;
+            cs_dir = fileparts(f{1,:});
+            [dummy cs_ldir] = fileparts(cs_dir); %name of simulation
+            ics = 1;
+            while ~strcmp(cs_ldir,NIRS.Cs.n{ics})
+                ics =ics+1;
+            end
+            %current simulation
+            cs = NIRS.Cs.mcs{ics};
+        else
+            %take last simulation
+            cs = NIRS.Cs.mcs{end};
+            cs_dir = cs.dir;
         end
-        i_cs =itest;
-        cs = NIRS.Cs.mcs{i_cs};
-        %current tomo reconstruction
+        
         ctm = {};
         
         % b8i and segR have the same orientations since there is no
         % permutation (C and Matlab conventions in nirs_run_configMC)
         VsegR = spm_vol(cs.segR);
         jobR.image_in ={cs.segR};
-        jobR.out_dir = dir_in;
+        jobR.out_dir = cs_dir;
         jobR.out_dim = [1 1 1];
         jobR.out_dt = 'same';
         jobR.out_vxsize = job.sens_vxsize;
@@ -67,27 +70,25 @@ csn = dir_in(sep(end-1):sep(end)-1);
         clear YsegRR;
         
         % Pairs....
-        C_cs = [4 32];
-        %         C_cs = cs.C; %ancien Cmc
+        %C_cs = [4 32];
+        C_cs = cs.C; %ancien Cmc
         NC_cs = length(C_cs); %Total number of measurements
         
         %%% X %%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % p330
         % on prend l'identite pour \Omegachapeau en premiere approximation
         %%% pour l'instant pas de SVD
-        load(fullfile(dir_in,'sens.mat'));
-        
+        load(fullfile(cs_dir,'sens.mat'));
+        Xmc = sens;
+        clear sens
         % On veut reconstruire efficacement. Comme on a une resolution
         % proche du cm, on sous echantillonne la matrice de sensitivite...
         for Ci =1:NC_cs
-            Xmci = reshape(sens(Ci,:),VsegR.dim);
-            Vmc = struct('fname',fullfile(dir_in,'Xmci.nii'),...
-                'dim',  VsegR.dim,...
-                'dt',   VsegR.dt,...
-                'pinfo',VsegR.pinfo,...
-                'mat',  VsegR.mat);
-            Vmc = spm_create_vol(Vmc);
-            spm_write_vol(Vmc, Xmci);
+            %inefficient, why write .nii
+            Xmci = reshape(Xmc(Ci,:),VsegR.dim);
+            Vmc = nirs_create_vol(fullfile(cs_dir,'Xmci.nii'),...
+                VsegR.dim, VsegR.dt, VsegR.pinfo, VsegR.mat, Xmci);
+            
             
             %this resizing has the same parameters has the one of segR to
             %segRR (lines 47 to 52)
@@ -113,24 +114,20 @@ csn = dir_in(sep(end-1):sep(end)-1);
         
         beta_prior = zeros(2*Nvx,1);
         
-        ext1 = GetExtinctions(NIRS.Cf.dev.wl(1,1));
-        ext2 = GetExtinctions(NIRS.Cf.dev.wl(1,2));
+        ext1 = GetExtinctions(NIRS.Cf.dev.wl(1));
+        ext2 = GetExtinctions(NIRS.Cf.dev.wl(2));
+        Xsens = blkdiag(Xwl{1}, Xwl{2});
         
-        Xsens = sparse([Xwl{1} zeros(size(Xwl{1}));zeros(size(Xwl{1})) Xwl{2}]);
-        E11 = sparse(ext1(1,1)*eye(Nvx)); %4 large calculations, lasting about 1 minute
-        E12 = sparse(ext1(1,2)*eye(Nvx));
-        E21 = sparse(ext2(1,1)*eye(Nvx));
-        E22 = sparse(ext2(1,2)*eye(Nvx));
-        Egrande = sparse([E11 E12 ; E21 E22]);
-        X = Xsens*Egrande;
-        sX = sparse(X);%%%%%%%% SHBTB
-        
-        %%% systeme hierarchique by the book !
-        clear E11 E12 E21 E22 Egrande Xsens X%%%%%%%% SHBTB
-        tic%%%%%%%% SHBTB %This requires a lot of memory, takes about 1 minute
-        Xbar = sparse([sXmc sX ; speye(Nvx) sparse(zeros(Nvx,2*Nvx)) ; sparse(zeros(2*Nvx,Nvx)) speye(2*Nvx)]);%%%%%%%% SHBTB
-        toc%%%%%%%% SHBTB
-        
+        E0 = [ext1(1) ext1(2); ext2(1) ext2(2)];
+        sX = Xsens * kron(E0,sparse(eye(Nvx)));
+        clear Xsens
+        switch job.ReML_method
+            case 0
+            case 1
+                tic%%%%%%%% SHBTB %This requires a lot of memory, takes about 1 minute
+                Xbar = sparse([sXmc sX ; speye(Nvx) sparse(zeros(Nvx,2*Nvx)) ; sparse(zeros(2*Nvx,Nvx)) speye(2*Nvx)]);%%%%%%%% SHBTB
+                toc%%%%%%%% SHBTB
+        end
         for ifnirs=1:size(NIRS.Dt.fir.pp(end),2)
             fnirs = load(NIRS.Dt.fir.pp(end).p{1,ifnirs},'-mat');
             ctm.Y = NIRS.Dt.fir.pp(end).p{1,ifnirs};
@@ -156,29 +153,32 @@ csn = dir_in(sep(end-1):sep(end)-1);
             %             end
             
             for itp=1:length(job.temp_pts)
+                tic
                 disp(['current : ' int2str(job.temp_pts(itp))])
                 %%% Y %%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                                 Y_t0 = fnirs.d(job.temp_pts(itp),C_cs)';
+                Y_t0 = fnirs.d(job.temp_pts(itp),C_cs)';
                 
                 %ctm.Y = 'fantom';
                 %Yt0 = load('Yt0.nirs','-mat');
                 %Y_t0 = Yt0.Yt0;
-                Y_bar_t0 = sparse([Y_t0; zeros(3*Nvx,1)]);%%%%%%%% SHBTB
+                
                 switch job.ReML_method
                     case 0
                         disp('code Huppert');
                         ctm.alg = 'HUP';
                         % on doit envoyer X et Y pas les bar !!!!!
-                        
-                        [lambda,beta_W,Stats]=nirs_run_DOT_REML(Y_t0,Xbar,beta_prior,Qn,Qp);
+                        warning('off','MATLAB:nearlySingularMatrix');
+                        warning('off','MATLAB:singularMatrix');
+                        [lambda,beta,Stats]=nirs_run_DOT_REML(Y_t0,sX,beta_prior,Qn,Qp);
                         %                         [lambda,beta_W,Stats]=nirs_run_DOT_REML(Y_t0,Xbar*W',beta_prior,Qn,Qp);
                         %Convert to the image domain and display
                         %                         beta = W'*beta_W;
-                        beta = beta_W;
+                        %beta = beta_W;
                     case 1
+                        
                         disp('code spm_reml');
                         ctm.alg = 'SPM';
-                        
+                        Y_bar_t0 = sparse([Y_t0; zeros(3*Nvx,1)]);%%%%%%%% SHBTB
                         %%% Y %%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                         %                         Y_t0 = fnirs.d(job.temp_pts(itp),C_cs)';
                         
@@ -214,23 +214,22 @@ csn = dir_in(sep(end-1):sep(end)-1);
                         %                         [C,h,Ph,F,Fa,Fc]=spm_reml_hijacked(YY,Xbar,Q);
                         [C,h,Ph,F,Fa,Fc]=nirs_spm_reml(YY,Xbar,Q);
                         iC     = spm_inv(C);
-                        iCX    = iC*Xbar; 
+                        iCX    = iC*Xbar;
                         Cq = spm_inv(Xbar'*iCX);
                         beta = Cq*Xbar'*iC*Y_t0;
                 end
                 
-                betaR_HbO = reshape(beta(1:Nvx,1),[VsegRR.dim]);
-                betaR_HbR = reshape(beta(Nvx+1:2*Nvx,1),[VsegRR.dim]);
+                betaR_HbO = reshape(beta(1:Nvx,1),VsegRR.dim);
+                betaR_HbR = reshape(beta(Nvx+1:2*Nvx,1),VsegRR.dim);
                 
                 %creates Tmrs : tomographical reconstruction
-                if ~isfield(NIRS,'Tm')
-                    NIRS.Tm ={};
-                end
+                if ~isfield(NIRS,'Tm'), NIRS.Tm ={}; end
                 
+                str0 = gen_num_str(itp,5);
                 %mkdir
                 daate = strrep(datestr(now),':','-');
-                daate = ['Re_' int2str(length(job.temp_pts)) 'PT_' daate '_' ctm.alg '_' int2str(job.sens_vxsize) 'mm'];
-                ctm.p = fullfile(dir_in,daate);
+                daate = ['Re_' str0 'PT_' daate '_' ctm.alg '_' int2str(job.sens_vxsize) 'mm'];
+                ctm.p = fullfile(cs_dir,daate);
                 mkdir(ctm.p);
                 
                 if isfield(NIRS.Tm,'tmrs')
@@ -243,28 +242,22 @@ csn = dir_in(sep(end-1):sep(end)-1);
                 
                 [dum,namRR,extRR] = fileparts(temp.segRR);
                 ctm.segRR = fullfile(ctm.p,[namRR extRR]);
-                copyfile(temp.segRR,ctm.segRR);
-                delete(temp.segRR);
-                
+                try
+                    copyfile(temp.segRR,ctm.segRR);
+                    delete(temp.segRR);
+                 catch exception
+                     disp(exception.identifier);
+                     disp(exception.stack(1));
+                     disp(['Could not copy a file for subject' int2str(Idx)]);
+                end
                 NIRS.Tm.tmrs{itm} = ctm;
                 NIRS.Tm.n{itm} = ctm.n;
-                
-                %write nifti for DHbO DHbR
-                V_O = struct('fname',fullfile(ctm.p,['D[HbO]_t' int2str(job.temp_pts(itp)) '.nii']),...
-                    'dim',  VsegRR.dim,...
-                    'dt',   [16,0],...
-                    'pinfo',VsegRR.pinfo,...
-                    'mat',  VsegRR.mat);
-                V_O = spm_create_vol(V_O);
-                spm_write_vol(V_O, betaR_HbO);
-                
-                V_R = struct('fname',fullfile(ctm.p,['D[HbR]_t' int2str(job.temp_pts(itp)) '.nii']),...
-                    'dim',  VsegRR.dim,...
-                    'dt',   [16,0],...
-                    'pinfo',VsegRR.pinfo,...
-                    'mat',  VsegRR.mat);
-                V_R = spm_create_vol(V_R);
-                spm_write_vol(V_R, betaR_HbR);
+                               
+                V_O = nirs_create_vol(fullfile(ctm.p,['O_' str0 '.nii']),...
+                    VsegRR.dim, [16,0], VsegRR.pinfo, VsegRR.mat, betaR_HbO);
+                V_R = nirs_create_vol(fullfile(ctm.p,['R_' str0 '.nii']),...
+                    VsegRR.dim, [16,0], VsegRR.pinfo, VsegRR.mat, betaR_HbR);
+                toc
             end
         end
         save(job.NIRSmat{Idx,1},'NIRS');
