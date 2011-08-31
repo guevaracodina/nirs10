@@ -145,7 +145,6 @@ for iSubj=1:size(job.NIRSmat,1)
         end
         clear tk_wl tk_file tk_dir tk_ext history header
         
-        % cas caca, il faudra REFAIRE PLUS PROPRE
         Cid = NIRS.Cf.H.C.id;
         
         %Cgp
