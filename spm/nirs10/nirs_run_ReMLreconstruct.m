@@ -9,14 +9,14 @@ function out = nirs_run_ReMLreconstruct(job)
 % \ [DHbO(vx);DHbR(vx)] = 0 + omega
 %
 % ce que l on peut ecrire sous la forme
-% /Y(t0)\   /Xsens*[ext] Xsens*[ext]\  /omega\   /epsilon_channel-noise\
+% /Y(t0)\   /Xsens*[ext] Xsens*[ext]\  /omega\   /epsilon_channelnoise\
 % |  0  | = |      1           0    |* \beta0/ + |       -omega        |
 % \  0  /   \     0           1     /            \       -beta0        /
 %
 % Y(t0)                 = instant t0 dans le fichier .nirs
 % Xsens                 = matrice sensitivite en un unique point temporel
 % [ext]                 = matrice des coefficients d extinction
-% epsilon_channel-noise = bruit dans les canaux
+% epsilon_channelnoise = bruit dans les canaux
 % omega (notre beta !)  = effet du paradigme
 
 %%%% lire le BOLD du contraste correspondant et prevoir d'enregistrer sous
@@ -34,7 +34,8 @@ for Idx=1:size(job.NIRSmat,1)
         
         % gets the simulation cs used for the reconstruction
         sep = strfind(dir_in,filesep);
-        csn = dir_in(sep(end-1)+3:sep(end)-1);
+%         csn = dir_in(sep(end-1)+3:sep(end)-1);
+csn = dir_in(sep(end-1):sep(end)-1);
         itest=1;
         while itest<length(NIRS.Cs.n) && (isempty(strfind(csn,NIRS.Cs.n{itest})) || length(csn)~=length(NIRS.Cs.n{itest}))
             itest =itest+1;
