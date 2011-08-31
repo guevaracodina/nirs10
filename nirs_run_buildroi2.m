@@ -107,10 +107,10 @@ for Idx=1:size(job.NIRSmat,1)
                 bbv(3,2) = max(Pfp_roi_rmv(3,:));
                 
                 bbv = round(bbv);
-                marge = 5;
+                marge = 40;%5
                 
             case 'S_cubecenter'
-                ray =40;
+                ray =40;%max(NIRS.Cf.H.C.gp(Ckpt)+3);
                 bbm = zeros(3,length(Skpt));
                 bbM = zeros(3,length(Skpt));
                 for iS=1:length(Skpt);
@@ -134,7 +134,7 @@ for Idx=1:size(job.NIRSmat,1)
                 
                 bbv(3,1) = min(bbmv(3,:),bbMv(3,:));
                 bbv(3,2) = max(bbmv(3,:),bbMv(3,:));
-                marge =20;
+                marge =0;
         end
         % the size of the plotted image can be bigger than the size read in
         % the header, in such case the value kept is the one of header

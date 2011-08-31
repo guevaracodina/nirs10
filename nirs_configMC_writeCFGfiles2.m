@@ -20,7 +20,10 @@ function nirs_configMC_writeCFGfiles2(job)
 
 
 outOP = GetOpt_ppts('wl');
+% il faut chqnger les propri2t2s si on chqnge lq tqille des voxels
+scalings =[1 1 1 1];%= [job.par.voxelSize 1 job.par.voxelSize 1];
 opt_ppts = outOP{1};
+
 opt_ppts_perturb = outOP{2};
 
 pve_cfg = job.pve_cfg;
@@ -172,9 +175,7 @@ for iwl = 1:size(job.wl_dev,2)
                     Pwd_rmiv(1,iP), Pwd_rmiv(2,iP), Pwd_rmiv(3,iP));
                 end_time =  job.par.numTimeGates*job.par.deltaT;
                 fprintf(fid,'%s %2.2e %1.2e   # time-gates(s): start, end, step\n','0.00e-9', end_time, job.par.deltaT);
-                %fprintf(fid,'%s %s %s   # time-gates(s): start, end, step\n', '0','1e-9','1e-9');
-                %[~,file,ext] = fileparts(job.n);%%% le .bin
-                fprintf(fid,'%s     # volume (''uchar'' format)\n', n_b8i);%[file, ext]);
+                fprintf(fid,'%s     # volume (''uchar'' format)\n', n_b8i);
                 
                 fprintf(fid,'%1.0f %3.0f %3.0f %3.0f            # x: voxel size, dim, start/end indices\n',...
                     job.par.voxelSize,job.ROIlimits(2,1),1,job.ROIlimits(2,1));
@@ -182,34 +183,35 @@ for iwl = 1:size(job.wl_dev,2)
                     job.par.voxelSize,job.ROIlimits(2,2),1,job.ROIlimits(2,2));
                 fprintf(fid,'%1.0f %3.0f %3.0f %3.0f            # z: voxel size, dim, start/end indices\n',...
                     job.par.voxelSize,job.ROIlimits(2,3),1,job.ROIlimits(2,3));
-                fprintf(fid, '%g %s \n',job.nummed,' # num of media'); %%%%%% a changer /////////
+                
+                fprintf(fid, '%g %s \n',job.nummed,' # num of media');
                 fprintf(fid, '%3.2f %2.1f %5.4f %3.2f %s\n', ...
-                    opt_ppts{iwl,1}([2 3 1 4]),'# GM: scat(1/mm), g, mua (1/mm), n');
+                    scalings.*opt_ppts{iwl,1}([2 3 1 4]),'# GM: scat(1/mm), g, mua (1/mm), n');
                 fprintf(fid, '%3.2f %2.1f %5.4f %3.2f %s\n', ...
-                    opt_ppts{iwl,2}([2 3 1 4]),'# WM: scat(1/mm), g, mua (1/mm), n');
+                    scalings.*opt_ppts{iwl,2}([2 3 1 4]),'# WM: scat(1/mm), g, mua (1/mm), n');
                 fprintf(fid, '%3.2f %2.1f %5.4f %3.2f %s\n', ...
-                    opt_ppts{iwl,3}([2 3 1 4]),'# CSF: scat(1/mm), g, mua (1/mm), n');
+                    scalings.*opt_ppts{iwl,3}([2 3 1 4]),'# CSF: scat(1/mm), g, mua (1/mm), n');
                 fprintf(fid, '%3.2f %2.1f %5.4f %3.2f %s\n', ...
-                    opt_ppts{iwl,4}([2 3 1 4]),'# Skull: scat(1/mm), g, mua (1/mm), n');
+                    scalings.*opt_ppts{iwl,4}([2 3 1 4]),'# Skull: scat(1/mm), g, mua (1/mm), n');
                 fprintf(fid, '%3.2f %2.1f %5.4f %3.2f %s\n', ...
-                    opt_ppts{iwl,5}([2 3 1 4]),'# Scalp: scat(1/mm), g, mua (1/mm), n');
+                    scalings.*opt_ppts{iwl,5}([2 3 1 4]),'# Scalp: scat(1/mm), g, mua (1/mm), n');
                 fprintf(fid, '%3.2f %2.1f %5.4f %3.2f %s\n', ...
-                    opt_ppts{iwl,6}([2 3 1 4]),'# Sinuses: scat(1/mm), g, mua (1/mm), n');
+                    scalings.*opt_ppts{iwl,6}([2 3 1 4]),'# Sinuses: scat(1/mm), g, mua (1/mm), n');
 %                 fprintf(fid, '%3.2f %2.1f %5.4f %3.2f %s\n', ...
 %                     opt_ppts_perturb{iwl}([2 3 1 4]),'# Perturbation: scat(1/mm), g, mua (1/mm), n');
                 if pve_cfg==1
                         fprintf(fid, '%3.2f %2.1f %5.4f %3.2f %s\n', ...
-                    opt_ppts{iwl,1}([2 3 1 4]),'# GM (BOLD): scat(1/mm), g, mua (1/mm), n');
+                    scalings.*opt_ppts{iwl,1}([2 3 1 4]),'# GM (BOLD): scat(1/mm), g, mua (1/mm), n');
                 fprintf(fid, '%3.2f %2.1f %5.4f %3.2f %s\n', ...
-                    opt_ppts{iwl,2}([2 3 1 4]),'# WM (BOLD): scat(1/mm), g, mua (1/mm), n');
+                    scalings.*opt_ppts{iwl,2}([2 3 1 4]),'# WM (BOLD): scat(1/mm), g, mua (1/mm), n');
                 fprintf(fid, '%3.2f %2.1f %5.4f %3.2f %s\n', ...
-                    opt_ppts{iwl,3}([2 3 1 4]),'# CSF (BOLD): scat(1/mm), g, mua (1/mm), n');
+                    scalings.*opt_ppts{iwl,3}([2 3 1 4]),'# CSF (BOLD): scat(1/mm), g, mua (1/mm), n');
                 fprintf(fid, '%3.2f %2.1f %5.4f %3.2f %s\n', ...
-                    opt_ppts{iwl,4}([2 3 1 4]),'# Skull (BOLD): scat(1/mm), g, mua (1/mm), n');
+                    scalings.*opt_ppts{iwl,4}([2 3 1 4]),'# Skull (BOLD): scat(1/mm), g, mua (1/mm), n');
                 fprintf(fid, '%3.2f %2.1f %5.4f %3.2f %s\n', ...
-                    opt_ppts{iwl,5}([2 3 1 4]),'# Scalp (BOLD): scat(1/mm), g, mua (1/mm), n');
+                    scalings.*opt_ppts{iwl,5}([2 3 1 4]),'# Scalp (BOLD): scat(1/mm), g, mua (1/mm), n');
                 fprintf(fid, '%3.2f %2.1f %5.4f %3.2f %s\n', ...
-                    opt_ppts{iwl,6}([2 3 1 4]),'# Sinuses (BOLD): scat(1/mm), g, mua (1/mm), n');
+                    scalings.*opt_ppts{iwl,6}([2 3 1 4]),'# Sinuses (BOLD): scat(1/mm), g, mua (1/mm), n');
                 end
                 
                 % Detectors (all other optodes)
