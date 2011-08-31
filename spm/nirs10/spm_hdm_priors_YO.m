@@ -1,4 +1,4 @@
-function [pE,pC] = spm_hdm_priors(m,h)
+function [pE,pC] = spm_hdm_priors_YO(m,h)
 % returns priors for a hemodynamic dynamic causal model
 % FORMAT [pE,pC] = spm_hdm_priors(m,[h])
 % m   - number of inputs
@@ -59,6 +59,10 @@ pC    = v*diag(e)*v'/32;
 %---------------------------------------------------------------------------
 pE    = [pE 0];
 pC    = blkdiag(pC,1/32);
+
+% if modal == 2 %add a parameter for the relative strength of flow to BOLD
+%      
+% end
 
 % append m efficacy priors
 %---------------------------------------------------------------------------

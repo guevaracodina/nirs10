@@ -141,13 +141,15 @@ try
                         Y.y(:,2)    = VOI_ASL.Y; %y/100;
                 end
                 Y.y(:,1) = VOI.Y;
-                
+                %rescale to unit variance and zero mean
+                %Y.y = 100*(Y.y - repmat(mean(Y.y),[size(Y.y,1) 1]))./ repmat(std(Y.y),[size(Y.y,1) 1]);
                 %-place response and confounds in response structure
                 %--------------------------------------------------------------------------
                 %-
                 switch modal
                     case {1,2,3}
                         %y      = VOI.xY.u;
+                        VOI.xY.RT = SPM.xY.RT;
                         Y.dt   = VOI.xY.RT; %SPM.xY.RT;
                         Y.X0   = VOI.xY.X0;                   
                 end
@@ -263,7 +265,7 @@ try
                 HDM{SubjIdx,r1}{s1}.Cp = Cp;
                 HDM{SubjIdx,r1}{s1}.F = F;
                 HDM{SubjIdx,r1}{s1}.name = ROIs(r1).nameROI;
-                HDM{SubjIdx,r1}{s1}.subj = SPMfile; %to remove any doubt
+                HDM{SubjIdx,r1}{s1}.subj = fBOLD; %to remove any doubt
                 HDM{SubjIdx,r1}{s1}.session = cs1;
                 %-display results
                 %==========================================================================
