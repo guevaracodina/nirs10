@@ -229,17 +229,18 @@ for Idx=1:size(job.NIRSmat,1)
                 betaR_HbO = reshape(full(beta(1,:)),VsegRR.dim);
                 betaR_HbR = reshape(full(beta(2,:)),VsegRR.dim);
                 %write nifti for DHbO DHbR
-                if itp < 10
-                    str = '0000';
-                elseif itp < 100
-                    str = '000';
-                elseif itp < 1000
-                    str = '00';
-                elseif itp < 1e4
-                    str = '0';
-                else str = '';
-                end
-                str0 = [str int2str(job.temp_pts(itp))];
+                str0 = gen_num_str(itp,4);
+%                 if itp < 10
+%                     str = '0000';
+%                 elseif itp < 100
+%                     str = '000';
+%                 elseif itp < 1000
+%                     str = '00';
+%                 elseif itp < 1e4
+%                     str = '0';
+%                 else str = '';
+%                 end
+               % str0 = [str int2str(job.temp_pts(itp))];
                 V_O = nirs_create_vol(fullfile(ctm.p,['O_' str0 '.nii']),...
                     VsegRR.dim, [16,0], VsegRR.pinfo, VsegRR.mat, betaR_HbO);
                 V_R = nirs_create_vol(fullfile(ctm.p,['R_' str0 '.nii']),...
