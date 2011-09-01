@@ -134,18 +134,33 @@ try
                         fASL = fullfile(subjectsASL{SubjIdx},'SPM.mat');
                         VOI_ASL = get_VOI(fASL,ROIs(r1),cs1);
                 end
+                
                 %xY = VOI.xY;
                 %y = VOI.Y; %/100;
                 switch modal
                     case {2,3,5}
                         Y.y(:,2)    = VOI_ASL.Y; %y/100;
+                        %Specific to Michèle`s project:
+                        %calibration factor for ASL
+                        load(fASL);
+                        [dir1 fil1] = fileparts(SPM.xY.P(1,:));
+                        load(fullfile(dir1,'CBFcalibrFactor.mat'));
+                        M.CBFcalibrFactor = calibrFactor;
                 end
-                Y.y(:,1) = VOI.Y;
+                %Add high pass filter 
+                Y.y(:,2) = ButterHPF(1/SPM.xY.RT,1/128,3,Y.y(:,2));
+                %only rescale BOLD signal, not ASL:
+                y1 = VOI.Y;
+                y1(1:4) = mean(y1(5:10)); y1(end-4:end) = mean(y1(end-10:end-5));
+                y1 = ButterHPF(1/SPM.xY.RT,1/128,2,y1);
+                %y1 = 100*(y1 - repmat(median(y1),[size(y1) 1]))./repmat(median(y1),[size(y1,1) 1]); % repmat(std(y1),[size(y1,1) 1]);                    
+                y1 = (y1 - repmat(mean(y1),[size(y1) 1]))./repmat(mean(y1),[size(y1,1) 1]); % repmat(std(y1),[size(y1,1) 1]);                    
+                Y.y(:,1) = y1;
                 %rescale to unit variance and zero mean
-                %Y.y = 100*(Y.y - repmat(mean(Y.y),[size(Y.y,1) 1]))./ repmat(std(Y.y),[size(Y.y,1) 1]);
+                %Y.y = 100*(Y.y - repmat(median(Y.y),[size(Y.y,1) 1]))./ repmat(std(Y.y),[size(Y.y,1) 1]);
+                
                 %-place response and confounds in response structure
                 %--------------------------------------------------------------------------
-                %-
                 switch modal
                     case {1,2,3}
                         %y      = VOI.xY.u;
