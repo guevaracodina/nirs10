@@ -152,6 +152,26 @@ for Idx=1:size(job.NIRSmat,1)
             %                 %Qp{6}=sparse();
             %             end
             
+            daate = strrep(datestr(now),':','-');
+            tm_dir = ['Re_' daate '_a' ctm.alg '_' int2str(job.sens_vxsize) 'mm'];
+            ctm.p = fullfile(cs_dir,tm_dir);
+            if ~exist(ctm.p,'dir'),mkdir(ctm.p);end
+            if ~isfield(NIRS,'Tm'), NIRS.Tm ={}; end
+            if isfield(NIRS.Tm,'tmrs')
+                itm = size(NIRS.Tm.tmrs,2)+1;
+            else
+                itm=1;
+            end
+            ctm.n = tm_dir;
+            ctm.sens_vxsize = job.sens_vxsize;
+            
+            [dum,namRR,extRR] = fileparts(temp.segRR);
+            ctm.segRR = fullfile(ctm.p,[namRR extRR]);
+            copyfile(temp.segRR,ctm.segRR);
+            delete(temp.segRR);
+            NIRS.Tm.tmrs{itm} = ctm;
+            NIRS.Tm.n{itm} = ctm.n;
+                           
             for itp=1:length(job.temp_pts)
                 tic
                 disp(['current : ' int2str(job.temp_pts(itp))])
@@ -220,39 +240,8 @@ for Idx=1:size(job.NIRSmat,1)
                 end
                 
                 betaR_HbO = reshape(beta(1:Nvx,1),VsegRR.dim);
-                betaR_HbR = reshape(beta(Nvx+1:2*Nvx,1),VsegRR.dim);
-                
-                %creates Tmrs : tomographical reconstruction
-                if ~isfield(NIRS,'Tm'), NIRS.Tm ={}; end
-                
-                str0 = gen_num_str(itp,5);
-                %mkdir
-                daate = strrep(datestr(now),':','-');
-                daate = ['Re_' str0 'PT_' daate '_' ctm.alg '_' int2str(job.sens_vxsize) 'mm'];
-                ctm.p = fullfile(cs_dir,daate);
-                mkdir(ctm.p);
-                
-                if isfield(NIRS.Tm,'tmrs')
-                    itm = size(NIRS.Tm.tmrs,2)+1;
-                else
-                    itm=1;
-                end
-                ctm.n = daate;
-                ctm.sens_vxsize = job.sens_vxsize;
-                
-                [dum,namRR,extRR] = fileparts(temp.segRR);
-                ctm.segRR = fullfile(ctm.p,[namRR extRR]);
-                try
-                    copyfile(temp.segRR,ctm.segRR);
-                    delete(temp.segRR);
-                 catch exception
-                     disp(exception.identifier);
-                     disp(exception.stack(1));
-                     disp(['Could not copy a file for subject' int2str(Idx)]);
-                end
-                NIRS.Tm.tmrs{itm} = ctm;
-                NIRS.Tm.n{itm} = ctm.n;
-                               
+                betaR_HbR = reshape(beta(Nvx+1:2*Nvx,1),VsegRR.dim);                
+                str0 = gen_num_str(itp,4);               
                 V_O = nirs_create_vol(fullfile(ctm.p,['O_' str0 '.nii']),...
                     VsegRR.dim, [16,0], VsegRR.pinfo, VsegRR.mat, betaR_HbO);
                 V_R = nirs_create_vol(fullfile(ctm.p,['R_' str0 '.nii']),...
