@@ -182,7 +182,6 @@ for Idx=1:size(job.NIRSmat,1)
         NIRS.Cs.temp.Pfp_roi_rmv = PfpR_roi_rmv(1:3,:); 
         %Same but in MNI real space
         NIRS.Cs.temp.Pfp_roi_rmm = Pfp_roi_rmm;
-        %
         NIRS.Cs.temp.Pp_roi_rmm = Pp_roi_rmm;
         NIRS.Cs.temp.Pp_roi_c1_rmm = Pp_roi_c1_rmm;
         NIRS.Cs.temp.segR = fullfile(dir2,[job.output_prefix,name,'.nii']);

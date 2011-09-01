@@ -1,7 +1,7 @@
 function out = nirs_MCsegment_rebels(job)
 %--> for rebel voxels
 rebel_count = 0;
-surnd = 3;
+surnd = 3; %why not 1? 3 allows more accurate attribution of layer
 
 %loading shadow and Ysegmented
 Ysegmented = job.Yseg;
@@ -72,7 +72,7 @@ for i=1+surnd:size(Ysegmented,1)-surnd
             %%%% central voxel
             rebel_value_count = zeros(6,1);
             for i_value =1:6
-                rebel_value_count(i_value) = size(find(nbrhood==(i_value-1)),1);
+                rebel_value_count(i_value) = length(find(nbrhood==(i_value-1)));
             end
             [dummy,layer] = max(rebel_value_count);
             layer = layer-1;
@@ -84,7 +84,7 @@ for i=1+surnd:size(Ysegmented,1)-surnd
                 v_c1 = Y1(i,posAlpha(j),posAleph(j));
                 v_c2 = Y2(i,posAlpha(j),posAleph(j));
                 v_c3 = Y3(i,posAlpha(j),posAleph(j));
-
+                
                 v_c4 = Y4(i,posAlpha(j),posAleph(j));
                 v_c5 = Y5(i,posAlpha(j),posAleph(j));
                 [confidence,layer2] = max([v_c1,v_c2,v_c3,v_c4,v_c5]);

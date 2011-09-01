@@ -36,25 +36,39 @@ switch cimethod
             Y(i,:,:) = imdilate(squeeze(Y(i,:,:)),se);
         end
         
-    case 2%'gaussNdilate' devenu : gauss poids ;odifie median otsu
+    case 2
+        %Preferred method
+        %for each brain layer (especially skin and skull),
+        % a 3D Gaussian filter is applied (and used as a weight), 
+        % then medfilt2 and then
+        % a threshold mask on the result
+        
+        %'gaussNdilate' devenu : gauss poids ;odifie median otsu
         % Gaussian Filter
         masqueGauss = zeros(gaussfilt_size,gaussfilt_size,gaussfilt_size);
         for i=1:gaussfilt_size
             for j=1:gaussfilt_size
                 for k=1:gaussfilt_size
-                    masqueGauss(i,j,k) = 1/((2*pi)^(1/2)*gaussfilt_sdev)*exp(-1/20*((floor(gaussfilt_size/2)+1-i)^2+(floor(gaussfilt_size/2)+1-j)^2+(floor(gaussfilt_size/2)+1-k)^2)/gaussfilt_sdev^2);
+                    masqueGauss(i,j,k) = 1/((2*pi)^(1/2)*gaussfilt_sdev)*...
+                        exp(-1/20*((floor(gaussfilt_size/2)+1-i)^2+...
+                                   (floor(gaussfilt_size/2)+1-j)^2+...
+                                   (floor(gaussfilt_size/2)+1-k)^2)/gaussfilt_sdev^2); %possible mistake in number 20?
                 end
             end
         end
         %         %%%%%% A VERIFIER SI ON MET UNE NORME 2, L'INFLUENCE SUR LES
         %         %%%%%% TRAITEMENTS
-        masqueGauss = masqueGauss/sum(sum(sum(masqueGauss)));
-        C = convn(Y,masqueGauss,'same');
+        masqueGauss = masqueGauss/sum(masqueGauss(:));
+        %This operation will not conserve probabilities across layers,
+        %hence sum of probability over layers at one voxel can differ from unity       
+        C = convn(Y,masqueGauss,'same'); %could replace by a convnfft for speed
         Y2 = Y.*C;
-        
+        %Median filter in direction x only in voxel space
         for i=1:size(Y,1)
+            %median filter -- cartoon-like result
             Y2(i,:,:) = medfilt2(squeeze(Y2(i,:,:)));
             level = graythresh(squeeze(Y2(i,:,:)));
+            %create a boolean mask instead of probability distribution
             Y(i,:,:) = im2bw(squeeze(Y2(i,:,:)),level);
         end
         
@@ -77,13 +91,8 @@ switch cimethod
             Y(i,:,:) = im2bw(squeeze(Y(i,:,:)),level);
         end
 end
-
-V_processed = struct('fname',fullfile(dir,['processed_',name,'.nii']),...
-    'dim',  V.dim,...
-    'dt',   V.dt,...
-    'pinfo',V.pinfo,...
-    'mat',V.mat);
-V_processed = spm_create_vol(V_processed);
-V_processed = spm_write_vol(V_processed, Y);
+%Write Y
+V_processed = nirs_create_vol(fullfile(dir,['processed_',name,'.nii']),...
+                    V.dim, V.dt, V.pinfo, V.mat, Y);
 
 varargout{1}=V_processed;
