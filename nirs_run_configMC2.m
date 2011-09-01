@@ -90,7 +90,7 @@ for Idx=1:size(job.NIRSmat,1)
             NSess = size(NIRS.Dt.fir.pp(1,last).p,1);
             
             for iSess =1:NSess
-                arun=1;
+                arun=1; %?
                 if arun==0 %%% prevoir la sauvegarde des differentes matrices xSPM
                     clear xSPM_boldmask xSPM_boldmask_sorted
                     % on genere une simulation MonteCarlo par contraste BOLD ///
@@ -151,6 +151,7 @@ for Idx=1:size(job.NIRSmat,1)
                 end
             end
         elseif isfield(job.pve_cfg,'no_pve')
+            %Name for current simulation
             csn = [alg_nam '_' daate];
             cs.dir =fullfile(G.seg_p,csn);
             %Directory for configuration files
@@ -174,7 +175,7 @@ for Idx=1:size(job.NIRSmat,1)
             cs.Pvoid = Pvoid;
             cs.Pfp_rmiv = outF.P.Pfp_rmiv;
             cs.Pwd_rmm = outF.P.Pwd_rmm;
-            cs.nummed = 6;
+            cs.nummed = 6;%?
             
             Sr = cs.par.radiis * ones(cs.NSkpt,1);
             Dr = cs.par.radiid * ones(cs.NDkpt,1);

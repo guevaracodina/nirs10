@@ -143,7 +143,7 @@ for Idx=1:size(job.NIRSmat,1)
             daate = strrep(datestr(now),':','-');
             tm_dir = ['tm_' daate '_a' ctm.alg '_' int2str(job.sens_vxsize) 'mm'];
             ctm.p = fullfile(cs_dir,tm_dir);
-            if ~exist(ctm.p),mkdir(ctm.p);end
+            if ~exist(ctm.p,'dir'),mkdir(ctm.p);end
             
             if isfield(NIRS.Tm,'tmrs')
                 itm = size(NIRS.Tm.tmrs,2)+1;
@@ -230,17 +230,6 @@ for Idx=1:size(job.NIRSmat,1)
                 betaR_HbR = reshape(full(beta(2,:)),VsegRR.dim);
                 %write nifti for DHbO DHbR
                 str0 = gen_num_str(itp,4);
-%                 if itp < 10
-%                     str = '0000';
-%                 elseif itp < 100
-%                     str = '000';
-%                 elseif itp < 1000
-%                     str = '00';
-%                 elseif itp < 1e4
-%                     str = '0';
-%                 else str = '';
-%                 end
-               % str0 = [str int2str(job.temp_pts(itp))];
                 V_O = nirs_create_vol(fullfile(ctm.p,['O_' str0 '.nii']),...
                     VsegRR.dim, [16,0], VsegRR.pinfo, VsegRR.mat, betaR_HbO);
                 V_R = nirs_create_vol(fullfile(ctm.p,['R_' str0 '.nii']),...

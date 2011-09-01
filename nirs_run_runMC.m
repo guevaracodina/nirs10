@@ -8,7 +8,6 @@ function out = nirs_run_runMC(job)
 % Copyright (C) 2010 LIOM Laboratoire d'Imagerie Optique et Moléculaire
 %                    École Polytechnique de Montréal
 %_______________________________________________________________________
-%%%%%%%% same code as sensitivity matrix
 
 % le nombre de repetitions a une influence sur le DPF mais les valeurs
 % restent de meme ordre de grandeur
@@ -45,6 +44,7 @@ for Idx=1:size(job.NIRSmat,1)
         catch
             f = job.MC_runCUDAchoice.tMCimg1.tMCimg_configFiles;
         end
+        %Directory for current simulation
         if ~isempty(f{1})
             cs_dir =  fileparts(f{1,:});
         else
@@ -53,12 +53,13 @@ for Idx=1:size(job.NIRSmat,1)
         
         [dummy,cs_ldir] = fileparts(cs_dir);
         ics =1;
+        %Identify current simulation
         while ~strcmp(cs_ldir,NIRS.Cs.n{ics})
             ics =ics+1;
         end
         cs = NIRS.Cs.mcs{ics};
         %%%%%%%%
-        
+        %Launch simulation depending on algorithm choice (i.e. MCX or tMC)
         switch cs.alg
             case 1 %MCX
                 [t,dummy] = spm_select('FPList',cs_dir,'.inp');
@@ -72,40 +73,26 @@ for Idx=1:size(job.NIRSmat,1)
                 for k1=1:size(t,1)
                     [dir1,file1,dummy] = fileparts(t(k1,:));
                     file2 = [file1 '.inp'];
+                    %Go to simulation directory in order to put executable there,
+                    %as the code will not run otherwise
                     cd(dir1);
                     
                     % if his/mch needed
                     if strcmp(file1(1),'S')
                         codeexe = 'mcx_det';
                         if countS ==0
-                         copyfile([spm('Dir') '\toolbox\nirs10\mc_exe\' codeexe '.exe'],[dir1 filesep codeexe '.exe']);
-                         countS = countS+1;
+                            countS = countS+1; %?
                         end
                     else
                         codeexe = 'mcx';
                         if countD ==0
-                         copyfile([spm('Dir') '\toolbox\nirs10\mc_exe\' codeexe '.exe'],[dir1 filesep codeexe '.exe']);
-                         countD = countD+1;
+                            countD = countD+1; %?
                         end
                     end
-                    %else
-                    %codeexe = 'mcx.exe';
-                    %end
-                    
-                    %                 str_run1 = ['mcx.exe -t ' int2str(J.MCX_t) ' -T ' int2str(J.MCX_T) ' -n ' int2str(cs.par.nphotons)];
-% % % % % % % % % % %                     str_run1 = [codeexe ' -A 2 -n ' int2str(cs.par.nphotons)];
-% % % % % % % % % % %                     if J.MCX_l
-% % % % % % % % % % %                         str_log = ' -l'; %'MCX_logfile';
-% % % % % % % % % % %                     else
-% % % % % % % % % % %                         str_log = '';
-% % % % % % % % % % %                     end
-% % % % % % % % % % %                     str_run2 = [' -r ' int2str(J.MCX_r) ' -g ' int2str(J.MCX_g) ' -U 1 -S 1 -d 1 -a 0 -b 0 -B 1 -z 1'];
-% % % % % % % % % % %                     res = system([str_run1 ' -f ' file2 ' -s ' file1 str_run2 str_log]);
-
-% % % % % % % % % % %                     str_run2 = [' -r ' int2str(J.MCX_r) ' -g ' int2str(J.MCX_g) ' -U 1 -S 1 -d 1 -a 0 -b 0 -B 1 -z 1'];
-% -z 1 EST ESSENTIEL !!!!!!!!!!!!!!!!!!!
-%                     res = system([codeexe ' -A -n ' int2str(cs.par.nphotons) ' -f ' file2 ' -s ' file1 ' -r ' int2str(J.MCX_r) ' -g 1 -b 0 -d 1 -z 1 -l']);
-                    res = system([codeexe ' -A -n ' int2str(cs.par.nphotons) ' -f ' file2 ' -s ' file1 ' -r ' int2str(J.MCX_r) ' -U 1 -S 1 -g 1 -b 0 -d 1 -z 1 -l']);
+                    copyfile([spm('Dir') '\toolbox\nirs10\mc_exe\' codeexe '.exe'],[dir1 filesep codeexe '.exe']);
+                    % -z 1 EST ESSENTIEL !!!!!!!!!!!!!!!!!!!
+                    res = system([codeexe ' -A -n ' int2str(cs.par.nphotons) ' -f ' file2 ' -s ' ...
+                        file1 ' -r ' int2str(J.MCX_r) ' -g 1 -b 0 -d 1 -z 1 -l']);
                 end
                 
                 if countD>0, delete([dir1 filesep 'mcx.exe']);end
@@ -132,7 +119,7 @@ for Idx=1:size(job.NIRSmat,1)
                     res = system(str_run);
                 end
         end
-
+        
         if NewDirCopyNIRS
             newNIRSlocation = fullfile(dir2,'NIRS.mat');
             save(newNIRSlocation,'NIRS');

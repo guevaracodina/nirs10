@@ -7,9 +7,9 @@ function out = nirs_run_buildroi2(job)
 % outputprefix    - Prefix of the ROI image name
 %_______________________________________________________________________
 %
-% The image will be croped with respect to the selected source-detector
-% pairs (channels) to are to be kept for the MonteCarlo simulation. You
-% only have to enter the channels numbers for the first wavelength.
+% The image will be cropped with respect to the selected source-detector
+% pairs (channels) to be kept for the MonteCarlo simulation. You
+% only have to enter the channel numbers for the first wavelength.
 %_______________________________________________________________________
 % Copyright (C) 2010 Laboratoire d'Imagerie Optique et Moleculaire
 
@@ -31,12 +31,11 @@ for Idx=1:size(job.NIRSmat,1)
         [dir0,dummy,dummy2] = fileparts(job.NIRSmat{Idx,1});
         
         if ~isempty(job.image_in{:})
-            V = spm_vol(job.image_in{:});
-            Y = spm_read_vols(V);
+            V = spm_vol(job.image_in{:});            
         else
             V = spm_vol(NIRS.Dt.ana.T1seg);
-            Y = spm_read_vols(V);
         end
+        Y = spm_read_vols(V);
         [dir,name] = fileparts(V.fname);
         
         NS = NIRS.Cf.H.S.N;
@@ -59,6 +58,7 @@ for Idx=1:size(job.NIRSmat,1)
         Ckpt_owl = [];
         Skpt =[];
         Dkpt=[];
+        %Loop over ?
         for i=1:length(Ckpt)
             Cbloup = (1:length(Cid(1,:))).*(Cid(1,:) == Ckpt(i));
             Skpt = [Skpt Cid(2,sum(Cbloup))];
@@ -97,16 +97,18 @@ for Idx=1:size(job.NIRSmat,1)
         method = 'S_cubecenter';
         switch method
             case 'ancienne'
-                bbv(1,1) = min(Pfp_roi_rmv(1,:));
-                bbv(1,2) = max(Pfp_roi_rmv(1,:));
+%                 bbv(1,1) = min(Pfp_roi_rmv(1,:));
+%                 bbv(1,2) = max(Pfp_roi_rmv(1,:));
+%                 
+%                 bbv(2,1) = min(Pfp_roi_rmv(2,:));
+%                 bbv(2,2) = max(Pfp_roi_rmv(2,:));
+%                 
+%                 bbv(3,1) = min(Pfp_roi_rmv(3,:));
+%                 bbv(3,2) = max(Pfp_roi_rmv(3,:));
                 
-                bbv(2,1) = min(Pfp_roi_rmv(2,:));
-                bbv(2,2) = max(Pfp_roi_rmv(2,:));
-                
-                bbv(3,1) = min(Pfp_roi_rmv(3,:));
-                bbv(3,2) = max(Pfp_roi_rmv(3,:));
-                
-                bbv = round(bbv);
+                bbv(:,1) = min(Pfp_roi_rmv,[],1);
+                bbv(:,2) = max(Pfp_roi_rmv,[],1);
+                bbv = round(bbv); %?
                 marge = 40;%5
                 
             case 'S_cubecenter'
@@ -152,17 +154,10 @@ for Idx=1:size(job.NIRSmat,1)
         V_roi.dim = [bbv(1,2)-bbv(1,1)+1 bbv(2,2)-bbv(2,1)+1 bbv(3,2)-bbv(3,1)+1];
         % V_roi.mat is the mat from voxel ROI to the raw image space in mm
         V_roi.mat = V.mat*mat_roi2raw;
-        
-        V_roi = struct('fname',fullfile(dir2,[job.output_prefix,name,'.nii']),...
-            'dim',    V_roi.dim,...
-            'dt',     V.dt,...
-            'pinfo',  V.pinfo,...
-            'mat',    V_roi.mat);
-        
         Y_roi = Y(bbv(1,1):bbv(1,2),bbv(2,1):bbv(2,2),bbv(3,1):bbv(3,2));
-        
-        V_roi = spm_create_vol(V_roi);
-        V_roi = spm_write_vol(V_roi, Y_roi);
+       
+        V_roi = nirs_create_vol(fullfile(dir2,[job.output_prefix,name,'.nii']),...
+                    V_roi.dim, V.dt, V.pinfo, V_roi.mat, Y_roi);               
         
         % Sources and detectors positions must be updated also
         for i=1:size(Pkpt,2)
