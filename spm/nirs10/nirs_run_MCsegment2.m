@@ -5,7 +5,8 @@ function out = nirs_run_MCsegment2(job)
 
 % Clément Bonnéry
 % 2010-06
-
+belong_label = 'belongs2n_ci';
+processed_label = 'processed';
 %outVsegmented = {};
 outNIRSmat = {};
 try
@@ -86,21 +87,24 @@ for Idx=1:nsubj
 %         try
             [dir,name] = fileparts(V.fname);
             
-            %%% on traite les couches
+            %Treatment of skin layer (which is the most difficult)
             nirs_MCsegment_process_image(fullfile(dir,['c5',name,'.nii']),...
                 c5method, se_size_pi, gaussfilt_size, gaussfilt_sdev);
             
             %%% belong2
-            % Give the number of layers each voxel belongs to (between 0 and 2)
-            if ~spm_existfile(fullfile(dir,filesep,'belongs2n_ci.nii'))
-                
+            fbelong = fullfile(dir,filesep,[belong_label '.nii']);
+            % Find the number of layers that each voxel belongs to (between 0 and 2)
+            %Result is an image Yb ("belong") 
+            if ~spm_existfile(fbelong)
+                %calculate sum of the 5 layers, of which only the 5th one 
+                %was previously processed
                 matlabbatch{1}.spm.util.imcalc.input = {
                     fullfile(dir,['c1',name,'.nii'])
                     fullfile(dir,['c2',name,'.nii'])
                     fullfile(dir,['c3',name,'.nii'])
                     fullfile(dir,['c4',name,'.nii'])
                     fullfile(dir,['processed_c5',name,'.nii'])};
-                matlabbatch{1}.spm.util.imcalc.output = 'belongs2n_ci.nii';
+                matlabbatch{1}.spm.util.imcalc.output = [belong_label '.nii'];
                 matlabbatch{1}.spm.util.imcalc.outdir = {dir};
                 matlabbatch{1}.spm.util.imcalc.expression = 'i1+i2+i3+i4+i5';
                 matlabbatch{1}.spm.util.imcalc.options.dmtx = 0;
@@ -108,47 +112,41 @@ for Idx=1:nsubj
                 matlabbatch{1}.spm.util.imcalc.options.interp = 1;
                 matlabbatch{1}.spm.util.imcalc.options.dtype = 4;
                 spm_jobman('run_nogui',matlabbatch);
-                
-%                 [dummy,Vb] = spm_imcalc_ui([fullfile(dir,['c5',name,'.nii']);...
-%                     fullfile(dir,['c2',name,'.nii']);...
-%                     fullfile(dir,['c3',name,'.nii']);...
-%                     fullfile(dir,['c4',name,'.nii']);...
-%                     fullfile(dir,['c1',name,'.nii'])],...
-%                     fullfile(dir,'belongs2n_ci.nii'),...
-%                     'i1+i2+i3+i4+i5');
-                
+                               
                 %%% Head shadow
-                % is determined to know whether a voxel is situated in the head or not
-                % once the sum is calculated an erosion is carried out to smoothen the
-                % image and to uniformise the mask
-                Vb = spm_vol(fullfile(dir,'belongs2n_ci.nii'));
+                % "head shadow" is an image, Yh, with value 1 inside the head and zero outside
+                Vb = spm_vol(fbelong);
                 Yb = spm_read_vols(Vb);
                 Yh = Yb;
-                
+                %construct image "head shadow"
+                %For planes x and y in the image in voxel space, perform a median filter
                 for i=1:size(Yh,1)
                     Yh(i,:,:) = medfilt2(squeeze(Yh(i,:,:)));
                 end
+                %Plane y
                 for i=1:size(Yh,2)
                     Yh(:,i,:) = medfilt2(squeeze(Yh(:,i,:)));
                     level = graythresh(squeeze(Yh(:,i,:)));
                     Yh(:,i,:) = im2bw(squeeze(Yh(:,i,:)),level);
+                    %Fill holes: 
                     Yh(:,i,:) = imfill(squeeze(Yh(:,i,:)),'holes');
                 end
-                
-                Vh = struct('fname',fullfile(dir,'head_shadow.nii'),...
-                    'dim',  Vb.dim,...
-                    'dt',   Vb.dt,...
-                    'pinfo',Vb.pinfo,...
-                    'mat',Vb.mat);
-                Vh = spm_create_vol(Vh);
-                spm_write_vol(Vh, Yh);
+                Vh = nirs_create_vol(fullfile(dir,'head_shadow.nii'),...
+                    Vb.dim, Vb.dt, Vb.pinfo, Vb.mat, Yh);                
             else
-                Vb = spm_vol(fullfile(dir,'belongs2n_ci.nii'));Yb = spm_read_vols(Vb);
+                Vb = spm_vol(fbelong);Yb = spm_read_vols(Vb);
                 Vh = spm_vol(fullfile(dir,'head_shadow.nii')); Yh = spm_read_vols(Vh);
             end
-            
+            %Ysegmented can take one of 7 values:
+            %0: air outside head
+            %1: GM
+            %2: WM
+            %3: CSF
+            %4: Skull
+            %5: Skin
+            %6: air inside head (e.g. sinus)
             Ysegmented = zeros(size(Yb));
-            
+            %Open all 5 layers
             V1 = spm_vol(fullfile(dir,['c1',name,'.nii']));Y1 = spm_read_vols(V1);clear V1;
             V2 = spm_vol(fullfile(dir,['c2',name,'.nii']));Y2 = spm_read_vols(V2);clear V2;
             V3 = spm_vol(fullfile(dir,['c3',name,'.nii']));Y3 = spm_read_vols(V3);clear V3;
@@ -157,6 +155,7 @@ for Idx=1:nsubj
             
             %%% choosing layer...
             %--> belongs_2n==1 : voxel is directly attributed
+            
             Ysegmented( Yb>=0.5 & Yb<1.51 & Y5>=thresh_as ) = 5;
             Ysegmented( Yb>=0.5 & Yb<1.51 & Y4>=thresh_as ) = 4;
             
@@ -172,6 +171,7 @@ for Idx=1:nsubj
             
             Ysegmented( Yb>=1.51 & Y2>=Y1 & Y2>=Y3 & Y2>=Y4 & Y2>=Y5 ) = 2;
             Ysegmented( Yb>=1.51 & Y1>=Y2 & Y1>=Y3 & Y1>=Y4 & Y1>=Y5 ) = 1;
+            %CSF last because...
             Ysegmented( Yb>=1.51 & Y3>=Y1 & Y3>=Y2 & Y3>=Y4 & Y3>=Y5 ) = 3;
             spm_progress_bar('Set',25);
             %--> belongs_2n==0 : voxel has'nt been attributed to any
@@ -184,14 +184,16 @@ for Idx=1:nsubj
             Ysegmented( Yb<0.5 & Yh==1 & Y1>=Y2 & Y1>=Y3 & Y1>=Y4 & Y1>=Y5 & Y1~=0 ) = 1;
             Ysegmented( Yb<0.5 & Yh==1 & Y3>=Y1 & Y3>=Y2 & Y3>=Y4 & Y3>=Y5 & Y3~=0 ) = 3;
             
+            
+            %preparation for rebel voxel
             jobr.rebel_surrounding = job.rebel_surrounding;
             jobr.output_prefix = output_prefix;
             jobr.name = name;
             jobr.dir = dir;
             jobr.Yseg = Ysegmented;
-            jobr.Yb = fullfile(dir,'belongs2n_ci.nii');
+            jobr.Yb = fbelong;
             jobr.Yh = fullfile(dir,'head_shadow.nii');
-            
+            %
             nirs_MCsegment_process_image(fullfile(dir,['c1',name,'.nii']),...
                 c1method, se_size_pi, gaussfilt_size, gaussfilt_sdev);
             nirs_MCsegment_process_image(fullfile(dir,['c2',name,'.nii']),...
