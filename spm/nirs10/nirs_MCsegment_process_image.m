@@ -38,6 +38,12 @@ switch cimethod
         
     case 2
         %Preferred method
+        
+        %Example:
+        %This aims to modify the skin (c5) layer so that it more accurately
+        %represents the skin -- especially in order to re-attribute to skull
+        %many voxels initially attributed to skin by SPM new segment
+
         %for each brain layer (especially skin and skull),
         % a 3D Gaussian filter is applied (and used as a weight), 
         % then medfilt2 and then
