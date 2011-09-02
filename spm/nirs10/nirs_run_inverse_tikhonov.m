@@ -18,7 +18,14 @@ function out = nirs_run_inverse_tikhonov(job)
 % DHbO\R (beta)         = variation des concentrations dans les voxels
 % alpha                 = hyperparametre de beta (DHbR\O)
 % epsilon_channel-noise = bruit dans les canaux
-
+if isfield(job.downsample_freq,'all_points_downsampled')
+    pmethod = 1;
+    downfreq = job.downsample_freq.all_points_downsampled.downsample_freq;
+else
+    pmethod = 0;
+    %temporal points
+    temp_pts = job.downsample_freq.specific_points.temp_pts;
+end
 for Idx=1:size(job.NIRSmat,1)
     try
         clear NIRS
@@ -128,18 +135,22 @@ for Idx=1:size(job.NIRSmat,1)
             if ~isfield(NIRS,'Tm')
                 NIRS.Tm ={};
             end
+            if pmethod
+                downstep = round(NIRS.Cf.dev.fs/downfreq);
+                temp_pts = 1:downstep:size(Y,2);
+            end
             %mkdir
-             switch job.tikh_method
-                    case 0 % Tikhonov regularization : ancienne version
-                        disp('Methode a l''ancienne')
-                        ctm.alg ='anci';                
-                    case 1 % Tikhonov regularization
-                        disp('peudo inverse');
-                        ctm.alg = 'PInv';                    
-                    case 2 % avec wavelets...
-                    case 3 % Li et al extended Tikhonov regularization (est ce que ca a de l interet alors qu il va falloir trouver deux hyperparametres)
-                    case 4 % Tikhonov ameliore
-                 end
+            switch job.tikh_method
+                case 0 % Tikhonov regularization : ancienne version
+                    disp('Methode a l''ancienne')
+                    ctm.alg ='anci';
+                case 1 % Tikhonov regularization
+                    disp('peudo inverse');
+                    ctm.alg = 'PInv';
+                case 2 % avec wavelets...
+                case 3 % Li et al extended Tikhonov regularization (est ce que ca a de l interet alors qu il va falloir trouver deux hyperparametres)
+                case 4 % Tikhonov ameliore
+            end
             daate = strrep(datestr(now),':','-');
             tm_dir = ['tm_' daate '_a' ctm.alg '_' int2str(job.sens_vxsize) 'mm'];
             ctm.p = fullfile(cs_dir,tm_dir);
@@ -161,9 +172,9 @@ for Idx=1:size(job.NIRSmat,1)
             NIRS.Tm.tmrs{itm} = ctm;
             NIRS.Tm.n{itm} = ctm.n;
             
-            for itp=1:length(job.temp_pts)
+            for itp=1:length(temp_pts)
                 tic
-                Y_t0 = Y(job.temp_pts(itp),C_cs)';
+                Y_t0 = Y(temp_pts(itp),C_cs)';
                 Y_to{1} = Y_t0(1:NC2mi,1);
                 Y_to{2} = Y_t0(NC2mi+1:end,1);
                 
