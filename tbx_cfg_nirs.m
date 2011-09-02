@@ -2956,19 +2956,53 @@ end
 %Reconstructions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-temp_pts       = cfg_entry; 
+
+temp_pts         = cfg_entry; 
 temp_pts.name    = 'Point temporel de l''inversion'; % The displayed name
 temp_pts.tag     = 'temp_pts';       %file names
 temp_pts.strtype = 'r';  
 temp_pts.num     = [1 Inf];     % Number of inputs required 
+temp_pts.val     = {1};
 % temp_pts.def = @(val)nirs_get_defaults('configMC1.nphotons', val{:});
-temp_pts.help    = {'Input time point.'}; 
-             
+temp_pts.help    = {'Input time points.'}; 
+  
+specific_points           = cfg_branch;
+specific_points.name      = 'Select specific_points';
+specific_points.tag       = 'specific_points';
+specific_points.val       = {temp_pts}; 
+specific_points.help      = {'Select specific points.'};
+
+downsample_freq         = cfg_entry; 
+downsample_freq.name    = 'Downsampling frequency in Hz'; % The displayed name
+downsample_freq.tag     = 'downsample_freq';       %file names
+downsample_freq.strtype = 'r';  
+downsample_freq.num     = [1 1];     % Number of inputs required 
+downsample_freq.val     = {1};
+downsample_freq.help    = {'Enter downsampling frequency in Hz.'
+    'A target sampling frequency will be generated, which may however' 
+    'be only approximately equal to the specified downsampling frequency,'
+    'but it will correspond to the actual frequency of selecting every Nth point'}'; 
+
+all_points_downsampled           = cfg_branch;
+all_points_downsampled.name      = 'Select all points, downsampled';
+all_points_downsampled.tag       = 'all_points_downsampled';
+all_points_downsampled.val       = {downsample_freq}; 
+all_points_downsampled.help      = {'Select a subset of all points,'
+    'downsampled to a set frequency'}';
+
+psel_choice           = cfg_choice;
+psel_choice.name      = 'Temporal point selection method';
+psel_choice.tag       = 'psel_choice';
+psel_choice.values    = {all_points_downsampled specific_points};
+psel_choice.val       = {all_points_downsampled}; 
+psel_choice.help      = {'Temporal point selection method'}';
+
 sens_vxsize= cfg_entry; 
 sens_vxsize.name    = 'Voxel size in sensitivity matrix'; % The displayed name
 sens_vxsize.tag     = 'sens_vxsize';       %file names
 sens_vxsize.strtype = 'r';  
 sens_vxsize.num     = [1 1];     % Number of inputs required 
+sens_vxsize.val     = {0.5};
 % sens_vxsize.def = @(val)nirs_get_defaults('configMC1.nphotons', val{:});
 sens_vxsize.help    = {'Input time point.'}; 
 
@@ -3041,7 +3075,7 @@ tikh_method.help      = {'Choose Tikhonov regularization reconstruction method (
 tikhonov1      = cfg_exbranch;       
 tikhonov1.name = 'Tikhonov inversion';             
 tikhonov1.tag  = 'tikhonov1';
-tikhonov1.val  = {NIRSmat NewDirCopyNIRS temp_pts dir_in sens_vxsize tikh_method alpha}; 
+tikhonov1.val  = {NIRSmat NewDirCopyNIRS psel_choice dir_in sens_vxsize tikh_method alpha}; 
 tikhonov1.prog = @nirs_run_inverse_tikhonov;  
 tikhonov1.vout = @nirs_cfg_vout_inverse_tikhonov; 
 tikhonov1.help = {'Invert using Tikhonov.'};
@@ -3070,7 +3104,7 @@ ReML_method.help      = {'Choose ReML reconstruction method.'};
 ReMLreconstruct1      = cfg_exbranch;       
 ReMLreconstruct1.name = '3D NIRS data ReML reconstruction';             
 ReMLreconstruct1.tag  = 'ReMLreconstruct1';
-ReMLreconstruct1.val  = {NIRSmat NewDirCopyNIRS beta_wtd temp_pts dir_in sens_vxsize ReML_method WLruns};   
+ReMLreconstruct1.val  = {NIRSmat NewDirCopyNIRS beta_wtd psel_choice dir_in sens_vxsize ReML_method WLruns};   
 ReMLreconstruct1.prog = @nirs_run_ReMLreconstruct;  
 ReMLreconstruct1.vout = @nirs_cfg_vout_ReMLreconstruct; 
 ReMLreconstruct1.help = {'Run 3D NIRS data reconstruction.'};

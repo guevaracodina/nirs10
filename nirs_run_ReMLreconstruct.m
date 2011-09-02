@@ -22,7 +22,14 @@ function out = nirs_run_ReMLreconstruct(job)
 %%%% lire le BOLD du contraste correspondant et prevoir d'enregistrer sous
 %%%% differents noms em fonction du contrates puisqu apres il faudra
 %%%% continuer avec le GLM et le meme contraste
-
+if isfield(job.downsample_freq,'all_points_downsampled')
+    pmethod = 1;
+    downfreq = job.downsample_freq.all_points_downsampled.downsample_freq;
+else
+    pmethod = 0;
+    %temporal points
+    temp_pts = job.downsample_freq.specific_points.temp_pts;
+end
 
 for Idx=1:size(job.NIRSmat,1)
     
@@ -128,10 +135,25 @@ for Idx=1:size(job.NIRSmat,1)
                 Xbar = sparse([sXmc sX ; speye(Nvx) sparse(zeros(Nvx,2*Nvx)) ; sparse(zeros(2*Nvx,Nvx)) speye(2*Nvx)]);%%%%%%%% SHBTB
                 toc%%%%%%%% SHBTB
         end
-        for ifnirs=1:size(NIRS.Dt.fir.pp(end),2)
-            fnirs = load(NIRS.Dt.fir.pp(end).p{1,ifnirs},'-mat');
-            ctm.Y = NIRS.Dt.fir.pp(end).p{1,ifnirs};
+        pdata = NIRS.Dt.fir.pp;
+        wh = length(pdata);
+        while wh
+            [dummy fil1] = fileparts(pdata(wh).p{1});
+            if strcmp(fil1(1),'h') || strcmp(fil1(1:2),'bh')
+                wh = wh-1;
+            else
+                pdata = pdata(wh).p;
+                wh = 0;
+            end
+        end
+        for ifnirs=1:length(pdata)           
+            ctm.Y = pdata{ifnirs};            
+            Y = fopen_NIR(pdata{ifnirs},NIRS.Cf.H.C.N)';   
             
+            if pmethod
+                downstep = round(NIRS.Cf.dev.fs/downfreq);
+                temp_pts = 1:downstep:size(Y,2);
+            end
             %%% covariances %%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % Qn : Covariance du bruit de mesure
             % huppert_direct_2008 : (section 3.6 p 12) The initial seed of R was calculated from linear regression of the data with the temporal basis.
@@ -172,11 +194,11 @@ for Idx=1:size(job.NIRSmat,1)
             NIRS.Tm.tmrs{itm} = ctm;
             NIRS.Tm.n{itm} = ctm.n;
                            
-            for itp=1:length(job.temp_pts)
+            for itp=1:length(temp_pts)
                 tic
-                disp(['current : ' int2str(job.temp_pts(itp))])
+                disp(['current : ' int2str(temp_pts(itp))])
                 %%% Y %%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                Y_t0 = fnirs.d(job.temp_pts(itp),C_cs)';
+                Y_t0 = Y(temp_pts(itp),C_cs)';
                 
                 %ctm.Y = 'fantom';
                 %Yt0 = load('Yt0.nirs','-mat');
