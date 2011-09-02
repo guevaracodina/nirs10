@@ -97,6 +97,7 @@ for Idx=1:size(job.NIRSmat,1)
         Pfp_roi_rmv = Pfp_roi_rmvtemp(1:3,:);
         
         method = 'S_cubecenter';
+%         method = 'ancienne';
         switch method
             case 'ancienne'
 %                 bbv(1,1) = min(Pfp_roi_rmv(1,:));

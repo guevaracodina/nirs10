@@ -8,6 +8,10 @@ Ysegmented = job.Yseg;
 Vb = spm_vol(job.Yb);%Yb = spm_read_vols(Vb);
 Vh = spm_vol(job.Yh);Yh = spm_read_vols(Vh);
 
+if isfield(job,'Yb2')
+    Yb2 = job.Yb2;
+end
+
 V1 = spm_vol(job.Y1);Y1 = spm_read_vols(V1);
 V2 = spm_vol(job.Y2);Y2 = spm_read_vols(V2);
 V3 = spm_vol(job.Y3);Y3 = spm_read_vols(V3);

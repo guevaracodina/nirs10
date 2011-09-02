@@ -4,33 +4,6 @@ function out = nirs_run_calculatePVE(job)
 %%%%%%%%
 % Calcul du facteur de volume partiel
 %
-% BOlDdata;  (SEULEMENT SI ON VEUT EFFECTUER UN PROBLÈME DIRECT, i.e. PROJETER CES DONNÉES DANS L'ESPACE DES PAIRES)
-% Masque du changement de signal BOLD (rBOLD) en % par rapport au baseline,
-% matrice en voxels (interpolée à la résolution de l'IRM anatomique)
-% size : nHbX*V x 1
-% il faut que dConcfMRI
-% soit une matrice (déroulée en un vecteur) de V éléments (pour chaque
-% espèce HbX concaténée) qui donne un masque qui vaut deltaHbO et R dans
-% tout le volume.
-% De l'analyse Neurolens : FIR estimée normalisée * valeur moyenne
-% sur la ROI * masque qui vaut 1 dans la ROI et 0 ailleurs, sommée (moyennée?) sur
-% tmin:tmax.
-%
-% TRS : donne les données nécessaires au calcul du facteur de calibration du BOLD
-% V0, OEF0 = (SO2in-SO2out)/SO2in = 1-ScO20, HbR0
-%
-% Quantités d'intérêt calculées :
-% 	DPF (differential pathlength factor);
-% 	PPF (partial pathlength factor dans la perturbation, si on a roulé une simulation
-% avec perturbation (on suppose que le dernier tissu est une perturbation)***);
-%
-% V0 = 0.05; % venous blood volume fraction
-% OEF0 = 1-0.6975; % baseline oxygen extraction fraction
-% HbR0 = 131.*(1-0.758); % baseline HbR concentration (=HbT0*(1-SO20)) in uM
-% TE = 30e-3; % 30 ms in our BOLD sequence
-% nu0 = 80.6; % s^-1, at 3T
-% alpha = -4.3 * nu0 * TE * V0 * OEF0 / HbR0; % Facteur de calibration du BOLD(relative change BOLD / uM) : BOLD(t)/BOLD(0) = alpha * [HbR(t)]
-%
 %_________________________________________________________________________
 % Clément Bonnéry June 2011
 % Methode from Hiraoka et al. 1993, Optical pathlength in inhomogeneous
@@ -207,10 +180,10 @@ for iSubj=1:size(job.NIRSmat,1)
                             %                     end
                             if cs.nummed==6
                                 L_Vi_Vphts = History{tk_Ci,2}(idx,3:size(History{tk_Ci,2},2));
-%                                 elseif cs.nummed==12
+%                                 elseif cs.nummed==11
 %                                 L_Vi_Vphts = History{tk_Ci,2}(idx,3:8)+[History{tk_Ci,2}(idx,9:13),zeros(size(History{tk_Ci,2}(idx,9:13),1),1)];
                             elseif cs.nummed==12
-                                L_Vi_Vphts = History{tk_Ci,2}(idx,3:8)+[History{tk_Ci,2}(idx,9:14),zeros(size(History{tk_Ci,2}(idx,9:14),1),1)];
+                                L_Vi_Vphts = History{tk_Ci,2}(idx,3:8)+History{tk_Ci,2}(idx,9:14);
                             end
                             W_phts = W0*exp(-sum(L_Vi_Vphts*muas',2));
                             
