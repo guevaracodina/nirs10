@@ -66,9 +66,21 @@ switch cimethod
         %         %%%%%% TRAITEMENTS
         masqueGauss = masqueGauss/sum(masqueGauss(:));
         %This operation will not conserve probabilities across layers,
-        %hence sum of probability over layers at one voxel can differ from unity       
+        %hence sum of probability over layers at one voxel can differ from unity
+        % % % % % %         C = convn(Y,masqueGauss,'same'); %could replace by a convnfft for speed
+        % % % % % %         Y2 = Y.*(C.^2);
+        % % % % % %         %Median filter in direction x only in voxel space
+        % % % % % %         for i=1:size(Y,1)
+        % % % % % %             %median filter -- cartoon-like result
+        % % % % % %             Y2(i,:,:) = medfilt2(squeeze(Y2(i,:,:)));
+        % % % % % %             level = graythresh(squeeze(Y2(i,:,:)));
+        % % % % % %             %create a boolean mask instead of probability distribution
+        % % % % % %             Y(i,:,:) = im2bw(squeeze(Y2(i,:,:)),level);
+        % % % % % %         end
+        
+        
         C = convn(Y,masqueGauss,'same'); %could replace by a convnfft for speed
-        Y2 = Y.*C;
+        Y2 = Y.*(C.^2);
         %Median filter in direction x only in voxel space
         for i=1:size(Y,1)
             %median filter -- cartoon-like result
@@ -77,7 +89,8 @@ switch cimethod
             %create a boolean mask instead of probability distribution
             Y(i,:,:) = im2bw(squeeze(Y2(i,:,:)),level);
         end
-        
+%         Y = Y.*(C.^2);
+
     case 3%'otsu'
         for i=1:size(Y,1)
             Y(i,:,:) = medfilt2(squeeze(Y(i,:,:)));
