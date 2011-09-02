@@ -137,6 +137,7 @@ for Idx=1:size(job.NIRSmat,1)
             end
             if pmethod
                 downstep = round(NIRS.Cf.dev.fs/downfreq);
+                TR = downstep/downfreq/NIRS.Cf.dev.fs;               
                 temp_pts = 1:downstep:size(Y,1);
             end
             %mkdir
@@ -155,7 +156,7 @@ for Idx=1:size(job.NIRSmat,1)
             tm_dir = ['tm_' daate '_a' ctm.alg '_' int2str(job.sens_vxsize) 'mm'];
             ctm.p = fullfile(cs_dir,tm_dir);
             if ~exist(ctm.p,'dir'),mkdir(ctm.p);end
-            
+            if pmethod, save(fullfile(ctm.p,'TR.mat'),'TR'); end
             if isfield(NIRS.Tm,'tmrs')
                 itm = size(NIRS.Tm.tmrs,2)+1;
             else
@@ -173,7 +174,7 @@ for Idx=1:size(job.NIRSmat,1)
             NIRS.Tm.n{itm} = ctm.n;
             
             for itp=1:length(temp_pts)
-                tic
+                %tic
                 Y_t0 = Y(temp_pts(itp),C_cs)';
                 Y_to{1} = Y_t0(1:NC2mi,1);
                 Y_to{2} = Y_t0(NC2mi+1:end,1);
@@ -246,8 +247,8 @@ for Idx=1:size(job.NIRSmat,1)
                 V_R = nirs_create_vol(fullfile(ctm.p,['R_' str0 '.nii']),...
                     VsegRR.dim, [16,0], VsegRR.pinfo, VsegRR.mat, betaR_HbR);
                 
-                toc
-                disp(int2str(itp));
+                %toc
+                %disp(int2str(itp));
             end
         end
         save(job.NIRSmat{Idx,1},'NIRS');

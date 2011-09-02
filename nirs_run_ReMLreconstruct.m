@@ -152,6 +152,7 @@ for Idx=1:size(job.NIRSmat,1)
             
             if pmethod
                 downstep = round(NIRS.Cf.dev.fs/downfreq);
+                TR = downstep/downfreq/NIRS.Cf.dev.fs;   
                 temp_pts = 1:downstep:size(Y,1);
             end
             %%% covariances %%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -178,6 +179,7 @@ for Idx=1:size(job.NIRSmat,1)
             tm_dir = ['Re_' daate '_a' ctm.alg '_' int2str(job.sens_vxsize) 'mm'];
             ctm.p = fullfile(cs_dir,tm_dir);
             if ~exist(ctm.p,'dir'),mkdir(ctm.p);end
+            if pmethod, save(fullfile(ctm.p,'TR.mat'),'TR'); end
             if ~isfield(NIRS,'Tm'), NIRS.Tm ={}; end
             if isfield(NIRS.Tm,'tmrs')
                 itm = size(NIRS.Tm.tmrs,2)+1;
