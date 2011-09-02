@@ -24,6 +24,7 @@ for Idx=1:size(job.NIRSmat,1)
     %Load NIRS.mat information
     try
         NIRS = [];
+        clear sens
         load(job.NIRSmat{Idx,1});
         
         if ~isempty(job.outMCfiles{1,1})
@@ -70,6 +71,7 @@ for Idx=1:size(job.NIRSmat,1)
         Yb8i_l1(Yb8i==3)= opt_ppts{1,3}(1,1);
         Yb8i_l1(Yb8i==4)= opt_ppts{1,4}(1,1);
         Yb8i_l1(Yb8i==5)= opt_ppts{1,5}(1,1);
+        Yb8i_l1(Yb8i==6)= opt_ppts{1,6}(1,1);
         
         Yb8i_l2 = zeros(size(Yb8i));
         Yb8i_l2(Yb8i==1)= opt_ppts{2,1}(1,1);
@@ -77,6 +79,7 @@ for Idx=1:size(job.NIRSmat,1)
         Yb8i_l2(Yb8i==3)= opt_ppts{2,3}(1,1);
         Yb8i_l2(Yb8i==4)= opt_ppts{2,4}(1,1);
         Yb8i_l2(Yb8i==5)= opt_ppts{2,5}(1,1);
+        Yb8i_l2(Yb8i==6)= opt_ppts{2,6}(1,1);
         
         if size(Yb8i_l1,1)==1%cs.alg==2
             Yb8i_l1 = Yb8i_l1';
@@ -149,22 +152,6 @@ for Idx=1:size(job.NIRSmat,1)
                     %                     T = spm_type(fid,'bits');
                     ms = fread(fid,V_segR.dim(1)*V_segR.dim(2)*V_segR.dim(3),'float64');%,'float32');
                     fclose(fid);
-                    % Bonnery from Boas et al.
-                    %                 sum_Jout = sum(ms(ms<0)/(cs.par.nphotons*10));
-                    %                 Svx = 5*5;
-                    %                 Vvx = 5*5*5;
-                    %                 [indices,~] = find(ms>0);
-                    %                 msP = zeros(size(ms));
-                    %                 msP(indices,1)=ms(indices,1);
-                    %                 if Pwl==1
-                    %                     norm_ms = (1-Svx*sum_Jout)/(Vvx*sum(msP.*Yb8i_l1));
-                    %                 else
-                    %                     norm_ms = (1-Svx*sum_Jout)/(Vvx*sum(msP.*Yb8i_l2));
-                    %                 end
-                    %                 msP = msP*norm_ms;
-                    %%%% version 2
-                    % ms = ms/(cs.par.nphotons*10);
-                    
                     %%%%%%%%%%%%%%%%%%%%%%%
                     % % % % %                     code ;ich sur les fluences voir aussi le code
                     % de Boas
@@ -291,57 +278,13 @@ for Idx=1:size(job.NIRSmat,1)
         save(fullfile(cs_dir,'sensReshaped.mat'),'sens_reshaped');
         
         %%% a mettre en option
-        V = struct('fname',fullfile(cs_dir,['sens' '.nii']),...
-            'dim',  V_segR.dim,...
-            'dt',   [64,0],...
-            'pinfo',V_segR.pinfo,...
-            'mat',  V_segR.mat);
-        
-        V = spm_create_vol(V);
-        spm_write_vol(V,log(sens_reshaped));
-        %         V1 = struct('fname',fullfile(cs_dir,['ms1' '.nii']),'dim',V_segR.dim,'dt',[16,0],'pinfo',V_segR.pinfo,'mat',V_segR.mat);
-        %         V1 = spm_create_vol(V1);
-        %         spm_write_vol(V1,log(ms));
-        %         V2 = struct('fname',fullfile(cs_dir,['md1' '.nii']),'dim',V_segR.dim,'dt',[16,0],'pinfo',V_segR.pinfo,'mat',V_segR.mat);
-        %         V2 = spm_create_vol(V2);
-        %         spm_write_vol(V2,log(md));
-        %%%
-        
+        V = nirs_create_vol(fullfile(cs_dir,['sens' '.nii']),...
+                    V_segR.dim, [64,0], V_segR.pinfo, V_segR.mat, log(sens_reshaped));
+           
         m_c1 = zeros(size(Yb8i));
         m_c1(Yb8i==1)=1;
         
-        % sens_sd_c1i = zeros(1,size(sens,2));
-        %         sens_c1 =  zeros(size(sens));
-        %         sens_reshaped_c1 =  zeros(size(sens_reshaped));
-        
-%         for i=1:size(sens,1)
-%             sens_sd = reshape(sens(i,:),V_segR.dim);
-%             V = struct('fname',fullfile(cs_dir,['banane_' int2str(sensC(i,1)) '.nii']),...
-%                 'dim',  V_segR.dim,...
-%                 'dt',   [64,0],...
-%                 'pinfo',V_segR.pinfo,...
-%                 'mat',  V_segR.mat);
-%             
-%             V = spm_create_vol(V);
-%             spm_write_vol(V,sens_sd);
-%             
-%             %             for j=1:size(sens,2)
-%             %                 if m_c1(j,1)==1
-%             %                     %             sens_sd_c1i(1,j) = sens(i,j);
-%             %                     sens_c1(i,j) = sens(i,j);
-%             %                 end
-%             %             end
-%             %             sens_reshaped_c1 = sens_reshaped_c1 + reshape(sens_c1(i,:),V_segR.dim);
-%             
-%             %             V_c1 = struct('fname',fullfile(cs_dir,['banane_c1_' int2str(sensC(i,1)) '.nii']),...
-%             %                 'dim',  V_segR.dim,...
-%             %                 'dt',   V_segR.dt,...
-%             %                 'pinfo',V_segR.pinfo,...
-%             %                 'mat',  V_segR.mat);
-%             %             V_c1 = spm_create_vol(V_c1);
-%             %             spm_write_vol(V_c1,reshape(sens_c1(i,:),V_segR.dim));%sens_sd_c1i,V_segR.dim));
-%             
-%         end
+
         save(job.NIRSmat{Idx,1},'NIRS');
     catch exception
         disp(exception.identifier);
