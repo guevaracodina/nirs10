@@ -3002,9 +3002,9 @@ sens_vxsize.name    = 'Voxel size in sensitivity matrix'; % The displayed name
 sens_vxsize.tag     = 'sens_vxsize';       %file names
 sens_vxsize.strtype = 'r';  
 sens_vxsize.num     = [1 1];     % Number of inputs required 
-sens_vxsize.val     = {0.5};
+sens_vxsize.val     = {5};
 % sens_vxsize.def = @(val)nirs_get_defaults('configMC1.nphotons', val{:});
-sens_vxsize.help    = {'Input time point.'}; 
+sens_vxsize.help    = {'Enter voxel size for reconstruction, in millimeters.'}; 
 
 anat_segT1         = cfg_files; %Select MC segmented volume for this subject
 anat_segT1.name    = 'Anatomical segmented image'; % The displayed name
