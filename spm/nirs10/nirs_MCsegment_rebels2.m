@@ -11,7 +11,7 @@ Vh = spm_vol(job.Yh);Yh = spm_read_vols(Vh);
 % if isfield(job,'Yb2')
 %     Yb2 = job.Yb2;
 % end
-% 
+%
 % Y1 = job.Y1;
 % Y2 = job.Y2;
 % Y3 = job.Y3;
@@ -31,10 +31,10 @@ for i=1+surnd:size(Ysegmented,1)-surnd
         % each layer
         for j=1:size(posAlpha,1)
             
-%             if Y6nus(i,posAlpha(j),posAleph(j))==0
-%                 Ysegmented(i,posAlpha(j),posAleph(j))=6; 
-%             else
-                nbrhood = Ysegmented(i-surnd:i+surnd,...
+            %             if Y6nus(i,posAlpha(j),posAleph(j))==0
+            %                 Ysegmented(i,posAlpha(j),posAleph(j))=6;
+            %             else
+            nbrhood = Ysegmented(i-surnd:i+surnd,...
                 max(1,posAlpha(j)-surnd):min(Vb.dim(2),posAlpha(j)+surnd),...
                 max(1,posAleph(j)-surnd):min(Vb.dim(3),posAleph(j)+surnd));
             
@@ -91,35 +91,37 @@ for i=1+surnd:size(Ysegmented,1)-surnd
             %%%% merging des deux chemins
             if layer==0
                 nbrhood1 = Ysegmented(i-surnd:i+surnd,...
-                max(1,posAlpha(j)-5):min(Vb.dim(2),posAlpha(j)+5),...
-                max(1,posAleph(j)-5):min(Vb.dim(3),posAleph(j)+5));
-            rebel_value_count = zeros(6,1);
-            for i_value =1:6
-                rebel_value_count(i_value) = length(find(nbrhood1==(i_value-1)));
-            end
-            [dummy,layer] = max(rebel_value_count);
-            layer = layer-1;
-            Ysegmented(i,posAlpha(j),posAleph(j)) = layer;
-            
-%                 v_c1 = Y1(i,posAlpha(j),posAleph(j));
-%                 v_c2 = Y2(i,posAlpha(j),posAleph(j));
-%                 v_c3 = Y3(i,posAlpha(j),posAleph(j));
-%                 
-%                 v_c4 = Y4(i,posAlpha(j),posAleph(j));
-%                 v_c5 = Y5(i,posAlpha(j),posAleph(j));
-%                 [confidence,layer2] = max([v_c1,v_c2,v_c3,v_c4,v_c5]);
-%                 if layer2~=0 %&& confidence>0.3
-%                     Ysegmented(i,posAlpha(j),posAleph(j)) = layer2;
-%                 else
-%                     Ysegmented(i,posAlpha(j),posAleph(j)) = 6;
-%                 end
+                    max(1,posAlpha(j)-5):min(Vb.dim(2),posAlpha(j)+5),...
+                    max(1,posAleph(j)-5):min(Vb.dim(3),posAleph(j)+5));
+                rebel_value_count = zeros(6,1);
+                for i_value =1:6
+                    rebel_value_count(i_value) = length(find(nbrhood1==(i_value-1)));
+                end
+                [dummy,layer] = max(rebel_value_count);
+                layer = layer-1;
+                Ysegmented(i,posAlpha(j),posAleph(j)) = layer;
+                
+                %                 v_c1 = Y1(i,posAlpha(j),posAleph(j));
+                %                 v_c2 = Y2(i,posAlpha(j),posAleph(j));
+                %                 v_c3 = Y3(i,posAlpha(j),posAleph(j));
+                %
+                %                 v_c4 = Y4(i,posAlpha(j),posAleph(j));
+                %                 v_c5 = Y5(i,posAlpha(j),posAleph(j));
+                %                 [confidence,layer2] = max([v_c1,v_c2,v_c3,v_c4,v_c5]);
+                %                 if layer2~=0 %&& confidence>0.3
+                %                     Ysegmented(i,posAlpha(j),posAleph(j)) = layer2;
+                %                 else
+                %                     Ysegmented(i,posAlpha(j),posAleph(j)) = 6;
+                %                 end
             else
                 Ysegmented(i,posAlpha(j),posAleph(j)) = layer;
             end
-%             end
+            %             end
             
         end
     end
+    
+    
     rebel_count = rebel_count +  size(posAlpha,1);
 end
 
@@ -128,7 +130,7 @@ if surnd==3
 end
 rebel_count_processed = 0;
 for i=1+surnd:size(Ysegmented,1)-surnd
-    [posAlpha,posAleph]=find(squeeze(Yh(i,:,:))>0 & squeeze(Ysegmented(i,:,:))==0);
+    [posAlpha,dummy]=find(squeeze(Yh(i,:,:))>0 & squeeze(Ysegmented(i,:,:))==0);
     rebel_count_processed = rebel_count_processed +  size(posAlpha,1);
 end
 disp(['Remaining rebel voxels after processing : ',int2str(rebel_count_processed)]);
