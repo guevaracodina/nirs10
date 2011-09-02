@@ -121,19 +121,15 @@ for Idx=1:size(job.NIRSmat,1)
                 nSkpt = length(Skpt);
                 bbm = zeros(3,nSkpt);
                 bbM = zeros(3,nSkpt);
-                dimm = V.mat*[V.dim';1];
                 for iS=1:nSkpt
                     % cube a 4cm du centre S
                     S_cc = Pfp_roi_rmm(:,iS);
                     bbm(:,iS) = S_cc-ray*ones(3,1);
                     bbM(:,iS) = S_cc+ray*ones(3,1);
-                    for i =1:3
-                        bbm(i,iS) = max(1,bbm(i,iS));
-                        bbM(i,iS) = min(dimm(i),bbM(i,iS));
-                    end
-                    % on le coupe la ou il depasse trop
+
                     bbmv1 = V.mat\[bbm;ones(1,nSkpt)];
                     bbMv1 = V.mat\[bbM;ones(1,nSkpt)];
+                                        
                     %min and max of 
                     bbmv(1:3,iS) = round(bbmv1(1:3,iS));
                     bbMv(1:3,iS) = round(bbMv1(1:3,iS));
