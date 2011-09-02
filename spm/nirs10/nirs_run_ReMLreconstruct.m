@@ -22,13 +22,13 @@ function out = nirs_run_ReMLreconstruct(job)
 %%%% lire le BOLD du contraste correspondant et prevoir d'enregistrer sous
 %%%% differents noms em fonction du contrates puisqu apres il faudra
 %%%% continuer avec le GLM et le meme contraste
-if isfield(job.downsample_freq,'all_points_downsampled')
+if isfield(job.psel_choice,'all_points_downsampled')
     pmethod = 1;
-    downfreq = job.downsample_freq.all_points_downsampled.downsample_freq;
+    downfreq = job.psel_choice.all_points_downsampled.downsample_freq;
 else
     pmethod = 0;
     %temporal points
-    temp_pts = job.downsample_freq.specific_points.temp_pts;
+    temp_pts = job.psel_choice.specific_points.temp_pts;
 end
 
 for Idx=1:size(job.NIRSmat,1)
@@ -152,7 +152,7 @@ for Idx=1:size(job.NIRSmat,1)
             
             if pmethod
                 downstep = round(NIRS.Cf.dev.fs/downfreq);
-                temp_pts = 1:downstep:size(Y,2);
+                temp_pts = 1:downstep:size(Y,1);
             end
             %%% covariances %%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % Qn : Covariance du bruit de mesure
