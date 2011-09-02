@@ -195,7 +195,7 @@ for Idx=1:size(job.NIRSmat,1)
                     b = strcmp(fD_n,Dfn);
                     if b % one pair found : processing goes on !
                         c = find(Cid(2,:)== Sn & Cid(3,:)==D_Sn(i) & Cwl==Pwl);
-                        disp(['Sn=' int2str(Sn) ' et D_Sn=[' int2str(D_Sn) '] et wl=' int2str(Pwl) ' , DONC : ' int2str(c)]);
+                        %disp(['Sn=' int2str(Sn) ' et D_Sn=[' int2str(D_Sn) '] et wl=' int2str(Pwl) ' , DONC : ' int2str(c)]);
                         
                         D_Pktp = NS+sum((1:length(Dkpt)).*(Dkpt==D_Sn(i)));
                         S_Pkpt = sum((1:length(Skpt)).*(Skpt==Sn));
@@ -280,7 +280,7 @@ for Idx=1:size(job.NIRSmat,1)
         sens_index = [C' sens];
         sensC = sortrows(sens_index);
         sensC(isnan(sensC))=0;
-        disp([int2str(sum(sum(sum(isnan(sensC))))) ' NaNs have been corrected in sensitivity matrix (' int2str(numel(sensC)) ' values)']);
+        %disp([int2str(sum(sum(sum(isnan(sensC))))) ' NaNs have been corrected in sensitivity matrix (' int2str(numel(sensC)) ' values)']);
         sens = sensC(:,2:end);
         save(fullfile(cs_dir,'sens.mat'),'sens');
         

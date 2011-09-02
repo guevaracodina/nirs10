@@ -29,7 +29,7 @@ if isempty(nirs10)
     nirs_criugm_defaults;
     nirs_criugm_paces_defaults;
     nirs_testStimuli_defaults;
-    nirs_buildroi_defaults;
+    %nirs_buildroi_defaults;
     nirs_MCsegment_defaults;
     nirs_detectVitamins_defaults;
     nirs_coreg_defaults;

@@ -7,7 +7,7 @@ Y = spm_read_vols(V);
 Pp_rmm = job.Pp_rmm;
 Pp_c1_rmm = job.Pp_c1_rmm;
 try
-Pwd_rmm = job.Pwd_rmm;
+    Pwd_rmm = job.Pwd_rmm;
 catch
 end
 NP = job.NP;
@@ -68,50 +68,50 @@ switch job.lby
                 boundC1_i = outF{1};
                 neighvox1_i = outF{2};
                 
-%                 outF = do_fit('find_bound_o',Y,boundC1_i,Pwd_rmiv(:,Pi));
+                %                 outF = do_fit('find_bound_o',Y,boundC1_i,Pwd_rmiv(:,Pi));
                 outF = do_fit('find_bound_o',Y,neighvox1_i,Pwd_rmiv(:,Pi));
                 boundC2_i = outF{1};
                 neighvox2_i = outF{2};
                 %2)
-%                 if Y(round(neighvox1_i(1)),round(neighvox1_i(2)),round(neighvox1_i(3)))==0
-%                     disp('we stop');
-%                     Pfp_rmiv(1:3,Pi) = boundC2_i;
-Pfp_rmiv(1:3,Pi) = neighvox2_i;
-%                 else
-%                     outF = do_fit('find_bound_o',Y,Pfp_rmiv(:,Pi),-Pd_rmiv(:,Pi));
-%                     boundC2_i = outF{1};
-%                     neighvox2_i = outF{2};
-%                 end
+                %                 if Y(round(neighvox1_i(1)),round(neighvox1_i(2)),round(neighvox1_i(3)))==0
+                %                     disp('we stop');
+                %                     Pfp_rmiv(1:3,Pi) = boundC2_i;
+                Pfp_rmiv(1:3,Pi) = neighvox2_i;
+                %                 else
+                %                     outF = do_fit('find_bound_o',Y,Pfp_rmiv(:,Pi),-Pd_rmiv(:,Pi));
+                %                     boundC2_i = outF{1};
+                %                     neighvox2_i = outF{2};
+                %                 end
                 
             else % on ramene le point a l interieur puis on lui fait suivre la procedure normale
-%                 out = do_fit('drive_i',Y,Pfp_rmiv(:,Pi),-Pd_rmiv(:,Pi));
-%                 Pfp_rmiv(1:3,Pi)= out{1};
-%                 
-%                 outF = do_fit('find_bound_i',Y,Pfp_rmiv(:,Pi),Pd_rmiv(:,Pi));
-%                 boundC1_i = outF{1};
-%                 neighvox1_i = outF{2};
-%                 %2)
-%                 if Y(round(neighvox1_i(1)),round(neighvox1_i(2)),round(neighvox1_i(3)))==0
-%                     disp('we stop');
-%                     Pfp_rmiv(1:3,Pi) = boundC1_i;
-%                 else
-                    %%%%%%%outF = do_fit('find_bound_o',Y,neighvox1_i(:,Pi),-Pd_rmiv(:,Pi));
-                    %%%%%%% remplace par ligne suivante pour des pbs de
-                    %%%%%%% noms uniquement
-                    outF = do_fit('find_bound_o',Y,Pfp_rmiv(:,Pi),Pwd_rmiv(:,Pi));
-                    boundC2_i = outF{1};
-                    neighvox2_i = outF{2};
-%                     %3)
-%                     if Y(round(neighvox2_i(1)),round(neighvox2_i(2)),round(neighvox2_i(3)))~=0
-%                         disp('we stop');
-%                          Pfp_rmiv(1:3,Pi) = boundC2_i;
-                         Pfp_rmiv(1:3,Pi) = neighvox2_i;
-%                     else
-%                         outF = do_fit('find_bound_o',Y,neighvox1_i(:,Pi),-Pd_rmiv(:,Pi));
-%                         boundC2_i = outF{1};
-%                         neighvox2_i = outF{2};
-%                     end
-%                 end
+                %                 out = do_fit('drive_i',Y,Pfp_rmiv(:,Pi),-Pd_rmiv(:,Pi));
+                %                 Pfp_rmiv(1:3,Pi)= out{1};
+                %
+                %                 outF = do_fit('find_bound_i',Y,Pfp_rmiv(:,Pi),Pd_rmiv(:,Pi));
+                %                 boundC1_i = outF{1};
+                %                 neighvox1_i = outF{2};
+                %                 %2)
+                %                 if Y(round(neighvox1_i(1)),round(neighvox1_i(2)),round(neighvox1_i(3)))==0
+                %                     disp('we stop');
+                %                     Pfp_rmiv(1:3,Pi) = boundC1_i;
+                %                 else
+                %%%%%%%outF = do_fit('find_bound_o',Y,neighvox1_i(:,Pi),-Pd_rmiv(:,Pi));
+                %%%%%%% remplace par ligne suivante pour des pbs de
+                %%%%%%% noms uniquement
+                outF = do_fit('find_bound_o',Y,Pfp_rmiv(:,Pi),Pwd_rmiv(:,Pi));
+                boundC2_i = outF{1};
+                neighvox2_i = outF{2};
+                %                     %3)
+                %                     if Y(round(neighvox2_i(1)),round(neighvox2_i(2)),round(neighvox2_i(3)))~=0
+                %                         disp('we stop');
+                %                          Pfp_rmiv(1:3,Pi) = boundC2_i;
+                Pfp_rmiv(1:3,Pi) = neighvox2_i;
+                %                     else
+                %                         outF = do_fit('find_bound_o',Y,neighvox1_i(:,Pi),-Pd_rmiv(:,Pi));
+                %                         boundC2_i = outF{1};
+                %                         neighvox2_i = outF{2};
+                %                     end
+                %                 end
             end
             %3)s
             Pfp_rmm(:,Pi) = Pfp_rmiv(1:3,Pi);
