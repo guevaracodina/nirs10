@@ -96,6 +96,7 @@ for Idx=1:size(job.NIRSmat,1)
         end
         Pfp_roi_rmv = Pfp_roi_rmvtemp(1:3,:);
         
+%        method = 'ancienne';% 'S_cubecenter';
         method = 'S_cubecenter';
 %         method = 'ancienne';
         switch method
@@ -117,37 +118,34 @@ for Idx=1:size(job.NIRSmat,1)
             case 'S_cubecenter'
                 %additional 4 cm (40 mm) added to source 
                 ray = 40;%max(NIRS.Cf.H.C.gp(Ckpt)+3);
-                bbm = zeros(3,length(Skpt));
-                bbM = zeros(3,length(Skpt));
-                for iS=1:length(Skpt);
+                nSkpt = length(Skpt);
+                bbm = zeros(3,nSkpt);
+                bbM = zeros(3,nSkpt);
+                dimm = V.mat*[V.dim';1];
+                for iS=1:nSkpt
                     % cube a 4cm du centre S
                     S_cc = Pfp_roi_rmm(:,iS);
                     bbm(:,iS) = S_cc-ray*ones(3,1);
                     bbM(:,iS) = S_cc+ray*ones(3,1);
+                    for i =1:3
+                        bbm(i,iS) = max(1,bbm(i,iS));
+                        bbM(i,iS) = min(dimm(i),bbM(i,iS));
+                    end
                     % on le coupe la ou il depasse trop
-                    %A FAIRE
-                    bbmv1 = V.mat\[bbm;1];
-                    bbMv1 = V.mat\[bbM;1];
+                    bbmv1 = V.mat\[bbm;ones(1,nSkpt)];
+                    bbMv1 = V.mat\[bbM;ones(1,nSkpt)];
                     %min and max of 
-                    bbmv(1:3,iS) = round(bbmv1(1:3));
-                    bbMv(1:3,iS) = round(bbMv1(1:3));
+                    bbmv(1:3,iS) = round(bbmv1(1:3,iS));
+                    bbMv(1:3,iS) = round(bbMv1(1:3,iS));
                 end
-                bbv(1,1) = min(bbmv(1,:),bbMv(1,:));
-                bbv(1,2) = max(bbmv(1,:),bbMv(1,:));
-                
-                bbv(2,1) = min(bbmv(2,:),bbMv(2,:));
-                bbv(2,2) = max(bbmv(2,:),bbMv(2,:));
-                
-                bbv(3,1) = min(bbmv(3,:),bbMv(3,:));
-                bbv(3,2) = max(bbmv(3,:),bbMv(3,:));
+                bbv(:,1) = min([bbmv bbMv],[],2);
+                bbv(:,2) = max([bbmv bbMv],[],2);
                 marge =0;
         end
         % the size of the plotted image can be bigger than the size read in
         % the header, in such case the value kept is the one of header
-        for i =1:3
-            bbv(i,1) = max(1,bbv(i,1)-marge); 
-            bbv(i,2) = min(V.dim(i),bbv(i,2)+marge);
-        end
+        bbv(:,1) = max([[1;1;1] bbv(:,1)-marge],[],2);
+        bbv(:,2) = min([V.dim' bbv(:,2)+marge],[],2);
         
         % With resizing
         %  mat_roi2raw is the transformation matrix from the voxel space

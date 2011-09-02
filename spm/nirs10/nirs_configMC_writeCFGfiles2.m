@@ -39,7 +39,7 @@ r = job.P.r;
 mc_dir = job.dir;
 
 n_b8i = job.n_b8i;
-
+disp('Generating files for sensitivity profiles computation')
 % Create a .cfg or .inp file for each optode and each wavelength
 for iwl = 1:size(job.wl_dev,2)
     for iP = 1:NS+ND
@@ -49,13 +49,11 @@ for iwl = 1:size(job.wl_dev,2)
             else
                 if Pkpt(iP)-NSinit<10, PNo = ['D_No' num2str(0) num2str(Pkpt(iP)-NSinit)]; else PNo = ['D_No' num2str(Pkpt(iP)-NSinit)]; end
             end
-            
+                            
             if algo==2 % tMCimg
                 n_cfg = fullfile(mc_dir,[PNo '_' num2str(job.wl_dev(iwl)) 'nm.cfg']);
                 fid = fopen(n_cfg,'w');
-                disp('Generating files for sensitivity profiles computation')
-                
-                % Title
+                             % Title
                 fprintf(fid, ';; Fichier de configuration\n');
                 % ID subject
                 fprintf(fid, [';; Sujet # : ' n_b8i '\n\n']);
@@ -163,7 +161,7 @@ for iwl = 1:size(job.wl_dev,2)
                 n_cfg = fullfile(mc_dir,[PNo '_' num2str(job.wl_dev(iwl)) 'nm.inp']);
                 fid = fopen(n_cfg,'w');
                 
-                disp('Generating files for sensitivity profiles computation')
+
                 
                 % We create the file src.cfg for the Monte-Carlo simulation by reading
                 % template.cfg and adding relevant information
