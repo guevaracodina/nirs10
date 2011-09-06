@@ -75,6 +75,8 @@ elseif G.alg==2 % pour tMC, les points doivent etre dans le volume (peut etre es
     outF = nirs_fit_probe(jobF);
     Pfp_ancienne_rmiv = outF{1};
 end
+% % % % % % % NIRSE = load('D:\Users\Clément\test_segmentation\S011\MCX_05-Sep-2011 17-04-00\NIRS.mat');
+% % % % % % % Pfp_ancienne_rmiv = NIRSE.NIRS.Cs.mcs{1,1}.P.Pfp_rmiv;
 
 % 8bits .bin image
 [dummy,id,dummy2] = fileparts(V_rmiv.fname);
