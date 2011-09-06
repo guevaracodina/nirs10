@@ -146,7 +146,7 @@ for Idx=1:size(job.NIRSmat,1)
                     disp('Methode a l''ancienne')
                     ctm.alg ='anci';
                 case 1 % Tikhonov regularization
-                    disp('peudo inverse');
+                    disp('pseudo inverse');
                     ctm.alg = 'PInv';
                 case 2 % avec wavelets...
                 case 3 % Li et al extended Tikhonov regularization (est ce que ca a de l interet alors qu il va falloir trouver deux hyperparametres)
@@ -255,7 +255,9 @@ for Idx=1:size(job.NIRSmat,1)
     catch exception
         disp(exception.identifier);
         disp(exception.stack(1));
-        rmdir(ctm.p); %careful, the code might break here, so put breakpoint on line before
+        try
+            rmdir(ctm.p); %careful, the code might break here, so put breakpoint on line before
+        end
         disp(['Could not run MonteCarlo reconstruction for subject' int2str(Idx)]);
     end
 end

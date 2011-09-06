@@ -23,7 +23,11 @@ try
 catch
     NewDirCopyNIRS = 0;
 end
-
+try 
+    Save6Projections = job.Save6Projections;
+catch
+    Save6Projections = 1;
+end
 % Loop over subjects
 for iSubj=1:size(job.NIRSmat,1)
     
@@ -297,12 +301,12 @@ for iSubj=1:size(job.NIRSmat,1)
                 
                 %Viewer from NIRS_SPM
                 %viewer_ON = 0;
-                if viewer_ON
+                if viewer_ON || Save6Projections
                     %rendered_MNI = varargin{1};
                     Nch = size(rendered_MNI{1}.rchn,1);
                     load Split
                     for kk=1:6
-                        figure;
+                        fh0(kk) = figure;
                         %kk = 4; % dorsal view
                         %brain = rend{kk}.ren;
                         brain = rendered_MNI{kk}.ren;
@@ -325,10 +329,20 @@ for iSubj=1:size(job.NIRSmat,1)
                         colormap(split);
                         axis image;
                         axis off;
-                    
+                        
                         for jj = 1:Nch
                             if rchn(jj) ~= -1 && cchn(jj) ~= -1 %% updated 2009-02-25
                                 text(cchn(jj)-5, rchn(jj), num2str(jj), 'color', 'r');
+                            end
+                        end
+                        try
+                            if Save6Projections
+                                [side_hemi spec_hemi] = nirs_get_brain_view(kk);
+                                filen1 = fullfile(pth2,[spec_hemi '.fig']);
+                                saveas(fh0(kk),filen1,'fig');
+                                filen2 = fullfile(pth2,[spec_hemi '.tif']);
+                                print(fh0(kk), '-dtiffn', filen2);
+                                close(fh0(kk));
                             end
                         end
                     end
