@@ -5,11 +5,10 @@ function out = nirs_run_criugm(job)
 
 % Clément Bonnéry
 % 2010-11-05
-try
-    outNIRSmat ={};
-    
-    % Study configuration
-    study_p = job.study_cfg.study_path{:};
+
+outNIRSmat ={};
+% Study configuration
+study_p = job.study_cfg.study_path{:};
 %     if isfield(job.study_cfg.study_path,'choose_path')
 %         study_p = job.study_cfg.study_path.choose_path;
 %         if ~exist(study_p,'dir'),
@@ -18,12 +17,12 @@ try
 %     else
 %         study_p = job.study_cfg.study_path.existing_study{:};
 %     end
-    
-    % Loop over all subjects
-    sN = size(job.subj,2);
-    for is=1:sN
-        
-        if isfield(job.study_cfg.indvdata,'template_chosen')            
+
+% Loop over all subjects
+sN = size(job.subj,2);
+for is=1:sN
+    try
+        if isfield(job.study_cfg.indvdata,'template_chosen')
             % save template T1 as anatT1
             anatT1 = fullfile(fileparts(which('spm')),'templates','T1.nii');
             job.subj(1,is).anatT1 = {anatT1};
@@ -128,20 +127,20 @@ try
             NIRS.Cf.H.D.N = size(f.SD.DetPos,1);
             NIRS.Cf.H.P.N = NIRS.Cf.H.S.N + NIRS.Cf.H.D.N;
             
-%             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.NIRSmat = {fullfile(study_p,'NIRS4all.mat')};
-%             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.DelPreviousData = 0;
-%             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.NewDirCopyNIRS.CreateNIRSCopy_false = struct([]);
-%             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.anatT1 = {[fullfile(fileparts(which('spm')),'templates','T1.nii') ',1']};
-%             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.segT1_4fit = {[fullfile(fileparts(which('spm')),'toolbox','nirs10','nirs10_templates','00044_segmented_T1.nii') ',1']};
-%             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.anatT1_template = {[fullfile(fileparts(which('spm')),'templates','T1.nii') ',1']};
-%             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.fid_in_subject_MNI = 0;
-%             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.nasion_wMNI = [0 84 -48];
-%             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.AL_wMNI = [-83 -19 -38];
-%             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.AR_wMNI = [83 -19 -38];
-%             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.GenDataTopo = 1;
-%             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.render_choice.render_template = struct([]);
-%             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.View6Projections = 0;
-%             spm_jobman('run_nogui',matlabbatch);
+            %             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.NIRSmat = {fullfile(study_p,'NIRS4all.mat')};
+            %             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.DelPreviousData = 0;
+            %             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.NewDirCopyNIRS.CreateNIRSCopy_false = struct([]);
+            %             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.anatT1 = {[fullfile(fileparts(which('spm')),'templates','T1.nii') ',1']};
+            %             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.segT1_4fit = {[fullfile(fileparts(which('spm')),'toolbox','nirs10','nirs10_templates','00044_segmented_T1.nii') ',1']};
+            %             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.anatT1_template = {[fullfile(fileparts(which('spm')),'templates','T1.nii') ',1']};
+            %             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.fid_in_subject_MNI = 0;
+            %             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.nasion_wMNI = [0 84 -48];
+            %             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.AL_wMNI = [-83 -19 -38];
+            %             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.AR_wMNI = [83 -19 -38];
+            %             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.GenDataTopo = 1;
+            %             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.render_choice.render_template = struct([]);
+            %             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg3.View6Projections = 0;
+            %             spm_jobman('run_nogui',matlabbatch);
         end
         
         % Anatomical image
@@ -240,17 +239,16 @@ try
             NIRS4all = load(fullfile(study_p, 'NIRS4all.mat'));
             NIRS.Cf.H = NIRS4all.NIRS.Cf.H;
             NIRS.Dt.ana = NIRS4all.NIRS.Dt.ana;
-%             NIRS.Dt.pro.errValofCoreg_mm2 = NIRS4all.NIRS.Dt.pro.errValofCoreg_mm2;
+            %             NIRS.Dt.pro.errValofCoreg_mm2 = NIRS4all.NIRS.Dt.pro.errValofCoreg_mm2;
             copyfile(fullfile(study_p, 'TopoData.mat'),fullfile(sDtp, 'TopoData.mat'));
         end
         
         save(fullfile(sDtp, 'NIRS.mat'),'NIRS');
         outNIRSmat = [outNIRSmat; fullfile(sDtp,'NIRS.mat')];
+    catch exception
+        disp(exception.identifier);
+        disp(exception.stack(1));
     end
-    
-    out.NIRSmat = outNIRSmat;
-catch exception
-    disp(exception.identifier);
-    disp(exception.stack(1));
 end
+out.NIRSmat = outNIRSmat;
 end
