@@ -269,13 +269,13 @@ for Idx=1:size(job.NIRSmat,1)
         sensC(isnan(sensC))=0;
         %disp([int2str(sum(sum(sum(isnan(sensC))))) ' NaNs have been corrected in sensitivity matrix (' int2str(numel(sensC)) ' values)']);
         sens = sensC(:,2:end);
-        save(fullfile(cs_dir,'sens.mat'),'sens');
+        save(fullfile(cs_dir,'sens.mat'),'sens','-v7.3'); %PP
         
         sens_reshaped = zeros(V_segR.dim);
         for i=1:size(sens,1)
             sens_reshaped = sens_reshaped + reshape(sens(i,:),V_segR.dim);
         end
-        save(fullfile(cs_dir,'sensReshaped.mat'),'sens_reshaped');
+        save(fullfile(cs_dir,'sensReshaped.mat'),'sens_reshaped','-v7.3'); %PP
         
         %%% a mettre en option
         V = nirs_create_vol(fullfile(cs_dir,['sens' '.nii']),...
