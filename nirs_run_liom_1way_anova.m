@@ -103,7 +103,11 @@ for Idx=1:nS
         fname_ch = NIRS.Dt.ana.rend;
         load(fname_ch);
     end
-    ftopo = fullfile(dir1,'TOPO.mat');
+    try 
+        ftopo = NIRS.TOPO;
+    catch
+        ftopo = fullfile(dir1,'TOPO.mat');
+    end
     TOPO = [];
     load(ftopo);
     %large structure
