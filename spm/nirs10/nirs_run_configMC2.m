@@ -175,7 +175,7 @@ for Idx=1:size(job.NIRSmat,1)
             cs.Pvoid = Pvoid;
             cs.Pfp_rmiv = outF.P.Pfp_rmiv;
             cs.Pwd_rmm = outF.P.Pwd_rmm;
-            cs.nummed = 6;%?
+            cs.nummed = 6;%? nombre de couches dans l'image
             
             Sr = cs.par.radiis * ones(cs.NSkpt,1);
             Dr = cs.par.radiid * ones(cs.NDkpt,1);
