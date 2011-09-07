@@ -97,7 +97,7 @@ for i=1:size(Pwd_rmm,2)
 end
 
 if G.alg==1
-    %%% MCX en voxel /////!!!!!!!!!!!!!!!!!!!!!!!!!!
+    %%% MCX en voxel !!!!!!!!!!!!!!!!!!!!!!!!!!
     % comme on travaille sur les donnees sur des voxels isotropiques de
     % 1mm, il suffit de diviser par la taille des voxels (dans le cas
     % ou on serait avec des voxels de taille custom, il faudrait

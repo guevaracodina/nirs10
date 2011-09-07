@@ -222,8 +222,8 @@ for iwl = 1:size(job.wl_dev,2)
                 fprintf(fid,'%g %g            # detector number and radius (mm)\n',...
                     size(Rr,2),r(1,NS+1));
                 for iR=1:size(Rr,2)
-                    fprintf(fid,'%.1f	%.1f	%.1f  # detector %g position (mm)\n',...
-                        Rp_rmiv(:,iR),Rn(iR));
+                    fprintf(fid,'%d	%d	%d  # detector %g position (mm)\n',...
+                        round(Rp_rmiv(:,iR)),round(Rn(iR)));
                 end
                 fclose(fid);
             end
