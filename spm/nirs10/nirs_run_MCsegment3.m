@@ -40,6 +40,12 @@ for Idx=1:nsubj
             disp(['Could not find anatomical image for ' int2str(Idx) 'th subject.']);
         end
     end
+    %Try to use field corrected image if possible
+    [dirA filA extA] = fileparts(V.fname);
+    tmp_file = fullfile(dirA,['m' filA extA]);
+    if exist(tmp_file,'file')
+        V.fname = tmp_file;
+    end
     
     
     % USER OPTIONS %

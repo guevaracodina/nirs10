@@ -28,6 +28,11 @@ try
 catch
     Save6Projections = 1;
 end
+try
+    ForceReprocess = job.ForceReprocess;
+catch
+    ForceReprocess = 1;
+end
 % Loop over subjects
 for iSubj=1:size(job.NIRSmat,1)
     
@@ -63,12 +68,17 @@ for iSubj=1:size(job.NIRSmat,1)
         
         [dirT1, fil, ext] = fileparts(NIRS.Dt.ana.T1);
         fwT1 = [dirT1 filesep 'w' fil ext(1:4)];
-        if spm_existfile(fwT1)
+        if spm_existfile(fwT1) && ~ForceReprocess
             disp(['Spatial normalisation already run in file ' fwT1 ' - skipping']);
         else
-        
+            tmp_file = fullfile(dirT1,['m' fil ext]);
+            if exist(tmp_file,'file') 
+                src_file = tmp_file;
+            else
+                src_file = NIRS.Dt.ana.T1;
+            end
             %Various options that we don't make available to the user in the GUI
-            matlabbatch{1}.spm.spatial.normalise.estwrite.subj.source = {NIRS.Dt.ana.T1};
+            matlabbatch{1}.spm.spatial.normalise.estwrite.subj.source = {src_file};
             matlabbatch{1}.spm.spatial.normalise.estwrite.subj.wtsrc = '';
             matlabbatch{1}.spm.spatial.normalise.estwrite.subj.resample = {NIRS.Dt.ana.T1};
             matlabbatch{1}.spm.spatial.normalise.estwrite.eoptions.template = {NIRS.Dt.ana.tT1};
@@ -86,8 +96,7 @@ for iSubj=1:size(job.NIRSmat,1)
             matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.interp = 1;
             matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.wrap = [0 0 0];
             matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.prefix = 'w';
-
-            spm_jobman('run_nogui',matlabbatch);
+            spm_jobman('run',matlabbatch);
         
         end
 

@@ -26,6 +26,17 @@ else
     %temporal points
     temp_pts = job.psel_choice.specific_points.temp_pts;
 end
+try 
+    tikh_constraint = job.tikh_constraint;
+catch
+    tikh_constraint = 1;
+end
+try 
+    NewNIRSdir = job.NewDirCopyNIRS.CreateNIRSCopy.NewNIRSdir;
+    NewDirCopyNIRS = 1;
+catch
+    NewDirCopyNIRS = 0;
+end
 for Idx=1:size(job.NIRSmat,1)
     try
         clear NIRS
@@ -73,6 +84,10 @@ for Idx=1:size(job.NIRSmat,1)
         m_c1(YsegRR==1)=1;% mask for GM
         m_c5 = zeros(size(YsegRR));
         m_c5(YsegRR==5)=1;% mask for skin
+        if tikh_constraint
+            m_c12 = zeros(size(YsegRR));
+            m_c12(YsegRR==1 | YsegRR == 2)=1;
+        end
         clear YsegRR;
         
         % Source detector pairs....
@@ -206,8 +221,14 @@ for Idx=1:size(job.NIRSmat,1)
                         for iwl=1:2
                             if itp==1
                                 XX{iwl} =Xwl{iwl}'*Xwl{iwl};
+                                sz = size(XX{iwl},2);
                                 %takes 27 GB of memory for 4e4 x 4e4 size
-                                XXLI{iwl} = sparse(XX{iwl} + alpha*eye(size(XX{iwl},2))); % eq.19 huppert_2010_hierarchical
+                                if tikh_constraint
+                                    constraint_factor = 1e6;
+                                    XXLI{iwl} = sparse(XX{iwl} + alpha*(sparse(diag(m_c12(:)))+ constraint_factor*(sparse(eye(sz))-sparse(diag(m_c12(:))))));
+                                else
+                                    XXLI{iwl} = sparse(XX{iwl} + alpha*eye(sz)); % eq.19 huppert_2010_hierarchical
+                                end
                             end
                             YY = (Xwl{iwl}'*Y_to{iwl});
                             Dmua{iwl} = XXLI{iwl} \ YY;
@@ -251,7 +272,16 @@ for Idx=1:size(job.NIRSmat,1)
                 %disp(int2str(itp));
             end
         end
-        save(job.NIRSmat{Idx,1},'NIRS');
+        if NewDirCopyNIRS
+            [dirN fil1 ext1] =fileparts(job.NIRSmat{Idx,1});
+            dir2 = [dirN filesep NewNIRSdir];
+            if ~exist(dir2,'dir'), mkdir(dir2); end;
+            newNIRSlocation = fullfile(dir2,'NIRS.mat');
+            save(newNIRSlocation,'NIRS');
+            job.NIRSmat{Idx,1} = newNIRSlocation;          
+        else
+            save(job.NIRSmat{Idx,1},'NIRS'); 
+        end
     catch exception
         disp(exception.identifier);
         disp(exception.stack(1));

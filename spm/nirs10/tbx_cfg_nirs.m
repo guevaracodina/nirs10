@@ -1490,6 +1490,14 @@ Save6Projections.values = {1,0};
 Save6Projections.val  = {1};
 Save6Projections.help = {'Save images of channel locations for the 6 projections.'}';
 
+ForceReprocess      = cfg_menu;
+ForceReprocess.tag  = 'ForceReprocess';
+ForceReprocess.name = 'Force reprocessing';
+ForceReprocess.labels = {'True','False'};
+ForceReprocess.values = {1,0};
+ForceReprocess.val  = {0};
+ForceReprocess.help = {'Force reprocessing.'}';
+
 render_file         = cfg_files;
 render_file.name    = 'Render file';
 render_file.tag     = 'render_file';
@@ -1535,7 +1543,7 @@ coreg1.name = 'NIRScoreg';
 coreg1.tag  = 'coreg1';
 coreg1.val  = {NIRSmat DelPreviousData NewDirCopyNIRS anatT1 segT1_4fit ...
     anatT1_template fid_in_subject_MNI nasion_wMNI AL_wMNI AR_wMNI ...
-    GenDataTopo render_choice View6Projections Save6Projections};
+    GenDataTopo render_choice View6Projections Save6Projections ForceReprocess};
 coreg1.prog = @nirs_run_coreg;
 coreg1.vout = @nirs_cfg_vout_coreg;
 coreg1.help = {'Automatic coregistration.'};
@@ -3079,11 +3087,19 @@ tikh_method.help      = {'Choose Tikhonov regularization reconstruction method (
     '-- Simple Bayesian Interpretation uses covariances for the norms.'
     }';
 
+tikh_constraint           = cfg_menu;
+tikh_constraint.name      = 'Reconstruction constraint';
+tikh_constraint.tag       = 'tikh_constraint';
+tikh_constraint.labels    = {'Yes','No'};
+tikh_constraint.values    = {1,0};
+tikh_constraint.val       = {1};
+tikh_constraint.help      = {'Force reconstructions to be on grey and white matter.'}';
+
 % Executable Branch
 tikhonov1      = cfg_exbranch;
 tikhonov1.name = 'Tikhonov inversion';
 tikhonov1.tag  = 'tikhonov1';
-tikhonov1.val  = {NIRSmat NewDirCopyNIRS psel_choice dir_in sens_vxsize tikh_method alpha};
+tikhonov1.val  = {NIRSmat NewDirCopyNIRS psel_choice dir_in sens_vxsize tikh_method alpha tikh_constraint};
 tikhonov1.prog = @nirs_run_inverse_tikhonov;
 tikhonov1.vout = @nirs_cfg_vout_inverse_tikhonov;
 tikhonov1.help = {'Invert using Tikhonov.'};

@@ -857,7 +857,7 @@ else
 end
 end
 
-function [xCon SSxCon] = nirs_get_contrasts(SPM,job,automated_contrasts)
+function [SPM xCon SSxCon] = nirs_get_contrasts(SPM,job,automated_contrasts)
 %Construct the full design matrix over all sessions
 SS_SPM = SPM;
 SS_SPM.xCon = [];
