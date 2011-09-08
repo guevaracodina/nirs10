@@ -6290,6 +6290,22 @@ HDMdisplay.values    = {1,0};
 HDMdisplay.val       = {0};
 HDMdisplay.help      = {'Display output for each subject'}';
 
+save_figures           = cfg_menu;
+save_figures.name      = 'Save figures';
+save_figures.tag       = 'save_figures';
+save_figures.labels    = {'Yes' 'No'};
+save_figures.values    = {1,0};
+save_figures.val       = {1};
+save_figures.help      = {'Save figures for each subject'}';
+
+nameHDM         = cfg_entry;
+nameHDM.name    = 'HDM Name';
+nameHDM.tag     = 'nameHDM';
+nameHDM.strtype = 's';
+nameHDM.num     = [0 Inf];
+nameHDM.val     = {''};
+nameHDM.help    = {'Enter name for this HDM calculation.'}';
+
 % StimuliSign     = cfg_entry;
 % StimuliSign.name    = 'Stimuli sign';
 % StimuliSign.tag     = 'Stimuli';
@@ -6303,7 +6319,7 @@ liom_HDM      = cfg_exbranch;
 liom_HDM.name = 'LIOM Hemodynamic Modelling';
 liom_HDM.tag  = 'liom_HDM';
 liom_HDM.val  = {xSPM_Modalities Model_Choice Stimuli which_session ...
-    which_subjects genericROI HDMdisplay};
+    which_subjects genericROI HDMdisplay save_figures nameHDM};
 liom_HDM.prog = @nirs_run_liom_HDM;
 liom_HDM.vout = @nirs_cfg_vout_liom_HDM;
 liom_HDM.help = {'NIRS_SPM Hemodynamic Modeling.'};
