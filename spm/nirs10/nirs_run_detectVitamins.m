@@ -18,7 +18,7 @@ manualMode = 0;
 wrongWhenAutomatic = 0;
 % Boolean for an exception... always leave =0 except for P2S24 & P2S27.
 % Sorry about that.
-needFixForMissingVit = 1;
+needFixForMissingVit = 0;
 
 % INPUTS %
 %%%%%%%%%%
@@ -55,7 +55,9 @@ for iSubj = 1:nSubj
         needFixForMissingVit = temp;
     end
     
-    if needFixForMissingVit
+    if needFixForMissingVit % Found in Michèle's stuff... do not use except to fix
+        % the bug for 2 particular subjects of study MDEIEP2 (P2S24 &
+        % P2S27)
         fix_coreg_missing_vitamin(fileparts(NIRSmat{iSubj}));
         
     % Use the normal code    
