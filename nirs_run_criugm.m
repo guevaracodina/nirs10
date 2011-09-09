@@ -177,6 +177,8 @@ for is=1:sN
             
             NU=[];% number of session EST ON BIEN SUR QUE C EST PAS SESS ??????????? NOTATIONS PAS CONSISTANTES
             if ~strcmp(nirs_files,''), NU = size(nirs_files,1); end
+            Nons=[];
+            if ~strcmp(job.subj(1,is).protocol,''), Nons = size(job.subj(1,is).protocol,1); end
             % Loop over all sessions
             for iU=1:NU % # of data files
                 fp = nirs_files(iU,1);
@@ -196,7 +198,7 @@ for is=1:sN
                 %%%%%
                 %%% MODIFIER POUR INTEGRER LES ONSETS DIFFEREMMENT %%%
                 % Protocol
-                if ~isempty(job.subj(1,is).protocol{iU,:})
+                if iU<=Nons && ~isempty(job.subj(1,is).protocol{iU,:})
                     % Read "multiple conditions" file (.mat)
                     clear names onsets durations;
                     load(job.subj(1,is).protocol{iU,:},'-mat');
