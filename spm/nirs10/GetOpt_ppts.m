@@ -32,10 +32,16 @@ switch choice
     case 'subj'
         load(p);     
         
-        c_a1 = Opt_ppts(isubj,1,1)/mean(Opt_ppts(:,1,1));
-        c_s1 = Opt_ppts(isubj,1,2)/mean(Opt_ppts(:,1,2));
-        c_a2 = Opt_ppts(isubj,2,1)/mean(Opt_ppts(:,2,1));
-        c_s2 = Opt_ppts(isubj,2,2)/mean(Opt_ppts(:,2,2));
+%         c_a1 = Opt_ppts(isubj,1,1)/mean(Opt_ppts(:,1,1));
+%         c_s1 = Opt_ppts(isubj,1,2)/mean(Opt_ppts(:,1,2));
+%         c_a2 = Opt_ppts(isubj,2,1)/mean(Opt_ppts(:,2,1));
+%         c_s2 = Opt_ppts(isubj,2,2)/mean(Opt_ppts(:,2,2));
+
+
+        c_a1 = 2;
+        c_s1 = 1;
+        c_a2 = 2;
+        c_s2 = 1;
         % calcul de la nouvelle valeurs des mu pour toutes les couches sauf
         % le CSF qui ne contient aucune vasculature.
         op = opt_ppts;
