@@ -66,20 +66,20 @@ for Idx=1:size(job.NIRSmat,1)
         fclose(fid);
         % : mua mus' ... on prend les mu_a
         Yb8i_l1 = zeros(size(Yb8i));
-        Yb8i_l1(Yb8i==1)= opt_ppts{1,1}(1,1);
-        Yb8i_l1(Yb8i==2)= opt_ppts{1,2}(1,1);
-        Yb8i_l1(Yb8i==3)= opt_ppts{1,3}(1,1);
-        Yb8i_l1(Yb8i==4)= opt_ppts{1,4}(1,1);
-        Yb8i_l1(Yb8i==5)= opt_ppts{1,5}(1,1);
-        Yb8i_l1(Yb8i==6)= opt_ppts{1,6}(1,1);
+        Yb8i_l1(Yb8i==1)= opt_ppts(1,1,1);
+        Yb8i_l1(Yb8i==2)= opt_ppts(1,2,1);
+        Yb8i_l1(Yb8i==3)= opt_ppts(1,3,1);
+        Yb8i_l1(Yb8i==4)= opt_ppts(1,4,1);
+        Yb8i_l1(Yb8i==5)= opt_ppts(1,5,1);
+        Yb8i_l1(Yb8i==6)= opt_ppts(1,6,1);
         
         Yb8i_l2 = zeros(size(Yb8i));
-        Yb8i_l2(Yb8i==1)= opt_ppts{2,1}(1,1);
-        Yb8i_l2(Yb8i==2)= opt_ppts{2,2}(1,1);
-        Yb8i_l2(Yb8i==3)= opt_ppts{2,3}(1,1);
-        Yb8i_l2(Yb8i==4)= opt_ppts{2,4}(1,1);
-        Yb8i_l2(Yb8i==5)= opt_ppts{2,5}(1,1);
-        Yb8i_l2(Yb8i==6)= opt_ppts{2,6}(1,1);
+        Yb8i_l2(Yb8i==1)= opt_ppts(2,1,1);
+        Yb8i_l2(Yb8i==2)= opt_ppts(2,2,1);
+        Yb8i_l2(Yb8i==3)= opt_ppts(2,3,1);
+        Yb8i_l2(Yb8i==4)= opt_ppts(2,4,1);
+        Yb8i_l2(Yb8i==5)= opt_ppts(2,5,1);
+        Yb8i_l2(Yb8i==6)= opt_ppts(2,6,1);
         
         if size(Yb8i_l1,1)==1%cs.alg==2
             Yb8i_l1 = Yb8i_l1';
