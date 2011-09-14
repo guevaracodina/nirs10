@@ -565,11 +565,15 @@ try
                         if save_figures
                             %Save figure
                             filen1 = fullfile(figDir,['HDM_' gen_num_str(SubjIdx,3)]);
-                            saveas(Fhdm,filen1,'fig');
+                            figDir2 = fullfile(figDir,'fig');
+                            if ~exist(figDir2,'dir'),mkdir(figDir2); end
+                            filen3 = fullfile(figDir2,['HDM_' gen_num_str(SubjIdx,3)]);
+                            saveas(Fhdm,filen3,'fig');
                             print(Fhdm, '-dtiffn', filen1);
                             Fsi = spm_figure('GetWin','SI');
-                            filen2 = fullfile(figDir,['EHDM_' gen_num_str(SubjIdx,3)]);                        
-                            saveas(Fsi,filen2,'fig');
+                            filen2 = fullfile(figDir,['EHDM_' gen_num_str(SubjIdx,3)]);   
+                            filen4 = fullfile(figDir2,['EHDM_' gen_num_str(SubjIdx,3)]);   
+                            saveas(Fsi,filen4,'fig');
                             print(Fsi, '-dtiffn', filen2);
                             try
                                 close(Fhdm);
