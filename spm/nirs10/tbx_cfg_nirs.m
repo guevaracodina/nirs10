@@ -2004,6 +2004,7 @@ heart_rate_cfg.values    = {heart_resting heart_exercise};
 heart_rate_cfg.val       = {heart_resting};
 heart_rate_cfg.help      = {'Choose configuration of parameters.'
     'Resting-state or VO2max (aerobic exercise)'}';
+
 save_heart_rate_figure      = cfg_menu;
 save_heart_rate_figure.tag  = 'save_heart_rate_figure';
 save_heart_rate_figure.name = 'save_heart_rate_figure';

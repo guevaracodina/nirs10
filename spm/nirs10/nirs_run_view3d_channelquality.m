@@ -1,4 +1,4 @@
-function out = nirs_run_view3d(job)
+function out = nirs_run_view3d_channelquality(job)
 % View optodes en 3D
 %_______________________________________________________________________
 % Copyright (C) 2010 Laboratoire d'Imagerie Optique et Moleculaire
@@ -14,7 +14,7 @@ for iSubj=1:size(job.NIRSmat,1)
     % Load NIRS.mat
     NIRS = [];
     try
-        load(job.NIRSmat{iSubj,1});
+        load(job.NIRSmat);
     catch
         disp(['Could not load NIRS.mat for ' int2str(Idx) 'th subject in nirs_run_view3d.']);
     end
@@ -53,6 +53,9 @@ for iSubj=1:size(job.NIRSmat,1)
     NP = NIRS.Cf.H.P.N;
     NS = NIRS.Cf.H.S.N;
     ND = NIRS.Cf.H.D.N;
+    
+    NC = NIRS.Cf.H.C.N;
+    Cid = NIRS.Cf.H.C.id;
 
     % % Fitted positions (positions are fitted with respect to the scalp)
     % jobe.NIRS = NIRS;
@@ -97,7 +100,7 @@ for iSubj=1:size(job.NIRSmat,1)
     % adding tags
     for Pi = 1:NP
         if Pi<=NS
-            list{1,1} = 'r';
+            list{1,1} = 'b';
             list{2,1} = 10;
             list{3,1} = 'S#';
             Pinum = int2str(Pi);
@@ -107,7 +110,7 @@ for iSubj=1:size(job.NIRSmat,1)
             list{3,1} = 'D#';
             Pinum = int2str(Pi-NS);
         elseif Pi>NS+ND
-            list{1,1} = 'g';
+            list{1,1} = 'b';
             list{2,1} = 2;
             list{3,1} = 'Q#';
             Pinum = int2str(Pi-(NS+ND));
@@ -116,16 +119,44 @@ for iSubj=1:size(job.NIRSmat,1)
         xp = Pp_rmv(2,Pi);
         yp = Pp_rmv(1,Pi);
         zp = Pp_rmv(3,Pi);
-        text(xp,yp,zp,[list{3,1} Pinum],'FontWeight','bold','Color',list{1,1});
+        text(xp,yp,zp,[list{3,1} Pinum],'Color',list{1,1});
 
-        xfp = Pfp_rmv(2,Pi);
-        yfp = Pfp_rmv(1,Pi);
-        zfp = Pfp_rmv(3,Pi);
-        text(xfp,yfp,zfp,'X','FontWeight','bold','Color','black');%list{1,1}
+%         xfp = Pfp_rmv(2,Pi);
+%         yfp = Pfp_rmv(1,Pi);
+%         zfp = Pfp_rmv(3,Pi);
+%         text(xfp,yfp,zfp,'X','FontWeight','Color','black');%list{1,1}
 
         plot3([Pp_c1_rmv(2,Pi),Pp_rmv(2,Pi)],...
             [Pp_c1_rmv(1,Pi),Pp_rmv(1,Pi)],...
             [Pp_c1_rmv(3,Pi),Pp_rmv(3,Pi)], 'Linewidth',list{2,1},'Color',list{1,1});
+    end
+    hold on;
+    Ckpt = 1:size(Cid,2);
+    for Ci = NC/2+1:NC % on prend juste les canaux de 830
+            %keep track of channel location
+            Cbloup = (1:length(Cid(1,:))).*(Cid(1,:) == Ckpt(Ci));
+            S = Cid(2,sum(Cbloup));
+            D = Cid(3,sum(Cbloup));
+%             C_owl = Cid(1,Cid(2,:)==Cid(2,sum(Cbloup)) & Cid(3,:)==Cid(3,sum(Cbloup)));%other wavelengths
+
+
+        xpS = Pp_rmv(2,S);
+        ypS = Pp_rmv(1,S);
+        zpS = Pp_rmv(3,S);
+        
+        xpD = Pp_rmv(2,NS+D);
+        ypD = Pp_rmv(1,NS+D);
+        zpD = Pp_rmv(3,NS+D);
+        
+        x = mean([xpS xpD]);
+        y = mean([ypS ypD]);
+        z = mean([zpS zpD]);
+        
+        if job.whp_b(Ci,1)==1
+            text(x,y,z,int2str(sum(Cbloup)),'FontWeight','bold','Color','g');
+        else
+            text(x,y,z,int2str(sum(Cbloup)),'FontWeight','bold','Color','r');
+        end
     end
     hold off
 
@@ -137,7 +168,7 @@ for iSubj=1:size(job.NIRSmat,1)
 
     % Save and close figure, or not, according to user-interface defined option
     if job.save_figure
-        saveas(gcf,fullfile(NIRS.Dt.s.p,'coreg_3Dview.fig'));
+        saveas(gcf,fullfile(NIRS.Dt.s.p,'3Dview_channelquality.fig'));
         close(gcf);
     end
     
