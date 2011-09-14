@@ -370,6 +370,15 @@ for Idx=1:size(job.NIRSmat,1)
                         level = graythresh(whpR(C_HbO,:));% Otsu
                         whp_b(C_HbO,:) = im2bw(whpR(C_HbO,:),level);
                         
+                        % affiche sur l image 3d, la qualite du signal dans
+                        % chacune des paires
+                        test_aff = 1;
+                        if test_aff==1
+                            jobCQ.whp_b = whp_b;
+                            jobCQ.NIRSmat = job.NIRSmat{Idx,1};
+                            nirs_run_view3d_channelquality(jobCQ);
+                        end
+                        
                         % reconstruction
                         bouchetrou = whpR.*whp_b;
                         testq = sum(whp_b,2);

@@ -198,22 +198,22 @@ for is=1:sN
                 %%%%%
                 %%% MODIFIER POUR INTEGRER LES ONSETS DIFFEREMMENT %%%
                 % Protocol
-                if iU<=Nons && ~isempty(job.subj(1,is).protocol{iU,:})
-                    % Read "multiple conditions" file (.mat)
-                    clear names onsets durations;
-                    load(job.subj(1,is).protocol{iU,:},'-mat');
-                    for kk = 1:size(names, 2)
-                        NIRS.Dt.fir.Sess(iU).U(kk).name = names(kk);
-                        NIRS.Dt.fir.Sess(iU).U(kk).ons = onsets{kk};
-                        NIRS.Dt.fir.Sess(iU).U(kk).dur = durations{kk};
-                        NIRS.Dt.fir.Sess(iU).U(kk).P = P;
-                    end
-                else
-                    NIRS.Dt.fir.Sess(iU).U.name = {};
-                    NIRS.Dt.fir.Sess(iU).U.ons = [];
-                    NIRS.Dt.fir.Sess(iU).U.dur = [];
-                    NIRS.Dt.fir.Sess(iU).U.P = P;
-                end
+%                 if iU<=Nons && ~isempty(job.subj(1,is).protocol{iU,:})
+%                     % Read "multiple conditions" file (.mat)
+%                     clear names onsets durations;
+%                     load(job.subj(1,is).protocol{iU,:},'-mat');
+%                     for kk = 1:size(names, 2)
+%                         NIRS.Dt.fir.Sess(iU).U(kk).name = names(kk);
+%                         NIRS.Dt.fir.Sess(iU).U(kk).ons = onsets{kk};
+%                         NIRS.Dt.fir.Sess(iU).U(kk).dur = durations{kk};
+%                         NIRS.Dt.fir.Sess(iU).U(kk).P = P;
+%                     end
+%                 else
+%                     NIRS.Dt.fir.Sess(iU).U.name = {};
+%                     NIRS.Dt.fir.Sess(iU).U.ons = [];
+%                     NIRS.Dt.fir.Sess(iU).U.dur = [];
+%                     NIRS.Dt.fir.Sess(iU).U.P = P;
+%                 end
             end
         end
         
