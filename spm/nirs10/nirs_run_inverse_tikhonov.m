@@ -224,8 +224,8 @@ for Idx=1:size(job.NIRSmat,1)
                                 sz = size(XX{iwl},2);
                                 %takes 27 GB of memory for 4e4 x 4e4 size
                                 if tikh_constraint
-                                    constraint_factor = 1e6;
-                                    XXLI{iwl} = sparse(XX{iwl} + alpha*(sparse(diag(m_c12(:)))+ constraint_factor*(sparse(eye(sz))-sparse(diag(m_c12(:))))));
+                                    constraint_factor = 1e9;
+                                    XXLI{iwl} = sparse(XX{iwl} + sparse(diag(alpha*(m_c12(:)+constraint_factor*(ones(sz,1)-m_c12(:))))));
                                 else
                                     XXLI{iwl} = sparse(XX{iwl} + alpha*eye(sz)); % eq.19 huppert_2010_hierarchical
                                 end
