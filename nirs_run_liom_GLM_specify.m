@@ -171,9 +171,10 @@ for Idx=1:size(job.NIRSmat,1)
         %create directory for stats for this subject
         spm_dir = fullfile(dir1,job.dir1);
         if ~exist(spm_dir,'dir'), mkdir(spm_dir); end
-
+        
         %Find onsets
         try
+            SPM.Sess(1).U;
             SPM.Sess = NIRS.Dt.fir.Sess;
         catch
             try
@@ -183,7 +184,7 @@ for Idx=1:size(job.NIRSmat,1)
                 for f=1:nsess
                     %load onset file
                     clear names onsets durations
-                    load(job.subj(Idx,1).input_onsets{f});
+                    load(job.subj(1,1).input_onsets{f}); %careful, must have same onsets for all subjects
                     for kk = 1:size(names, 2)
                         SPM.Sess(f).U(kk).name = names(kk);
                         SPM.Sess(f).U(kk).ons = onsets{kk};

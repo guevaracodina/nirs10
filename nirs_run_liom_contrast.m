@@ -904,8 +904,10 @@ contrastT = {}; contrastF = {};
 contrastT_name = {}; contrastF_name = {};
 %negative contrasts can be treated later as to avoid a
 %duplication of long calculations
+epilepsyOn = 0;
 try
     if automated_contrasts
+        if epilepsyOn
         try
             %number of confounds
             ncf = NIRSconfounds.NumChConfoundsActual;
@@ -915,6 +917,7 @@ try
         %Need to check if GLM was run with or without derivs
         switch SPM.xBF.name
             case {'hrf','Gamma functions'}
+               
                 %canonical HRF - no derivatives - no F contrasts
                 %1st Volterra kernel
                 contrastT{1} = [1 zeros(1,nr-1)];
@@ -1009,6 +1012,12 @@ try
                         contrastF_name{2} = 'F2';
                     end
                 end
+        end
+        else
+            for i0=1:nr-2
+                contrastT{i0} = [zeros(1,i0-1) 1 zeros(1,nr-i0)];
+                contrastT_name{i0} = ['C' int2str(i0)];
+            end
         end
     end
 catch exception
