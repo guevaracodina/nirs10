@@ -5560,7 +5560,7 @@ anova_dir_name.help    = {'Enter name of folder to store the analysis.'}';
 
 % Executable Branch
 liom_1way_anova      = cfg_exbranch;
-liom_1way_anova.name = 'Liom Anova Estimation';
+liom_1way_anova.name = 'Liom 1-way Anova Estimation';
 liom_1way_anova.tag  = 'liom_1way_anova';
 liom_1way_anova.val  = {NIRSmat anova_dir_name anova_level level_repeat contrast_figures contrast_p_value ...
     GroupColorbars override_colorbar figures_visible SmallFigures}; % factorial_design};
@@ -5571,6 +5571,129 @@ liom_1way_anova.help = {'Liom 1way anova estimation.'};
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     function vout = nirs_cfg_vout_liom_1way_anova(job)
+        vout = cfg_dep;
+        vout.sname      = 'NIRS.mat';
+        vout.src_output = substruct('.','NIRSmat');
+        vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
+    end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Two-way anova
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%
+anova_level         = cfg_entry;
+anova_level.name    = 'Number of levels';
+anova_level.tag     = 'anova_level';
+anova_level.strtype = 'r';
+anova_level.num     = [1 1];
+anova_level.val     = {2};
+anova_level.help    = {'Enter number of levels (e.g. 2 for young vs old).'
+    'For a one-way anova, there is only one factor.'}';
+
+level_name        = cfg_entry;
+level_name.name    = 'Name for this level';
+level_name.tag     = 'level_name';
+level_name.strtype = 's';
+level_name.num     = [1 Inf];
+level_name.help    = {'Enter name of this level.'}';
+
+level_subj        = cfg_entry;
+level_subj.name    = 'Subjects at this level';
+level_subj.tag     = 'level_subj';
+level_subj.strtype = 'r';
+level_subj.num     = [1 Inf];
+level_subj.help    = {'Enter subject numbers for this level.'}';
+
+level         = cfg_branch;
+level.tag     = 'level';
+level.name    = 'Add level';
+level.val     = {level_name level_subj};
+level.help    = {'Add level'}';
+
+level_repeat         = cfg_repeat;
+level_repeat.tag     = 'level_repeat';
+level_repeat.name    = 'New level';
+level_repeat.help    = {'Add a level for factor 1'}';
+level_repeat.values  = {level};
+level_repeat.num     = [1 Inf];
+
+
+level_repeat2         = cfg_repeat;
+level_repeat2.tag     = 'level_repeat2';
+level_repeat2.name    = 'New level';
+level_repeat2.help    = {'Add a level for factor 2'}';
+level_repeat2.values  = {level};
+level_repeat2.num     = [1 Inf];
+
+% % ---------------------------------------------------------------------
+% % fact Factor
+% % ---------------------------------------------------------------------
+% fact2anova         = cfg_branch;
+% fact2anova.tag     = 'fact2anova';
+% fact2anova.name    = 'Factor';
+% fact2anova.val     = {name levels dept variance};
+% fact2anova.help    = {'Add a new factor to your experimental design'};
+
+% ---------------------------------------------------------------------
+% generic Factors
+% ---------------------------------------------------------------------
+Factors         = cfg_repeat;
+Factors.tag     = 'Factors';
+Factors.name    = 'Factors';
+Factors.help    = {
+    'Specify your design a factor at a time. Need exactly 2 factors '
+    'First factor must be the contrasts; second factor must be the sessions'
+    ''
+    }';
+Factors.values  = {fact};
+Factors.num     = [1 Inf];
+
+% % ---------------------------------------------------------------------
+% % levels Levels
+% % ---------------------------------------------------------------------
+% levels_2anova         = cfg_entry;
+% levels_2anova.tag     = 'levels_2anova';
+% levels_2anova.name    = 'Number of levels for factor 1';
+% levels_2anova.help    = {
+%     'Enter the number of levels factor 1'
+%     }';
+% levels_2anova.strtype = 'e';
+% levels_2anova.num     = [1 1];
+% 
+% levels_2anova2         = cfg_entry;
+% levels_2anova2.tag     = 'levels_2anova2';
+% levels_2anova2.name    = 'Number of levels for factor 2';
+% levels_2anova2.help    = {
+%     'Enter the number of levels factor 2'
+%     }';
+% levels_2anova2.strtype = 'e';
+% levels_2anova2.num     = [1 1];
+
+anova_dir_name        = cfg_entry;
+anova_dir_name.name    = 'Name of folder to store the analysis';
+anova_dir_name.tag     = 'anova_dir_name';
+anova_dir_name.strtype = 's';
+anova_dir_name.num     = [1 Inf];
+anova_dir_name.val{1}  = 'Anova';
+anova_dir_name.help    = {'Enter name of folder to store the analysis.'}';
+
+% Executable Branch
+liom_2way_anova      = cfg_exbranch;
+liom_2way_anova.name = 'Liom 2-way Anova Estimation';
+liom_2way_anova.tag  = 'liom_2way_anova';
+liom_2way_anova.val  = {NIRSmat anova_dir_name Factors contrast_figures contrast_p_value ...
+    GroupColorbars override_colorbar figures_visible SmallFigures}; % factorial_design};
+liom_2way_anova.prog = @nirs_run_liom_2way_anova;
+liom_2way_anova.vout = @nirs_cfg_vout_liom_2way_anova;
+liom_2way_anova.help = {'Liom 2way anova estimation.'
+    'This module currently assumes that the first factor comes from the list of contrasts'
+    'while the second factor comes from the list of sessions.'
+    'It does not allow distinguishing between different types of subjects.'}';
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    function vout = nirs_cfg_vout_liom_2way_anova(job)
         vout = cfg_dep;
         vout.sname      = 'NIRS.mat';
         vout.src_output = substruct('.','NIRSmat');
@@ -6501,7 +6624,7 @@ model_estimate        = cfg_choice; %cfg_repeat;
 model_estimate.name   = 'GLM Estimation';
 model_estimate.tag    = 'model_estimate';
 model_estimate.values = {wls_bglm_estimate liom_contrast  ...
-    liom_group extract_map_data liom_1way_anova AnalyzeGLM ROCtest};
+    liom_group extract_map_data liom_1way_anova liom_2way_anova AnalyzeGLM ROCtest};
 model_estimate.help   = {'These modules estimate a GLM.'};
 
 %module 13
