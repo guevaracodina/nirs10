@@ -37,6 +37,11 @@ try
 catch
     GroupMultiSession = 0;
 end
+try
+    save_nifti_contrasts = job.save_nifti_contrasts;
+catch
+    save_nifti_contrasts = 1;
+end
 % try
 %     Study_type = job.Study_type;
 % catch
@@ -197,6 +202,7 @@ for Idx=1:size(job.NIRSmat,1)
         Z.output_unc = output_unc;
         Z.SmallFigures = SmallFigures;
         Z.write_neg_pos = write_neg_pos;
+        Z.save_nifti_contrasts = save_nifti_contrasts;
         %Handles for figures
         Pt = []; %positive responses, tube
         Pu = []; %positive responses, uncorrected
@@ -657,6 +663,18 @@ try
         F.sum_kappa = sum_kappa(c1);
         F.tstr = tstr;
         F.hb = hb;
+        %contrast - what will be saved as nifti if requested
+        if strcmp(tstr,'T')
+            %F.con = zeros(s1,s2);
+            %F.con = squeeze(c_interp_beta(c1,index_mask));
+            F.con = squeeze(c_interp_beta(c1,:,:));
+            F.ess = [];
+        else
+            F.con = [];
+            %F.ess = zeros(s1,s2);
+            %F.ess = squeeze(c_interp_F(c1,index_mask));
+            F.ess = squeeze(c_interp_F(c1,:,:));
+        end
         %     if c1 == 3
         %         a=1;
         %     end

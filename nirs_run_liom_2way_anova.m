@@ -5,10 +5,9 @@ try
     out = nirs_spm_run_factorial_design(job);
 end
 %Get anova info
-anova_level = job.anova_level;
-for l1=1:anova_level
-    level_name{l1} = job.level(l1).level_name;
-    level_subj{l1} = job.level(l1).level_subj;
+for l1=1:2
+    nlevel(l1) = job.fact(l1).levels;
+    names_level{l1} = job.fact(l1).name;
 end
 Pu = [];
 Nu = [];
@@ -26,11 +25,11 @@ catch
     SmallFigures = 0;
 end
 write_neg_pos = 0;
-try
-    group_session_to_average = job.group_session_to_average;
-catch
-    group_session_to_average = 1;
-end
+% try
+%     group_session_to_average = job.group_session_to_average;
+% catch
+%     group_session_to_average = 1;
+% end
 %Booleans to choose which figures to write to disk, if any
 switch job.contrast_figures
     case 0
@@ -103,7 +102,7 @@ for Idx=1:nS
         fname_ch = NIRS.Dt.ana.rend;
         load(fname_ch);
     end
-    try 
+    try
         ftopo = NIRS.TOPO;
     catch
         ftopo = fullfile(dir1,'TOPO.mat');
@@ -221,16 +220,26 @@ try
                                         ccov_beta(f1,:) = tmp(:);
                                         
                                     else
-                                        %for is1=1:length(big_TOPO{f1}.v{v1}.s)
-                                        is1 = group_session_to_average;
+                                        %
+                                        %is1 = group_session_to_average;
                                         %do each session separately
-                                        tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_beta(c1,:,:));
-                                        cbeta(f1,:) = tmp(:);
-                                        tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_cov_interp_beta(c1,:,:));
-                                        ccov_beta(f1,:) = tmp(:);
-                                        %end
+                                        Ns = length(big_TOPO{f1}.v{v1}.s);
+                                        
+                                        for is1=1:3 %Ns
+                                            
+                                            tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_beta(c1,:,:));
+                                            if c1 == 1 && f1 == 1 && is1 == 1 
+                                                cbeta = zeros(ns,nC,Ns,length(tmp(:)));
+                                                ccov_beta =zeros(ns,nC,Ns,length(tmp(:)));
+                                            end
+                                            cbeta(f1,c1,is1,:) = tmp(:);
+                                            tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_cov_interp_beta(c1,:,:));
+                                            ccov_beta(f1,c1,is1,:) = tmp(:);
+                                        end
                                     end
-                                catch
+                                catch exception
+                                    disp(exception.identifier);
+                                    disp(exception.stack(1));
                                     disp(['No data for subject ' int2str(f1) ' contrast ' int2str(c1)  ' chromophore ' hb ' and view ' int2str(v1)]);
                                 end
                             end
@@ -246,63 +255,67 @@ try
                                         tmp = ones(sz(1), sz(2));
                                         ccov_beta(f1,:) = tmp(:);
                                     else
+                                        %RECALL TO MODIFY FOR 2-WAY ANOVA
                                         %do each session separately
-                                        is1 = group_session_to_average;
+                                        %is1 = group_session_to_average;
                                         %for is1=1:length(big_TOPO{f1}.v{v1}.s)
-                                        tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_F(c1,:,:));
-                                        cbeta(f1,:) = tmp(:);
-                                        sz = size(squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_F(c1,:,:)));
-                                        tmp = ones(sz(1), sz(2));
-                                        ccov_beta(f1,:) = tmp(:);
-                                        %end
+                                        for is1=1:length(big_TOPO{f1}.v{v1}.s)
+                                            tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_F(c1,:,:));
+                                            %Not sensible to mix T and F
+                                            %contrasts
+                                            cbeta(f1,c1,is1,:) = tmp(:);
+                                            sz = size(squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_F(c1,:,:)));
+                                            tmp = ones(sz(1), sz(2));
+                                            ccov_beta(f1,c1,is1,:) = tmp(:);
+                                        end
                                     end
                                 catch
                                     disp(['No data for subject ' int2str(f1) ' contrast ' int2str(c1)  ' chromophore ' hb ' and view ' int2str(v1)]);
                                 end
                             end
                         end
-                        try
-                            A = liom_anova(cbeta,ccov_beta,s1,s2,ns,min_s,level_subj);
-                        catch exception2
-                            disp(exception2.identifier);
-                            disp(exception2.stack(1));
-                        end
-                        
-                        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.A = A;
-                        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.c = xCon(c1);
-                        
-                        filestr = [num2str(p_value) '_' spec_hemi '_' hb];
-                        filestr_fig = [num2str(p_value) ' ' spec_hemi ' ' hb];
-                        info1 = [filestr xCon(c1).name];
-                        info_for_fig1 = [filestr_fig xCon(c1).name];
-                        F.contrast_info = info1;
-                        F.contrast_info_for_fig = info_for_fig1;
-                        F.contrast_info_both = [filestr xCon(c1).name]; %same for Pos and Neg, used for combined figures
-                        F.contrast_info_both_for_fig = [filestr_fig xCon(c1).name]; %same for Pos and Neg, used for combined figures
-                        
-                        F.T_map = A.F;
-                        F.erdf = A.df;
-                        F.eidf = A.dfbetween;
-                        F.tstr = 'F'; %tstr;
-                        F.hb = hb;
-                        try
-                            DF = nirs_draw_figure(4,F,W,Z);
-                        catch exception2
-                            disp(exception2.identifier);
-                            disp(exception2.stack(1));
-                        end
-                        try
-                            if GFIS, [Pu,Nu,Cu] = nirs_copy_figure(Pu,Nu,Cu,DF,CF,c1,hb,1,F.tstr); end;
-                        catch exception2
-                            disp(exception2.identifier);
-                            disp(exception2.stack(1));
-                        end
                     catch exception
                         disp(exception.identifier);
                         disp(exception.stack(1));
-                        disp(['Problem with a specific contrast ' int2str(c1) ' and chromophore ' hb ' for view ' int2str(v1)]);
                     end
                 end
+                try
+                    A = liom_2way_anova(cbeta,ccov_beta,s1,s2,ns,min_s);
+                catch exception2
+                    disp(exception2.identifier);
+                    disp(exception2.stack(1));
+                end
+                
+                TOPO.v{v1}.group.hb{h1}.A = A;
+                %TOPO.v{v1}.group.hb{h1}.A.c = xCon(c1);
+                
+                filestr = [num2str(p_value) '_' spec_hemi '_' hb];
+                filestr_fig = [num2str(p_value) ' ' spec_hemi ' ' hb];
+                info1 = [filestr ];
+                info_for_fig1 = [filestr_fig ];
+                F.contrast_info = info1;
+                F.contrast_info_for_fig = info_for_fig1;
+                F.contrast_info_both = [filestr ]; %same for Pos and Neg, used for combined figures
+                F.contrast_info_both_for_fig = [filestr_fig ]; %same for Pos and Neg, used for combined figures
+                
+                F.T_map = A.F;
+                F.erdf = A.df;
+                F.eidf = A.dfbetween;
+                F.tstr = 'F'; %tstr;
+                F.hb = hb;
+                try
+                    DF = nirs_draw_figure(4,F,W,Z);
+                catch exception2
+                    disp(exception2.identifier);
+                    disp(exception2.stack(1));
+                end
+                try
+                    if GFIS, [Pu,Nu,Cu] = nirs_copy_figure(Pu,Nu,Cu,DF,CF,c1,hb,1,F.tstr); end;
+                catch exception2
+                    disp(exception2.identifier);
+                    disp(exception2.stack(1));
+                end
+             
             end
             %save assembled figures
             save_assembled_figures(Z,W,Cu,'','unc',0);

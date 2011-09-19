@@ -4412,6 +4412,15 @@ write_neg_pos.help = {'If generating negative contrasts, whether to output '
     'separate maps for negative and positive contrasts and for both, '
     'or only the maps with both contrasts' }';
 
+save_nifti_contrasts      = cfg_menu;
+save_nifti_contrasts.tag  = 'save_nifti_contrasts';
+save_nifti_contrasts.name = 'Save contrast images in nifti format';
+save_nifti_contrasts.labels = {'Yes', 'No'};
+save_nifti_contrasts.values = {1,0};
+save_nifti_contrasts.val    = {0};
+save_nifti_contrasts.help = {'This option is useful for 2nd level studies: '
+    'It creates nifti images, one for each contrast, which can then be input'
+    'Into an SPM 2nd level analysis.' }';
 
 % Executable Branch
 liom_contrast      = cfg_exbranch;
@@ -4421,7 +4430,7 @@ liom_contrast.tag  = 'liom_contrast';
 liom_contrast.val  = {NIRSmat NewDirCopyNIRS ProcessContrastsBySession GroupMultiSession view consess ...
     spatial_LPF GenerateInverted GroupColorbars contrast_p_value ...
     contrast_figures override_colorbar figures_visible GroupFiguresIntoSubplots ...
-    output_unc SmallFigures write_neg_pos TopoData}; %Study_type
+    output_unc SmallFigures write_neg_pos TopoData save_nifti_contrasts}; %Study_type
 liom_contrast.prog = @nirs_run_liom_contrast;
 liom_contrast.vout = @nirs_cfg_vout_liom_contrast;
 liom_contrast.help = {'Liom Contrast Calculations.'};
@@ -6624,7 +6633,7 @@ model_estimate        = cfg_choice; %cfg_repeat;
 model_estimate.name   = 'GLM Estimation';
 model_estimate.tag    = 'model_estimate';
 model_estimate.values = {wls_bglm_estimate liom_contrast  ...
-    liom_group extract_map_data liom_1way_anova liom_2way_anova AnalyzeGLM ROCtest};
+    liom_group extract_map_data liom_1way_anova AnalyzeGLM ROCtest}; %liom_2way_anova
 model_estimate.help   = {'These modules estimate a GLM.'};
 
 %module 13
