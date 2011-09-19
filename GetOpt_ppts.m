@@ -3,7 +3,7 @@ function out = GetOpt_ppts(varargin)
 if length(varargin)>1
     choice ='subj';
     p = varargin{2};
-    isubj = varargin{3};
+%     isubj = varargin{3};
 else
     choice ='litt';
 end
@@ -30,7 +30,7 @@ switch choice
     case 'litt'
         %default values are handed out       
     case 'subj'
-        load(p);     
+%         load(p);     
         
 %         c_a1 = Opt_ppts(isubj,1,1)/mean(Opt_ppts(:,1,1));
 %         c_s1 = Opt_ppts(isubj,1,2)/mean(Opt_ppts(:,1,2));
@@ -38,10 +38,10 @@ switch choice
 %         c_s2 = Opt_ppts(isubj,2,2)/mean(Opt_ppts(:,2,2));
 
 
-        c_a1 = 2;
-        c_s1 = 1;
-        c_a2 = 2;
-        c_s2 = 1;
+        c_a1 = 1;
+        c_s1 = 4;
+        c_a2 = 1;
+        c_s2 = 4;
         % calcul de la nouvelle valeurs des mu pour toutes les couches sauf
         % le CSF qui ne contient aucune vasculature.
         op = opt_ppts;
