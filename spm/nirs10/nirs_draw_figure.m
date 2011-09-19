@@ -104,7 +104,7 @@ try
                 for i1=2:length(udf) %exclude 0
                     xth(i1) = spm_invFcdf(1-p_value, eidf, udf(i1));
                 end
-                xT_map = T_map(:);
+                T_map = T_map(:); %??
                 for i1 = 1:length(xerdf)
                     if xerdf(i1) > 0
                         xth_z(i1) = xth(xerdf(i1)==udf);
@@ -516,8 +516,10 @@ try
         %cbfreeze(hc1);
         %Write figure
         if Z.write_neg_pos || combinedfig || tstr == 'F'
-            filen1 = fullfile(pathn,[tstr '_' str_cor '_' contrast_info '.fig']);
             if gen_fig
+                pathfig = fullfile(pathn,'fig');
+                if ~exist(pathfig,'dir'),mkdir(pathfig); end
+                filen1 = fullfile(pathfig,[tstr '_' str_cor '_' contrast_info '.fig']);
                 saveas(fh1,filen1,'fig');
             end
             if gen_tiff
@@ -545,6 +547,27 @@ try
         end
         Y.tick_number = tick_number;
         Y.fontsize_choice = fontsize_choice;
+        %Save as nifti
+        if Z.save_nifti_contrasts
+            pathnii = fullfile(pathn,'nii');
+            if ~exist(pathnii,'dir'),mkdir(pathnii); end
+            filen3 = fullfile(pathnii,[tstr '_' str_cor '_' contrast_info '.nii']);
+            %note it is the contrast that should be written, not the T or F-stat maps  
+%             switch W.side_hemi
+%                 case 3 %right
+%                     M = [[0 1;-1 0] zeros(2); zeros(2) eye(2)];
+%                 case 4 %left
+                    M = [[0 1;-1 0] zeros(2); zeros(2) eye(2)];
+%             end
+            if strcmp(tstr,'T') 
+                
+                V = nirs_create_vol(filen3,...
+                    [W.s1 W.s2 1], [16,0], [1;0;352],M, F.con);
+            else
+                V = nirs_create_vol(filen3,...
+                    [W.s1 W.s2 1], [16,0], [1;0;352],M, F.ess);
+            end 
+        end
     else
         Y = [];
     end
