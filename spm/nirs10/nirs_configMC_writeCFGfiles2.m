@@ -19,7 +19,7 @@ function nirs_configMC_writeCFGfiles2(job)
 % mise a jour Clement 07/2011
 
 
-outOP = GetOpt_ppts('wl');
+outOP = GetOpt_ppts('wl','subj',3);
 % il faut chqnger les propri2t2s si on chqnge lq tqille des voxels
 scalings =[1 1 1 1];%= [job.par.voxelSize 1 job.par.voxelSize 1];
 opt_ppts = outOP{1};
