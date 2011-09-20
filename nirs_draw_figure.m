@@ -547,29 +547,29 @@ try
         end
         Y.tick_number = tick_number;
         Y.fontsize_choice = fontsize_choice;
-        %Save as nifti
-        if Z.save_nifti_contrasts
-            pathnii = fullfile(pathn,'nii');
-            if ~exist(pathnii,'dir'),mkdir(pathnii); end
-            filen3 = fullfile(pathnii,[tstr '_' str_cor '_' contrast_info '.nii']);
-            %note it is the contrast that should be written, not the T or F-stat maps  
-%             switch W.side_hemi
-%                 case 3 %right
-%                     M = [[0 1;-1 0] zeros(2); zeros(2) eye(2)];
-%                 case 4 %left
-                    M = [[0 1;-1 0] zeros(2); zeros(2) eye(2)];
-%             end
-            if strcmp(tstr,'T') 
-                
-                V = nirs_create_vol(filen3,...
-                    [W.s1 W.s2 1], [16,0], [1;0;352],M, F.con);
-            else
-                V = nirs_create_vol(filen3,...
-                    [W.s1 W.s2 1], [16,0], [1;0;352],M, F.ess);
-            end 
-        end
+        
     else
         Y = [];
+    end
+    %Save as nifti
+    if Z.save_nifti_contrasts
+        pathnii = fullfile(pathn,'nii');
+        if ~exist(pathnii,'dir'),mkdir(pathnii); end
+        filen3 = fullfile(pathnii,[tstr '_' str_cor '_' contrast_info '.nii']);
+        %note it is the contrast that should be written, not the T or F-stat maps
+        %             switch W.side_hemi
+        %                 case 3 %right
+        %                     M = [[0 1;-1 0] zeros(2); zeros(2) eye(2)];
+        %                 case 4 %left
+        M = [[0 1;-1 0] zeros(2); zeros(2) eye(2)];
+        %             end
+        if strcmp(tstr,'T')            
+            V = nirs_create_vol(filen3,...
+                [W.s1 W.s2 1], [16,0], [1;0;352],M, F.con);
+        else
+            V = nirs_create_vol(filen3,...
+                [W.s1 W.s2 1], [16,0], [1;0;352],M, F.ess);
+        end
     end
 catch exception
     disp(exception.identifier);
