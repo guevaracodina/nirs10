@@ -670,7 +670,7 @@ for z = 1:nbz:zdim                       %-loop over planes (2D or 3D data)
             %--------------------------------------------------------------
             if ~any(Cm), break, end                %-Break if empty mask
             Y(i,Cm)  = spm_get_data(VY(i),xyz(:,Cm),false);
-            xM.TH(i) = 1e-8; %PP
+            %xM.TH(i) = 1e-8; %PP
             Cm(Cm)   = Y(i,Cm) > xM.TH(i);         %-Threshold (& NaN) mask
             if xM.I && ~YNaNrep && xM.TH(i) < 0    %-Use implicit mask
                 Cm(Cm) = abs(Y(i,Cm)) > eps;
