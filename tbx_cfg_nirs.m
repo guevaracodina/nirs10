@@ -3233,6 +3233,17 @@ dir.ufilter = '.*';
 dir.num     = [1 1];
 
 % ---------------------------------------------------------------------
+% sessions Sessions
+% ---------------------------------------------------------------------
+sessions         = cfg_entry;
+sessions.name    = 'Sessions';
+sessions.tag     = 'sessions';
+sessions.strtype = 'r';
+sessions.num     = [0 Inf];
+sessions.val     = {''};
+sessions.help    = {'Enter the numbers of the sessions to include. If not specified, all sessions included in the NIRS matrix will be included.'};
+
+% ---------------------------------------------------------------------
 % units Units for design
 % ---------------------------------------------------------------------
 units         = cfg_menu;
@@ -3665,7 +3676,7 @@ hpf_butter.help = {'Choose whether to include a Butterworth High Pass Filter.'
 wls_bglm_specify      = cfg_exbranch;
 wls_bglm_specify.name = 'LIOM GLM Specification';
 wls_bglm_specify.tag  = 'wls_bglm_specify';
-wls_bglm_specify.val  = {NIRSmat dir1 subj units time_res derivs bases ...
+wls_bglm_specify.val  = {NIRSmat dir1 sessions subj units time_res derivs bases ...
     volt GLM_include_cardiac GLM_include_Mayer NIRSchannelsConfound GenerateHbT flag_window ...
     channel_pca hpf_butter generate_trRV filter_design_matrix ...
     wls_or_bglm LiomDeleteLarge};
