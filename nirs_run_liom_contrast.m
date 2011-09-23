@@ -248,14 +248,17 @@ for Idx=1:size(job.NIRSmat,1)
                         % nirs_run_ODtoHbOHbR ? Not sure this gives the right
                         % order....?!?
                         
-                        if wl(1) > 750
-                            %first wavelength is "HbO-like"
-                            W.ch_HbO = W.index_ch;
-                            W.ch_HbR = NC/2 + W.index_ch;
-                        else
-                            W.ch_HbR = W.index_ch;
-                            W.ch_HbO = NC/2 + W.index_ch;
-                        end
+%                         if wl(1) > 750
+%                             %first wavelength is "HbO-like"
+%                             W.ch_HbO = W.index_ch;
+%                             W.ch_HbR = NC/2 + W.index_ch;
+%                         else
+%                             W.ch_HbR = W.index_ch;
+%                             W.ch_HbO = NC/2 + W.index_ch;
+%                         end
+                        W.ch_HbO = W.index_ch;
+                        W.ch_HbR = NC/2 + W.index_ch;
+                        
                         try
                             W.ch_HbT = NC+W.index_ch;
                         catch exception
