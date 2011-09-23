@@ -683,7 +683,10 @@ for Idx=1:size(job.NIRSmat,1)
         %location of the HbO and HbR (combined) files - note that
         %for the purpose of GLM estimation, we do not care if a channel
         %is HbO or HbR, so we can loop over all the channels
-        SPM.xY.P = NIRS.Dt.fir.pp(lst).p; 
+        for f=1:nsess
+            iSess = idx_sess(f);
+            SPM.xY.P{f} = NIRS.Dt.fir.pp(lst).p{iSess};
+        end
         SPM.generate_trRV = generate_trRV;
         SPM.filter_design_matrix = filter_design_matrix;
         SPM.job = job;
