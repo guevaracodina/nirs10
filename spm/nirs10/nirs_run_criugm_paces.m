@@ -201,6 +201,11 @@ for Idx=1:size(job.NIRSmat,1)
                     k2 = [k2 k2+nc*(-HbO_like+HbR_like(i4))];
                 end
             end
+%             
+            % MICHÈLE 20 sept 2011: to avoid inversion of channel order
+            % (see line 188 commentary) :
+            k2 = sort(k2);
+            
             %end
             %remove only channels that were not detected in the first
             %session - to harmonize all the sessions
@@ -329,21 +334,30 @@ for Idx=1:size(job.NIRSmat,1)
                         
                         %%%%%
                         whp = hp/max(max(hp));
-                        whp_b = zeros(size(whp));
+                        %whp_b = zeros(size(whp));
+                        % MICHÈLE 20 sept 2011
+                        whp_b = zeros(NC,size(whp,2));
                         
                         %%% attention : a partir de cette ligne, on
                         %%% travaille avec l'ordre des lignes correspondant
                         %%% a celui des canaux mais pas avant.....
                         % Affichage du resultat
-                        if strcmp(NIRS.Cf.dev.n,'CW6')
-                            whpR = zeros(NC,size(whp,2)); whpR([k1 k1-(NC/2)],:) = whp; 
-                            
-                        elseif strcmp(NIRS.Cf.dev.n,'CW5')
-                            whpR = zeros(NC,size(whp,2)); whpR([k1 k1+(NC/2)],:) = whp; 
-                            %figure;imagesc(whpR);title(['Heart pace: ' rDtp{f}]);
-                        else
-                            whpR([k1 k1+(NC/2)],:) = whp;  
-                        end
+                        
+%                         % MICHÈLE 20 sept. 2011: enlever cette inversion
+%                         % devenue redondante... et remplacer par ceci:
+%%%%%%%%%%%%%%%%%%
+                        whpR = zeros(NC,size(whp,2)); whpR(k2,:) = whp;
+%                         if strcmp(NIRS.Cf.dev.n,'CW6')
+%                             whpR = zeros(NC,size(whp,2)); whpR([k1 k1-(NC/2)],:) = whp; 
+%                             
+%                         elseif strcmp(NIRS.Cf.dev.n,'CW5')
+%                             whpR = zeros(NC,size(whp,2)); whpR([k1 k1+(NC/2)],:) = whp; 
+%                             %figure;imagesc(whpR);title(['Heart pace: ' rDtp{f}]);
+%                         else
+%                             whpR([k1 k1+(NC/2)],:) = whp;  
+%                         end
+%%%%%%%%%%%%%%%%%%%
+
                         if display_heart_rate_figure
                             hfig = figure('visible','on');
                         else
@@ -372,10 +386,12 @@ for Idx=1:size(job.NIRSmat,1)
                         
                         % affiche sur l image 3d, la qualite du signal dans
                         % chacune des paires
-                        test_aff = 1;
+                        test_aff = 0;
                         if test_aff==1
+                            jobCQ = job;
                             jobCQ.whp_b = whp_b;
-                            jobCQ.NIRSmat = job.NIRSmat{Idx,1};
+                            jobCQ.save_figure = save_heart_rate_figure;
+                            jobCQ.NIRSmat = job.NIRSmat(Idx,1);
                             nirs_run_view3d_channelquality(jobCQ);
                         end
                         

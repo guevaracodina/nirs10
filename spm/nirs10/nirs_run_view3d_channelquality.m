@@ -14,12 +14,12 @@ for iSubj=1:size(job.NIRSmat,1)
     % Load NIRS.mat
     NIRS = [];
     try
-        load(job.NIRSmat);
+        load(job.NIRSmat{iSubj,:});
     catch
         disp(['Could not load NIRS.mat for ' int2str(Idx) 'th subject in nirs_run_view3d.']);
     end
 
-    if isempty(job.segT1_4fit{1,1})
+    if isfield(job,'segT1_4fit') && isempty(job.segT1_4fit{1,1})
         try
             if ~job.on_cortex
                 segT1_4fit = NIRS.Dt.ana.T1seg;

@@ -1032,7 +1032,7 @@ try
                 end
         end
         else
-            for i0=1:nr-2
+            for i0=1:nr-1
                 contrastT{i0} = [zeros(1,i0-1) 1 zeros(1,nr-i0)];
                 contrastT_name{i0} = ['C' int2str(i0)];
             end

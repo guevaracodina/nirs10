@@ -18,6 +18,8 @@ function out = nirs_run_liom_GLM_specify(job)
 %matlabbatch{MP}.spm.tools.nirs10.model_specify.('liom_GLM_specify')=matlabbatch{MP}.spm.tools.nirs10.model_specify.('wls_bglm_specify')
 %matlabbatch{MP}.spm.tools.nirs10.model_specify = rmfield(matlabbatch{MP}.spm.tools.nirs10.model_specify, 'wls_bglm_specify'); 
 %save('','matlabbatch')
+
+
 %physiological confounds
 try
     NIRSconfounds = job.NIRSchannelsConfound.NIRSconfounds;
@@ -165,7 +167,21 @@ for Idx=1:size(job.NIRSmat,1)
         rDtp = NIRS.Dt.fir.pp(lst).p; % path for files to be processed
         NC = NIRS.Cf.H.C.N;
         fs = NIRS.Cf.dev.fs;
-        nsess = size(rDtp,1);
+        % MICHÈLE 21 sept. 2011
+        %nsess = size(rDtp,1);
+        nsessAll = size(rDtp,1);
+        % Sessions to use (assumed same for all subjects)
+        try
+            idx_sess = job.sessions;
+            if max(idx_sess)>nsessAll || min(idx_sess)<1 ||...
+                    length(idx_sess)>nsessAll || ... % wrong entry...
+                    isempty(idx_sess) % or default value!
+                goToCatch;
+            end
+        catch
+            idx_sess = 1:nsessAll;
+        end
+        nsess = length(idx_sess);
 
         [dir1, fil1, ext1] = fileparts(rDtp{1,1});
         %create directory for stats for this subject
@@ -177,11 +193,12 @@ for Idx=1:size(job.NIRSmat,1)
             SPM.Sess(1).U;
             SPM.Sess = NIRS.Dt.fir.Sess;
         catch
-            try
-                %Ignore parametric modulations - cf spm_run_fmri_design.m
-                P.name = 'none';
-                P.h    = 0;
-                for f=1:nsess
+            %Ignore parametric modulations - cf spm_run_fmri_design.m
+            P.name = 'none';
+            P.h    = 0;
+            for f=1:nsess
+                iSess = idx_sess(f);
+                try
                     %load onset file
                     clear names onsets durations
                     load(job.subj(1,1).input_onsets{f}); %careful, must have same onsets for all subjects
@@ -191,28 +208,64 @@ for Idx=1:size(job.NIRSmat,1)
                         SPM.Sess(f).U(kk).dur = durations{kk};
                         SPM.Sess(f).U(kk).P = P;
                     end
+                catch
+                    %Could not load onset
+                    disp(['Could not find onsets - assuming baseline scan (no stimuli) on session ' int2str(iSess) '.']);
+                    % MICHÈLE 21 sept. 2011 - for resting state scans one must
+                    % be allowed to include 0 conditions in the design matrix
+                    % (only other regressors).
+                    SPM.Sess(f).U = [];
+                    SPM.Sess(f).C.C = [];
+                    SPM.Sess(f).C.name = cell(1,0);
+                    % This way, spm_get_ons will not prompt the user to
+                    % manually enter conditions as it does when the U field
+                    % does not exist.
                 end
-            catch
-                %Could not load onset
-                disp('Could not find onsets');
             end
         end
         %Adding confound regressors 
        
         for f=1:nsess
+            iSess = idx_sess(f);
             C = [];
             Cname = {};
             try 
                 if job.GLM_include_cardiac
                     %heart rate regressor
-                    C = NIRS.Dt.fir.Sess(f).fR{1};
+                    C = NIRS.Dt.fir.Sess(iSess).fR{1};
                     C = C - repmat(mean(C),[length(C),1]);
                     Cname = {'H'};
                 end
                 if job.GLM_include_Mayer
                     %Mayer wave regressor
-                    C = [C NIRS.Dt.fir.Sess(f).mR{1}];
+                    C = [C NIRS.Dt.fir.Sess(iSess).mR{1}];
                     Cname = [Cname {'M'}];
+                end
+                if ~isempty(job.subj.multi_reg)
+                    %"Multiple regressors" file
+                    %nb = 0;
+                    %for iFile = 1:length(job.subj.multi_reg) % if more
+                    %than one file per session... not implemented
+                    %nb = nb+1;
+                    try 
+                        [dir fil ext] = fileparts(job.subj.multi_reg{f});
+                        if strcmp(ext,'.mat')
+                            regressors = load(job.subj.multi_reg{f});
+                            % not going to work, because I don't know
+                            % the name of the variable saved
+                            % (regressors.variable?)...
+                        elseif strcmp(ext,'.txt')
+                            regressors = load(job.subj.multi_reg{f},'-ascii');
+                        end
+                        for iReg = 1:size(regressors,2)
+                            C = [C regressors(:,iReg)];
+                            Cname = [Cname {['Other' int2str(iReg)]}];
+                        end
+                    catch
+                        % Possibly no "Multiple Regressors" files for some
+                        % sessions (currently only last ones can be
+                        % omitted)
+                    end
                 end
                 if NIRSconfoundsOn
                     wl = NIRS.Cf.dev.wl;
@@ -247,7 +300,7 @@ for Idx=1:size(job.NIRSmat,1)
                         HbOIX4 = [HbOIX4 find(HbOIX3(j1)==NIRS.Cf.H.C.id(1,:))];
                     end
                     %get data for that session
-                    d = fopen_NIR(rDtp{f,1},NC);
+                    d = fopen_NIR(rDtp{iSess,1},NC);
                     d_conf = d(HbOIX4,:);
                     
                     for j1=1:length(HbOIX4)
@@ -268,7 +321,7 @@ for Idx=1:size(job.NIRSmat,1)
                         kept_ch(HbOIX4-NC/2) = 0;
                     end  
                     ch_keep = ch_keep(logical(kept_ch));
-                    [dir3, fil3, ext3] = fileparts(rDtp{f,1});
+                    [dir3, fil3, ext3] = fileparts(rDtp{iSess,1});
                     new_name = fullfile(spm_dir,[fil3 ext3]);
                     d_kept = d(ch_keep,:);
                     fwrite_NIR(new_name,d_kept);
@@ -284,7 +337,7 @@ for Idx=1:size(job.NIRSmat,1)
             catch
                 try 
                     if job.GLM_include_cardiac
-                        C = NIRS.Dt.fir.Sess(f).cR{1};
+                        C = NIRS.Dt.fir.Sess(iSess).cR{1};
                         Cname = {'H'};
                     end
                 catch
@@ -297,12 +350,13 @@ for Idx=1:size(job.NIRSmat,1)
         %Number of datapoints for each session
         nscan = [];
         for f=1:nsess
+            iSess = idx_sess(f);
             try
                 %only use of data for design specification. By storing 
                 %size(d,2) in NIRS, we would avoid loading all the data!
-                d = fopen_NIR(rDtp{f,1},NC);
+                d = fopen_NIR(rDtp{iSess,1},NC);
             catch
-                disp(['Aborting. Could not load data file for session ' int2str(f)]);
+                disp(['Aborting. Could not load data file for session ' int2str(iSess)]);
                 %return
             end
             nscan = [nscan size(d,2)];
