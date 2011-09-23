@@ -35,6 +35,21 @@ for iSubj=1:size(job.NIRSmat,1)
         % SPATIAL NORMALIZATION OF ANATOMICAL IMAGE %
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
+%         NIRS.Dt.fir.stax.n = 'Brainsight(c)';
+%             NIRS.Dt.fir.stax.nota = 'Helmet template';
+%             NIRS_ht = load(job.subj(1,is).helmet.helm_temp{:});
+%             NIRS.Cf.H.P.w = NIRS_ht.NIRS.Cf.H.P.w;
+%             NIRS.Cf.H.C = NIRS_ht.NIRS.Cf.H.C;
+%             NIRS.Cf.H.p = NIRS_ht.NIRS.Cf.H.p;
+%             NIRS.Cf.H.n = NIRS_ht.NIRS.Cf.H.n;
+%             
+%             f = load(job.subj(1,is).nirs_files{:},'-mat');
+%             NIRS.Cf.H.S.n = f.SD.SrcNam;
+%             NIRS.Cf.H.S.N = size(f.SD.SrcPos,1);
+%             NIRS.Cf.H.D.n = f.SD.SrcNam;
+%             NIRS.Cf.H.D.N = size(f.SD.DetPos,1);
+%             NIRS.Cf.H.P.N = NIRS.Cf.H.S.N + NIRS.Cf.H.D.N;
+        
         % Allow user-specified image of subject to overwrite previous
         % anatomical image in NIRS.mat; unlikely to ever happen
         if isempty(job.anatT1{1,1})
@@ -47,15 +62,15 @@ for iSubj=1:size(job.NIRSmat,1)
             %Store T1 file location
             NIRS.Dt.ana.T1 = job.anatT1{1,1};
         end
-        try
-            tmpf = job.anatT1_template{1,1};
-            if spm_existfile(tmpf)
-                NIRS.Dt.ana.tT1 = tmpf;
-            else
-                [DirSPM,dummy,dummy2] = fileparts(which('spm'));
-                NIRS.Dt.ana.tT1 = fullfile(DirSPM,'templates','T1.nii');
-            end
-        end
+%         try
+%             tmpf = job.anatT1_template{1,1};
+%             if spm_existfile(tmpf)
+%                 NIRS.Dt.ana.tT1 = tmpf;
+%             else
+%                 [DirSPM,dummy,dummy2] = fileparts(which('spm'));
+%                 NIRS.Dt.ana.tT1 = fullfile(DirSPM,'templates','T1.nii');
+%             end
+%         end
         
         [dirT1, fil, ext] = fileparts(NIRS.Dt.ana.T1);
         fwT1 = [dirT1 filesep 'w' fil ext(1:4)];
@@ -158,8 +173,8 @@ for iSubj=1:size(job.NIRSmat,1)
         %%%%%%%%%%%% CB: A RETRAVAILLER : SI ON VEUT VRAIMENT QUE CA SOIT
         %%%%%%%%%%%% UTILE, IL FAUT POUVOIR RECUPERER CE QUI EST AFFICHE
         %%%%%%%%%%%% SUR LE PDF DE LA NORMALISATION : en fait, lorsqu'on
-        %%%%%%%%%%%% nor;qlise on obtient une ;atrice de passage entre
-        %%%%%%%%%%%% l'image anato;ique du sujet nor;alisee et la te;plate.
+        %%%%%%%%%%%% normalise on obtient une matrice de passage entre
+        %%%%%%%%%%%% l'image anatomique du sujet normalisee et la template.
         %%%%%%%%%%%% Cette matrice peut etre utilisee ici pour faire le
         %%%%%%%%%%%% lien entre les deux images. Mais si on a une autre
         %%%%%%%%%%%% image que la template, ca devient impossible...

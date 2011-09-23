@@ -1583,7 +1583,7 @@ coreg3      = cfg_exbranch;
 coreg3.name = 'NIRScoreg with helmet template';
 coreg3.tag  = 'coreg3';
 coreg3.val  = {NIRSmat DelPreviousData NewDirCopyNIRS anatT1 segT1_4fit ...
-    anatT1_template fid_in_subject_MNI nasion_wMNI AL_wMNI AR_wMNI GenDataTopo};
+    GenDataTopo};%anatT1_template fid_in_subject_MNI nasion_wMNI AL_wMNI AR_wMNI
 coreg3.prog = @nirs_run_coreg_helmtemp;
 coreg3.vout = @nirs_cfg_vout_coreg3;
 coreg3.help = {'Automatic coregistration with T1 template. Use this choice in the case you don''t have the anatomical T1 images of the subject.'};

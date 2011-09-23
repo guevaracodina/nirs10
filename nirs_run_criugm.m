@@ -105,10 +105,10 @@ for is=1:sN
             NIRS.Dt.fir.stax.n = 'T1_vitamins';
             
         elseif isfield(job.subj(1,is).helmet,'no_helmet') && ~template4all
-            NIRS.Dt.fir.stax.n = 'no_helmet';
+            NIRS.Dt.fir.stax.n = 'no_helmet';% no so much interest
             
         elseif isfield(job.subj(1,is).helmet,'helm_temp') &&...
-                ~isempty(job.subj(1,is).helmet.helm_temp) && ~template4all
+                ~isempty(job.subj(1,is).helmet.helm_temp) && ~template4all%%%% je pense au4il fqut enlever ce ~template4all
             %%% on a l anatomique et un template pour le helmet...
             % il faut coller les deux dans l espace normalise et la
             % coregistration necessaire n est que partielle !!!!
@@ -224,7 +224,7 @@ for is=1:sN
             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.NIRSmat = {fullfile(study_p,'NIRS4all.mat')};
             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.DelPreviousData = 0;
             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.NewDirCopyNIRS.CreateNIRSCopy_false = struct([]);
-            matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.anatT1 = {[fullfile(fileparts(which('spm')),'templates','T1.nii') ',1']};
+            matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.anatT1 = NIRS.Dt.ana.T1;
             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.segT1_4fit = {[fullfile(fileparts(which('spm')),'toolbox','nirs10','nirs10_templates','00044_segmented_T1.nii') ',1']};
             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.anatT1_template = {[fullfile(fileparts(which('spm')),'templates','T1.nii') ',1']};
             matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.fid_in_subject_MNI = 0;
