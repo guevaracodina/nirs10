@@ -555,17 +555,18 @@ try
     if Z.save_nifti_contrasts
         pathnii = fullfile(pathn,'nii');
         if ~exist(pathnii,'dir'),mkdir(pathnii); end
-        filen3 = fullfile(pathnii,[tstr '_' str_cor '_' contrast_info '.nii']);
-        %note it is the contrast that should be written, not the T or F-stat maps
-        %             switch W.side_hemi
-        %                 case 3 %right
-        %                     M = [[0 1;-1 0] zeros(2); zeros(2) eye(2)];
-        %                 case 4 %left
-%         M = [[0 1;-1 0] zeros(2); zeros(2) eye(2)];
-        
-        %             end
-        % test : on se trompe pas pour le milieu
-        % 1:ventral, 2:dorsal, 3:right, 4:left, 5:frontal, 6:occipital
+        filen4 = fullfile(pathnii,['GLM_' tstr '_' str_cor '_' contrast_info '.nii']);
+        M = [[0 1;-1 0] zeros(2); zeros(2) eye(2)];
+        if strcmp(tstr,'T')            
+            V = nirs_create_vol(filen4,...
+                 [W.s1 W.s2 1], [16,0], [1;0;352],M, F.con);
+                
+        else
+            V = nirs_create_vol(filen4,...
+                 [W.s1 W.s2 1], [16,0], [1;0;352],M, F.ess);                
+        end
+        filen3 = fullfile(pathnii,['VIEW_' tstr '_' str_cor '_' contrast_info '.nii']);
+          % 1:ventral, 2:dorsal, 3:right, 4:left, 5:frontal, 6:occipital
         switch W.side_hemi
             case 2% s2 x vx and s1 z vx
                 dim = [W.s2 1 W.s1];
