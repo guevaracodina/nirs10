@@ -1382,12 +1382,24 @@ rebel_thresh_hs.name = 'Threshold for head shadow in Monte Carlo segmentation';
 rebel_thresh_hs.def   = @(val)nirs_get_defaults('preprocANAT.MCsegment1.rebel_thresh_hs', val{:});
 rebel_thresh_hs.help = {'Threshold to discriminate voxels in head shadow image.'};
 
+force_reprocess      = cfg_menu;
+force_reprocess.tag  = 'force_reprocess';
+force_reprocess.name = 'Force reprocessing of segmentation';
+force_reprocess.labels = {'True','False'};
+force_reprocess.values = {1,0};
+force_reprocess.val  = {0};
+force_reprocess.help = {'Force reprocessing of segmentation.'
+    'Note that SPM segmentation will never be reprocessed.'
+    'This is only for reprocessing the preparation for Monte Carlo.'
+    'Note also that previous results will be overwritten.'}';
+
+
 %_______________________________________________________________________
 MCsegment1      = cfg_exbranch;
 MCsegment1.tag  = 'MCsegment1';
 MCsegment1.name = 'MC Segmentation';
 
-MCsegment1.val  = {NIRSmat_optional DelPreviousData NewDirCopyNIRS image_in output_autonaming ...
+MCsegment1.val  = {NIRSmat_optional DelPreviousData NewDirCopyNIRS force_reprocess  image_in output_autonaming ...
     output_prefix skn skl csf grm wtm thresh_as head_shadow ...
     rebel_surrounding rebel_thresh_hs process_image}; %%%%%% pk NIRSmat_optional ???
 MCsegment1.prog = @nirs_run_MCsegment3;

@@ -16,7 +16,11 @@ catch
     NIRSok = 0;
     nsubj = length(job.image_in);
 end
-
+try 
+    force_reprocess = job.force_reprocess;
+catch
+    force_reprocess = 0;
+end
 for Idx=1:nsubj
     if NIRSok
         try
@@ -37,7 +41,7 @@ for Idx=1:nsubj
         try
             V.fname = NIRS.Dt.ana.T1;
         catch
-            disp(['Could not find anatomical image for ' int2str(Idx) 'th subject.']);
+            disp(['Could not find anatomical image for subject ' int2str(Idx) ]);
         end
     end
     %Try to use field corrected image if possible
@@ -79,7 +83,7 @@ for Idx=1:nsubj
     [dir1, file1, dummy] = fileparts(V.fname);
     %tmpf = spm_select('List',dir1,['_segmented_' file1]);
     %if ~isempty(tmpf)
-    if spm_existfile(fullfile(dir1,[output_prefix,'_segmented_',file1,'.nii']))
+    if spm_existfile(fullfile(dir1,[output_prefix,'_segmented_',file1,'.nii'])) && ~force_reprocess
         %         NIRS.Cs.mcs.seg = tmpf(1,:);
         %MC Segmentation already done, skipping
         if NIRSok
@@ -139,7 +143,7 @@ for Idx=1:nsubj
                 matlabbatch{1}.spm.util.imcalc.options.mask = 0;
                 matlabbatch{1}.spm.util.imcalc.options.interp = 1;
                 matlabbatch{1}.spm.util.imcalc.options.dtype = 4;
-                spm_jobman('run_nogui',matlabbatch);
+                spm_jobman('run',matlabbatch);
                 
                 Vb = spm_vol(fullfile(dir,'belongs2n_ci.nii'));Yb = spm_read_vols(Vb);
                 
