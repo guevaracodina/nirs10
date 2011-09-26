@@ -125,6 +125,7 @@ for iSubj=1:size(job.NIRSmat,1)
         %mesure par les Pfp
         %Cgp =
         
+        b0=0;b1=0;
         for Ci=1:NIRS.Cf.H.C.N
             try
                 S_Ci = unique(Cid(2,Cid(1,:)== Ci));
@@ -186,7 +187,8 @@ for iSubj=1:size(job.NIRSmat,1)
                                 L_Vi_Vphts = History{tk_Ci,2}(idx,3:8)+History{tk_Ci,2}(idx,9:14);
                             end
                             W_phts = W0*exp(-sum(L_Vi_Vphts*muas',2));
-                            
+                            b0 = b0+size(L_Vi_Vphts,1);
+                            b1 = b1+size(History{tk_Ci,2},1);
                             numerateur = zeros(1,6);
                             for ilayer=1:6
                                 numerateur(1,ilayer) = sum(L_Vi_Vphts(:,ilayer).*W_phts,1);% sommation des photons
@@ -229,6 +231,7 @@ for iSubj=1:size(job.NIRSmat,1)
                 PDPF_Vi(:,Ci) =-10;
             end
         end
+        disp(['b0 : ' int2str(b0) ' contre un total de ' int2str(b1)]);
         
         save(fullfile(cs_dir,'PDPF.mat'),'PDPF_Vi');
         NIRS.Dt.fir.PDPF = PDPF_Vi;

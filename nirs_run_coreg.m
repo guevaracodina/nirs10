@@ -102,7 +102,10 @@ for iSubj=1:size(job.NIRSmat,1)
 
         %Recreate name of _sn.mat file just created by spm_normalise, and load it
         [pth,nam] = spm_fileparts(deblank(NIRS.Dt.ana.T1));
-        sn_filename  = fullfile(pth,[nam,'_sn.mat']);
+        sn_filename  = fullfile(pth,[nam '_sn.mat']);
+        if ~exist(sn_filename,'file')
+            sn_filename  = fullfile(pth,['m' nam '_sn.mat']);
+        end
         NIRS.Dt.ana.wT1 = load(sn_filename);
 
         %There are two physical objects: the MRI image, and the NIRS construct
