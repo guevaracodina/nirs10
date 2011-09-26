@@ -574,7 +574,7 @@ for kk = 1:nm
             %Numerator of F-test
             c_ResSS =  (beta'*hsqr')*(hsqr*beta)/xCon(c1).trRV;
             %Interpolate
-            c_interp_F(c1,rmv(kk), cmv(kk)) = c_ResSS/d;
+            c_interp_F(c1,rmv(kk), cmv(kk)) = c_ResSS/d; 
         end
     end
 end
