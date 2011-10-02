@@ -201,13 +201,13 @@ for Idx=1:size(job.NIRSmat,1)
                                 vxr = 3;%voxel radius
                                 
                                 ms_N = ms(round(max(cs.Pfp_rmiv(1,S_Pkpt)-vxr,1)):round(min(cs.Pfp_rmiv(1,S_Pkpt)+vxr,size(ms,1))),... 
-                                    round(max(cs.Pfp_rmiv(2,S_Pkpt)-vxr,1)):round(min(cs.Pfp_rmiv(2,S_Pkpt)+vxr,size(ms,2))),...
-                                    round(max(cs.Pfp_rmiv(3,S_Pkpt)-vxr,1)):round(min(cs.Pfp_rmiv(3,S_Pkpt)+vxr,size(ms,3))));
+                                          round(max(cs.Pfp_rmiv(2,S_Pkpt)-vxr,1)):round(min(cs.Pfp_rmiv(2,S_Pkpt)+vxr,size(ms,2))),...
+                                          round(max(cs.Pfp_rmiv(3,S_Pkpt)-vxr,1)):round(min(cs.Pfp_rmiv(3,S_Pkpt)+vxr,size(ms,3))));
                                 md_N = md(round(max(cs.Pfp_rmiv(1,D_Pktp)-vxr,1)):round(min(cs.Pfp_rmiv(1,D_Pktp)+vxr,size(md,1))),...
-                                    round(max(cs.Pfp_rmiv(2,D_Pktp)-vxr,1)):round(min(cs.Pfp_rmiv(2,D_Pktp)+vxr,size(md,2))),...
-                                    round(max(cs.Pfp_rmiv(3,D_Pktp)-vxr,1)):round(min(cs.Pfp_rmiv(3,D_Pktp)+vxr,size(md,3))));
+                                          round(max(cs.Pfp_rmiv(2,D_Pktp)-vxr,1)):round(min(cs.Pfp_rmiv(2,D_Pktp)+vxr,size(md,2))),...
+                                          round(max(cs.Pfp_rmiv(3,D_Pktp)-vxr,1)):round(min(cs.Pfp_rmiv(3,D_Pktp)+vxr,size(md,3))));
                                 
-                                phi0_S = max(ms_N(:));
+                                phi0_S = max(ms_N(:)); %%???
                                 phi0_D = max(md_N(:));
                                 
                                 % Sensitivity matrix
@@ -222,7 +222,7 @@ for Idx=1:size(job.NIRSmat,1)
                                 fclose(fid);
                                 % Bonnery from Boas et al.
                                 sum_Jout = sum(md(md<0)/(cs.par.nphotons*10));
-                                Svx = 5*5;
+                                Svx = 5*5; %???
                                 Vvx = 5*5*5;
                                 [indices,dummy] = find(md>0);
                                 mdP = zeros(size(md));
@@ -237,15 +237,15 @@ for Idx=1:size(job.NIRSmat,1)
                                 msR = reshape(msP,V_segR.dim);
                                 mdR = reshape(mdP,V_segR.dim);
                                 %%% calcul de phi0
-                                vxr = 3;%voxel radius
+                                vxr = 3;%voxel radius in millimeters -- assumption to make more visible and explain
                                 
                                 ms_N = msR(max(cs.Pfp_rmiv(1,S_Pkpt)-vxr,1):min(cs.Pfp_rmiv(1,S_Pkpt)+vxr,size(msR,1)),...
-                                    max(cs.Pfp_rmiv(2,S_Pkpt)-vxr,1):min(cs.Pfp_rmiv(2,S_Pkpt)+vxr,size(msR,2)),...
-                                    max(cs.Pfp_rmiv(3,S_Pkpt)-vxr,1):min(cs.Pfp_rmiv(3,S_Pkpt)+vxr,size(msR,3)));
+                                           max(cs.Pfp_rmiv(2,S_Pkpt)-vxr,1):min(cs.Pfp_rmiv(2,S_Pkpt)+vxr,size(msR,2)),...
+                                           max(cs.Pfp_rmiv(3,S_Pkpt)-vxr,1):min(cs.Pfp_rmiv(3,S_Pkpt)+vxr,size(msR,3)));
                                 
                                 md_N = mdR(max(cs.Pfp_rmiv(1,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(1,D_Pktp)+vxr,size(mdR,1)),...
-                                    max(cs.Pfp_rmiv(2,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(2,D_Pktp)+vxr,size(mdR,2)),...
-                                    max(cs.Pfp_rmiv(3,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(3,D_Pktp)+vxr,size(mdR,3)));
+                                           max(cs.Pfp_rmiv(2,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(2,D_Pktp)+vxr,size(mdR,2)),...
+                                           max(cs.Pfp_rmiv(3,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(3,D_Pktp)+vxr,size(mdR,3)));
                                 
                                 phi0_S = max(ms_N(:));
                                 phi0_D = max(md_N(:));
@@ -269,21 +269,33 @@ for Idx=1:size(job.NIRSmat,1)
         sensC(isnan(sensC))=0;
         %disp([int2str(sum(sum(sum(isnan(sensC))))) ' NaNs have been corrected in sensitivity matrix (' int2str(numel(sensC)) ' values)']);
         sens = sensC(:,2:end);
+        
         save(fullfile(cs_dir,'sens.mat'),'sens','-v7.3'); %PP
         
         sens_reshaped = zeros(V_segR.dim);
         for i=1:size(sens,1)
             sens_reshaped = sens_reshaped + reshape(sens(i,:),V_segR.dim);
         end
-        save(fullfile(cs_dir,'sensReshaped.mat'),'sens_reshaped','-v7.3'); %PP
-        
-        %%% a mettre en option
-        V = nirs_create_vol(fullfile(cs_dir,['sens' '.nii']),...
-                    V_segR.dim, [64,0], V_segR.pinfo, V_segR.mat, log(sens_reshaped));
+        save(fullfile(cs_dir,'Sum_sensReshaped.mat'),'sens_reshaped','-v7.3'); %PP
+      
+%         sensR = reshape(sens,[size(sens,1) V_segR.dim]); 
+%         for i=1:size(sens,1)
+%             sens2 = squeeze(sensR(i,:,:,:));
+%             %Save as a 4D .nii volume 
+%             V(i) = nirs_create_vol(fullfile(cs_dir,['sens' int2str(i) '.nii']),...
+%                     V_segR.dim, [16,0], V_segR.pinfo, V_segR.mat, sens2);
+%         end
+%         %Save as a 4D .nii volume 
+%         V4 = spm_file_merge(V,'sens.nii',0);        
+% 
+
+
+        V2 = nirs_create_vol(fullfile(cs_dir,'log_sum_sens.nii'),...
+                    V_segR.dim, [16,0], V_segR.pinfo, V_segR.mat, log(sens_reshaped));
            
-        m_c1 = zeros(size(Yb8i));
-        m_c1(Yb8i==1)=1;
-        
+%         m_c1 = zeros(size(Yb8i));
+%         m_c1(Yb8i==1)=1;
+%         NIRS.sens = V4; 
 
         save(job.NIRSmat{Idx,1},'NIRS');
     catch exception

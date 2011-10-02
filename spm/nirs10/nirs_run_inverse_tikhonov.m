@@ -98,31 +98,41 @@ for Idx=1:size(job.NIRSmat,1)
         Xmc = sens;
         clear sens
         % Need to downsample sensitivity matrix
+%         for Ci =1:NC_cs
+%             %inefficient, why write .nii
+%             Xmci = reshape(Xmc(Ci,:),VsegR.dim);
+%             Vmc = nirs_create_vol(fullfile(cs_dir,'Xmci.nii'),...
+%                 VsegR.dim, VsegR.dt, VsegR.pinfo, VsegR.mat, Xmci);
+%             
+%             %this resizing has the same parameters as the one of segR to
+%             %segRR (lines 47 to 52)
+%             jobR.image_in ={Vmc.fname};
+%             jobR.out_autonaming = 1;
+%             jobR.out_prefix = 'R';
+%             fname =  nirs_resize(jobR);
+%             clear Xmci Vmc
+%             Vmc = spm_vol(fname);
+%             Ymc = spm_read_vols(Vmc);
+%             %
+%             XmcR(Ci,:) = reshape(Ymc,[1 prod(Vmc.dim)]);
+%         end
+        
+        dimR = floor(VsegR.dim/jobR.out_vxsize);
+        Xmc_cm = zeros(NC_cs,prod(dimR));
         for Ci =1:NC_cs
             %inefficient, why write .nii
             Xmci = reshape(Xmc(Ci,:),VsegR.dim);
-            Vmc = nirs_create_vol(fullfile(cs_dir,'Xmci.nii'),...
-                VsegR.dim, VsegR.dt, VsegR.pinfo, VsegR.mat, Xmci);
-            
-            %this resizing has the same parameters has the one of segR to
-            %segRR (lines 47 to 52)
-            jobR.image_in ={Vmc.fname};
-            jobR.out_autonaming = 1;
-            jobR.out_prefix = 'R';
-            fname =  nirs_resize(jobR);
-            clear Xmci Vmc
-            Vmc = spm_vol(fname);
-            Ymc = spm_read_vols(Vmc);
-            %
-            XmcR(Ci,:) = reshape(Ymc,[1 prod(Vmc.dim)]);
+            tmp = nirs_resize_no_save(Xmci,dimR);  
+            Xmc_cm(Ci,:) = tmp(:);       
         end
-        Xmc = XmcR;
-        clear XmcR Vmc Ymc
+        
+        Xmc = Xmc_cm;
+        clear Xmc_cm Vmc Ymc
         Nvx = size(Xmc,2);
         NC2mi = NC_cs/2; %only for 2 wavelengths; number of pairs
         
-        ext1 = GetExtinctions(NIRS.Cf.dev.wl(1,1));
-        ext2 = GetExtinctions(NIRS.Cf.dev.wl(1,2));
+        ext1 = GetExtinctions(NIRS.Cf.dev.wl(1));
+        ext2 = GetExtinctions(NIRS.Cf.dev.wl(2));
         Ext = [ext1(1,1) ext1(1,2) ; ext2(1,1) ext2(1,2)];
         %regularization parameter
         alpha =job.alpha;
