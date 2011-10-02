@@ -7,16 +7,16 @@ function out = nirs_run_liom_GLM_specify(job)
 %April 22 2011 fails to run, this maybe due to a renaming of the field
 %wls_bglm_specify to liom_GLM_specify in job. If one needs to use such
 %a batch, one could replace the wls_bglm_specify field by liom_GLM_specify
-%using 
+%using
 %job.('liom_GLM_specify')=job.('wls_bglm_specify')
-%job = rmfield(job, 'wls_bglm_specify'); 
+%job = rmfield(job, 'wls_bglm_specify');
 %ModulePosition=1;
 %where job is the whole matlabbatch{ModulePosition}.spm.tools.nirs10.model_specify
 %and saving the modified batch job
 
 %MP=1;
 %matlabbatch{MP}.spm.tools.nirs10.model_specify.('liom_GLM_specify')=matlabbatch{MP}.spm.tools.nirs10.model_specify.('wls_bglm_specify')
-%matlabbatch{MP}.spm.tools.nirs10.model_specify = rmfield(matlabbatch{MP}.spm.tools.nirs10.model_specify, 'wls_bglm_specify'); 
+%matlabbatch{MP}.spm.tools.nirs10.model_specify = rmfield(matlabbatch{MP}.spm.tools.nirs10.model_specify, 'wls_bglm_specify');
 %save('','matlabbatch')
 
 
@@ -37,16 +37,16 @@ catch
     flag_window = 0;
 end
 %Option to skip generation of trRV. TrRV is required for statistics
-try 
+try
     generate_trRV = job.generate_trRV;
 catch
     generate_trRV = 1;
 end
-%Option only used to search for a bug; correct option to use is 
+%Option only used to search for a bug; correct option to use is
 %always filter_design_matrix = 0; -- This comment seems incorrect now --
 %filter_design_matrix = 1 is required now to eliminate the bias when using
 %the Butterworth high pass filter prior to the GLM
-try 
+try
     filter_design_matrix = job.filter_design_matrix;
 catch
     filter_design_matrix = 0;
@@ -55,7 +55,7 @@ end
 %Currently, only NIRS_SPM method works well
 %Specify WLS, BGLM or NIRS_SPM parameters
 meth0=job.wls_or_bglm;
-try 
+try
     meth0.NIRS_SPM;
     meth1 = 3;
 catch
@@ -84,12 +84,12 @@ switch meth1
         Opt.Design.degre=job.wls_or_bglm.BGLM.BGLM_degre; % maximum degree for polynomial drifts
         Opt.Design.threshold_drift=job.wls_or_bglm.BGLM.BGLM_threshold_drift; % Threshold for correlation analysis
     case 3
-        Opt.meth = 'NIRS_SPM';       
+        Opt.meth = 'NIRS_SPM';
     otherwise
 end
 
 %PCA - the functionality of this has not been tested
-try 
+try
     PCA = job.channel_pca;
 catch
     PCA = 0; %no PCA
@@ -107,8 +107,8 @@ catch
 end
 
 %LPF - Butterworth infinite impulse response filter
-try    
-    lpf_butter_freq = job.lpf_butter.lpf_butter_On.lpf_butter_freq;     
+try
+    lpf_butter_freq = job.lpf_butter.lpf_butter_On.lpf_butter_freq;
     LPFbutter = 1;
 catch
     LPFbutter = 0; %no low pass filter
@@ -116,7 +116,7 @@ catch
 end
 
 %HPF - filter from NIRS_SPM - note that Butterworth HPF can be used with it
-if meth1 ==3 
+if meth1 ==3
     try
         HPF = ['DCT, ' int2str(job.wls_or_bglm.NIRS_SPM.nirs_hpf.hpf_dct.hpf_dct_cutoff)];
     catch
@@ -135,11 +135,11 @@ end
 
 %LPF - filter from NIRS_SPM
 if meth1 == 3
-    try    
+    try
         FWHM = job.wls_or_bglm.NIRS_SPM.nirs_lpf.lpf_gauss.fwhm1;
-        LPF = 'gaussian'; 
+        LPF = 'gaussian';
     catch
-        try 
+        try
             job.wls_or_bglm.NIRS_SPM.nirs_lpf.lpf_hrf;
             LPF = 'hrf';
         catch
@@ -161,7 +161,7 @@ for Idx=1:size(job.NIRSmat,1)
         SPM = [];
         NIRS = [];
         load(job.NIRSmat{Idx,1});
-           
+        
         %use last step of preprocessing
         lst = length(NIRS.Dt.fir.pp);
         rDtp = NIRS.Dt.fir.pp(lst).p; % path for files to be processed
@@ -182,7 +182,7 @@ for Idx=1:size(job.NIRSmat,1)
             idx_sess = 1:nsessAll;
         end
         nsess = length(idx_sess);
-
+        
         [dir1, fil1, ext1] = fileparts(rDtp{1,1});
         %create directory for stats for this subject
         spm_dir = fullfile(dir1,job.dir1);
@@ -190,46 +190,50 @@ for Idx=1:size(job.NIRSmat,1)
         
         %Find onsets
         try
-            SPM.Sess(1).U;
             SPM.Sess = NIRS.Dt.fir.Sess;
         catch
-            %Ignore parametric modulations - cf spm_run_fmri_design.m
-            P.name = 'none';
-            P.h    = 0;
-            for f=1:nsess
-                iSess = idx_sess(f);
-                try
-                    %load onset file
-                    clear names onsets durations
-                    load(job.subj(1,1).input_onsets{f}); %careful, must have same onsets for all subjects
-                    for kk = 1:size(names, 2)
-                        SPM.Sess(f).U(kk).name = names(kk);
-                        SPM.Sess(f).U(kk).ons = onsets{kk};
-                        SPM.Sess(f).U(kk).dur = durations{kk};
-                        SPM.Sess(f).U(kk).P = P;
+            try
+                SPM.Sess(1).U;
+                SPM.Sess = NIRS.Dt.fir.Sess;
+            catch
+                %Ignore parametric modulations - cf spm_run_fmri_design.m
+                P.name = 'none';
+                P.h    = 0;
+                for f=1:nsess
+                    iSess = idx_sess(f);
+                    try
+                        %load onset file
+                        clear names onsets durations
+                        load(job.subj(1,1).input_onsets{f}); %careful, must have same onsets for all subjects
+                        for kk = 1:size(names, 2)
+                            SPM.Sess(f).U(kk).name = names(kk);
+                            SPM.Sess(f).U(kk).ons = onsets{kk};
+                            SPM.Sess(f).U(kk).dur = durations{kk};
+                            SPM.Sess(f).U(kk).P = P;
+                        end
+                    catch
+                        %Could not load onset
+                        disp(['Could not find onsets - assuming baseline scan (no stimuli) on session ' int2str(iSess) '.']);
+                        % MICHÈLE 21 sept. 2011 - for resting state scans one must
+                        % be allowed to include 0 conditions in the design matrix
+                        % (only other regressors).
+                        SPM.Sess(f).U = [];
+                        SPM.Sess(f).C.C = [];
+                        SPM.Sess(f).C.name = cell(1,0);
+                        % This way, spm_get_ons will not prompt the user to
+                        % manually enter conditions as it does when the U field
+                        % does not exist.
                     end
-                catch
-                    %Could not load onset
-                    disp(['Could not find onsets - assuming baseline scan (no stimuli) on session ' int2str(iSess) '.']);
-                    % MICHÈLE 21 sept. 2011 - for resting state scans one must
-                    % be allowed to include 0 conditions in the design matrix
-                    % (only other regressors).
-                    SPM.Sess(f).U = [];
-                    SPM.Sess(f).C.C = [];
-                    SPM.Sess(f).C.name = cell(1,0);
-                    % This way, spm_get_ons will not prompt the user to
-                    % manually enter conditions as it does when the U field
-                    % does not exist.
                 end
             end
         end
-        %Adding confound regressors 
-       
+        %Adding confound regressors
+        
         for f=1:nsess
             iSess = idx_sess(f);
             C = [];
             Cname = {};
-            try 
+            try
                 if job.GLM_include_cardiac
                     %heart rate regressor
                     C = NIRS.Dt.fir.Sess(iSess).fR{1};
@@ -247,7 +251,7 @@ for Idx=1:size(job.NIRSmat,1)
                     %for iFile = 1:length(job.subj.multi_reg) % if more
                     %than one file per session... not implemented
                     %nb = nb+1;
-                    try 
+                    try
                         [dir fil ext] = fileparts(job.subj.multi_reg{f});
                         if strcmp(ext,'.mat')
                             regressors = load(job.subj.multi_reg{f});
@@ -278,7 +282,7 @@ for Idx=1:size(job.NIRSmat,1)
                     end
                     %HbO channels
                     chHbO = NIRS.Cf.H.C.wl== HbO_like;
-                    fullHbO = NIRS.Cf.H.C.gp(chHbO); 
+                    fullHbO = NIRS.Cf.H.C.gp(chHbO);
                     [B_HbO IX] = sort(fullHbO); %sort in ascending order
                     %Impose minimum and maximum bounds
                     IXmax = IX(B_HbO <= MaxChDist);
@@ -306,7 +310,7 @@ for Idx=1:size(job.NIRSmat,1)
                     for j1=1:length(HbOIX4)
                         C = [C d_conf(j1,:)'];
                         Cname = [Cname {['C' int2str(j1)]}];
-                    end 
+                    end
                     NIRSconfounds.NumChConfoundsActual = length(HbOIX4);
                     NIRSconfounds.Ch_removed = HbOIX4;
                     %Create and save a new data set excluding these
@@ -314,12 +318,12 @@ for Idx=1:size(job.NIRSmat,1)
                     %generate list of kept channels
                     ch_keep = 1:NC;
                     kept_ch = ones(1,NC);
-                    kept_ch(HbOIX4) = 0; 
+                    kept_ch(HbOIX4) = 0;
                     if HbO_like == 1
                         kept_ch(HbOIX4+NC/2) = 0;
                     else
                         kept_ch(HbOIX4-NC/2) = 0;
-                    end  
+                    end
                     ch_keep = ch_keep(logical(kept_ch));
                     [dir3, fil3, ext3] = fileparts(rDtp{iSess,1});
                     new_name = fullfile(spm_dir,[fil3 ext3]);
@@ -335,7 +339,7 @@ for Idx=1:size(job.NIRSmat,1)
                     NIRS.Dt.fir.pp(lst).kept{f,1} = ch_keep; %kept channels
                 end
             catch
-                try 
+                try
                     if job.GLM_include_cardiac
                         C = NIRS.Dt.fir.Sess(iSess).cR{1};
                         Cname = {'H'};
@@ -343,7 +347,7 @@ for Idx=1:size(job.NIRSmat,1)
                 catch
                 end
             end
-        
+            
             SPM.Sess(f).C.C    = C;
             SPM.Sess(f).C.name = Cname;
         end
@@ -352,7 +356,7 @@ for Idx=1:size(job.NIRSmat,1)
         for f=1:nsess
             iSess = idx_sess(f);
             try
-                %only use of data for design specification. By storing 
+                %only use of data for design specification. By storing
                 %size(d,2) in NIRS, we would avoid loading all the data!
                 d = fopen_NIR(rDtp{iSess,1},NC);
             catch
@@ -362,20 +366,20 @@ for Idx=1:size(job.NIRSmat,1)
             nscan = [nscan size(d,2)];
         end
         clear d
-
+        
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % CODE from NIRS_SPM 
+        % CODE from NIRS_SPM
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
         SPM.nscan = nscan;
         SPM.xY.RT = 1/fs;
-        SPM.xBF.T = job.time_res; 
+        SPM.xBF.T = job.time_res;
         SPM.xBF.T0 = 1;
         SPM.xBF.dt = SPM.xY.RT/SPM.xBF.T;
         if  job.units == 0
-                SPM.xBF.UNITS = 'scans';
-            elseif  job.units == 1
-                SPM.xBF.UNITS = 'secs';
+            SPM.xBF.UNITS = 'scans';
+        elseif  job.units == 1
+            SPM.xBF.UNITS = 'secs';
         end
         
         % separate specifications for non-replicated sessions
@@ -386,13 +390,13 @@ for Idx=1:size(job.NIRSmat,1)
         
         if strcmp(fieldnames(job.bases),'hrf')
             if all(job.derivs == [0 0])
-                    SPM.xBF.name = 'hrf';
-                elseif all(job.derivs == [1 0])
-                    SPM.xBF.name = 'hrf (with time derivative)';
-                elseif all(job.derivs == [1 1])
-                    SPM.xBF.name = 'hrf (with time and dispersion derivatives)';
-                else
-                    disp('Unrecognized hrf derivative choices.')
+                SPM.xBF.name = 'hrf';
+            elseif all(job.derivs == [1 0])
+                SPM.xBF.name = 'hrf (with time derivative)';
+            elseif all(job.derivs == [1 1])
+                SPM.xBF.name = 'hrf (with time and dispersion derivatives)';
+            else
+                disp('Unrecognized hrf derivative choices.')
             end
         else
             nambase = fieldnames(job.bases);
@@ -417,22 +421,22 @@ for Idx=1:size(job.NIRSmat,1)
             SPM.xBF.order  = job.bases.(nam).order;
         end
         %the rest is very close to spm_fmri_design.m
-
+        
         % get basis functions
         %--------------------------------------------------------------------------
         try
             bf      = SPM.xBF.bf;
         catch
             SPM.xBF = spm_get_bf(SPM.xBF);
-            if size(SPM.xBF.bf,1) == 1 || size(SPM.xBF.bf,2) == 1 
+            if size(SPM.xBF.bf,1) == 1 || size(SPM.xBF.bf,2) == 1
                 SPM.xBF.bf = SPM.xBF.bf/sum(SPM.xBF.bf); %normalize
             end
             bf      = SPM.xBF.bf;
         end
-
+        
         V = job.volt;
-        SPM.xBF.Volterra = V; % model interactions (Volterra) 
-
+        SPM.xBF.Volterra = V; % model interactions (Volterra)
+        
         % 1st or 2nd order Volterra expansion?
         %--------------------------------------------------------------------------
         try
@@ -441,35 +445,35 @@ for Idx=1:size(job.NIRSmat,1)
             V   = spm_input('model interactions (Volterra)','+1','y/n',[2 1]);
             SPM.xBF.Volterra  = V;
         end
-
+        
         Xx    = [];
         Xb    = [];
         Xname = {};
         Bname = {};
-
+        
         for s = 1:length(SPM.nscan)
             % number of scans for this session
             %----------------------------------------------------
             k   = SPM.nscan(s);
-
+            
             if (s == 1) || ~rep %always true
                 % create convolved stimulus functions or inputs
                 %==================================================================
-
+                
                 % Get inputs, neuronal causes or stimulus functions U
                 %------------------------------------------------------------------
                 U = spm_get_ons(SPM,s);
-
+                
                 % Convolve stimulus functions with basis functions
                 %------------------------------------------------------------------
                 [X,Xn,Fc] = spm_Volterra(U,bf,V);
-
+                
                 % Resample regressors at acquisition times (32 bin offset)
                 %-------------------------------------------------
                 try
                     X = X((0:(k - 1))*SPM.xBF.T + SPM.xBF.T0 + 32,:);
                 end
-
+                
                 % and orthogonalise (within trial type)
                 %--------------------------------------
                 for i = 1:length(Fc)
@@ -503,7 +507,7 @@ for Idx=1:size(job.NIRSmat,1)
                         Cname{i} = spm_input('name of','+0','s',str);
                     end
                 end
-
+                
                 % append mean-corrected regressors and names
                 %-------------------------------------------
                 reg_rows = size(C,1);
@@ -516,12 +520,12 @@ for Idx=1:size(job.NIRSmat,1)
                 end
                 X      = [X spm_detrend(C)];
                 Xn     = {Xn{:}   Cname{:}};
-
+                
                 % Confounds: Session effects
                 %===========================
                 B      = ones(k,1);
                 Bn     = {'constant'};
-
+                
             end
             % Session structure array
             %-----------------------------------------
@@ -531,7 +535,7 @@ for Idx=1:size(job.NIRSmat,1)
             SPM.Sess(s).row    = size(Xx,1) + (1:k);
             SPM.Sess(s).col    = size(Xx,2) + (1:size(X,2));
             SPM.Sess(s).Fc     = Fc;
-
+            
             % Append names
             %---------------------------------------------------------------
             for i = 1:length(Xn)
@@ -540,14 +544,14 @@ for Idx=1:size(job.NIRSmat,1)
             for i = 1:length(Bn)
                 Bname{end + 1} = [sprintf('Sn(%i) ',s) Bn{i}];
             end
-
+            
             % append into Xx and Xb
             %===============================================================
             Xx    = blkdiag(Xx,X);
             Xb    = blkdiag(Xb,B);
-
+            
         end %- for s
-
+        
         % finished
         %-----------------------------------------------------------------------
         SPM.xX.X      = [Xx Xb];
@@ -556,7 +560,7 @@ for Idx=1:size(job.NIRSmat,1)
         SPM.xX.iB     = (1:size(Xb,2)) + size(Xx,2);
         SPM.xX.iG     = [];
         SPM.xX.name   = {Xname{:} Bname{:}};
-
+        
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         nscan = SPM.nscan;
         nsess = length(nscan);
@@ -572,7 +576,7 @@ for Idx=1:size(job.NIRSmat,1)
         SPM.xX.LPFbutter = LPFbutter;
         SPM.xX.lpf_butter_freq = lpf_butter_freq;
         
-        try 
+        try
             SPM.GenerateHbT = job.GenerateHbT;
         catch
             SPM.GenerateHbT = 0;
@@ -582,7 +586,7 @@ for Idx=1:size(job.NIRSmat,1)
         end
         %Add model specification
         try SPM.xX.opt = Opt; catch; end
-                
+        
         %%% updated for wavelet-MDL detrending 2009-03-19
         if meth1 == 3
             str = 'Detrending?';
@@ -606,9 +610,9 @@ for Idx=1:size(job.NIRSmat,1)
                 SPM.xX.K.HParam.type = 'DCT';
                 SPM.xX.K.HParam.M = cutoff;
             elseif isempty(strfind(HPF, 'none')) == 0 %no filter
-                SPM.xX.K.HParam.type = 'none';          
+                SPM.xX.K.HParam.type = 'none';
             end
-
+            
             if isempty(strfind(LPF, 'hrf')) == 0 % hrf smoothing
                 SPM.xX.K.LParam.type = 'hrf';
             elseif isempty(strfind(LPF, 'gaussian')) == 0 % Gaussian smoothing
@@ -621,24 +625,24 @@ for Idx=1:size(job.NIRSmat,1)
         %This is a longer calculation, that can potentially enlarge
         %considerably the SPM.mat structure, hence it is better left to the
         %estimate step
-%         for s=1:nsess
-%             K = struct( 'HParam', SPM.xX.K.HParam,...
-%                 'row', SPM.Sess(s).row,...
-%                 'RT', SPM.xY.RT,...
-%                 'LParam', SPM.xX.K.LParam);
-%             SPM.xX.K(s).K = spm_filter_HPF_LPF_WMDL(K); %???Indexing
-%         end
-% % %         %PP or instead:
-% % %         allrow = [];
-% % %         for s=1:nsess
-% % %             allrow = [allrow SPM.Sess(s).row];
-% % %         end
-% % %         K = struct( 'HParam', SPM.xX.K.HParam,...
-% % %                 'row', allrow,...
-% % %                 'RT', SPM.xY.RT,...
-% % %                 'LParam', SPM.xX.K.LParam);
-% % %         SPM.xX.K = spm_filter_HPF_LPF_WMDL(K); %???Indexing
-            
+        %         for s=1:nsess
+        %             K = struct( 'HParam', SPM.xX.K.HParam,...
+        %                 'row', SPM.Sess(s).row,...
+        %                 'RT', SPM.xY.RT,...
+        %                 'LParam', SPM.xX.K.LParam);
+        %             SPM.xX.K(s).K = spm_filter_HPF_LPF_WMDL(K); %???Indexing
+        %         end
+        % % %         %PP or instead:
+        % % %         allrow = [];
+        % % %         for s=1:nsess
+        % % %             allrow = [allrow SPM.Sess(s).row];
+        % % %         end
+        % % %         K = struct( 'HParam', SPM.xX.K.HParam,...
+        % % %                 'row', allrow,...
+        % % %                 'RT', SPM.xY.RT,...
+        % % %                 'LParam', SPM.xX.K.LParam);
+        % % %         SPM.xX.K = spm_filter_HPF_LPF_WMDL(K); %???Indexing
+        
         % related spm m-file : spm_fmri_spm_ui.m
         if meth1 == 3
             method_cor = job.wls_or_bglm.NIRS_SPM.nirs_noise;
@@ -650,11 +654,11 @@ for Idx=1:size(job.NIRSmat,1)
         elseif method_cor == 1
             cVi = 'AR(1)';
         end
-
+        
         if ~ischar(cVi)	% AR coeficient[s] specified
             SPM.xVi.Vi = spm_Ce(nscan,cVi(1:3));
             cVi        = ['AR( ' sprintf('%0.1f ',cVi) ')'];
-
+            
         else
             switch lower(cVi)
                 case 'none'		%  xVi.V is i.i.d
@@ -673,7 +677,7 @@ for Idx=1:size(job.NIRSmat,1)
         if flag_window == 1
             spm_DesRep('DesMtx',SPM.xX,[],SPM.xsDes)
         end
-
+        
         %SPM.nirs.step = 'specification';
         %SPM.nirs.fname = NIRS.NIRS_SPM_Concfile{f};
         %SPM.nirs.Hb = hb;
@@ -691,7 +695,7 @@ for Idx=1:size(job.NIRSmat,1)
         SPM.filter_design_matrix = filter_design_matrix;
         SPM.job = job;
         save(fullfile(spm_dir,'SPM.mat'),'SPM');
-        %store path to SPM, after possible prior GLMs 
+        %store path to SPM, after possible prior GLMs
         try
             l1 = length(NIRS.SPM);
             NIRS.SPM{l1+1} = spm_dir;
@@ -703,18 +707,18 @@ for Idx=1:size(job.NIRSmat,1)
         disp(exception.stack(1));
         disp(['Could not specify GLM for subject' int2str(Idx)]);
     end
-    %NIRS is now modified - it includes a link to the GLM   
+    %NIRS is now modified - it includes a link to the GLM
     newNIRSlocation = fullfile(spm_dir,'NIRS.mat');
-    if NIRSconfoundsOn        
+    if NIRSconfoundsOn
         %update NIRS matrix
         NIRS.Cf.H.C.N = length(ch_keep);
         try NIRS.Cf.H.C.n = NIRS.Cf.H.C.n(ch_keep); end
         try NIRS.Cf.H.C.id = NIRS.Cf.H.C.id(:,ch_keep); end
-        try NIRS.Cf.H.C.wl = NIRS.Cf.H.C.wl(ch_keep); end 
+        try NIRS.Cf.H.C.wl = NIRS.Cf.H.C.wl(ch_keep); end
         try NIRS.Cf.H.C.gp = NIRS.Cf.H.C.gp(ch_keep); end
-        try NIRS.Cf.H.C.ok = NIRS.Cf.H.C.ok(ch_keep); end         
+        try NIRS.Cf.H.C.ok = NIRS.Cf.H.C.ok(ch_keep); end
     end
     save(newNIRSlocation,'NIRS');
-    job.NIRSmat{Idx,1} = newNIRSlocation;   
+    job.NIRSmat{Idx,1} = newNIRSlocation;
 end
 out.NIRSmat = job.NIRSmat;

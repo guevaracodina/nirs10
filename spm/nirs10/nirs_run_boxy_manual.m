@@ -1,4 +1,4 @@
-function out = nirs_run_boxy(job)
+function out = nirs_run_boxy_manual(job)
 %_______________________________________________________________________
 % Copyright (C) 2010 LIOM Laboratoire d'Imagerie Optique et Moléculaire
 %                    École Polytechnique de Montréal
@@ -16,8 +16,8 @@ function out = nirs_run_boxy(job)
 %BUT WHAT IS THE 4th column of mat_Mtg?
 %mat_Chn: same as mat_Mtg, but for the channels
 
-jobP = job.config_path;
-N_subj = size(job.subj,2);
+jobP = job.config_path2;
+N_subj = size(job.subj2,2);
 outNIRSmat = {};
 %Big loop over all subjects
 for Idx_subj=1:N_subj 
@@ -28,18 +28,18 @@ for Idx_subj=1:N_subj
     end
     %Extract info from chosen files
     %Number of BOXY data files for this subject
-    NIRS.N_dfiles = size(job.subj(1,Idx_subj).fnames,1);
+    NIRS.N_dfiles = size(job.subj2(1,Idx_subj).fnames,1);
     %NIRS.N_dfiles = size(job.fnames,1);
     
     %path and expname
-    temp_fname = job.subj(1,Idx_subj).fnames(1,:);
+    temp_fname = job.subj2(1,Idx_subj).fnames(1,:);
     NIRS.BOXYfiles = temp_fname;
     %temp_fname = job.fnames(1,:);
     [subj_BOXY_path expname] = fileparts(temp_fname{1,1});
     %find subject root directory
-    temp_idx = strfind(subj_BOXY_path,'\');
-    NIRS.subj_path = [subj_BOXY_path(1:temp_idx(end)-1) '\'];
-    NIRS.prjname = [NIRS.subj_path jobP.prj_path '\' expname '.prj'];
+    %temp_idx = strfind(subj_BOXY_path,'\');
+    NIRS.subj_path = job.subj2.Apath{1}; %[subj_BOXY_path(1:temp_idx(end)-1) '\'];
+    NIRS.prjname = job.subj2.prjFile{1}; %[NIRS.subj_path jobP.prj_path '\' expname '.prj'];
     %path for raw data
     NIRS.pathboxy = subj_BOXY_path;
     %path for output of NIRS.mat and of .nir data files
@@ -97,7 +97,7 @@ for Idx_subj=1:N_subj
     %Big Loop over each of the BOXY data files 
     for Idx_file = 1:NIRS.N_dfiles
         %Output file name
-        temp_fName = job.subj(1,Idx_subj).fnames(Idx_file,:);
+        temp_fName = job.subj2(1,Idx_subj).fnames(Idx_file,:);
         fName = temp_fName{1,1};
         [path1 expname1 ext1] = fileparts(fName); %#ok<ASGLU>
         ext1 = ext1(2:end); %skip the initial dot "."
@@ -176,9 +176,18 @@ for Idx_subj=1:N_subj
     NIRS.Cf.dev.fs = job.cf1.freq/job.cf1.resample;
     NIRS.Dt.s.p = oldNIRS.subj_path;
     %Try adding the anatomical image
-    try NIRS.Dt.ana.T1 = job.subj(1,Idx_subj).anatT1{1}; end
-    
-    NIRS.Dt.s.age = job.subj(1,Idx_subj).age1;
+    try 
+        tmpT1 = job.subj2(1,Idx_subj).anatT1{1}(1:end-2);
+        [dir0 fil0 ext0] = fileparts(tmpT1);
+        T1file = fullfile(oldNIRS.pathoutput_T1,[fil0 ext0]);
+        if ~strcmp(tmpT1,T1file)
+            copyfile(tmpT1,T1file);
+        end
+        NIRS.Dt.ana.T1 = T1file; 
+    catch
+        disp('Problem with anatomical image');
+    end
+    NIRS.Dt.s.age = job.subj2(1,Idx_subj).age1;
     %Data
     NIRS.Dt.fir.pp(1).p = oldNIRS.NIRfile'; %?
     NIRS.Dt.fir.pp(1).pre = 'readBOXY';
@@ -204,12 +213,10 @@ for Idx_subj=1:N_subj
     NIRS.Cf.H.C.gp = [oldNIRS.ChnDist' oldNIRS.ChnDist'];
     %try generating onsets - only saving location for now
     try        
-        NIRS.Dt.fir.rons = job.subj(1,Idx_subj).raw_onset_files;      
+        NIRS.Dt.fir.rons = job.subj2(1,Idx_subj).raw_onset_files2;      
     catch
        disp('Problem with onset files');
     end
-    
-    
     %write out NIRS in .mat file
     save([oldNIRS.subj_path 'NIRS'],'NIRS');   
     save([oldNIRS.subj_path 'oldNIRS'],'oldNIRS');   

@@ -211,7 +211,7 @@ for Idx=1:size(job.NIRSmat,1)
         Ct = []; %positive and negative combined, tube
         Cu = []; %uncorrected
         %get contrasts
-        [SPM xCon SSxCon] = nirs_get_contrasts(SPM,job,automated_contrasts);
+        [SPM xCon SSxCon] = nirs_get_contrasts(SPM,job,automated_contrasts,0);
         if run_contrast_OK
             %Big loop over views
             for v1=1:size(views_to_run,2)
@@ -248,14 +248,14 @@ for Idx=1:size(job.NIRSmat,1)
                         % nirs_run_ODtoHbOHbR ? Not sure this gives the right
                         % order....?!?
                         
-%                         if wl(1) > 750
-%                             %first wavelength is "HbO-like"
-%                             W.ch_HbO = W.index_ch;
-%                             W.ch_HbR = NC/2 + W.index_ch;
-%                         else
-%                             W.ch_HbR = W.index_ch;
-%                             W.ch_HbO = NC/2 + W.index_ch;
-%                         end
+                        %                         if wl(1) > 750
+                        %                             %first wavelength is "HbO-like"
+                        %                             W.ch_HbO = W.index_ch;
+                        %                             W.ch_HbR = NC/2 + W.index_ch;
+                        %                         else
+                        %                             W.ch_HbR = W.index_ch;
+                        %                             W.ch_HbO = NC/2 + W.index_ch;
+                        %                         end
                         W.ch_HbO = W.index_ch;
                         W.ch_HbR = NC/2 + W.index_ch;
                         
@@ -423,10 +423,16 @@ for Idx=1:size(job.NIRSmat,1)
                                     disp(exception.identifier);
                                     disp(exception.stack(1));
                                 end
-                                
+                                %special case when number of regressors
+                                %varies between sessions
+                                if automated_contrasts
+                                     %get contrasts
+                                    [SPM xCon SSxCon] = nirs_get_contrasts(SPM,job,automated_contrasts,f1);
+                                end
                                 [TOPO] = constrasts_core(Z,W,TOPO,SPM.xXn{f1},SSxCon,f1,Pt,Pu,Nt,Nu,Ct,Cu);
-                            end
-                        end %end for f1
+                                TOPO.SSxConS{f1} = SSxCon; %store contrasts by session
+                            end %end for f1
+                        end 
                     end
                     TOPO.v{side_hemi}.s1 = W.s1; %sizes of topographic projection
                     TOPO.v{side_hemi}.s2 = W.s2;
@@ -518,9 +524,12 @@ nm = length(rmv);
 %preallocate
 sum_kappa = zeros(nC,1);
 kappa = zeros(nC,s1,s2);
-c_interp_beta = zeros(nC,s1,s2);
+c_interp_beta = zeros(nC,s1,s2); %analog of con0001.nii in SPM
 c_cov_interp_beta = zeros(nC,s1,s2);
-c_interp_F = zeros(nC,s1,s2);
+c_interp_T = zeros(nC,s1,s2); %T-stat
+c_interp_ess = zeros(nC,s1,s2); %analog of ess0001.nii in SPM
+c_interp_ess0 = zeros(s1,s2); %extra-sum of squares of full model (ResMS)
+c_interp_F = zeros(nC,s1,s2); %F-stat
 sz_xCon  = size(xCon(1).c,1);
 %identity matrix of size number of regressors
 tmp = eye(sz_xCon);
@@ -540,6 +549,7 @@ for kk = 1:nm
     B3y = kron(B2y, tmp);
     B3t = kron(B2', tmp);
     d = (B2'*mtx_var*B2); %ResSS/TrRV
+    c_interp_ess0(rmv(kk), cmv(kk)) = d; %ResSS/TrRV -- recall normalization of ResSS by TrRV is included here (while it is a scale factor in the SPM nifti)
     for c1 = 1:nC
         c = xCon(c1).c;
         
@@ -566,15 +576,16 @@ for kk = 1:nm
             c_interp_beta(c1,rmv(kk), cmv(kk)) = (c' * B3t) * beta;
             
             c_cov_interp_beta(c1,rmv(kk), cmv(kk)) = (B2'*mtx_var*B2) * c_corr_beta;
-            
+            c_interp_T(c1,rmv(kk), cmv(kk)) = c_interp_beta(c1,rmv(kk), cmv(kk))/(c_cov_interp_beta(c1,rmv(kk), cmv(kk)))^0.5;
         else
             %This is an F-stat; if xCon(c1).STAT == 'F'
             %Do a GLM for the reduced model for each F contrast
             hsqr = xCon(c1).h * B3t;
             %Numerator of F-test
-            c_ResSS =  (beta'*hsqr')*(hsqr*beta)/xCon(c1).trRV;
+            c_ResSS =  (beta'*hsqr')*(hsqr*beta);
             %Interpolate
-            c_interp_F(c1,rmv(kk), cmv(kk)) = c_ResSS/d; 
+            c_interp_F(c1,rmv(kk), cmv(kk)) = c_ResSS/(d*xCon(c1).trRV);
+            c_interp_ess(c1,rmv(kk), cmv(kk)) = c_ResSS/xCon(c1).trRV; %note that we also normalize here by eidf
         end
     end
 end
@@ -582,18 +593,22 @@ for c1 = 1:nC %not for F contrasts...
     tm = kappa(c1,:,:);
     sum_kappa(c1) = sum(tm(:));
 end
-if W.spatial_LPF
+if W.spatial_LPF %does not work properly -- do not use
     K.k1 = s1;
     K.k2 = s2;
     K.radius = W.radius;
     K = spatial_LPF('set',K);
     c_interp_beta = spatial_LPF('lpf',K,c_interp_beta);
     c_cov_interp_beta = spatial_LPF('lpf',K,c_cov_interp_beta);
+    %should interpolate all the rest too...
 end
 C.sum_kappa = sum_kappa;
 C.c_interp_beta = c_interp_beta;
 C.c_cov_interp_beta = c_cov_interp_beta;
+C.c_interp_T = c_interp_T;
 C.c_interp_F = c_interp_F;
+C.c_interp_ess0 = c_interp_ess0;
+C.c_interp_ess = c_interp_ess;
 end
 
 function [Pt,Pu,Nt,Nu,Ct,Cu] = interpolated_maps(Z,W,C,xCon,f1,erdf,hb,Pt,Pu,Nt,Nu,Ct,Cu)
@@ -601,7 +616,10 @@ function [Pt,Pu,Nt,Nu,Ct,Cu] = interpolated_maps(Z,W,C,xCon,f1,erdf,hb,Pt,Pu,Nt,
 sum_kappa = C.sum_kappa;
 c_interp_beta = C.c_interp_beta;
 c_cov_interp_beta = C.c_cov_interp_beta;
+c_interp_T = C.c_interp_T;
 c_interp_F = C.c_interp_F;
+c_interp_ess = C.c_interp_ess;
+c_interp_ess0 = C.c_interp_ess0;
 s1 = W.s1;
 s2 = W.s2;
 spec_hemi = W.spec_hemi;
@@ -640,18 +658,37 @@ try
     for c1=1:nC
         if (xConStructOK && xCon(c1).STAT == 'T') || ...
                 ~xConStructOK %then must be a T-stat
-            
+            impose_T_bound = 1;
             index_mask = find(squeeze(c_cov_interp_beta(c1,:,:)) ~= 0);
             T_map = zeros(s1, s2);
-            T_map(index_mask) = squeeze(c_interp_beta(c1,index_mask))./ ...
-                sqrt(squeeze(c_cov_interp_beta(c1,index_mask)));
+            if impose_T_bound
+                %put a bound on low variance -- as in SPM (see ResMS bound)
+                tmp = squeeze(c_cov_interp_beta(c1,index_mask));
+                bound = (1e-3)^0.5*max(tmp(isfinite(tmp)));
+                tmp2 = bound*ones(size(tmp));
+                tmp2(tmp > bound) = tmp(tmp > bound);
+                T_map(index_mask) = squeeze(c_interp_beta(c1,index_mask))./ ...
+                    sqrt(tmp2); %c_interp_T(c1,index_mask);
+            else
+                T_map(index_mask) = squeeze(c_interp_beta(c1,index_mask))./ ...
+                    sqrt(squeeze(c_cov_interp_beta(c1,index_mask))); 
+            end
             tstr = 'T';
         else
             %F-stats
             index_mask = find(squeeze(c_interp_F(c1,:,:)) ~= 0);
             %still use variable T_map, though it is now an F_map
             T_map = zeros(s1, s2);
-            T_map(index_mask) = squeeze(c_interp_F(c1,index_mask));
+            impose_F_bound = 1;
+            if impose_F_bound
+                tmp = squeeze(c_interp_ess0(index_mask));%should calculate just once
+                bound = 1e-3*max(tmp(isfinite(tmp)));
+                tmp2 = bound*ones(size(tmp));
+                tmp2(tmp > bound) = tmp(tmp > bound);
+                T_map(index_mask) = squeeze(c_interp_ess(c1,index_mask))./tmp2';                    
+            else
+                T_map(index_mask) = squeeze(c_interp_F(c1,index_mask));
+            end
             tstr = 'F';
         end
         %Positive responses
@@ -676,7 +713,7 @@ try
             F.con = [];
             %F.ess = zeros(s1,s2);
             %F.ess = squeeze(c_interp_F(c1,index_mask));
-            F.ess = squeeze(c_interp_F(c1,:,:));
+            F.ess = squeeze(c_interp_ess(c1,:,:));
         end
         %     if c1 == 3
         %         a=1;
@@ -701,6 +738,14 @@ try
         
         F.contrast_info = [filestr '_Neg' xCon(c1).name];
         F.contrast_info_for_fig = [filestr_fig ' Neg' xCon(c1).name];
+        %contrast - what will be saved as nifti if requested
+        if strcmp(tstr,'T')
+            F.con = squeeze(c_interp_beta(c1,:,:));
+            F.ess = [];
+        else
+            F.con = [];
+            F.ess = squeeze(c_interp_ess(c1,:,:));
+        end
         if GInv || strcmp(hb,'HbR')
             if Z.output_unc
                 DF = nirs_draw_figure(2,F,W,Z);
@@ -868,21 +913,32 @@ if f1 == 0
     TOPO.v{side_hemi}.g.hb{hbi}.c_interp_beta = C.c_interp_beta;
     TOPO.v{side_hemi}.g.hb{hbi}.c_cov_interp_beta = C.c_cov_interp_beta;
     TOPO.v{side_hemi}.g.hb{hbi}.c_interp_F = C.c_interp_F;
+    TOPO.v{side_hemi}.g.hb{hbi}.c_interp_T = C.c_interp_T;
+    TOPO.v{side_hemi}.g.hb{hbi}.c_interp_ess = C.c_interp_ess;
+    TOPO.v{side_hemi}.g.hb{hbi}.c_interp_ess0 = C.c_interp_ess0;
     TOPO.v{side_hemi}.g.hb{hbi}.hb = hb;
 else
     TOPO.v{side_hemi}.s{f1}.hb{hbi}.sum_kappa = C.sum_kappa;
     TOPO.v{side_hemi}.s{f1}.hb{hbi}.c_interp_beta = C.c_interp_beta;
     TOPO.v{side_hemi}.s{f1}.hb{hbi}.c_cov_interp_beta = C.c_cov_interp_beta;
     TOPO.v{side_hemi}.s{f1}.hb{hbi}.c_interp_F = C.c_interp_F;
+    TOPO.v{side_hemi}.s{f1}.hb{hbi}.c_interp_T = C.c_interp_T;
+    TOPO.v{side_hemi}.s{f1}.hb{hbi}.c_interp_ess = C.c_interp_ess;
+    TOPO.v{side_hemi}.s{f1}.hb{hbi}.c_interp_ess0 = C.c_interp_ess0;
     TOPO.v{side_hemi}.s{f1}.hb{hbi}.hb = hb;
 end
 end
 
-function [SPM xCon SSxCon] = nirs_get_contrasts(SPM,job,automated_contrasts)
+function [SPM xCon SSxCon] = nirs_get_contrasts(SPM,job,automated_contrasts,s1)
 %Construct the full design matrix over all sessions
 SS_SPM = SPM;
 SS_SPM.xCon = [];
-SS_SPM.xX = SPM.xXn{1};
+if s1
+    SS_SPM.xX = SPM.xXn{s1};
+else
+    SS_SPM.xX = SPM.xXn{1};
+end
+
 %spm contrasts
 try
     tmp1 = []; tmp2 = []; tmp3 = 0; tmp4 = 0; tmp5 = 0; tmp6 = 0; tmp7 = [];
@@ -918,126 +974,134 @@ catch exception
 end
 %Generate automated contrasts if required
 %number of regressors for one session
-nr = size(SPM.xXn{1}.X,2);
+nr = size(SS_SPM.xX.X,2);
 %clear contrast contrast_name xCon
 %xCon = [];
 contrastT = {}; contrastF = {};
 contrastT_name = {}; contrastF_name = {};
 %negative contrasts can be treated later as to avoid a
 %duplication of long calculations
-epilepsyOn = 0;
+NonlinearEpilepsyOn = 0; %Remember to revert back to 0, used for most studies
 try
     if automated_contrasts
-        if epilepsyOn
-        try
-            %number of confounds
-            ncf = NIRSconfounds.NumChConfoundsActual;
-        catch
-            ncf = 0;
-        end
-        %Need to check if GLM was run with or without derivs
-        switch SPM.xBF.name
-            case {'hrf','Gamma functions'}
-               
-                %canonical HRF - no derivatives - no F contrasts
-                %1st Volterra kernel
-                contrastT{1} = [1 zeros(1,nr-1)];
-                contrastT_name{1} = 'T1';
-                %2nd Volterra kernel
-                if SPM.job.volt > 1
-                    if nr > 5+ncf %Careful, this might not be the correct number
-                        %if there are more confounding regressors
-                        %assume 2 stimuli - only take the first one
-                        contrastT{2} = [0 0 1 zeros(1,nr-3)];
-                        contrastT_name{2} = 'T2';
-                    else
-                        %assume only 1 stimulus
-                        contrastT{2} = [0 1 zeros(1,nr-2)];
-                        contrastT_name{2} = 'T2';
+        if NonlinearEpilepsyOn
+            try
+                %number of confounds
+                ncf = NIRSconfounds.NumChConfoundsActual;
+            catch
+                ncf = 0;
+            end
+            %Need to check if GLM was run with or without derivs
+            switch SPM.xBF.name
+                case {'hrf','Gamma functions'}
+                    
+                    %canonical HRF - no derivatives - no F contrasts
+                    %1st Volterra kernel
+                    contrastT{1} = [1 zeros(1,nr-1)];
+                    contrastT_name{1} = 'T1';
+                    %2nd Volterra kernel
+                    if SPM.job.volt > 1
+                        if nr > 5+ncf %Careful, this might not be the correct number
+                            %if there are more confounding regressors
+                            %assume 2 stimuli - only take the first one
+                            contrastT{2} = [0 0 1 zeros(1,nr-3)];
+                            contrastT_name{2} = 'T2';
+                        else
+                            %assume only 1 stimulus
+                            contrastT{2} = [0 1 zeros(1,nr-2)];
+                            contrastT_name{2} = 'T2';
+                        end
                     end
-                end
-                if SPM.job.volt == 3
-                    if nr > 5+ncf
-                        %assume 2 stimuli - only take the first one
-                        contrastT{3} = [0 0 0 0 0 0 1 zeros(1,nr-7)];
-                        contrastT_name{3} = 'T3';
-                    else
-                        %assume only 1 stimulus
-                        contrastT{3} = [0 0 1 zeros(1,nr-3)];
-                        contrastT_name{3} = 'T3';
+                    if SPM.job.volt == 3
+                        if nr > 5+ncf
+                            %assume 2 stimuli - only take the first one
+                            contrastT{3} = [0 0 0 0 0 0 1 zeros(1,nr-7)];
+                            contrastT_name{3} = 'T3';
+                        else
+                            %assume only 1 stimulus
+                            contrastT{3} = [0 0 1 zeros(1,nr-3)];
+                            contrastT_name{3} = 'T3';
+                        end
                     end
-                end
-            case 'hrf (with time derivative)'
-                %Automated T contrasts
-                %1st Volterra kernel
-                contrastT{1} = [1 zeros(1,nr-1)];
-                contrastT_name{1} = 'T1';
-                %2nd Volterra kernel
-                if SPM.job.volt > 1
-                    if nr > 10+ncf %Careful, this might not be the correct number
-                        %if there are more confounding regressors
-                        %assume 2 stimuli - only take the first one
-                        contrastT{2} = [0 0 0 0 1 zeros(1,nr-7)];
-                        contrastT_name{2} = 'T2';
-                    else
-                        %assume only 1 stimulus
-                        contrastT{2} = [0 0 1 zeros(1,nr-4)];
-                        contrastT_name{2} = 'T2';
+                case 'hrf (with time derivative)'
+                    %Automated T contrasts
+                    %1st Volterra kernel
+                    contrastT{1} = [1 zeros(1,nr-1)];
+                    contrastT_name{1} = 'T1';
+                    %2nd Volterra kernel
+                    if SPM.job.volt > 1
+                        if nr > 10+ncf %Careful, this might not be the correct number
+                            %if there are more confounding regressors
+                            %assume 2 stimuli - only take the first one
+                            contrastT{2} = [0 0 0 0 1 zeros(1,nr-7)];
+                            contrastT_name{2} = 'T2';
+                        else
+                            %assume only 1 stimulus
+                            contrastT{2} = [0 0 1 zeros(1,nr-4)];
+                            contrastT_name{2} = 'T2';
+                        end
                     end
-                end
-                %Automated F contrasts - careful, F contrasts need to be a cell
-                contrastF{1} = {[eye(2) zeros(2,nr-2)]};
-                contrastF_name{1} = 'F1';
-                if SPM.job.volt > 1
-                    %temp_mat = [ zeros(2,1) eye(2) zeros(2,3); zeros(1,5) 1];
-                    mat_Volt = [eye(3)]; %[eye(3) zeros(3,6); zeros(3,3) temp_mat];
-                    if nr > 10+ncf
-                        contrastF{2} = {[zeros(3,4) mat_Volt zeros(3,nr-7)]};
-                        contrastF_name{2} = 'F2';
-                    else
-                        contrastF{2} = {[zeros(3,2) mat_Volt zeros(3,nr-5)]};
-                        contrastF_name{2} = 'F2';
+                    %Automated F contrasts - careful, F contrasts need to be a cell
+                    contrastF{1} = {[eye(2) zeros(2,nr-2)]};
+                    contrastF_name{1} = 'F1';
+                    if SPM.job.volt > 1
+                        %temp_mat = [ zeros(2,1) eye(2) zeros(2,3); zeros(1,5) 1];
+                        mat_Volt = [eye(3)]; %[eye(3) zeros(3,6); zeros(3,3) temp_mat];
+                        if nr > 10+ncf
+                            contrastF{2} = {[zeros(3,4) mat_Volt zeros(3,nr-7)]};
+                            contrastF_name{2} = 'F2';
+                        else
+                            contrastF{2} = {[zeros(3,2) mat_Volt zeros(3,nr-5)]};
+                            contrastF_name{2} = 'F2';
+                        end
                     end
-                end
-                
-                %Automated F contrasts
-            case 'hrf (with time and dispersion derivatives)'
-                %Automated T contrasts
-                %1st Volterra kernel
-                contrastT{1} = [1 zeros(1,nr-1)];
-                contrastT_name{1} = 'T1';
-                %2nd Volterra kernel
-                if SPM.job.volt > 1
-                    if nr > 12+ncf %Careful, this might not be the correct number
-                        %if there are more confounding regressors
-                        %assume 2 stimuli - only take the first one
-                        contrastT{2} = [0 0 0 0 0 0 1 zeros(1,nr-7)];
-                        contrastT_name{2} = 'T2';
-                    else
-                        %assume only 1 stimulus
-                        contrastT{2} = [0 0 0 1 zeros(1,nr-4)];
-                        contrastT_name{2} = 'T2';
+                    
+                    %Automated F contrasts
+                case 'hrf (with time and dispersion derivatives)'
+                    %Automated T contrasts
+                    %1st Volterra kernel
+                    contrastT{1} = [1 zeros(1,nr-1)];
+                    contrastT_name{1} = 'T1';
+                    %2nd Volterra kernel
+                    if SPM.job.volt > 1
+                        if nr > 12+ncf %Careful, this might not be the correct number
+                            %if there are more confounding regressors
+                            %assume 2 stimuli - only take the first one
+                            contrastT{2} = [0 0 0 0 0 0 1 zeros(1,nr-7)];
+                            contrastT_name{2} = 'T2';
+                        else
+                            %assume only 1 stimulus
+                            contrastT{2} = [0 0 0 1 zeros(1,nr-4)];
+                            contrastT_name{2} = 'T2';
+                        end
                     end
-                end
-                %Automated F contrasts - careful, F contrasts need to be a cell
-                contrastF{1} = {[eye(3) zeros(3,nr-3)]};
-                contrastF_name{1} = 'F1';
-                if SPM.job.volt > 1
-                    %temp_mat = [ zeros(2,1) eye(2) zeros(2,3); zeros(1,5) 1];
-                    mat_Volt = [eye(6)]; %[eye(3) zeros(3,6); zeros(3,3) temp_mat];
-                    if nr > 12+ncf
-                        contrastF{2} = {[zeros(6,6) mat_Volt zeros(6,nr-12)]};
-                        contrastF_name{2} = 'F2';
-                    else
-                        contrastF{2} = {[zeros(6,3) mat_Volt zeros(6,nr-9)]};
-                        contrastF_name{2} = 'F2';
+                    %Automated F contrasts - careful, F contrasts need to be a cell
+                    contrastF{1} = {[eye(3) zeros(3,nr-3)]};
+                    contrastF_name{1} = 'F1';
+                    if SPM.job.volt > 1
+                        %temp_mat = [ zeros(2,1) eye(2) zeros(2,3); zeros(1,5) 1];
+                        mat_Volt = [eye(6)]; %[eye(3) zeros(3,6); zeros(3,3) temp_mat];
+                        if nr > 12+ncf
+                            contrastF{2} = {[zeros(6,6) mat_Volt zeros(6,nr-12)]};
+                            contrastF_name{2} = 'F2';
+                        else
+                            contrastF{2} = {[zeros(6,3) mat_Volt zeros(6,nr-9)]};
+                            contrastF_name{2} = 'F2';
+                        end
                     end
-                end
-        end
+            end
         else
             for i0=1:nr-1
                 contrastT{i0} = [zeros(1,i0-1) 1 zeros(1,nr-i0)];
-                contrastT_name{i0} = ['C' int2str(i0)];
+                try  
+                    if s1
+                        contrastT_name{i0} = ['_' validate_name(SS_SPM.Sess(s1).U(i0).name{1})];
+                    else
+                        contrastT_name{i0} = ['_' validate_name(SS_SPM.Sess(1).U(i0).name{1})];
+                    end
+                catch
+                    contrastT_name{i0} = ['C' int2str(i0)];
+                end
             end
         end
     end
@@ -1158,4 +1222,23 @@ try
 end
 %Single session contrasts
 SSxCon = SS_SPM.xCon;
+end
+
+function name = validate_name(name)
+%check if there are unallowed characters in file name part and remove them
+    name = regexprep(name,'>','g');
+    name = regexprep(name,'<','l');
+    name = regexprep(name,' ','_');
+    name = regexprep(name,'?','u');
+    name = regexprep(name,'!','e');
+    name = regexprep(name,'|','v');
+    name = regexprep(name,'#','n');
+    name = regexprep(name,'%','p');
+    name = regexprep(name,'&','a');
+    name = regexprep(name,'+','s');
+    name = regexprep(name,'@','t');
+    name = regexprep(name,'$','d');
+    name = regexprep(name,'^','c');
+    name = regexprep(name,'(','_');
+    name = regexprep(name,')','_');
 end

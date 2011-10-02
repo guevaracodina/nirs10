@@ -1,64 +1,28 @@
 %-----------------------------------------------------------------------
 % Job configuration created by cfg_util (rev $Rev: 4252 $)
 %-----------------------------------------------------------------------
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.subj.fnames = {
-%                                                               'W:\epiNIRSb\epi113AG\dataBOXY\epi113_AG.001'
-%                                                               'W:\epiNIRSb\epi113AG\dataBOXY\epi113_AG.002'
-%                                                               'W:\epiNIRSb\epi113AG\dataBOXY\epi113_AG.003'
-%                                                               'W:\epiNIRSb\epi113AG\dataBOXY\epi113_AG.004'
-%                                                               'W:\epiNIRSb\epi113AG\dataBOXY\epi113_AG.005'
-%                                                               'W:\epiNIRSb\epi113AG\dataBOXY\epi113_AG.006'
-%                                                               'W:\epiNIRSb\epi113AG\dataBOXY\epi113_AG.007'
-%                                                               };
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.subj.age1 = 35;
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.subj.raw_onset_files = {
-%                                                                        'W:\epiNIRSb\epi113AG\eeg\epi113agtanc1'
-%                                                                        'W:\epiNIRSb\epi113AG\eeg\epi113agtanc2'
-%                                                                        'W:\epiNIRSb\epi113AG\eeg\epi113agtanc3'
-%                                                                        'W:\epiNIRSb\epi113AG\eeg\epi113agtanc4'
-%                                                                        'W:\epiNIRSb\epi113AG\eeg\epi113agtanc5'
-%                                                                        'W:\epiNIRSb\epi113AG\eeg\epi113agtanc6'
-%                                                                        'W:\epiNIRSb\epi113AG\eeg\epi113agtanc7'
-%                                                                        };
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.subj.anatT1 = {'W:\epiNIRSb\epi113AG\T1\sN2056798-0601-00001-000001-01.nii,1'};
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.config_path.prj_path = 'mtg';
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.config_path.T1_path = 'T1';
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.config_path.output_path = 'dataSPM';
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.Lambda = [830 690];
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.freq = 19.5312;
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.distmin = 1;
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.distmax = 6;
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.save_bin1 = true;
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.sizebloc = 1024;
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.nb_Mux = 32;
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.MaxSources = 64;
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.nb_Det = 16;
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.MaxElectrodes = 19;
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.use10_10system = true;
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.resample = 1;
-matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.subj = struct('fnames', {}, 'age1', {}, 'raw_onset_files', {}, 'anatT1', {});
-matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.config_path.prj_path = 'mtg';
-matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.config_path.T1_path = 'T1';
-matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.config_path.output_path = 'dataSPM';
-matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.Lambda = [830 690];
-matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.freq = 19.5312;
-matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.distmin = 1;
-matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.distmax = 6;
-matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.save_bin1 = true;
-matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.sizebloc = 1024;
-matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.nb_Mux = 32;
-matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.MaxSources = 64;
-matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.nb_Det = 16;
-matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.MaxElectrodes = 19;
-matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.use10_10system = true;
-matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.resample = 1;
+matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy_manual1.subj2 = struct('Apath', {}, 'fnames', {}, 'prjFile', {}, 'age1', {}, 'raw_onset_files2', {}, 'anatT1', {});
+matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy_manual1.config_path2.T1_path = 'T1';
+matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy_manual1.config_path2.output_path = 'dataSPM';
+matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy_manual1.cf1.Lambda = [830 690];
+matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy_manual1.cf1.freq = 19.5312;
+matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy_manual1.cf1.distmin = 1;
+matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy_manual1.cf1.distmax = 6;
+matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy_manual1.cf1.save_bin1 = true;
+matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy_manual1.cf1.sizebloc = 1024;
+matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy_manual1.cf1.nb_Mux = 32;
+matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy_manual1.cf1.MaxSources = 64;
+matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy_manual1.cf1.nb_Det = 16;
+matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy_manual1.cf1.MaxElectrodes = 19;
+matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy_manual1.cf1.use10_10system = true;
+matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy_manual1.cf1.resample = 1;
 matlabbatch{2}.spm.tools.nirs10.readOnsets.AnalyzerOnsets.NIRSmat_optional(1) = cfg_dep;
 matlabbatch{2}.spm.tools.nirs10.readOnsets.AnalyzerOnsets.NIRSmat_optional(1).tname = 'NIRS.mat';
 matlabbatch{2}.spm.tools.nirs10.readOnsets.AnalyzerOnsets.NIRSmat_optional(1).tgt_spec{1}(1).name = 'filter';
 matlabbatch{2}.spm.tools.nirs10.readOnsets.AnalyzerOnsets.NIRSmat_optional(1).tgt_spec{1}(1).value = 'mat';
 matlabbatch{2}.spm.tools.nirs10.readOnsets.AnalyzerOnsets.NIRSmat_optional(1).tgt_spec{1}(2).name = 'strtype';
 matlabbatch{2}.spm.tools.nirs10.readOnsets.AnalyzerOnsets.NIRSmat_optional(1).tgt_spec{1}(2).value = 'e';
-matlabbatch{2}.spm.tools.nirs10.readOnsets.AnalyzerOnsets.NIRSmat_optional(1).sname = 'ReadBoxyManual: NIRS.mat';
+matlabbatch{2}.spm.tools.nirs10.readOnsets.AnalyzerOnsets.NIRSmat_optional(1).sname = 'ReadBoxy: NIRS.mat';
 matlabbatch{2}.spm.tools.nirs10.readOnsets.AnalyzerOnsets.NIRSmat_optional(1).src_exbranch = substruct('.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1});
 matlabbatch{2}.spm.tools.nirs10.readOnsets.AnalyzerOnsets.NIRSmat_optional(1).src_output = substruct('.','NIRSmat');
 matlabbatch{2}.spm.tools.nirs10.readOnsets.AnalyzerOnsets.raw_onset_files = {''};

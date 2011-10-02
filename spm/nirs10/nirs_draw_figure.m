@@ -95,6 +95,7 @@ try
         case 4
             %group
             if strcmp(F.tstr,'F')
+                %if length(erdf) > 1 %?
                 str_cor = 'Anova';
                 xth_z = zeros(1,length(erdf));
                 index_over = [];
@@ -114,16 +115,26 @@ try
                     end
                 end
                 th_z = min(xth_z(xth_z>0));
+                %end
             else
                 str_cor = 'Group';
-                th_z = spm_invTcdf(1-p_value, erdf);
-                index_over = find(T_map > th_z);
-                %if GInv, index_over2 = find(-T_map > th_z); end
-                if GInv,
-                    if Z.GroupColorbars
-                        index_over2 = [find(T_map > th_z); find(-T_map > th_z)];
-                    else
-                        index_over2 = find(-T_map > th_z);
+                if erdf == 0
+                    disp([F.contrast_info ' : Problem with number of degrees of freedom']);
+                    index_over = [];
+                    if GInv
+                        index_over2 = [];
+                    end
+                else
+                    th_z = spm_invTcdf(1-p_value, erdf);
+                    
+                    index_over = find(T_map > th_z);
+                    %if GInv, index_over2 = find(-T_map > th_z); end
+                    if GInv,
+                        if Z.GroupColorbars
+                            index_over2 = [find(T_map > th_z); find(-T_map > th_z)];
+                        else
+                            index_over2 = find(-T_map > th_z);
+                        end
                     end
                 end
             end
@@ -208,8 +219,13 @@ if combinedfig
     contrast_info_for_fig = F.contrast_info_both_for_fig;
     index_over2 = I.index_over2;
 else
-    contrast_info = F.contrast_info;
-    contrast_info_for_fig = F.contrast_info_for_fig;
+    if strcmp(F.tstr,'T')
+        contrast_info = F.contrast_info;
+        contrast_info_for_fig = F.contrast_info_for_fig;
+    else
+        contrast_info = F.contrast_info_both;
+        contrast_info_for_fig = F.contrast_info_both_for_fig;
+    end
 end
 %choose font for figure here
 fontsize_choice = 16;
@@ -524,7 +540,7 @@ try
             end
             if gen_tiff
                 filen2 = fullfile(pathn,[tstr '_' str_cor '_' contrast_info '.tiff']);
-                if Z. SmallFigures
+                if Z.SmallFigures
                     print(fh1, '-dtiff', filen2);
                 else
                     print(fh1, '-dtiffn', filen2);
@@ -552,21 +568,24 @@ try
         Y = [];
     end
     %Save as nifti
-    if Z.save_nifti_contrasts
+    if Z.save_nifti_contrasts && ( Z.write_neg_pos || combinedfig || tstr == 'F' )
         pathnii = fullfile(pathn,'nii');
         if ~exist(pathnii,'dir'),mkdir(pathnii); end
-        filen4 = fullfile(pathnii,['GLM_' tstr '_' str_cor '_' contrast_info '.nii']);
+        %NP = not permuted
+        filen5 = fullfile(pathnii,[tstr '_' str_cor '_' contrast_info 'NP.nii']);
+        filen3 = fullfile(pathnii,[tstr '_' str_cor '_' contrast_info '.nii']);
+        %note it is the contrast that should be written, not the T or F-stat maps
         M = [[0 1;-1 0] zeros(2); zeros(2) eye(2)];
-        if strcmp(tstr,'T')            
-            V = nirs_create_vol(filen4,...
-                 [W.s1 W.s2 1], [16,0], [1;0;352],M, F.con);
-                
+        if strcmp(tstr,'T')
+            V = nirs_create_vol(filen5,...
+                [W.s1 W.s2 1], [16,0], [1;0;352],M, F.con);
         else
-            V = nirs_create_vol(filen4,...
-                 [W.s1 W.s2 1], [16,0], [1;0;352],M, F.ess);                
+            V = nirs_create_vol(filen5,...
+                [W.s1 W.s2 1], [16,0], [1;0;352],M, F.ess);
         end
-        filen3 = fullfile(pathnii,['VIEW_' tstr '_' str_cor '_' contrast_info '.nii']);
-          % 1:ventral, 2:dorsal, 3:right, 4:left, 5:frontal, 6:occipital
+        %             end
+        % test : on se trompe pas pour le milieu
+        % 1:ventral, 2:dorsal, 3:right, 4:left, 5:frontal, 6:occipital
         switch W.side_hemi
             case 2% s2 x vx and s1 z vx
                 dim = [W.s2 1 W.s1];
@@ -580,38 +599,38 @@ try
                 M = [[0 0 1;1 0 0;0 1 0;0 0 0] zeros(4,1)];
                 vecta = -M(1:3,1:3)*[round(dim(1)/2);round(dim(2)/2);1];
                 Fcon = permute(F.con,[2,1,3]);
-                Fess = permute(F.ess,[2,1,3]);          
+                Fess = permute(F.ess,[2,1,3]);
             case 4% s2 x vx and s1 y vx
                 dim = [W.s2 W.s1 1];
                 M = [[0 0 1;-1 0 0;0 1 0;0 0 0] zeros(4,1)];%%% matrice de base
                 vecta = -M(1:3,1:3)*[round(dim(1)/2);round(dim(2)/2);1];
                 Fcon = permute(F.con,[2,1,3]);
-                Fess = permute(F.ess,[2,1,3]); 
+                Fess = permute(F.ess,[2,1,3]);
                 
-            case 5% s2 -z vx and s1 y vx 
+            case 5% s2 -z vx and s1 y vx
                 dim = [1 W.s1 W.s2];
                 M = [[0 0 1;-1 0 0;0 -1 0;0 0 0] zeros(4,1)];
                 vecta = -M(1:3,1:3)*[1;round(dim(1)/2);round(dim(2)/2)];
                 Fcon = permute(F.con,[3,1,2]);
                 Fess = permute(F.ess,[3,1,2]);
-            %case 6% s2 z vx and s1 y vx                 
+                %case 6% s2 z vx and s1 y vx
             otherwise % cas sans interet
         end
         M(:,4) = [vecta;1];
         % test : use the V.mat of the T1
-%         path_T1 = [fileparts(fileparts(pathn)) '\T1'];
-%         V = spm_vol([path_T1 '\T1.nii']);
-%         M(1:3,1:3) = V.mat(1:3,1:3)./norm(V.mat(1:3,1:3));
-        if strcmp(tstr,'T')            
+        %         path_T1 = [fileparts(fileparts(pathn)) '\T1'];
+        %         V = spm_vol([path_T1 '\T1.nii']);
+        %         M(1:3,1:3) = V.mat(1:3,1:3)./norm(V.mat(1:3,1:3));
+        if strcmp(tstr,'T')
             V = nirs_create_vol(filen3,...
                 dim, [16,0], [1;0;352],M, Fcon);
-%                 [W.s1 W.s2 1], [16,0], [1;0;352],M, F.con);
-                
+            %                 [W.s1 W.s2 1], [16,0], [1;0;352],M, F.con);
+            
         else
             V = nirs_create_vol(filen3,...
                 dim, [16,0], [1;0;352],M, Fess);
-%                 [W.s1 W.s2 1], [16,0], [1;0;352],M, F.ess);
-                
+            %                 [W.s1 W.s2 1], [16,0], [1;0;352],M, F.ess);
+            
         end
     end
 catch exception
