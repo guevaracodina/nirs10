@@ -124,6 +124,7 @@ try
                     if GInv
                         index_over2 = [];
                     end
+                    th_z = 0;
                 else
                     th_z = spm_invTcdf(1-p_value, erdf);
                     
