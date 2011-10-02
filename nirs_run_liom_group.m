@@ -30,10 +30,20 @@ try
 catch
     group_session_to_average = 1;
 end
-try 
+try
     group_dir_name = job.group_dir_name;
 catch
     group_dir_name = 'Group';
+end
+try
+    save_nifti_contrasts = job.save_nifti_contrasts;
+catch
+    save_nifti_contrasts = 0;
+end
+try
+    simple_sum = job.simple_sum;
+catch
+    simple_sum = 1;
 end
 %Booleans to choose which figures to write to disk, if any
 switch job.contrast_figures
@@ -97,13 +107,17 @@ Z.GFIS = GFIS;
 Z.output_unc = output_unc;
 Z.SmallFigures = SmallFigures;
 Z.write_neg_pos = write_neg_pos;
-min_s = 2;
-
+Z.save_nifti_contrasts = save_nifti_contrasts;
+Z.min_s = 2;
+Z.FFX = FFX;
 nS = size(job.NIRSmat,1);
+Z.nS = nS;
+Z.simple_sum = simple_sum;
 if FFX || nS==1
     %fixed effects: loop over subjects first, as they are treated
     %separately
     nl = nS; %to loop over subjects
+    big_TOPO = []; %not used
 else
     %RFX - loop over subjects done later
     nl = 1;
@@ -118,7 +132,7 @@ else
             fname_ch = NIRS.Dt.ana.rend;
             load(fname_ch);
         end
-        try 
+        try
             ftopo = NIRS.TOPO;
         catch
             ftopo = fullfile(dir1,'TOPO.mat');
@@ -165,10 +179,10 @@ for Idx=1:nl
             job.NIRSmat{nl,1} = newNIRSlocation;
             Z.dir1 = dir_group;
         end
-                       
+        
         %Big loop over views
         for v1=1:6
-            view_estimated = 0;  
+            view_estimated = 0;
             try
                 if FFX || nS==1
                     if isfield(TOPO.v{v1},'s1')
@@ -184,13 +198,13 @@ for Idx=1:nl
                         ns = nS; %number of subjects
                         view_estimated = 1;
                     end
-                end 
+                end
             catch
                 view_estimated = 0;
             end
-           
+            
             if view_estimated
-                [side_hemi spec_hemi] = nirs_get_brain_view(v1);                             
+                [side_hemi spec_hemi] = nirs_get_brain_view(v1);
                 %View dependent info for figures
                 %brain = rend{v1}.ren;
                 brain = rendered_MNI{v1}.ren;
@@ -212,16 +226,18 @@ for Idx=1:nl
                 W.s2 = size(brain, 2);
                 W.spec_hemi = spec_hemi;
                 W.side_hemi = side_hemi;
+                clear xCon
                 if FFX || nS==1
                     %Contrasts
-                    xCon = TOPO.SSxCon;
+                    %xCon = TOPO.SSxCon; %need to generalize
+                    xConS = TOPO.SSxConS;
                     TOPO.v{v1}.g.ns = ns;
-                    TOPO.v{v1}.g.min_s = min_s;
+                    TOPO.v{v1}.g.min_s = Z.min_s;
                     TOPO.v{v1}.g.s1 = s1;
                     TOPO.v{v1}.g.s2 = s2;
                 else
                     TOPO.v{v1}.group.ns = ns;
-                    TOPO.v{v1}.group.min_s = min_s;
+                    TOPO.v{v1}.group.min_s = Z.min_s;
                     TOPO.v{v1}.group.s1 = s1;
                     TOPO.v{v1}.group.s2 = s2;
                     %Contrasts -- assume same contrasts for all subjects
@@ -233,12 +249,41 @@ for Idx=1:nl
                     %Contrasts - assume same contrasts for all subjects
                     %xCon = big_TOPO{1}.xCon;
                 end
-
                 
-                cbeta = zeros(ns,s1*s2);
-                ccov_beta = zeros(ns,s1*s2);
                 tmp = zeros(s1,s2);
-                nC = length(xCon);
+                if exist('xCon','var')
+                    nC = length(xCon);
+                    cbeta = zeros(ns,s1*s2);
+                    ccov_beta = zeros(ns,s1*s2);
+                else
+                    %build up list of contrasts and of their names
+                    Clist = xConS{1};
+                    Nlist = {}; for t2=1:length(xConS{1}), Nlist = [Nlist; xConS{1}(t2).name]; end
+                    for t1=2:ns
+                        for t2=1:length(xConS{t1})
+                            if ~any(strcmp(xConS{t1}(t2).name,Nlist))
+                                %add to the list
+                                Clist(end+1) = xConS{t1}(t2);
+                                Nlist{end+1} = xConS{t1}(t2).name;
+                            end
+                        end
+                    end
+                    nC = length(Clist);
+                    xCon = Clist;
+                    %for each contrast, build list of available sessions,
+                    %and position of these contrasts in SSxCon
+                    for c1=1:nC
+                        Sess{c1} = [];
+                        %Cp{c1} = []; %contrast position in the SSxCon list of that session
+                        for t1=1:ns
+                            Nlist = {}; for t2=1:length(xConS{t1}), Nlist = [Nlist; xConS{t1}(t2).name]; end
+                            if any(strcmp(xCon(c1).name, Nlist)),
+                                Sess{c1} = [Sess{c1} t1];
+                                Cp{c1,t1} = find(strcmp(xCon(c1).name, Nlist)==1);
+                            end
+                        end
+                    end
+                end
                 if GFIS
                     Pu = figure('Visible',cbar.visible,'Name',['Group' '_' num2str(p_value) '_Pos'],'NumberTitle','off');
                     %subplot(fh0P,nC,3,1);
@@ -257,198 +302,11 @@ for Idx=1:nl
                 
                 %Loop over chromophores
                 for h1=1:3 %including HbT
-                    hb = get_chromophore(h1);
-                    for c1=1:nC
-                        try
-                            %Skip F contrasts for now
-                            if xCon(c1).STAT == 'T'
-                                %fill in cbeta and ccov_beta
-                                for f1=1:ns
-                                    if FFX || nS==1
-                                        tmp = squeeze(TOPO.v{v1}.s{f1}.hb{h1}.c_interp_beta(c1,:,:));
-                                        cbeta(f1,:) = tmp(:);
-                                        tmp = squeeze(TOPO.v{v1}.s{f1}.hb{h1}.c_cov_interp_beta(c1,:,:));
-                                        ccov_beta(f1,:) = tmp(:);
-                                    else
-                                        if ~isfield(big_TOPO{f1}.v{v1},'s')
-                                            %group analysis of a group of
-                                            %sessions analysis
-                                            tmp = squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_interp_beta(c1,:,:));
-                                            cbeta(f1,:) = tmp(:);
-                                            tmp = squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_cov_interp_beta(c1,:,:));
-                                            ccov_beta(f1,:) = tmp(:);
-                                        else
-                                            %for is1=1:length(big_TOPO{f1}.v{v1}.s)
-                                            is1 = group_session_to_average;
-                                                %do each session separately
-                                                tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_beta(c1,:,:));
-                                                cbeta(f1,:) = tmp(:);
-                                                tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_cov_interp_beta(c1,:,:));
-                                                ccov_beta(f1,:) = tmp(:);
-                                            %end
-                                        end
-                                        
-                                    end
-                                end
-                            else %quick fix for F stats
-                                for f1=1:ns
-                                    if FFX || nS==1
-                                        tmp = squeeze(TOPO.v{v1}.s{f1}.hb{h1}.c_interp_F(c1,:,:));
-                                        cbeta(f1,:) = tmp(:);
-                                        sz = size(squeeze(TOPO.v{v1}.s{f1}.hb{h1}.c_interp_F(c1,:,:)));
-                                        tmp = ones(sz(1), sz(2));
-                                        ccov_beta(f1,:) = tmp(:);
-                                    else
-                                        if ~isfield(big_TOPO{f1}.v{v1},'s')
-                                            %group analysis of a group of
-                                            %sessions analysis
-                                            tmp = squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_interp_F(c1,:,:));
-                                            cbeta(f1,:) = tmp(:);
-                                            sz = size(squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_interp_F(c1,:,:)));
-                                            tmp = ones(sz(1), sz(2));
-                                            ccov_beta(f1,:) = tmp(:);
-                                        else
-                                            %do each session separately
-                                            is1 = group_session_to_average;
-                                            %for is1=1:length(big_TOPO{f1}.v{v1}.s)
-                                                tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_F(c1,:,:));
-                                                cbeta(f1,:) = tmp(:);
-                                                sz = size(squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_F(c1,:,:)));
-                                                tmp = ones(sz(1), sz(2));
-                                                ccov_beta(f1,:) = tmp(:);
-                                            %end
-                                        end
-                                    end
-                                end
-                            end
-                            if xCon(c1).STAT == 'T' || xCon(c1).STAT == 'F'
-                                %Positive contrasts
-                                %Generate group result as t-stat
-                                if GInv || strcmp(hb,'HbO') || strcmp(hb,'HbT')
-                                    try 
-                                        G = liom_group(cbeta,ccov_beta,s1,s2,ns,min_s,FFX); 
-                                    catch exception2
-                                        disp(exception2.identifier);
-                                        disp(exception2.stack(1));
-                                    end
-                                    if FFX || nS==1
-                                        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.Tmap = G.tmap_group;
-                                        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.erdf = G.erdf_group;
-                                        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.beta_group = G.beta_group;
-                                        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.std_group = G.std_group;
-                                        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.type = 'Positive';
-                                        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.var_bs = G.var_bs;
-                                        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.c = xCon(c1);
-                                    else
-                                        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.Tmap = G.tmap_group;
-                                        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.erdf = G.erdf_group;
-                                        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.beta_group = G.beta_group;
-                                        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.std_group = G.std_group;
-                                        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.type = 'Positive';
-                                        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.var_bs = G.var_bs;
-                                        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.c = xCon(c1);
-                                    end
-                                    erdf_group = max(G.erdf_group(:)); %quick fix...
-                                    filestr = [num2str(p_value) '_' spec_hemi '_' hb];
-                                    filestr_fig = [num2str(p_value) ' ' spec_hemi ' ' hb];
-                                    info1 = [filestr '_Pos' xCon(c1).name];
-                                    info_for_fig1 = [filestr_fig ' Pos' xCon(c1).name];
-                                    F.contrast_info = info1;
-                                    F.contrast_info_for_fig = info_for_fig1;
-                                    F.contrast_info_both = [filestr xCon(c1).name]; %same for Pos and Neg, used for combined figures
-                                    F.contrast_info_both_for_fig = [filestr_fig xCon(c1).name]; %same for Pos and Neg, used for combined figures
-                                    
-                                    F.T_map = G.tmap_group;
-                                    F.erdf = erdf_group;
-                                    F.eidf = xCon(c1).eidf;
-                                    F.tstr = xCon(c1).STAT; %tstr;
-                                    F.hb = hb;
-                                    try
-                                        DF = nirs_draw_figure(4,F,W,Z); 
-                                    catch exception2
-                                        disp(exception2.identifier);
-                                        disp(exception2.stack(1));
-                                    end
-                                    try
-                                        if GFIS, [Pu,Nu,Cu] = nirs_copy_figure(Pu,Nu,Cu,DF,CF,c1,hb,1,F.tstr); end; 
-                                    catch exception2
-                                        disp(exception2.identifier);
-                                        disp(exception2.stack(1));
-                                    end
-                                end
-                                %Negative contrasts
-                                for f1=1:ns
-                                    if FFX || nS==1
-                                        tmp = -squeeze(TOPO.v{v1}.s{f1}.hb{h1}.c_interp_beta(c1,:,:));
-                                        cbeta(f1,:,:) = tmp(:);
-                                    else
-                                        if ~isfield(big_TOPO{f1}.v{v1},'s')
-                                            tmp = -squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_interp_beta(c1,:,:));
-                                            cbeta(f1,:,:) = tmp(:);
-                                        else
-                                            is1 = group_session_to_average;
-                                            tmp = -squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_beta(c1,:,:));
-                                            cbeta(f1,:,:) = tmp(:);
-                                        end
-                                    end
-                                end
-                                if GInv || strcmp(hb,'HbR')
-                                    %Generate group result as t-stat
-                                    try
-                                        G = liom_group(cbeta,ccov_beta,s1,s2,ns,min_s,FFX); 
-                                    catch exception2
-                                        disp(exception2.identifier);
-                                        disp(exception2.stack(1));
-                                    end
-                                    if FFX || nS==1
-                                        TOPO.v{v1}.g.hb{h1}.c{2*c1}.Tmap = G.tmap_group;
-                                        TOPO.v{v1}.g.hb{h1}.c{2*c1}.erdf = G.erdf_group;
-                                        TOPO.v{v1}.g.hb{h1}.c{2*c1}.beta_group = G.beta_group;
-                                        TOPO.v{v1}.g.hb{h1}.c{2*c1}.std_group = G.std_group;
-                                        TOPO.v{v1}.g.hb{h1}.c{2*c1}.type = 'Negative';
-                                        TOPO.v{v1}.g.hb{h1}.c{2*c1}.var_bs = G.var_bs;
-                                        TOPO.v{v1}.g.hb{h1}.c{2*c1}.c = xCon(c1);
-                                    else
-                                        TOPO.v{v1}.group.hb{h1}.c{2*c1}.Tmap = G.tmap_group;
-                                        TOPO.v{v1}.group.hb{h1}.c{2*c1}.erdf = G.erdf_group;
-                                        TOPO.v{v1}.group.hb{h1}.c{2*c1}.beta_group = G.beta_group;
-                                        TOPO.v{v1}.group.hb{h1}.c{2*c1}.std_group = G.std_group;
-                                        TOPO.v{v1}.group.hb{h1}.c{2*c1}.type = 'Negative';
-                                        TOPO.v{v1}.group.hb{h1}.c{2*c1}.var_bs = G.var_bs;
-                                        TOPO.v{v1}.group.hb{h1}.c{2*c1}.c = xCon(c1);
-                                    end
-                                    erdf_group = max(G.erdf_group(:)); %quick fix...
-                                    filestr = [num2str(p_value) '_' spec_hemi '_' hb];
-                                    filestr_fig = [num2str(p_value) ' ' spec_hemi ' ' hb];
-                                    info1 = [filestr '_Neg' xCon(c1).name];
-                                    info_for_fig1 = [filestr_fig ' Neg' xCon(c1).name];
-                                    F.contrast_info = info1;
-                                    F.contrast_info_for_fig = info_for_fig1;
-                                    F.contrast_info_both = [filestr xCon(c1).name]; %same for Pos and Neg, used for combined figures
-                                    F.contrast_info_both_for_fig = [filestr_fig xCon(c1).name]; %same for Pos and Neg, used for combined figures
-                                    F.T_map = G.tmap_group;
-                                    F.erdf = erdf_group;
-                                    F.eidf = xCon(c1).eidf;
-                                    F.tstr = xCon(c1).STAT; %tstr;
-                                    F.hb = hb;
-                                    try DF = nirs_draw_figure(4,F,W,Z); 
-                                    catch exception2
-                                        disp(exception2.identifier);
-                                        disp(exception2.stack(1));
-                                    end
-                                    try 
-                                        if GFIS, [Pu,Nu,Cu] = nirs_copy_figure(Pu,Nu,Cu,DF,CF,c1,hb,0,F.tstr); end; 
-                                    catch exception2
-                                        disp(exception2.identifier);
-                                        disp(exception2.stack(1));
-                                    end
-                                end
-                            end
-                        catch exception
-                            disp(exception.identifier);
-                            disp(exception.stack(1));
-                            disp(['Problem with a specific contrast ' int2str(c1) ' and chromophore ' hb ' for view ' int2str(v1)]);
-                        end
+                    for c1=1:nC %Loop over contrasts
+                        %Positive stats
+                        [Pu,Nu,Cu,TOPO,big_TOPO] = fill_group(Pu,Nu,Cu,TOPO,big_TOPO,v1,c1,h1,Z,W,F,CF,xCon,ns,Sess,Cp,1);
+                        %Negative stats
+                        [Pu,Nu,Cu,TOPO,big_TOPO] = fill_group(Pu,Nu,Cu,TOPO,big_TOPO,v1,c1,h1,Z,W,F,CF,xCon,ns,Sess,Cp,0);
                     end
                 end
                 %save assembled figures
@@ -472,7 +330,11 @@ for Idx=1:nl
                 end
             end %if view_estimated
         end %end for v1
-        %TOPO.xCon = xCon; %would not work if new contrasts are later added
+        TOPO.xCon = xCon; %would not work if new contrasts are later added
+        if exist('Sess','var')
+            TOPO.Sess = Sess;
+            TOPO.Cp = Cp;
+        end
         save(ftopo,'TOPO');
     catch exception
         disp(exception.identifier);
@@ -496,4 +358,144 @@ switch h1
         hb = 'HbT';
 end
 end
-
+                                              
+function [Pu,Nu,Cu,TOPO,big_TOPO] = fill_group(Pu,Nu,Cu,TOPO,big_TOPO,v1,c1,h1,Z,W,F,CF,xCon,ns,Sess,Cp,shb)
+try
+    hb = get_chromophore(h1);
+    if shb
+        strA = 'Pos';
+        strB = 'Positive';
+        sign_hb = 1;
+    else
+        strA = 'Neg';
+        strB = 'Negative';
+        sign_hb = -1;
+    end
+    if xCon(c1).STAT == 'T'
+        fc = 0; %used only for FFX || nS==1
+        %fill in cbeta and ccov_beta
+        for f1=1:ns
+            if Z.FFX || Z.nS==1
+                %select sessions which had the contrast
+                if any(f1==Sess{c1})
+                    fc = fc+1;
+                    %now use Cp{c1,f1} to access the required c_interp_beta instead of c1
+                    tmp = sign_hb*squeeze(TOPO.v{v1}.s{f1}.hb{h1}.c_interp_beta(Cp{c1,f1},:,:));
+                    cbeta(fc,:) = tmp(:);
+                    tmp = squeeze(TOPO.v{v1}.s{f1}.hb{h1}.c_cov_interp_beta(Cp{c1,f1},:,:));
+                    ccov_beta(fc,:) = tmp(:);
+                end
+            else
+                if ~isfield(big_TOPO{f1}.v{v1},'s')
+                    %group analysis of a group of sessions analysis
+                    tmp = sign_hb*squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_interp_beta(c1,:,:));
+                    cbeta(f1,:) = tmp(:);
+                    tmp = squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_cov_interp_beta(c1,:,:));
+                    ccov_beta(f1,:) = tmp(:);
+                else
+                    %for is1=1:length(big_TOPO{f1}.v{v1}.s)
+                    is1 = group_session_to_average;
+                    %do each session separately
+                    tmp = sign_hb*squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_beta(c1,:,:));
+                    cbeta(f1,:) = tmp(:);
+                    tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_cov_interp_beta(c1,:,:));
+                    ccov_beta(f1,:) = tmp(:);
+                    %end
+                end
+            end
+        end
+    else %quick fix for F stats
+        fc = 0; %used only for FFX || nS==1
+        for f1=1:ns
+            if Z.FFX || Z.nS==1
+                %select sessions which had the contrast
+                if any(f1==Sess{c1})
+                    fc = fc+1;
+                    tmp = squeeze(TOPO.v{v1}.s{f1}.hb{h1}.c_interp_F(Cp{c1,f1},:,:));
+                    cbeta(fc,:) = tmp(:);
+                end
+            else
+                if ~isfield(big_TOPO{f1}.v{v1},'s')
+                    %group analysis of a group of sessions analysis
+                    tmp = squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_interp_F(c1,:,:));
+                    cbeta(f1,:) = tmp(:);
+                else
+                    %do each session separately
+                    is1 = group_session_to_average;
+                    %for is1=1:length(big_TOPO{f1}.v{v1}.s)
+                    tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_F(c1,:,:));
+                    cbeta(f1,:) = tmp(:);
+                    %end
+                end
+            end
+        end
+    end
+    %Generate group result as t-stat
+    try
+        if strcmp(xCon(c1).STAT,'T')
+            G = liom_group(cbeta,ccov_beta,W.s1,W.s2,Z.min_s,Z.FFX,Z.simple_sum);
+        else
+            G = liom_group_F(cbeta,W.s1,W.s2);
+        end
+    catch exception2
+        disp(exception2.identifier);
+        disp(exception2.stack(1));
+    end
+    if Z.FFX || Z.nS==1
+        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.Tmap = G.tmap_group;
+        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.erdf = G.erdf_group;
+        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.beta_group = G.beta_group;
+        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.std_group = G.std_group;
+        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.type = strB;
+        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.var_bs = G.var_bs;
+        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.c = xCon(c1);
+    else
+        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.Tmap = G.tmap_group;
+        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.erdf = G.erdf_group;
+        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.beta_group = G.beta_group;
+        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.std_group = G.std_group;
+        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.type = strB;
+        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.var_bs = G.var_bs;
+        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.c = xCon(c1);
+    end
+    erdf_group = max(G.erdf_group(:)); %quick fix...
+    filestr = [num2str(Z.p_value) '_' W.spec_hemi '_' hb];
+    filestr_fig = [num2str(Z.p_value) ' ' W.spec_hemi ' ' hb];
+    info1 = [filestr '_' strA xCon(c1).name];
+    info_for_fig1 = [filestr_fig ' ' strA xCon(c1).name];
+    F.contrast_info = info1;
+    F.contrast_info_for_fig = info_for_fig1;
+    F.contrast_info_both = [filestr xCon(c1).name]; %same for Pos and Neg, used for combined figures
+    F.contrast_info_both_for_fig = [filestr_fig xCon(c1).name]; %same for Pos and Neg, used for combined figures
+    
+    F.T_map = G.tmap_group;
+    F.erdf = erdf_group;
+    F.eidf = xCon(c1).eidf;
+    F.tstr = 'T'; %xCon(c1).STAT; %tstr;
+    F.hb = hb;
+    if strcmp(F.tstr,'T')
+        F.con = G.beta_group;
+        F.ess = [];
+    else
+        F.con = [];
+        F.ess = G.beta_group;
+    end
+    DF = [];
+    try
+        DF = nirs_draw_figure(4,F,W,Z);
+    catch exception2
+        disp(exception2.identifier);
+        disp(exception2.stack(1));
+    end
+    try
+        if Z.GFIS, [Pu,Nu,Cu] = nirs_copy_figure(Pu,Nu,Cu,DF,CF,c1,hb,shb,F.tstr); end;
+    catch exception2
+        disp(exception2.identifier);
+        disp(exception2.stack(1));
+    end
+catch exception
+    disp(exception.identifier);
+    disp(exception.stack(1));
+    disp(['Problem with a specific contrast ' int2str(c1) ' and chromophore ' hb ' for view ' int2str(v1)]);
+end
+end

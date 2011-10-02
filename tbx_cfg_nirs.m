@@ -303,6 +303,122 @@ boxy1.help = {'Select raw BOXY data files for this subject.'};
     end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Configuration for BOXY MANUAL  (boxy1)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Apath        = cfg_files; 
+Apath.name    = 'Analysis path'; 
+Apath.tag     = 'Apath';       %file names
+Apath.filter  = 'dir';
+Apath.ufilter = '.*';
+Apath.num     = [1 1];     
+Apath.help    = {'Choose folder where you want to put the analysis.'
+    'If the folder does not exist yet, you must first create it '
+    'before you can select it.'}';
+
+input1         = cfg_files; %Select raw BOXY data files for this subject
+input1.name    = 'Select BOXY files'; % The displayed name
+input1.tag     = 'fnames';       %file names
+input1.ufilter = '.0*';    %BOXY files are labeled .001, .002, .003, etc.
+%and it is very unlikely that there are more than 99 of them
+input1.num     = [1 Inf];     % Number of inputs required
+input1.help    = {'Select raw BOXY data files for this subject.'};
+
+age1         = cfg_entry;
+age1.name    = 'Subject age';
+age1.tag     = 'age1';
+age1.strtype = 'r';
+age1.num     = [1 1];
+age1.def     = @(val)nirs_get_defaults('readNIRS.boxy1.generic1.subj.age1', val{:});
+age1.help    = {'Age of the subject. Used later for OD to HbO/HbR conversion.'};
+
+raw_onset_files2        = cfg_files;
+raw_onset_files2.name    = 'Select onset files'; % The displayed name
+raw_onset_files2.tag     = 'raw_onset_files2';
+raw_onset_files2.num     = [1 Inf];     % Number of inputs required
+raw_onset_files2.val{1}  = {''};
+raw_onset_files2.help    = {'Select raw onset files. '
+    'Must specify one file for each data file, in same order.'}'; % help text displayed
+
+anatT1         = cfg_files; %Select T1 for this subject
+anatT1.name    = 'Raw anatomical image (optional)'; % The displayed name
+anatT1.tag     = 'anatT1';       %file names
+anatT1.filter  = 'image';
+anatT1.ufilter = '.*';
+anatT1.val{1}  = {''};
+anatT1.num     = [0 Inf];     % Number of inputs required
+anatT1.help    = {'Optional, can be specified in MC Segment, or earlier '
+    'and be available in NIRS.mat structure.'
+    'Select raw anatomical image(s) for the subject(s). '
+    'If several subjects, the images '
+    'must be in the same order as the NIRS.mat structures.'}';
+
+prjFile        = cfg_files; 
+prjFile.name    = 'Montage file'; % The displayed name
+prjFile.tag     = 'prjFile';       %file names
+prjFile.ufilter = '.prj';
+prjFile.num     = [1 1];     % Number of inputs required
+prjFile.help    = {'Select montage file (.prj), from MTG folder.'}';
+
+subj2         = cfg_branch;
+subj2.tag     = 'subj2';
+subj2.name    = 'Subject';
+subj2.val     = {Apath input1 prjFile age1 raw_onset_files2 anatT1};
+subj2.help    = {'This module allows multi-subject processing, '
+    'generating a NIRS.mat file for each subject. '
+    'Note that a list of links to the NIRS.mat structures will be '
+    'available as a virtual output for further processing'}';
+
+generic2         = cfg_repeat;
+generic2.tag     = 'generic2';
+generic2.name    = 'Subject';
+generic2.help    = {'For this module, more flexibility in location of files'
+    'is allowed, compared to the previous Read BOXY module'}';
+generic2.values  = {subj2};
+generic2.num     = [1 Inf];
+
+% %path structure
+% T1_path         = cfg_entry; %path
+% T1_path.name    = 'path for anatomical files';
+% T1_path.tag     = 'T1_path';
+% T1_path.strtype = 's';
+% T1_path.num     = [1 Inf];
+% T1_path.def     = @(val)nirs_get_defaults('readNIRS.boxy1.config_path.T1_path', val{:});
+% T1_path.help    = {'Path for T1 file: should be something like ..\T1\ (omit backslashes)'};
+% 
+% %path structure
+% output_path         = cfg_entry; %path
+% output_path.name    = 'path for .nir output files';
+% output_path.tag     = 'output_path';
+% output_path.strtype = 's';
+% output_path.num     = [1 Inf];
+% output_path.def     = @(val)nirs_get_defaults('readNIRS.boxy1.config_path.output_path', val{:});
+% output_path.help    = {'Path for .nir output files: should be something like ..\dataSPM\ (omit backslashes)'};
+
+config_path2         = cfg_branch;
+config_path2.tag     = 'config_path2';
+config_path2.name    = 'Path Configuration options';
+config_path2.val     = {T1_path output_path};
+config_path2.help    = {''};
+
+% Executable Branch
+boxy_manual1      = cfg_exbranch;
+boxy_manual1.name = 'ReadBoxyManual';
+boxy_manual1.tag  = 'boxy_manual1';
+boxy_manual1.val  = {generic2 config_path2 cf1};
+boxy_manual1.prog = @nirs_run_boxy_manual;
+boxy_manual1.vout = @nirs_cfg_vout_boxy_manual;
+boxy_manual1.help = {'Select raw BOXY data files for this subject.'};
+
+%make NIRS.mat available as a dependency
+    function vout = nirs_cfg_vout_boxy_manual(job)
+        vout = cfg_dep;
+        vout.sname      = 'NIRS.mat';
+        vout.src_output = substruct('.','NIRSmat');
+        vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
+    end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Configuration for IUGM (Techen CW5 [UNF] or CW6 [LESCA])
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -5519,6 +5635,17 @@ group_dir_name.num     = [1 Inf];
 group_dir_name.val{1}  = 'Group';
 group_dir_name.help    = {'Enter name of folder to store the analysis.'}';
 
+simple_sum = cfg_menu;
+simple_sum.tag    = 'simple_sum';
+simple_sum.name   = 'Use simple average or precision-weighted average';
+simple_sum.labels = {'Simple average','Precision-weighted average'};
+simple_sum.values = {1,0};
+simple_sum.val = {1};
+simple_sum.help   = {'Choice of averaging at the group level.'
+    'Simple average is the most conservative'
+    'Precision-weighting may give more activations, but they are'
+    'more likely to be false positives.'}';
+
 % Executable Branch
 liom_group      = cfg_exbranch;
 liom_group.name = 'Liom Group Model Estimation';
@@ -5526,7 +5653,7 @@ liom_group.tag  = 'liom_group';
 liom_group.val  = {NIRSmat group_dir_name FFX_or_RFX contrast_figures contrast_p_value ...
     GenerateInverted GroupColorbars override_colorbar figures_visible ...
     GroupFiguresIntoSubplots output_unc SmallFigures write_neg_pos ...
-    group_session_to_average}; % factorial_design};
+    group_session_to_average save_nifti_contrasts simple_sum}; % factorial_design};
 liom_group.prog = @nirs_run_liom_group;
 liom_group.vout = @nirs_cfg_vout_liom_group;
 liom_group.help = {'Liom Group level model estimation.'};
@@ -6592,6 +6719,46 @@ runOT1.help = {'.'};
 %         vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
 %     end
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Utilities
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+convert_files         = cfg_files; %Select NIRS.mat for this subject
+convert_files.name    = 'Select files to convert'; % The displayed name
+convert_files.tag     = 'convert_files';       %file names
+convert_files.filter  = 'image';
+convert_files.ufilter = '.*';
+convert_files.num     = [0 Inf];     % Number of inputs required
+convert_files.help    = {'Select files to convert.'}';
+
+convert_folders         = cfg_files; %Select NIRS.mat for this subject
+convert_folders.name    = 'Select folders to convert'; % The displayed name
+convert_folders.tag     = 'convert_folders';       %file names
+convert_folders.filter = 'dir';
+convert_folders.ufilter = '.*';
+convert_folders.num     = [0 Inf];     % Number of inputs required
+convert_folders.help    = {'Select folders of files to convert.'
+    'Attempt will be made to convert all the content of specified folders.'}';
+
+% Executable Branch
+convert_nii_to_2Dtopo      = cfg_exbranch;
+convert_nii_to_2Dtopo.name = 'Convert 2D nifti files to 2D topo files';
+convert_nii_to_2Dtopo.tag  = 'convert_nii_to_2Dtopo';
+convert_nii_to_2Dtopo.val  = {convert_files convert_folders};
+convert_nii_to_2Dtopo.prog = @nirs_run_nii_to_2D;
+convert_nii_to_2Dtopo.vout = @nirs_cfg_vout_nii_to_2D;
+convert_nii_to_2Dtopo.help = {'Convert 2D topographich nifti (.nii) files '
+    'to 2D topographic files (NIRS_SPM format).'}';
+
+%make NIRS.mat available as a dependency -- not coded up here
+    function vout = nirs_cfg_vout_nii_to_2D(job)
+        vout = cfg_dep;
+        vout.sname      = 'NIRS.mat';
+        vout.src_output = substruct('.','NIRSmat');
+        vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
+    end
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Configuration main modules
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -6601,7 +6768,7 @@ runOT1.help = {'.'};
 readNIRS        = cfg_choice;
 readNIRS.name   = 'Read NIRS data';
 readNIRS.tag    = 'readNIRS';
-readNIRS.values = {boxy1 criugm1 lot1};
+readNIRS.values = {boxy1 criugm1 lot1 boxy_manual1};
 readNIRS.help   = {'These modules read NIRS data in different formats.'};
 
 %module 0: utilities to read onsets and create GLM stimuli structure
@@ -6666,6 +6833,13 @@ CRIUGM.tag    = 'CRIUGM';
 CRIUGM.values = {runVOIRE1 runMOB1 runOT1};
 CRIUGM.help   = {'Data analysis for CRIUGM projects'};
 
+%module 10
+nirs_utilities        = cfg_choice;
+nirs_utilities.name   = 'NIRS utilities';
+nirs_utilities.tag    = 'nirs_utilities';
+nirs_utilities.values = {convert_nii_to_2Dtopo}; 
+nirs_utilities.help   = {'Various utilities.'};
+
 %-----------------------------------------------------------------------
 nirs10        = cfg_choice;
 nirs10.name   = 'nirs10';
@@ -6673,5 +6847,5 @@ nirs10.tag    = 'nirs10'; %Careful, this tag nirs10 must be the same as
 %the name of the toolbox and when called by spm_jobman in nirs10.m
 nirs10.values = {readNIRS readOnsets preprocessNIRS preprocANAT coregNIRS ...
     configMC1 runMC1 makesens1 calculatePVE1 model_reconstruct model_specify ...
-    model_estimate NIRS_HDM liom_HDM CRIUGM};
+    model_estimate nirs_utilities NIRS_HDM liom_HDM CRIUGM};
 end
