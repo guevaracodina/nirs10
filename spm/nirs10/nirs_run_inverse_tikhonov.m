@@ -194,7 +194,7 @@ for Idx=1:size(job.NIRSmat,1)
             [dum,namRR,extRR] = fileparts(temp.segRR);
             ctm.segRR = fullfile(ctm.p,[namRR extRR]);
             copyfile(temp.segRR,ctm.segRR);
-            delete(temp.segRR);
+%             delete(temp.segRR);
             NIRS.Tm.tmrs{itm} = ctm;
             NIRS.Tm.n{itm} = ctm.n;
             
