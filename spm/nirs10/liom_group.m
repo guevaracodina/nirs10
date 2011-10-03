@@ -54,12 +54,12 @@ try
                 return
             else
                 erdf(1, kk) = msk(index_msk(kk)) - rank(X);
-                var_bs = sum(res.^2)./erdf(1,kk); % variance between subjects
+                var_bs(1,kk) = sum(res.^2)./erdf(1,kk); % variance between subjects
             end
             if FFX
                 tmp_denum = indiv_cov(index, kk); %no intersubject variance
             else
-                tmp_denum = indiv_cov(index, kk) + var_bs; %%% covariance individual + inter- subject variance
+                tmp_denum = indiv_cov(index, kk) + var_bs(1,kk); %%% covariance individual + inter- subject variance
             end
             numer = indiv_beta(index, kk)./tmp_denum;
             numer = sum(numer);
@@ -83,6 +83,11 @@ try
         std_group = zeros(1,s1*s2);
         std_group(index_msk) = std_group_tmp(:);
         std_group = reshape(std_group,s1,s2);
+        
+        var_bs_tmp = var_bs;
+        var_bs = zeros(1, s1*s2);
+        var_bs(index_msk) = var_bs_tmp(:);
+        var_bs = reshape(var_bs, s1, s2);
         
         G.tmap_group = tmap_group;
         G.erdf_group = erdf_group;
