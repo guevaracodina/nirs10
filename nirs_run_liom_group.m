@@ -113,6 +113,7 @@ Z.FFX = FFX;
 nS = size(job.NIRSmat,1);
 Z.nS = nS;
 Z.simple_sum = simple_sum;
+Z.group_session_to_average = group_session_to_average;
 if FFX || nS==1
     %fixed effects: loop over subjects first, as they are treated
     %separately
@@ -178,7 +179,7 @@ for Idx=1:nl
             save(newNIRSlocation,'NIRS');
             job.NIRSmat{nl,1} = newNIRSlocation;
             Z.dir1 = dir_group;
-        end
+         end
         
         %Big loop over views
         for v1=1:6
@@ -255,6 +256,8 @@ for Idx=1:nl
                     nC = length(xCon);
                     cbeta = zeros(ns,s1*s2);
                     ccov_beta = zeros(ns,s1*s2);
+                    Sess = [];
+                    Cp = [];
                 else
                     %build up list of contrasts and of their names
                     Clist = xConS{1};
@@ -394,7 +397,7 @@ try
                     ccov_beta(f1,:) = tmp(:);
                 else
                     %for is1=1:length(big_TOPO{f1}.v{v1}.s)
-                    is1 = group_session_to_average;
+                    is1 = Z.group_session_to_average;
                     %do each session separately
                     tmp = sign_hb*squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_beta(c1,:,:));
                     cbeta(f1,:) = tmp(:);
@@ -421,7 +424,7 @@ try
                     cbeta(f1,:) = tmp(:);
                 else
                     %do each session separately
-                    is1 = group_session_to_average;
+                    is1 = Z.group_session_to_average;
                     %for is1=1:length(big_TOPO{f1}.v{v1}.s)
                     tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_F(c1,:,:));
                     cbeta(f1,:) = tmp(:);

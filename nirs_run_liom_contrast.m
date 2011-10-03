@@ -22,6 +22,11 @@ try
 catch
     GroupColorbars = 0;
 end
+% try 
+%     contrast_dir_name = job.contrast_dir_name;
+% catch
+%     contrast_dir_name = 'Contrast';
+% end
 try
     SmallFigures = job.SmallFigures;
 catch
@@ -178,7 +183,7 @@ for Idx=1:size(job.NIRSmat,1)
         %load TOPO (topographic maps) if already (partially) generated
         ftopo = fullfile(dir1,'TOPO.mat');
         TOPO = [];
-        if exist(ftopo,'file'), load(ftopo); end
+        
         if NewDirCopyNIRS
             [dirN fil1 ext1] =fileparts(job.NIRSmat{Idx,1});
             dir2 = [dirN filesep NewNIRSdir];
@@ -188,6 +193,8 @@ for Idx=1:size(job.NIRSmat,1)
             [dir fil1 ext1] = fileparts(ftopo);
             ftopo = fullfile(dir2, [fil1 ext1]);
             dir1 = dir2;
+        else
+            if exist(ftopo,'file'), load(ftopo); end
         end
         %Fill Z Structure, for passing most generic data
         Z = [];
@@ -203,6 +210,7 @@ for Idx=1:size(job.NIRSmat,1)
         Z.SmallFigures = SmallFigures;
         Z.write_neg_pos = write_neg_pos;
         Z.save_nifti_contrasts = save_nifti_contrasts;
+        %Z.contrast_dir_name = contrast_dir_name;
         %Handles for figures
         Pt = []; %positive responses, tube
         Pu = []; %positive responses, uncorrected

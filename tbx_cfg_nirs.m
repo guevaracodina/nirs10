@@ -4561,6 +4561,14 @@ save_nifti_contrasts.help = {'This option is useful for 2nd level studies: '
     'It creates nifti images, one for each contrast, which can then be input'
     'Into an SPM 2nd level analysis.' }';
 
+% contrast_dir_name        = cfg_entry;
+% contrast_dir_name.name    = 'Name of folder to store the analysis';
+% contrast_dir_name.tag     = 'contrast_dir_name';
+% contrast_dir_name.strtype = 's';
+% contrast_dir_name.num     = [1 Inf];
+% contrast_dir_name.val{1}  = 'Contrast';
+% contrast_dir_name.help    = {'Enter name of folder to store the analysis.'}';
+
 % Executable Branch
 liom_contrast      = cfg_exbranch;
 liom_contrast.name = 'Liom Contrast Calculations';
@@ -5853,6 +5861,34 @@ liom_2way_anova.help = {'Liom 2way anova estimation.'
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     function vout = nirs_cfg_vout_liom_2way_anova(job)
+        vout = cfg_dep;
+        vout.sname      = 'NIRS.mat';
+        vout.src_output = substruct('.','NIRSmat');
+        vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
+    end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Tests post-hoc -- not coded up yet
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Executable Branch
+liom_posthoc      = cfg_exbranch;
+liom_posthoc.name = 'Liom post hoc tests';
+liom_posthoc.tag  = 'liom_posthoc';
+liom_posthoc.val  = {NIRSmat group_dir_name FFX_or_RFX contrast_figures contrast_p_value ...
+    GenerateInverted GroupColorbars override_colorbar figures_visible ...
+    GroupFiguresIntoSubplots output_unc SmallFigures write_neg_pos ...
+    group_session_to_average save_nifti_contrasts simple_sum}; 
+liom_posthoc.prog = @nirs_run_liom_posthoc;
+liom_posthoc.vout = @nirs_cfg_vout_liom_posthoc;
+liom_posthoc.help = {'Liom post hoc averaging.'
+   'This module currently performs simple t-tests on specific contrasts,'
+   'specifically for the effect of the difference of one contrast between sessions,'
+   'then averaged over subjects.'}';
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    function vout = nirs_cfg_vout_liom_posthoc(job)
         vout = cfg_dep;
         vout.sname      = 'NIRS.mat';
         vout.src_output = substruct('.','NIRSmat');
