@@ -22,7 +22,7 @@ matlabbatch{2}.spm.tools.nirs10.readOnsets.AnalyzerOnsets.NIRSmat_optional(1).tg
 matlabbatch{2}.spm.tools.nirs10.readOnsets.AnalyzerOnsets.NIRSmat_optional(1).tgt_spec{1}(1).value = 'mat';
 matlabbatch{2}.spm.tools.nirs10.readOnsets.AnalyzerOnsets.NIRSmat_optional(1).tgt_spec{1}(2).name = 'strtype';
 matlabbatch{2}.spm.tools.nirs10.readOnsets.AnalyzerOnsets.NIRSmat_optional(1).tgt_spec{1}(2).value = 'e';
-matlabbatch{2}.spm.tools.nirs10.readOnsets.AnalyzerOnsets.NIRSmat_optional(1).sname = 'ReadBoxy: NIRS.mat';
+matlabbatch{2}.spm.tools.nirs10.readOnsets.AnalyzerOnsets.NIRSmat_optional(1).sname = 'ReadBoxyManual: NIRS.mat';
 matlabbatch{2}.spm.tools.nirs10.readOnsets.AnalyzerOnsets.NIRSmat_optional(1).src_exbranch = substruct('.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1});
 matlabbatch{2}.spm.tools.nirs10.readOnsets.AnalyzerOnsets.NIRSmat_optional(1).src_output = substruct('.','NIRSmat');
 matlabbatch{2}.spm.tools.nirs10.readOnsets.AnalyzerOnsets.raw_onset_files = {''};
