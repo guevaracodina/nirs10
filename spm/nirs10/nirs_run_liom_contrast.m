@@ -133,6 +133,11 @@ if ~isempty(job.consess)
 else
     automated_contrasts = 1;
 end
+try 
+    NonlinearEpilepsyOn = job.NonlinearEpilepsyOn;
+catch
+    NonlinearEpilepsyOn = 0;
+end
 %Gaussian spatial LPF
 try
     radius = job.spatial_LPF.spatial_LPF_On.spatial_LPF_radius;
@@ -219,7 +224,7 @@ for Idx=1:size(job.NIRSmat,1)
         Ct = []; %positive and negative combined, tube
         Cu = []; %uncorrected
         %get contrasts
-        [SPM xCon SSxCon] = nirs_get_contrasts(SPM,job,automated_contrasts,0);
+        [SPM xCon SSxCon] = nirs_get_contrasts(SPM,job,automated_contrasts,0,NonlinearEpilepsyOn);
         if run_contrast_OK
             %Big loop over views
             for v1=1:size(views_to_run,2)
@@ -435,7 +440,7 @@ for Idx=1:size(job.NIRSmat,1)
                                 %varies between sessions
                                 if automated_contrasts
                                      %get contrasts
-                                    [SPM xCon SSxCon] = nirs_get_contrasts(SPM,job,automated_contrasts,f1);
+                                    [SPM xCon SSxCon] = nirs_get_contrasts(SPM,job,automated_contrasts,f1,NonlinearEpilepsyOn);
                                 end
                                 [TOPO] = constrasts_core(Z,W,TOPO,SPM.xXn{f1},SSxCon,f1,Pt,Pu,Nt,Nu,Ct,Cu);
                                 TOPO.SSxConS{f1} = SSxCon; %store contrasts by session
@@ -937,7 +942,7 @@ else
 end
 end
 
-function [SPM xCon SSxCon] = nirs_get_contrasts(SPM,job,automated_contrasts,s1)
+function [SPM xCon SSxCon] = nirs_get_contrasts(SPM,job,automated_contrasts,s1,NonlinearEpilepsyOn)
 %Construct the full design matrix over all sessions
 SS_SPM = SPM;
 SS_SPM.xCon = [];
@@ -989,7 +994,7 @@ contrastT = {}; contrastF = {};
 contrastT_name = {}; contrastF_name = {};
 %negative contrasts can be treated later as to avoid a
 %duplication of long calculations
-NonlinearEpilepsyOn = 0; %Remember to revert back to 0, used for most studies
+%NonlinearEpilepsyOn = 1; %Remember to revert back to 0, used for most studies
 try
     if automated_contrasts
         if NonlinearEpilepsyOn

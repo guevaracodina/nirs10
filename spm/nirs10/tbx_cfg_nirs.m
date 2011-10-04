@@ -4569,6 +4569,16 @@ save_nifti_contrasts.help = {'This option is useful for 2nd level studies: '
 % contrast_dir_name.val{1}  = 'Contrast';
 % contrast_dir_name.help    = {'Enter name of folder to store the analysis.'}';
 
+
+NonlinearEpilepsyOn      = cfg_menu;
+NonlinearEpilepsyOn.tag  = 'NonlinearEpilepsyOn';
+NonlinearEpilepsyOn.name = 'Automated contrasts for nonlinearities in epilepsy';
+NonlinearEpilepsyOn.labels = {'Yes', 'No'};
+NonlinearEpilepsyOn.values = {1,0};
+NonlinearEpilepsyOn.val    = {0};
+NonlinearEpilepsyOn.help = {'This option is ONLY for '
+    'Automated contrasts for nonlinearities in epilepsy'}';
+
 % Executable Branch
 liom_contrast      = cfg_exbranch;
 liom_contrast.name = 'Liom Contrast Calculations';
@@ -4577,7 +4587,7 @@ liom_contrast.tag  = 'liom_contrast';
 liom_contrast.val  = {NIRSmat NewDirCopyNIRS ProcessContrastsBySession GroupMultiSession view consess ...
     spatial_LPF GenerateInverted GroupColorbars contrast_p_value ...
     contrast_figures override_colorbar figures_visible GroupFiguresIntoSubplots ...
-    output_unc SmallFigures write_neg_pos TopoData save_nifti_contrasts}; %Study_type
+    output_unc SmallFigures write_neg_pos TopoData save_nifti_contrasts NonlinearEpilepsyOn}; %Study_type
 liom_contrast.prog = @nirs_run_liom_contrast;
 liom_contrast.vout = @nirs_cfg_vout_liom_contrast;
 liom_contrast.help = {'Liom Contrast Calculations.'};
@@ -5648,7 +5658,7 @@ simple_sum.tag    = 'simple_sum';
 simple_sum.name   = 'Use simple average or precision-weighted average';
 simple_sum.labels = {'Simple average','Precision-weighted average'};
 simple_sum.values = {1,0};
-simple_sum.val = {1};
+simple_sum.val = {0};
 simple_sum.help   = {'Choice of averaging at the group level.'
     'Simple average is the most conservative'
     'Precision-weighting may give more activations, but they are'
@@ -5871,29 +5881,29 @@ liom_2way_anova.help = {'Liom 2way anova estimation.'
 % Tests post-hoc -- not coded up yet
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Executable Branch
-liom_posthoc      = cfg_exbranch;
-liom_posthoc.name = 'Liom post hoc tests';
-liom_posthoc.tag  = 'liom_posthoc';
-liom_posthoc.val  = {NIRSmat group_dir_name FFX_or_RFX contrast_figures contrast_p_value ...
-    GenerateInverted GroupColorbars override_colorbar figures_visible ...
-    GroupFiguresIntoSubplots output_unc SmallFigures write_neg_pos ...
-    group_session_to_average save_nifti_contrasts simple_sum}; 
-liom_posthoc.prog = @nirs_run_liom_posthoc;
-liom_posthoc.vout = @nirs_cfg_vout_liom_posthoc;
-liom_posthoc.help = {'Liom post hoc averaging.'
-   'This module currently performs simple t-tests on specific contrasts,'
-   'specifically for the effect of the difference of one contrast between sessions,'
-   'then averaged over subjects.'}';
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function vout = nirs_cfg_vout_liom_posthoc(job)
-        vout = cfg_dep;
-        vout.sname      = 'NIRS.mat';
-        vout.src_output = substruct('.','NIRSmat');
-        vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
-    end
+% % Executable Branch
+% liom_posthoc      = cfg_exbranch;
+% liom_posthoc.name = 'Liom post hoc tests';
+% liom_posthoc.tag  = 'liom_posthoc';
+% liom_posthoc.val  = {NIRSmat group_dir_name FFX_or_RFX contrast_figures contrast_p_value ...
+%     GenerateInverted GroupColorbars override_colorbar figures_visible ...
+%     GroupFiguresIntoSubplots output_unc SmallFigures write_neg_pos ...
+%     group_session_to_average save_nifti_contrasts simple_sum}; 
+% liom_posthoc.prog = @nirs_run_liom_posthoc;
+% liom_posthoc.vout = @nirs_cfg_vout_liom_posthoc;
+% liom_posthoc.help = {'Liom post hoc averaging.'
+%    'This module currently performs simple t-tests on specific contrasts,'
+%    'specifically for the effect of the difference of one contrast between sessions,'
+%    'then averaged over subjects.'}';
+% 
+% 
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%     function vout = nirs_cfg_vout_liom_posthoc(job)
+%         vout = cfg_dep;
+%         vout.sname      = 'NIRS.mat';
+%         vout.src_output = substruct('.','NIRSmat');
+%         vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
+%     end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Analyze GLMs - loop over subjects and jobs, to plot simple t contrasts
