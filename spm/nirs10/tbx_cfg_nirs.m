@@ -577,7 +577,7 @@ indvdata        = cfg_choice;
 indvdata.name   = 'Individual data or template for all';
 indvdata.tag    = 'indvdata';
 indvdata.values = {template_chosen indvdata_chosen};%choose_path
-indvdata.val    = {indvdata_chosen};
+indvdata.def    = {indvdata_chosen};
 indvdata.help   = {['Individual data allows you to choose data for each of the subject.'...
     'Template for all allows you to use one coregistration for all your subjects. You will need one T1 image and the registration of the helmet on the same person.']};
 

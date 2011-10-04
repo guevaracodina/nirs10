@@ -46,7 +46,7 @@ for Idx=1:size(job.NIRSmat,1)
             csOK = 1;
             while ~strcmp(cs_ldir,tmp0)
                 ics =ics+1;
-                if ics <= length(NIRS.Cs.n)
+                if ics <= length(NIRS.Cs.n) 
                     tmp0 = NIRS.Cs.n{ics};
                 else
                     tmp0 = cs_ldir;
@@ -58,8 +58,8 @@ for Idx=1:size(job.NIRSmat,1)
                 end
             end
             if csOK
-                %current simulation
-                cs = NIRS.Cs.mcs{ics};
+            %current simulation
+            cs = NIRS.Cs.mcs{ics};
             end
         else
             %take last simulation
@@ -103,42 +103,29 @@ for Idx=1:size(job.NIRSmat,1)
         [userview systemview] = memory;
         aMem = systemview.PhysicalMemory.Available;
         
-        load(fullfile(cs_dir,'sens.mat'));
+        load(fullfile(cs_dir,'sens.mat')); %maybe sens.mat should never be written -- always .nii, more efficient
         Xmc = sens;
         clear sens
         % On veut reconstruire efficacement. Comme on a une resolution
         % proche du cm, on sous echantillonne la matrice de sensitivite...
-        %         for Ci =1:NC_cs
-        %             %inefficient, why write .nii
-        %             Xmci = reshape(Xmc(Ci,:),VsegR.dim);
-        %             Vmc = nirs_create_vol(fullfile(cs_dir,'Xmci.nii'),...
-        %                 VsegR.dim, VsegR.dt, VsegR.pinfo, VsegR.mat, Xmci);
-        %
-        %
-        %             %this resizing has the same parameters has the one of segR to
-        %             %segRR (lines 47 to 52)
-        %             jobR.image_in ={Vmc.fname};
-        %             jobR.out_autonaming = 1;
-        %             jobR.out_prefix = 'R';
-        %             out =  nirs_resize(jobR);
-        %             clear Xmci Vmc
-        %             Vmc = spm_vol(out);
-        %             Ymc = spm_read_vols(Vmc);
-        %             Xmc_cm(Ci,:) = reshape(Ymc,[1 prod(Vmc.dim)]);
-        %         end
-        
-        %assume 
-        
-        %resampling of the sensitivity matrix
-        dimR = floor(VsegR.dim/jobR.out_vxsize);
-        Xmc_cm = zeros(NC_cs,prod(dimR));
-        for Ci =1:NC_cs
+        for Ci =1:NC_cs %rewrite by not writing to disk and calling a variant of nirs_resize that does not write to disk
             %inefficient, why write .nii
             Xmci = reshape(Xmc(Ci,:),VsegR.dim);
-            tmp = nirs_resize_no_save(Xmci,dimR);  
-            Xmc_cm(Ci,:) = tmp(:);       
+            Vmc = nirs_create_vol(fullfile(cs_dir,'Xmci.nii'),...
+                VsegR.dim, VsegR.dt, VsegR.pinfo, VsegR.mat, Xmci);
+            
+            
+            %this resizing has the same parameters has the one of segR to
+            %segRR (lines 47 to 52)
+            jobR.image_in ={Vmc.fname};
+            jobR.out_autonaming = 1;
+            jobR.out_prefix = 'R';
+            out =  nirs_resize(jobR);
+            clear Xmci Vmc
+            Vmc = spm_vol(out);
+            Ymc = spm_read_vols(Vmc);
+            Xmc_cm(Ci,:) = reshape(Ymc,[1 prod(Vmc.dim)]);
         end
-        
         % Xmc : matrice de sensitivite retaillee avec des plus gros voxels !
         Xmc = Xmc_cm;
         clear Xmc_cm Vmc Ymc sens
@@ -157,16 +144,14 @@ for Idx=1:size(job.NIRSmat,1)
         Xsens = blkdiag(Xwl{1}, Xwl{2});
         
         E0 = [ext1(1) ext1(2); ext2(1) ext2(2)];
-        sX = Xsens * kron(E0,sparse(eye(Nvx))); %Takes only about 10 GB on Optique-11 or-13, but over 24 GB on Optique-2.
+        sX = Xsens * kron(E0,sparse(eye(Nvx))); %Requires more than 24 GB of RAM
         clear Xsens
         switch job.ReML_method
             case 0
-                ctm.alg = 'ReML_Hup';
             case 1
                 tic%%%%%%%% SHBTB %This requires a lot of memory, takes about 1 minute
                 Xbar = sparse([sXmc sX ; speye(Nvx) sparse(zeros(Nvx,2*Nvx)) ; sparse(zeros(2*Nvx,Nvx)) speye(2*Nvx)]);%%%%%%%% SHBTB
                 toc%%%%%%%% SHBTB
-                ctm.alg = 'ReML_SPM';
         end
         pdata = NIRS.Dt.fir.pp;
         wh = length(pdata);
@@ -179,13 +164,13 @@ for Idx=1:size(job.NIRSmat,1)
                 wh = 0;
             end
         end
-        for ifnirs=1:length(pdata)
-            ctm.Y = pdata{ifnirs};
-            Y = fopen_NIR(pdata{ifnirs},NIRS.Cf.H.C.N)';
+        for ifnirs=1:length(pdata)           
+            ctm.Y = pdata{ifnirs};            
+            Y = fopen_NIR(pdata{ifnirs},NIRS.Cf.H.C.N)';   
             
             if pmethod
                 downstep = round(NIRS.Cf.dev.fs/downfreq);
-                TR = downstep/downfreq/NIRS.Cf.dev.fs;
+                TR = downstep/downfreq/NIRS.Cf.dev.fs;   
                 temp_pts = 1:downstep:size(Y,1);
             end
             %%% covariances %%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -228,7 +213,7 @@ for Idx=1:size(job.NIRSmat,1)
             delete(temp.segRR);
             NIRS.Tm.tmrs{itm} = ctm;
             NIRS.Tm.n{itm} = ctm.n;
-            
+                           
             for itp=1:length(temp_pts)
                 tic
                 disp(['current : ' int2str(temp_pts(itp))])
@@ -297,8 +282,8 @@ for Idx=1:size(job.NIRSmat,1)
                 end
                 
                 betaR_HbO = reshape(beta(1:Nvx,1),VsegRR.dim);
-                betaR_HbR = reshape(beta(Nvx+1:2*Nvx,1),VsegRR.dim);
-                str0 = gen_num_str(itp,4);
+                betaR_HbR = reshape(beta(Nvx+1:2*Nvx,1),VsegRR.dim);                
+                str0 = gen_num_str(itp,4);               
                 V_O = nirs_create_vol(fullfile(ctm.p,['O_' str0 '.nii']),...
                     VsegRR.dim, [16,0], VsegRR.pinfo, VsegRR.mat, betaR_HbO);
                 V_R = nirs_create_vol(fullfile(ctm.p,['R_' str0 '.nii']),...
