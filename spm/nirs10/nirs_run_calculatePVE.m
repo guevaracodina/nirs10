@@ -39,28 +39,21 @@ for iSubj=1:size(job.NIRSmat,1)
         
         
         if ~isempty(job.dir_in{1,1})
-            f = job.outMCfiles;
-            cs_dir =  fileparts(f{1,:});
+            cs_dir =  fileparts(job.dir_in{1,1});
             [dummy cs_ldir] = fileparts(cs_dir);
-            
             ics =1;
             while ~strcmp(cs_ldir,NIRS.Cs.n{ics})
                 ics =ics+1;
             end
-            cs = NIRS.Cs.mcs{ics};
-            if cs.alg==1, Oe='.mch'; elseif cs.alg==2, Oe='.his';end
-            
         else
             [cs_dir dummy dummy1] = fileparts(job.NIRSmat{iSubj,1});
             ics = length(NIRS.Cs.n);
-            cs_ldir = NIRS.Cs.n{1,ics};
-            cs = NIRS.Cs.mcs{ics};
-            if cs.alg==1, Oe='.mch'; elseif cs.alg==2, Oe='.his';end
-            
-            [fchar,dummy] = spm_select('FPList',cs_dir,Oe);
-            for i=1:size(fchar,1)
-                f{i,1} = fchar(i,:);
-            end
+        end
+        cs = NIRS.Cs.mcs{ics};
+        if cs.alg==1, Oe='.mch'; elseif cs.alg==2, Oe='.his';end
+        [fchar,dummy] = spm_select('FPList',cs_dir,Oe);
+        for i=1:size(fchar,1)
+            f{i,1} = fchar(i,:);
         end
         
         switch cs.alg
@@ -162,10 +155,10 @@ for iSubj=1:size(job.NIRSmat,1)
                     % on prepare les calculs puisque des photons ont ete
                     % detectes par le canal
                     if tk_wl==690
-%                         muas = [opt_ppts{1,1}(1,1),opt_ppts{1,2}(1,1),opt_ppts{1,3}(1,1),opt_ppts{1,4}(1,1),opt_ppts{1,5}(1,1),opt_ppts_perturb{1}(1,1)];
+                        %                         muas = [opt_ppts{1,1}(1,1),opt_ppts{1,2}(1,1),opt_ppts{1,3}(1,1),opt_ppts{1,4}(1,1),opt_ppts{1,5}(1,1),opt_ppts_perturb{1}(1,1)];
                         muas = [opt_ppts(1,1,1),opt_ppts(1,2,1),opt_ppts(1,3,1),opt_ppts(1,4,1),opt_ppts(1,5,1),opt_ppts(1,6,1)];
                     elseif tk_wl ==830
-%                         muas = [opt_ppts{2,1}(1,1),opt_ppts{2,2}(1,1),opt_ppts{2,3}(1,1),opt_ppts{2,4}(1,1),opt_ppts{2,5}(1,1),opt_ppts_perturb{2}(1,1)];
+                        %                         muas = [opt_ppts{2,1}(1,1),opt_ppts{2,2}(1,1),opt_ppts{2,3}(1,1),opt_ppts{2,4}(1,1),opt_ppts{2,5}(1,1),opt_ppts_perturb{2}(1,1)];
                         muas = [opt_ppts(2,1,1),opt_ppts(2,2,1),opt_ppts(2,3,1),opt_ppts(2,4,1),opt_ppts(2,5,1),opt_ppts(2,6,1)];
                     end
                     
@@ -181,12 +174,12 @@ for iSubj=1:size(job.NIRSmat,1)
                             %                     end
                             if cs.nummed==6
                                 L_Vi_Vphts = History{tk_Ci,2}(idx,3:size(History{tk_Ci,2},2));
-%                                 elseif cs.nummed==11
-%                                 L_Vi_Vphts = History{tk_Ci,2}(idx,3:8)+[History{tk_Ci,2}(idx,9:13),zeros(size(History{tk_Ci,2}(idx,9:13),1),1)];
+                                %                                 elseif cs.nummed==11
+                                %                                 L_Vi_Vphts = History{tk_Ci,2}(idx,3:8)+[History{tk_Ci,2}(idx,9:13),zeros(size(History{tk_Ci,2}(idx,9:13),1),1)];
                             elseif cs.nummed==12
                                 L_Vi_Vphts = History{tk_Ci,2}(idx,3:8)+History{tk_Ci,2}(idx,9:14);
                             end
-                            W_phts = W0*exp(-sum(L_Vi_Vphts*muas',2));
+                            W_phts = W0*exp(-sum(L_Vi_Vphts*muas',2));% one line per photon
                             b0 = b0+size(L_Vi_Vphts,1);
                             b1 = b1+size(History{tk_Ci,2},1);
                             numerateur = zeros(1,6);
@@ -197,48 +190,35 @@ for iSubj=1:size(job.NIRSmat,1)
                             PDP_Vi = numerateur/sum(W_phts);
                             PDPF_Vi(1:6,Ci) = PDP_Vi/chord;
                             
-                            DPF = PDPF_Vi;
-                        case 2
-                            % Methode Michele
-                            %: intégration à NIRS10 du code de Michèle
-                            % Desjardins computeDirectProblem.m
-                            if cs.nummed==6
-                                photons_ppl = History{tk_Ci,2}(idx,3:size(History{tk_Ci,2},2));
-                            elseif cs.nummed==11
-                                photons_ppl = History{tk_Ci,2}(idx,3:8)+ History{tk_Ci,2}(idx,9:13);
-                            end
-                            % Il faut pondérer la moyenne sur les photons par le poids de chaque photon, donné par son atténuation dans le milieu. La probabilité qu'un photon ne soit pas absorbé dans un tissu est (exp(mua*parcours dans tissu)) (Hiraoka 1993).
-                            photons_weight = exp(-1 * photons_ppl*muas');
-                            
-                            % Pour la paire pi (sm-dn), le DPF est la moyenne sur tous les
-                            % photons, pondérée par leur atténuation, , de ce parcours
-                            DPL(1:6,Ci) = photons_ppl * photons_weight ./ sum(photons_weight); % barycentre
-                            DPF(1:6,Ci) = DPL(1,Ci)/(Cgp(1,Ci)*10);% ...divisée par la distance source-détecteur en mm                                     %%%%%%% Differential Pathlength Factor
-                            
-                            %                             % Parcours moyen dans la perturbation
-                            %                             PPL(1,Ci) = photons_opl(6,Ci) * photons_weight(6,1) ./ sum(photons_weight(6,1));
-                            %                             PPF(1,Ci) = PPL(1,Ci)/Cgp(1,Ci);
                             % Parcours moyen dans la zone BOLD
-                            PPL(1,Ci) = Rphotons_ppl(7:11,Ci)'* photons_weight(1:5,1) ./ sum(photons_weight(1:5,1));
-                            PPF(1,Ci) = PPL(1,Ci)/(Cgp(1,Ci)*10);
-                            
-                            PVF(1,Ci) = DPF(1,Ci)./PPF(1,Ci);% Partial pathlength factor and partial volume factor (PVF := DPF/PPF);
+                            L_disturb_Vphts = History{tk_Ci,2}(idx,9:14);
+                            W_phts = W0*exp(-sum(L_disturb_Vphts*muas',2));
+                            for ilayer=1:6
+                                num_disturb(1,ilayer) = sum(L_disturb_Vphts(:,ilayer).*W_phts,1);% sommation des photons
+                            end
+                            PDP_disturb = num_disturb/sum(W_phts);
+                            PDPF_disturb(1:6,Ci) = PDP_disturb/chord;
                     end
-                    disp(['PVE calculated for channel : ' int2str(Ci)]);
+                    disp(['DPF and PVE calculated for channel : ' int2str(Ci)]);
                 end
             catch % le fichier d histoire n a pas ete trouve...
-                disp(['PVE failed for channel (must probable reason : source is not part of the ROI): ' int2str(Ci)]);
+                disp(['DPF and PVE failed for channel (must probable reason : source is not part of the ROI): ' int2str(Ci)]);
                 PDPF_Vi(:,Ci) =-10;
             end
         end
+        % PVF partial volume factor (PVF := DPF/PPF);
+        PVF = sum(PDPF_Vi,1)./sum(PDPF_disturb,1);
+        PVF(isinf(PVF)) = 0;
+        
         disp(['b0 : ' int2str(b0) ' contre un total de ' int2str(b1)]);
         
         save(fullfile(cs_dir,'PDPF.mat'),'PDPF_Vi');
         NIRS.Dt.fir.PDPF = PDPF_Vi;
         %         save(fullfile(cs_dir,'DPF.mat'),'DPF');
         % NIRS.Dt.fir.DPF = DPF;
-        %         save(fullfile(cs_dir,'PVE.mat'),'PVF');
-        %         NIRS.Dt.fir.PVE = PVF;
+        save(fullfile(cs_dir,'PVF.mat'),'PVF');
+        NIRS.Dt.fir.PVF = PVF;
+        
         % ----------------------------------------------------------------------- %
         if NewDirCopyNIRS
             [dirN fil1 ext1] =fileparts(job.NIRSmat{iSubj,1});

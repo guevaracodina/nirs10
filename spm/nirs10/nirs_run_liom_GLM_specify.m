@@ -190,8 +190,9 @@ for Idx=1:size(job.NIRSmat,1)
         
         %Find onsets
         try
-            SPM.Sess(1).U;
-            SPM.Sess = NIRS.Dt.fir.Sess;
+            SPM.Sess = NIRS.Dt.fir.Sess;%CB inversion des deux lignes
+            SPM.Sess(1).U;%CB inversion des deux lignes
+
         catch
             %Ignore parametric modulations - cf spm_run_fmri_design.m
             P.name = 'none';
