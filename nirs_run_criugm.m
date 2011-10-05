@@ -241,6 +241,7 @@ for is=1:sN
             NIRS4all = load(fullfile(study_p, 'NIRS4all.mat'));
             NIRS.Cf.H = NIRS4all.NIRS.Cf.H;
             NIRS.Dt.ana = NIRS4all.NIRS.Dt.ana;
+            NIRS.Dt.ana.rend = fullfile(sDtp, 'TopoData.mat');
             %             NIRS.Dt.pro.errValofCoreg_mm2 = NIRS4all.NIRS.Dt.pro.errValofCoreg_mm2;
             copyfile(fullfile(study_p, 'TopoData.mat'),fullfile(sDtp, 'TopoData.mat'));
         end
