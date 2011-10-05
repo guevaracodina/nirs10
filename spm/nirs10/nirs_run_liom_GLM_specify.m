@@ -348,6 +348,7 @@ for Idx=1:size(job.NIRSmat,1)
             SPM.Sess(f).C.C    = C;
             SPM.Sess(f).C.name = Cname;
         end
+
         %Number of datapoints for each session
         nscan = [];
         for f=1:nsess
@@ -716,6 +717,26 @@ for Idx=1:size(job.NIRSmat,1)
         try NIRS.Cf.H.C.ok = NIRS.Cf.H.C.ok(ch_keep); end
     end
     save(newNIRSlocation,'NIRS');
+    %May need to generate a new topodata
+    if NIRSconfoundsOn
+        clear matlabbatch
+        matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg1.NIRSmat = {newNIRSlocation};
+        matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg1.DelPreviousData = 0;
+        matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg1.NewDirCopyNIRS.CreateNIRSCopy_false = struct([]);
+        matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg1.anatT1 = {''};
+        matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg1.segT1_4fit = {''};
+        matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg1.anatT1_template = {'W:\spm8\templates\T1.nii'};
+        matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg1.fid_in_subject_MNI = 0;
+        matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg1.nasion_wMNI = [0 84 -48];
+        matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg1.AL_wMNI = [-83 -19 -38];
+        matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg1.AR_wMNI = [83 -19 -38];
+        matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg1.GenDataTopo = 1;
+        matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg1.render_choice.render_template = struct([]);
+        matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg1.View6Projections = 0;
+        matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg1.Save6Projections = 1;
+        matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg1.ForceReprocess = 0;
+        spm_jobman('run',matlabbatch);
+    end
     job.NIRSmat{Idx,1} = newNIRSlocation;
 end
 out.NIRSmat = job.NIRSmat;
