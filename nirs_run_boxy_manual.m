@@ -218,8 +218,8 @@ for Idx_subj=1:N_subj
        disp('Problem with onset files');
     end
     %write out NIRS in .mat file
-    save([oldNIRS.subj_path 'NIRS'],'NIRS');   
-    save([oldNIRS.subj_path 'oldNIRS'],'oldNIRS');   
-    outNIRSmat = [outNIRSmat; fullfile(oldNIRS.subj_path,'NIRS.mat')];
+    save([oldNIRS.pathoutput 'NIRS'],'NIRS');   
+    save([oldNIRS.pathoutput 'oldNIRS'],'oldNIRS');   
+    outNIRSmat = [outNIRSmat; fullfile(oldNIRS.pathoutput,'NIRS.mat')];
 end %end for  Big loop over subjects
 out.NIRSmat = outNIRSmat;
