@@ -15,7 +15,7 @@ function out = nirs_run_calculatePVE(job)
 % DPF 807 = 4.99 + 0.067 A 0.814
 % DPF 832 = 4.67 + 0.062 A 0.819
 
-
+% Get optical properties of each layer of the medium and of the perturbation
 outOP = GetOpt_ppts('wl');
 opt_ppts = outOP{1};
 opt_ppts_perturb = outOP{2};
@@ -37,7 +37,7 @@ for iSubj=1:size(job.NIRSmat,1)
         NIRS.Dt.fir.DPF =[];
         NIRS.Dt.fir.PVE =[];
         
-        
+        % Get "cs" (current simulation) info
         if ~isempty(job.dir_in{1,1})
             cs_dir =  fileparts(job.dir_in{1,1});
             [dummy cs_ldir] = fileparts(cs_dir);
@@ -47,15 +47,17 @@ for iSubj=1:size(job.NIRSmat,1)
             end
         else
             [cs_dir dummy dummy1] = fileparts(job.NIRSmat{iSubj,1});
-            ics = length(NIRS.Cs.n);
+            ics = length(NIRS.Cs.n); % Use last simulation run
         end
         cs = NIRS.Cs.mcs{ics};
         if cs.alg==1, Oe='.mch'; elseif cs.alg==2, Oe='.his';end
+        % Select histtory/mch files
         [fchar,dummy] = spm_select('FPList',cs_dir,Oe);
         for i=1:size(fchar,1)
             f{i,1} = fchar(i,:);
         end
         
+        % Read simulation outputs from his/mch file
         switch cs.alg
             case 1 %MCX
                 count=0;
@@ -66,9 +68,11 @@ for iSubj=1:size(job.NIRSmat,1)
                     [tk_dir, tk_file, tk_ext] = fileparts(f{i,1});
                     %                     tk_wl = str2double(tk_file(end-4:end-2));
                     count = count+1;
-                    History{count,1} = tk_file;
-                    History{count,3} = header;
-                    History{count,2} = history;
+                    History{count,1} = tk_file; % name of file
+                    History{count,3} = header; % header info
+                    History{count,2} = history; % for each detected photon:
+                    % det # / number of scattering events / pathlength
+                    % through each layer (nlayers+2 columns)
                 end
                 
             case 2 %tMCimg
@@ -112,21 +116,26 @@ for iSubj=1:size(job.NIRSmat,1)
         clear tk_wl tk_file tk_dir tk_ext history header
         
         Cid = NIRS.Cf.H.C.id;
+        % 3 x NC : channel ID; source #; det #
         
-        %Cgp
+        %Cgp (source-detector distance for each channel)
         Cgp = NIRS.Cf.H.C.gp;
         %mesure par les Pfp
         %Cgp =
         
         b0=0;b1=0;
+        % b0 : nombre de photons comptés sur le détecteur en cours
+        % b1 : nombre total de photons comptés
+        
+        % For each channel
         for Ci=1:NIRS.Cf.H.C.N
             try
                 S_Ci = unique(Cid(2,Cid(1,:)== Ci));
                 D_Ci = unique(Cid(3,Cid(1,:)== Ci));
-                Cbloup = sum((1:length(Cid(1,:))).*(Cid(1,:) == Ci));
+                Cbloup = sum( (1:length(Cid(1,:))) .* (Cid(1,:) == Ci) );
                 %%% on reconstruit le nom
                 if S_Ci < 10, S_Cin = ['0' int2str(S_Ci)]; else S_Cin = int2str(S_Ci);end
-                tk_wl = NIRS.Cf.dev.wl(NIRS.Cf.H.C.wl(Cbloup));
+                tk_wl = NIRS.Cf.dev.wl(NIRS.Cf.H.C.wl(Cbloup)); % wavelength for this channel
                 tk_n = ['S_No' S_Cin '_' int2str(tk_wl) 'nm'];
                 %                 [dummy, tk_file, dummy1] = fileparts(tk_n);
                 
@@ -148,6 +157,9 @@ for iSubj=1:size(job.NIRSmat,1)
                 D_Ci_cfg = offset_cfgfile+D_Ci_csPkpt-cs.NSkpt;
                 
                 idx = History{tk_Ci,2}(:,1)==D_Ci_cfg;
+                % 1 ligne par photon; 
+                % idx recense les lignes pour lesquelles c'est
+                %  le détecteur D_Ci_cfg qui a compté le photon
                 if sum(idx)==0
                     PVF(1,Ci)=0;
                     DPF(1,Ci)=0;
@@ -162,6 +174,7 @@ for iSubj=1:size(job.NIRSmat,1)
                         muas = [opt_ppts(2,1,1),opt_ppts(2,2,1),opt_ppts(2,3,1),opt_ppts(2,4,1),opt_ppts(2,5,1),opt_ppts(2,6,1)];
                     end
                     
+                    % Source-detector distance
                     chord = norm(cs.P.Pfp_rmm(:,D_Ci_csPkpt)-cs.P.Pfp_rmm(:,S_Ci),2);
                     
                     test=1;
@@ -172,25 +185,31 @@ for iSubj=1:size(job.NIRSmat,1)
                             W0 = 1;
                             %                     else
                             %                     end
-                            if cs.nummed==6
+                            if cs.nummed==6 % 6 layers (no perturbation)
                                 L_Vi_Vphts = History{tk_Ci,2}(idx,3:size(History{tk_Ci,2},2));
                                 %                                 elseif cs.nummed==11
                                 %                                 L_Vi_Vphts = History{tk_Ci,2}(idx,3:8)+[History{tk_Ci,2}(idx,9:13),zeros(size(History{tk_Ci,2}(idx,9:13),1),1)];
-                            elseif cs.nummed==12
+                            elseif cs.nummed==12 % 12 layers (medium 6 layers + perturbation)
                                 L_Vi_Vphts = History{tk_Ci,2}(idx,3:8)+History{tk_Ci,2}(idx,9:14);
                             end
-                            W_phts = W0*exp(-sum(L_Vi_Vphts*muas',2));% one line per photon
-                            b0 = b0+size(L_Vi_Vphts,1);
-                            b1 = b1+size(History{tk_Ci,2},1);
+                            % muas' : nLayer x 1
+                            % L_Vi_Vphts : nPhotons counted by this det x nLayer
+                            W_phts = W0*exp(-sum(L_Vi_Vphts*muas',2));% one line per photon counted
+                            b0 = b0+size(L_Vi_Vphts,1); % nPhotons counted by this det
+                            b1 = b1+size(History{tk_Ci,2},1); % total nPhotons detected
                             numerateur = zeros(1,6);
                             for ilayer=1:6
                                 numerateur(1,ilayer) = sum(L_Vi_Vphts(:,ilayer).*W_phts,1);% sommation des photons
                             end
                             
                             PDP_Vi = numerateur/sum(W_phts);
+                            % Differential pathlength factor,
+                            % dimensionless, is mean pathglength /
+                            % source-detector distance
                             PDPF_Vi(1:6,Ci) = PDP_Vi/chord;
                             
-                            % Parcours moyen dans la zone BOLD
+                            % Parcours moyen dans la perturbation (calcul
+                            % identique)
                             L_disturb_Vphts = History{tk_Ci,2}(idx,9:14);
                             W_phts = W0*exp(-sum(L_disturb_Vphts*muas',2));
                             for ilayer=1:6
@@ -206,7 +225,8 @@ for iSubj=1:size(job.NIRSmat,1)
                 PDPF_Vi(:,Ci) =-10;
             end
         end
-        % PVF partial volume factor (PVF := DPF/PPF);
+        % PVF partial volume factor (PVF := DPF/PPF); summed over layers,
+        % one value for each channel
         PVF = sum(PDPF_Vi,1)./sum(PDPF_disturb,1);
         PVF(isinf(PVF)) = 0;
         
