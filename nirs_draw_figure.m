@@ -23,7 +23,7 @@ try
     try
         sum_kappa = F.sum_kappa;
     end
-    if ~(fign == 4)
+    if ~(fign == 4) && ~(fign == 5) 
         switch F.hb
             case 'HbO'
                 nchn = length(W.ch_HbO);
@@ -138,6 +138,14 @@ try
                         end
                     end
                 end
+            end
+        case 5
+            %for 2-anova
+            str_cor = ['2A' int2str(eidf) '_' int2str(erdf-eidf)];
+            if strcmp(F.tstr,'F') % should always be the case
+                th_z = spm_invFcdf(1-p_value, eidf, erdf);
+                index_over = find(T_map > th_z);
+                index_over2 = []; %not used
             end
     end
     I = [];
