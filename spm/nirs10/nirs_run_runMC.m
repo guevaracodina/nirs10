@@ -78,7 +78,7 @@ for Idx=1:size(job.NIRSmat,1)
                     cd(dir1);
                     
                     % if his/mch needed
-                    if strcmp(file1(1),'S')
+                    if 1 %strcmp(file1(1),'S')
                         codeexe = 'mcx_det';
                         if countS ==0
                             countS = countS+1; %?
