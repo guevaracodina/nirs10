@@ -168,7 +168,7 @@ for Idx=1:nl
             [dir0,dummy,dummy2] = fileparts(job.NIRSmat{1});
             %extract previous directory
             tmp = strfind(dir0,filesep);
-            dir_root = dir0(1:tmp(end-2));
+            dir_root = dir0(1:tmp(end-3));
             dir_group = fullfile(dir_root, group_dir_name);
             if ~exist(dir_group,'dir'), mkdir(dir_group); end
             %store in same directory as first subject

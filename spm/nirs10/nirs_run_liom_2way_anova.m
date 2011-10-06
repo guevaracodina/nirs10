@@ -5,10 +5,12 @@ try
     out = nirs_spm_run_factorial_design(job);
 end
 %Get anova info
-for l1=1:2
-    nlevel(l1) = job.fact(l1).levels;
-    names_level{l1} = job.fact(l1).name;
-end
+% for l1=1:2
+%     nlevel(l1) = job.fact(l1).levels;
+%     names_level{l1} = job.fact(l1).name;
+% end
+anova2_sessions = job.anova2_sessions;
+anova2_contrasts = job.anova2_contrasts;
 Pu = [];
 Nu = [];
 Cu = [];
@@ -25,6 +27,7 @@ catch
     SmallFigures = 0;
 end
 write_neg_pos = 0;
+
 % try
 %     group_session_to_average = job.group_session_to_average;
 % catch
@@ -72,7 +75,12 @@ GFIS = 1;
 try
     anova_dir_name = job.anova_dir_name;
 catch
-    anova_dir_name = 'Anova';
+    anova_dir_name = 'AnovaTwoWay';
+end
+try 
+    includeSubjectEffects = job.includeSubjectEffects;
+catch
+    includeSubjectEffects = 1;
 end
 %Structure for passing more generic data
 Z = [];
@@ -86,6 +94,8 @@ Z.GFIS = GFIS;
 Z.output_unc = output_unc;
 Z.SmallFigures = SmallFigures;
 Z.write_neg_pos = write_neg_pos;
+Z.save_nifti_contrasts = 0;
+Z.includeSubjectEffects = includeSubjectEffects;
 min_s = 2;
 
 nS = size(job.NIRSmat,1);
@@ -121,7 +131,7 @@ try
     [dir0,dummy,dummy2] = fileparts(job.NIRSmat{1});
     %extract previous directory
     tmp = strfind(dir0,filesep);
-    dir_root = dir0(1:tmp(end-2));
+    dir_root = dir0(1:tmp(end-3));
     dir_group = fullfile(dir_root,anova_dir_name);
     if ~exist(dir_group,'dir'), mkdir(dir_group); end
     %store in same directory as first subject
@@ -183,9 +193,9 @@ try
             end
             %Contrasts - assume same contrasts for all subjects
             %xCon = big_TOPO{1}.xCon;
-            cbeta = zeros(ns,s1*s2);
-            ccov_beta = zeros(ns,s1*s2);
-            tmp = zeros(s1,s2);
+%             cbeta = zeros(ns,s1*s2);
+%             ccov_beta = zeros(ns,s1*s2);
+%             tmp = zeros(s1,s2);
             nC = length(xCon);
             if GFIS
                 Pu = figure('Visible',cbar.visible,'Name',['Group' '_' num2str(p_value) '_Pos'],'NumberTitle','off');
@@ -199,88 +209,88 @@ try
             CF.GInv = GInv;
             CF.split = split;
             CF.nC = nC;
+            nC0 = length(anova2_contrasts);
+            nS0 = length(anova2_sessions);
             
             %Loop over chromophores
             for h1=1:3 %including HbT
                 hb = get_chromophore(h1);
-                for c1=1:nC
-                    try
-                        %Skip F contrasts for now
-                        if xCon(c1).STAT == 'T'
-                            %fill in cbeta and ccov_beta
-                            for f1=1:ns
-                                try
-                                    if ~isfield(big_TOPO{f1}.v{v1},'s')
-                                        %group analysis of a group of
-                                        %sessions analysis
-                                        
-                                        tmp = squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_interp_beta(c1,:,:));
-                                        cbeta(f1,:) = tmp(:);
-                                        tmp = squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_cov_interp_beta(c1,:,:));
-                                        ccov_beta(f1,:) = tmp(:);
-                                        
-                                    else
-                                        %
-                                        %is1 = group_session_to_average;
-                                        %do each session separately
-                                        Ns = length(big_TOPO{f1}.v{v1}.s);
-                                        
-                                        for is1=1:3 %Ns
-                                            
-                                            tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_beta(c1,:,:));
-                                            if c1 == 1 && f1 == 1 && is1 == 1 
-                                                cbeta = zeros(ns,nC,Ns,length(tmp(:)));
-                                                ccov_beta =zeros(ns,nC,Ns,length(tmp(:)));
-                                            end
-                                            cbeta(f1,c1,is1,:) = tmp(:);
-                                            tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_cov_interp_beta(c1,:,:));
-                                            ccov_beta(f1,c1,is1,:) = tmp(:);
+                %Fill cbeta with session by contrast information
+                sC = 0; %session counter
+                Ns = length(big_TOPO{1}.v{v1}.s); %number of sessions
+                for s1=1:Ns
+                    %only selected sessions
+                    if any(s1==anova2_sessions)
+                        sC = sC + 1;
+                        cC = 0; %contrast counter
+                        for c1=1:nC
+                            %only selected contrasts
+                            if any(c1==anova2_contrasts)
+                                cC = cC + 1;
+                                %add to design matrix
+                                %Skip F contrasts for now
+                                if xCon(c1).STAT == 'T'
+                                    fC = 0;
+                                    %fill in cbeta
+                                    for f1=1:ns
+                                        try
+                                            fC = fC+1;
+                                            tmp = squeeze(big_TOPO{f1}.v{v1}.s{s1}.hb{h1}.c_interp_beta(c1,:,:));
+                                            %                                             %assign space - all cells
+                                            %                                             if cC == 1 && f1 == 1 && sC == 1
+                                            %                                                 nC0 = length(anova2_contrasts);
+                                            %                                                 nS0 = length(anova2_sessions);
+                                            %                                                 cbeta{nS0,nC0} = zeros(ns,length(tmp(:)));
+                                            %                                             end
+                                            %                                             %further assign space - each cell
+                                            %                                             if f1 == 0
+                                            %                                                 cbeta{sC,cC} = zeros(ns,length(tmp(:)));
+                                            %                                             end
+                                            %now fill cbeta
+                                            cbeta(fC,sC,cC,:) = tmp(:);
+                                        catch exception %exception for difficulty filling cbeta
+                                            disp(exception.identifier);
+                                            disp(exception.stack(1));
+                                            fC = fC-1; %remove
+                                            %cbeta{sC,cC}(f1,:) = NaN(length(tmp(:)),1);
+                                            disp(['No data for subject ' int2str(f1) ', contrast ' int2str(c1) ', session ' int2str(s1) ', chromophore ' hb ', and view ' int2str(v1)]);
                                         end
                                     end
-                                catch exception
-                                    disp(exception.identifier);
-                                    disp(exception.stack(1));
-                                    disp(['No data for subject ' int2str(f1) ' contrast ' int2str(c1)  ' chromophore ' hb ' and view ' int2str(v1)]);
-                                end
-                            end
-                        else %quick fix for F stats
-                            for f1=1:ns
-                                try
-                                    if ~isfield(big_TOPO{f1}.v{v1},'s')
-                                        %group analysis of a group of
-                                        %sessions analysis
-                                        tmp = squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_interp_F(c1,:,:));
-                                        cbeta(f1,:) = tmp(:);
-                                        sz = size(squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_interp_F(c1,:,:)));
-                                        tmp = ones(sz(1), sz(2));
-                                        ccov_beta(f1,:) = tmp(:);
-                                    else
-                                        %RECALL TO MODIFY FOR 2-WAY ANOVA
-                                        %do each session separately
-                                        %is1 = group_session_to_average;
-                                        %for is1=1:length(big_TOPO{f1}.v{v1}.s)
-                                        for is1=1:length(big_TOPO{f1}.v{v1}.s)
-                                            tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_F(c1,:,:));
-                                            %Not sensible to mix T and F
-                                            %contrasts
-                                            cbeta(f1,c1,is1,:) = tmp(:);
-                                            sz = size(squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_F(c1,:,:)));
-                                            tmp = ones(sz(1), sz(2));
-                                            ccov_beta(f1,c1,is1,:) = tmp(:);
-                                        end
-                                    end
-                                catch
-                                    disp(['No data for subject ' int2str(f1) ' contrast ' int2str(c1)  ' chromophore ' hb ' and view ' int2str(v1)]);
                                 end
                             end
                         end
-                    catch exception
-                        disp(exception.identifier);
-                        disp(exception.stack(1));
+                    end
+                end %end for s1
+                
+                X0 = []; %Design matrix of reduced model                
+                ns0 = size(cbeta,1);
+                X = zeros(ns0*nS0*nC0,nS0*nC0); %Design matrix of 2-way anova (full model)
+                sC = 0; %session counter
+                for s1=1:Ns
+                    %only selected sessions
+                    if any(s1==anova2_sessions)
+                        sC = sC + 1;
+                        cC = 0; %contrast counter
+                        for c1=1:nC
+                            %only selected contrasts
+                            if any(c1==anova2_contrasts)
+                                cC = cC + 1;
+                                X0= [X0; eye(ns0)]; %intra-subject effects
+                                rs = (1+ (cC-1)*ns0+nC0*(sC-1)*ns0);
+                                re = rs+ns0-1;
+                                X(rs:re,cC+nC0*(sC-1)) = ones(ns0,1); %treatment effects                                
+                            end
+                        end
                     end
                 end
+                if includeSubjectEffects
+                    X = [X X0];
+                else
+                    X0 = [];
+                end
+           
                 try
-                    A = liom_2way_anova(cbeta,ccov_beta,s1,s2,ns,min_s);
+                    A = liom_group_2A(cbeta,X,X0,W.s1,W.s2,Z); %careful, s1 (session counter) not same as W.s1 (size of image)!
                 catch exception2
                     disp(exception2.identifier);
                     disp(exception2.stack(1));
@@ -298,25 +308,25 @@ try
                 F.contrast_info_both = [filestr ]; %same for Pos and Neg, used for combined figures
                 F.contrast_info_both_for_fig = [filestr_fig ]; %same for Pos and Neg, used for combined figures
                 
-                F.T_map = A.F;
-                F.erdf = A.df;
-                F.eidf = A.dfbetween;
+                F.T_map = A.tmap_group;
+                F.erdf = A.erdf;
+                F.eidf = A.eidf;
                 F.tstr = 'F'; %tstr;
                 F.hb = hb;
                 try
-                    DF = nirs_draw_figure(4,F,W,Z);
+                    DF = nirs_draw_figure(5,F,W,Z);
                 catch exception2
                     disp(exception2.identifier);
                     disp(exception2.stack(1));
                 end
                 try
-                    if GFIS, [Pu,Nu,Cu] = nirs_copy_figure(Pu,Nu,Cu,DF,CF,c1,hb,1,F.tstr); end;
+                    if GFIS, [Pu,Nu,Cu] = nirs_copy_figure(Pu,Nu,Cu,DF,CF,1,hb,1,F.tstr); end;
                 catch exception2
                     disp(exception2.identifier);
                     disp(exception2.stack(1));
                 end
-             
-            end
+                
+            end %hb
             %save assembled figures
             save_assembled_figures(Z,W,Cu,'','unc',0);
             try close(Pu); end
