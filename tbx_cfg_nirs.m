@@ -2607,20 +2607,23 @@ no_pve.help = {'PVE won''t be calculated.'};
 pve_bold      = cfg_branch;
 pve_bold.name = 'BOLD mask';
 pve_bold.tag  = 'pve_bold';
-pve_bold.help = {'PVE will be calculated with respect to BOLD mask.'};
+pve_bold.help = {'PVE will be calculated with respect to last BOLD mask.'};
 
 pve_asl      = cfg_branch;
 pve_asl.name = 'ASL mask';
 pve_asl.tag  = 'pve_asl';
-pve_asl.help = {'PVE will be calculated with respect to ASL mask.'};
+pve_asl.help = {'PVE will be calculated with respect to last ASL mask.'};
 
 pve_anat         = cfg_files;
-pve_anat.name    = 'Anatomical image';
+pve_anat.name    = 'User-chosen mask';
 pve_anat.tag     = 'pve_anat';
 pve_anat.filter  = 'image';
 pve_anat.ufilter = '.nii';
 pve_anat.num     = [1 1];
-pve_anat.help    = {'PVE will be calculated with respect to a selected anatomical mask.'};
+pve_anat.help    = {['PVE will be calculated with respect to a user-chosen mask.' ...
+    ' The image can contain any value and have any resolution different from ' ...
+    'that of the simulation volume. It will be thresholded above 0 and transformed' ...
+    ' to the space of the simulation medium.']};
 
 pve_cfg           = cfg_choice;
 pve_cfg.name      = 'PVE';
