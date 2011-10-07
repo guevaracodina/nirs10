@@ -80,17 +80,36 @@ for Idx=1:size(job.NIRSmat,1)
         
         daate = strrep(datestr(now),':','-');
         
-        %%% on definit un nom
-        if sum(isfield(job.pve_cfg,{'pve_bold','pve_asl','pve_anat'})) %%%% Thresholded BOLD image is concidered as layer 6
-            %%%% it might be also a perturbation included by user... any use ??
-            % on cherche toutes les sessions qui pourraient mener a un
+        % CONFIGURE SIMULATION %     
+
+        if sum(isfield(job.pve_cfg,{'pve_bold','pve_asl','pve_anat'}))
+            %%%% Thresholded BOLD image is considered as layer 6
             
+            % on cherche toutes les sessions qui pourraient mener a un        
             % calcul de PVE
             last = size(NIRS.Dt.fir.pp,2);
             NSess = size(NIRS.Dt.fir.pp(1,last).p,1);
+            do_results_ui = 1;
+            cs.pve_cfg = 1;
+            cs.nummed = 12;
             
-            for iSess =1:NSess
-                arun=1; %?
+            if isfield(job.pve_cfg,'pve_anat')
+                %%%% it might be also a perturbation included by user, not
+                %%%% necessarily taken from BOLD results
+                do_results_ui = 0;
+                NSess = 1; %size(job.pve_cfg.pve_anat)
+            end
+            
+        elseif isfield(job.pve_cfg,'no_pve')           
+            cs.pve_cfg = 0;          
+            NSess = 1; % by default only 1 MC simulation        
+            cs.nummed = 6; % nombre de couches dans l'image
+            
+        end           
+            
+        for iSess = 1:NSess
+            arun=1; % already run               
+            if do_results_ui
                 if arun==0 %%% prevoir la sauvegarde des differentes matrices xSPM
                     clear xSPM_boldmask xSPM_boldmask_sorted
                     % on genere une simulation MonteCarlo par contraste BOLD ///
@@ -103,64 +122,42 @@ for Idx=1:size(job.NIRSmat,1)
                 else%%%% cas ou on a deja la matrice xSPM
                     load('D:\Users\Clément\Projet_ReML\donnees\test_MCX\S531\xSPM.mat');
                 end
-                
+                jobP.xSPM = xSPM;               
+
+                % Name for current simulation
                 cs_title = xSPM.title;
+                cs.dir = fullfile(G.seg_p,csn);
                 csn = [alg_nam '_' cs_title '_' daate];
-                cs.dir =fullfile(G.seg_p,csn);
-                if ~exist(cs.dir,'dir')%Directory for configuration files
-                    mkdir(cs.dir);
-                end
-                
-                try
-                    jobP.xSPM = xSPM;
+
+            else                   
+                % Name for current simulation
+                csn = [alg_nam '_' daate];   
+                cs.dir = fullfile(G.seg_p,csn);
+
+            end
+
+            if cs.pve_cfg
+                try % Resample the BOLD or user-specified mask to the space
+                    % and resolution of the medium for the simulation
+
+                    % User-specified mask (if given)
+                    if isfield(job.pve_cfg,'pve_anat') && ~isempty(job.pve_cfg.pve_anat)
+                        jobP.user_mask = job.pve_cfg.pve_anat{1};
+                    end
+
                     jobP.T1seg = G.seg;%NIRS.Dt.ana.T1seg;
                     jobP.cs_dir = cs.dir;
+
                     outP = nirs_MCsegment_PVE(jobP);
                     G.seg = outP;
-                    cs.pve_cfg = 1;
-                    
-                    % fin de config et ecriture
-                    jobF.G = G;
-                    jobF.G.dir = cs.dir;
-                    jobF.G.voxelSize =cs.par.voxelSize;
-                    jobF.G.alg = cs.alg;
-                    jobF.P = P;
-                    outF = nirs_configMC_toMCframe(jobF);%images,positions and directions
-                    cs.segR = outF.G.segR;
-                    cs.b8i = outF.G.b8i;
-                    cs.n_b8i = outF.G.n_b8i;
-                    cs.ROIlimits = outF.G.ROIlimits;
-                    cs.P = outF.P;
-                    cs.Pvoid = Pvoid;
-                    cs.Pfp_rmiv = outF.P.Pfp_rmiv;
-                    cs.Pwd_rmm = outF.P.Pwd_rmm;
-                    cs.nummed = 12;
-                    
-                    Sr = cs.par.radiis * ones(cs.NSkpt,1);
-                    Dr = cs.par.radiid * ones(cs.NDkpt,1);
-                    cs.P.r = [Sr' Dr' zeros(1,size(cs.Pkpt,1) -(cs.NSkpt+cs.NDkpt))];
-            
-                    NIRS.Cs.mcs{i_cs} = cs;
-                    NIRS.Cs.n{i_cs} = csn;
-                    
-                    jobW = cs;
-                    jobW.wl_dev = NIRS.Cf.dev.wl;
-                    nirs_configMC_writeCFGfiles2(jobW);
+
+
                 catch
                     disp(['PVE failed for session ' iSess]);
                 end
             end
-        elseif isfield(job.pve_cfg,'no_pve')
-            %Name for current simulation
-            csn = [alg_nam '_' daate];
-            cs.dir =fullfile(G.seg_p,csn);
-            %Directory for configuration files
-            if ~exist(cs.dir,'dir')
-                mkdir(cs.dir);
-            end
-            cs.pve_cfg = 0;
             
-            % fin de config et ecriture
+            % Fin de config
             jobF.G = G;
             jobF.G.dir = cs.dir;
             jobF.G.voxelSize =cs.par.voxelSize;
@@ -175,27 +172,37 @@ for Idx=1:size(job.NIRSmat,1)
             cs.Pvoid = Pvoid;
             cs.Pfp_rmiv = outF.P.Pfp_rmiv;
             cs.Pwd_rmm = outF.P.Pwd_rmm;
-            cs.nummed = 6;%? nombre de couches dans l'image
-            
+
             Sr = cs.par.radiis * ones(cs.NSkpt,1);
             Dr = cs.par.radiid * ones(cs.NDkpt,1);
             cs.P.r = [Sr' Dr' zeros(1,size(cs.Pkpt,1) -(cs.NSkpt+cs.NDkpt))];
-            
+
             NIRS.Cs.mcs{i_cs} = cs;
             NIRS.Cs.n{i_cs} = csn;
-            
+
             jobW = cs;
             jobW.wl_dev = NIRS.Cf.dev.wl;
+
+            % FOR EACH SIMULATION : WRITE CONFIGURATION FILES (.inp)
+            % Directory for configuration files
+            if ~exist(cs.dir,'dir')
+                mkdir(cs.dir);
+            end
+            % Write the files
             nirs_configMC_writeCFGfiles2(jobW);
+
         end
+            
         
         newNIRSlocation = fullfile(cs.dir,'NIRS.mat');
         save(newNIRSlocation,'NIRS');
         job.NIRSmat{Idx,1} = newNIRSlocation;
+        
     catch exception
         disp(exception.identifier);
         disp(exception.stack(1));
         disp(['Could not run MonteCarlo configuration for subject' int2str(Idx)]);
     end
 end
+
 out.NIRSmat = job.NIRSmat;
