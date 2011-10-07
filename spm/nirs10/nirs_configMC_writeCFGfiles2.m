@@ -21,8 +21,10 @@ function nirs_configMC_writeCFGfiles2(job)
 %%% magouille a regler proprement
 num = str2num(job.dir(35:37));
 %%%
-outOP = GetOpt_ppts('wl','D:\Users\Clément\DPF_testDuncan3\Opt_ppts_44sujets_MichP2S.mat',num);
-% il faut chqnger les propri2t2s si on chqnge lq tqille des voxels
+%outOP = GetOpt_ppts('wl','D:\Users\Clément\DPF_testDuncan3\Opt_ppts_44sujets_MichP2S.mat',num);
+outOP = GetOpt_ppts('wl');
+
+% il faut changer les propriétés si on change la taille des voxels
 scalings =[1 1 1 1];%= [job.par.voxelSize 1 job.par.voxelSize 1];
 opt_ppts = outOP{1};
 
