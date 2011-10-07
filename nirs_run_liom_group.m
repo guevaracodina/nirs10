@@ -244,6 +244,9 @@ for Idx=1:nl
                     %Contrasts -- assume same contrasts for all subjects
                     try
                         xCon = big_TOPO{1}.SSxCon; % big_TOPO{1}.xCon}; %????
+                        if isempty(xCon) %for contrasts defined over several sessions
+                            xCon = big_TOPO{1}.xCon;
+                        end
                     catch
                         xCon = big_TOPO{1}.xCon;
                     end
