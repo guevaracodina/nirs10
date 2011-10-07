@@ -190,8 +190,17 @@ for Idx=1:size(job.NIRSmat,1)
         
         %Find onsets
         try
-            NIRS.Dt.fir.Sess(1).U;
-            SPM.Sess = NIRS.Dt.fir.Sess;
+            for f=1:nsess
+                iSess = idx_sess(f);
+                NIRS.Dt.fir.Sess(1).U;
+                if ~isempty(NIRS.Dt.fir.Sess(iSess).U.ons)
+                    SPM.Sess(f) = NIRS.Dt.fir.Sess(iSess);
+                else % no onsets
+                    SPM.Sess(f).U = [];
+                    SPM.Sess(f).C.C = [];
+                    SPM.Sess(f).C.name = cell(1,0);
+                end
+            end
         catch
             %Ignore parametric modulations - cf spm_run_fmri_design.m
             P.name = 'none';

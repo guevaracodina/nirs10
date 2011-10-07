@@ -209,6 +209,8 @@ for is=1:sN
                         NIRS.Dt.fir.Sess(iU).U(kk).P = P;
                     end
                 else
+                    %NIRS.Dt.fir.Sess(iU).U = [];
+
                     NIRS.Dt.fir.Sess(iU).U.name = {};
                     NIRS.Dt.fir.Sess(iU).U.ons = [];
                     NIRS.Dt.fir.Sess(iU).U.dur = [];

@@ -2350,14 +2350,64 @@ normalize_baseline.help = {'Normalize to baseline'}';
 %Configuration for converting Optical Densities to HbO/HbR
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-PVF         = cfg_entry;
-PVF.name    = 'Partial Volume Factors';
-PVF.tag     = 'PVF';
-PVF.strtype = 'r';
-PVF.num     = [1 2];
-PVF.def  = @(val)nirs_get_defaults('preprocessNIRS.ODtoHbOHbR.PVF', val{:});
-PVF.help    = {'Enter the partial volume factor values for each wavelength ',...
+PVFsim         = cfg_files;
+PVFsim.name    = 'PVF from file';
+PVFsim.tag     = 'PVFsim';
+PVFsim.filter  = 'mat';
+PVFsim.ufilter = '.mat';
+PVFsim.num     = [1 1];
+PVFsim.help    = {['Select the PVF.mat file created by the nirs_calculatePVE module.']};
+
+PVFval         = cfg_entry;
+PVFval.name    = 'Enter values';
+PVFval.tag     = 'PVFval';
+PVFval.strtype = 'r';
+PVFval.num     = [1 2];
+PVFval.def  = @(val)nirs_get_defaults('preprocessNIRS.ODtoHbOHbR.PVF', val{:});
+PVFval.help    = {'Enter the partial volume factor values for each wavelength ',...
     'as a vector: [PVF(lambda_1) ... PVF(lambda_n)].'};
+
+PVF           = cfg_choice;
+PVF.name      = 'Partial Volume Factors';
+PVF.tag       = 'PVF';
+PVF.values    = {PVFval PVFsim};
+PVF.val       = {PVFval};
+PVF.help      = {'Either enter a value for the partial volume factor to apply ', ...
+    'or use the value computed by Monte-Carlo simulations and stored in the NIRS matrix.'};
+
+
+DPFsim         = cfg_files;
+DPFsim.name    = 'DPF from file';
+DPFsim.tag     = 'DPFsim';
+DPFsim.filter  = 'mat';
+DPFsim.ufilter = '.mat';
+DPFsim.num     = [1 1];
+DPFsim.help    = {['Select the PDPF.mat file created by the nirs_calculatePVE module.']};
+
+DPFval         = cfg_entry;
+DPFval.name    = 'Enter values';
+DPFval.tag     = 'DPFval';
+DPFval.strtype = 'r';
+DPFval.num     = [1 2];
+DPFval.def  = @(val)nirs_get_defaults('preprocessNIRS.ODtoHbOHbR.DPF', val{:});
+DPFval.help    = {'Enter the partial volume factor values for each wavelength ',...
+    'as a vector: [DPF(lambda_1) ... DPF(lambda_n)].'};
+
+DPFlit      = cfg_branch;
+DPFlit.name = 'Literature value';
+DPFlit.tag  = 'DPFlit';
+DPFlit.help = {'Literature values (from Duncan, 1996) will be used.'};
+
+DPF           = cfg_choice;
+DPF.name      = 'Differential pathlength factors';
+DPF.tag       = 'DPF';
+DPF.values    = {DPFval DPFsim DPFlit};
+DPF.val       = {DPFlit};
+DPF.help      = {'Either enter a value for the differential pathlenth factor to apply ', ...
+    'or use the value computed by Monte-Carlo simulations and stored in the NIRS matrix.' ...
+    ' Literature values can also be used (default).'};
+
+
 
 
 % ---------------------------------------------------------------------
@@ -2414,7 +2464,7 @@ nirs_lpf2.help      = {'Choose low-pass filter.'};
 ODtoHbOHbR      = cfg_exbranch;
 ODtoHbOHbR.name = 'Convert OD to HbO/HbR ';
 ODtoHbOHbR.tag  = 'ODtoHbOHbR';
-ODtoHbOHbR.val  = {NIRSmat DelPreviousData NewDirCopyNIRS PVF}; % nirs_lpf2};
+ODtoHbOHbR.val  = {NIRSmat DelPreviousData NewDirCopyNIRS DPF PVF}; % nirs_lpf2};
 ODtoHbOHbR.prog = @nirs_run_ODtoHbOHbR;
 ODtoHbOHbR.vout = @nirs_cfg_vout_ODtoHbOHbR;
 ODtoHbOHbR.help = {'Convert OD to HbO/HbR.'}';

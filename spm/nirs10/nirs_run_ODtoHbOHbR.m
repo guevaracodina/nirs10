@@ -18,8 +18,7 @@ for Idx=1:size(job.NIRSmat,1)
         load(job.NIRSmat{Idx,1});
         
         %bl_m = job.Normalize_OD;% method to calculate baseline
-        %threshold = job.threshold;%Threshold for cutting off small values of signal
-        PVF = job.PVF; % Partial volume correction factor
+
         age = NIRS.Dt.s.age;
         % Perform computation on output of the last step of preprocessing
         % that has been performed
@@ -30,6 +29,26 @@ for Idx=1:size(job.NIRSmat,1)
         NC = NIRS.Cf.H.C.N; % number of channels
         wl = NIRS.Cf.dev.wl; % device wavenlengths
         
+        % Partial volume correction factor
+        if isfield(job.PVF,'PVFval') && ~isempty(job.PVF.PVFval)
+            PVF = job.PVF.PVFval; % 1 x nLambda
+            PVF = repmat(PVF',[1 NC]); % nLambda x NC
+        elseif isfield(job.PVF,'PVFsim') && ~isempty(job.PVF.PVFsim)
+            simPVF = load(job.PVF.PVFsim{:}); 
+            PVF = simPVF.PVF; % 1 x NC
+            nLambda = length(wl);
+            PVF2 = zeros(nLambda,NC);
+            for iwl = 1:nLambda
+                for Ci = 1:NC
+                    PVF2(Cwl(1,Ci),Ci) = PVF(1,Ci);
+                end
+            end
+            PVF = PVF2; % nLambda x NC
+        else % for compatibility with older version            
+            PVF = job.PVF; % 1 x nLambda
+            PVF = repmat(PVF',[1 NC]); % nLambda x NC
+        end
+        
         try
             %exs(:,1): HbO for each wavelength; exs(:,2): HbR for each wavelength
             %Alexis's choice of extinction coefficients corresponds to case 1 in
@@ -39,22 +58,41 @@ for Idx=1:size(job.NIRSmat,1)
             disp('Problem loading extinction coefficients in nirs_run_ODtoHbOHbR.');
         end
         
-        %From Alexis Machado
-        % Differential path length factor --
-        %From 1996 Duncan et al. Measurement of cranial optical path length...
-        table = [690 ; 830 ; 744 ; 807];
-        a = [5.38 ; 4.67 ; 5.11 ; 4.99];
-        b = [0.049 ; 0.062 ; 0.106 ; 0.067];
-        c = [0.877 ; 0.819 ; 0.723 ; 0.814];
-        
-        for iwl =1:size(wl,2)
-            [raw,col] = find(wl(iwl)==table);
-            DPF(iwl,1) = a(raw,col)+b(raw,col)*age^c(raw,col);
+        % Differential pathlength factor
+        if isfield(job,'DPF') && isfield(job.DPF,'DPFval') && ~isempty(job.DPF.DPFval)
+            DPF = job.DPF.DPFval; % 1 x nLambda
+            DPF = repmat(DPF',[1 NC]); % nLambda x NC
+        elseif isfield(job,'DPF') && isfield(job.DPF,'DPFsim') && ~isempty(job.DPF.DPFsim)
+            load(job.DPF.DPFsim{:}); % nTissues x NC
+            DPF = sum(PDPF_Vi,1); % 1 x NC
+            nLambda = length(wl);
+            DPF2 = zeros(nLambda,NC);
+            for iwl = 1:nLambda
+                for Ci = 1:NC
+                    DPF2(Cwl(1,Ci),Ci) = DPF(1,Ci);
+                end
+            end
+            DPF = DPF2; % nLambda x NC
+        else % Use literature value
+            % From Alexis Machado
+            % Differential path length factor --
+            % From 1996 Duncan et al. Measurement of cranial optical path length...
+            table = [690 ; 830 ; 744 ; 807];
+            a = [5.38 ; 4.67 ; 5.11 ; 4.99];
+            b = [0.049 ; 0.062 ; 0.106 ; 0.067];
+            c = [0.877 ; 0.819 ; 0.723 ; 0.814];
+            for iwl =1:size(wl,2)
+                [raw,col] = find(wl(iwl)==table);
+                DPF(iwl,1) = a(raw,col)+b(raw,col)*age^c(raw,col);
+            end    
+            % nLambda x 1
+            DPF = repmat(DPF,[1 NC]); % nLambda x NC
         end
         
         EPF = zeros(1,NC); %EPF = L * PPF = L * DPF/PVF at each wavelength
         for Ci = 1:NC
-            EPF(1,Ci) = Cgp(1,Ci)*DPF(Cwl(1,Ci),1)./PVF(1,Cwl(1,Ci));
+            %EPF(1,Ci) = Cgp(1,Ci)*DPF(Cwl(1,Ci),1)./PVF(1,Cwl(1,Ci));
+            EPF(1,Ci) = Cgp(1,Ci)*DPF(Cwl(1,Ci),Ci)./PVF(Cwl(1,Ci),Ci);
             %             EPF(1,Ci) = Cgp(Ci,1)*DPF(Cwl(1,Ci),1)./PVF(1,Cwl(1,Ci)); %PP??? why not ./???
         end
         
