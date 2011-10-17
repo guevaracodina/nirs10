@@ -89,7 +89,9 @@ anatT1.filter  = 'image';
 anatT1.ufilter = '.*';
 anatT1.val{1}  = {''};
 anatT1.num     = [0 Inf];     % Number of inputs required
-anatT1.help    = {'Optional, can be specified in MC Segment, or earlier '
+anatT1.help    = {'CORRECTION: THIS IS NO LONGER OPTIONAL.'
+    'It is required for the coregistration module and the contrast module'
+    'Optional, can be specified in MC Segment, or earlier '
     'and be available in NIRS.mat structure.'
     'Select raw anatomical image(s) for the subject(s). '
     'If several subjects, the images '
