@@ -36,17 +36,27 @@ switch choice
         j = find(ages(:,2)<lim);
         v = find(ages(:,2)>lim);
         
-        if ages(isubj,2)<lim%j
-            c_a1 = mean(Opt_ppts(j,1,1))/mean(Opt_ppts(:,1,1));
-            c_s1 = mean(Opt_ppts(j,1,2))/mean(Opt_ppts(:,1,2));
-            c_a2 = mean(Opt_ppts(j,2,1))/mean(Opt_ppts(:,2,1));
-            c_s2 = mean(Opt_ppts(j,2,2))/mean(Opt_ppts(:,2,2));
-        else%v
-            c_a1 = mean(Opt_ppts(v,1,1))/mean(Opt_ppts(:,1,1));
-            c_s1 = mean(Opt_ppts(v,1,2))/mean(Opt_ppts(:,1,2));
-            c_a2 = mean(Opt_ppts(v,2,1))/mean(Opt_ppts(:,2,1));
-            c_s2 = mean(Opt_ppts(v,2,2))/mean(Opt_ppts(:,2,2));
-        end
+        %         if ages(isubj,2)<lim%j
+        %             c_a1 = mean(Opt_ppts(j,1,1))/mean(Opt_ppts(:,1,1));
+        %             c_s1 = mean(Opt_ppts(j,1,2))/mean(Opt_ppts(:,1,2));
+        %             c_a2 = mean(Opt_ppts(j,2,1))/mean(Opt_ppts(:,2,1));
+        %             c_s2 = mean(Opt_ppts(j,2,2))/mean(Opt_ppts(:,2,2));
+        %         else%v
+        %             c_a1 = mean(Opt_ppts(v,1,1))/mean(Opt_ppts(:,1,1));
+        %             c_s1 = mean(Opt_ppts(v,1,2))/mean(Opt_ppts(:,1,2));
+        %             c_a2 = mean(Opt_ppts(v,2,1))/mean(Opt_ppts(:,2,1));
+        %             c_s2 = mean(Opt_ppts(v,2,2))/mean(Opt_ppts(:,2,2));
+        %         end
+        
+        % 
+        load('D:\Users\Clément\DPF_article\analyses_dpf11\Mua_MichP2S44sujets.mat');
+        load('D:\Users\Clément\DPF_article\analyses_dpf11\Mus_MichP2S44sujets.mat');
+        % W weight en exponentielle negative
+        W = [0.0321 0.0871 0.2369 0.6439];
+        c_a1 = Mua(isubj,[1 2 3 4])*W'/mean(Mua(:,[1 2 3 4])*W');
+        c_s1 = Musprime(isubj,[1 2 3 4])*W'/mean(Musprime(:,[1 2 3 4])*W');
+        c_a2 = Mua(isubj,[13 14 15 16])*W'/mean(Mua(:,[13 14 15 16])*W');
+        c_s2 = Musprime(isubj,[13 14 15 16])*W'/mean(Musprime(:,[13 14 15 16])*W');
         %         % calcul de la nouvelle valeurs des mu pour toutes les couches sauf
         %         % le CSF qui ne contient aucune vasculature.
         op = opt_ppts;
@@ -55,7 +65,15 @@ switch choice
         op(2,[1 2 4 5],1) = c_a2*op(2,[1 2 4 5],1);
         op(2,[1 2 4 5],2) = c_s2*op(2,[1 2 4 5],2);
         opt_ppts = op;
-end
-out{1} = opt_ppts;
-out{2} = opt_ppts_perturb;
+        %%%%%%%%%%% DPF_article : MCsims
+        % % % % % %         load('D:\Users\Clément\DPF_article\MCsims\scripts\muFactors');
+        % % % % % %         op = opt_ppts;
+        % % % % % %         op(1,[1 2 4 5],1) = mua_vF690*op(1,[1 2 4 5],1);
+        % % % % % %         op(1,[1 2 4 5],2) = mus_vF690*op(1,[1 2 4 5],2);
+        % % % % % %         op(2,[1 2 4 5],1) = mua_vF830*op(2,[1 2 4 5],1);
+        % % % % % %         op(2,[1 2 4 5],2) = mus_vF830*op(2,[1 2 4 5],2);
+        % % % % % %         opt_ppts = op;
+        end
+        out{1} = opt_ppts;
+        out{2} = opt_ppts_perturb;
 end
