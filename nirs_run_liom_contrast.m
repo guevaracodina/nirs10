@@ -746,7 +746,7 @@ try
         end
         if  tstr == 'T' %for F-stat, do not invert the map - always positive
             %repeat for negative contrasts
-            F.T_map = -T_map;
+            F.T_map = -T_map; %only used for generating Neg contrast figures
         end
         
         F.contrast_info = [filestr '_Neg' xCon(c1).name];

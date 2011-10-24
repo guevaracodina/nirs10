@@ -448,21 +448,21 @@ try
         disp(exception2.stack(1));
     end
     if Z.FFX || Z.nS==1
-        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.Tmap = G.tmap_group;
-        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.erdf = G.erdf_group;
-        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.beta_group = G.beta_group;
-        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.std_group = G.std_group;
-        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.type = strB;
-        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.var_bs = G.var_bs;
-        TOPO.v{v1}.g.hb{h1}.c{2*c1-1}.c = xCon(c1);
+        TOPO.v{v1}.g.hb{h1}.c{2*c1-shb}.Tmap = G.tmap_group;
+        TOPO.v{v1}.g.hb{h1}.c{2*c1-shb}.erdf = G.erdf_group;
+        TOPO.v{v1}.g.hb{h1}.c{2*c1-shb}.beta_group = G.beta_group;
+        TOPO.v{v1}.g.hb{h1}.c{2*c1-shb}.std_group = G.std_group;
+        TOPO.v{v1}.g.hb{h1}.c{2*c1-shb}.type = strB;
+        TOPO.v{v1}.g.hb{h1}.c{2*c1-shb}.var_bs = G.var_bs;
+        TOPO.v{v1}.g.hb{h1}.c{2*c1-shb}.c = xCon(c1);
     else
-        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.Tmap = G.tmap_group;
-        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.erdf = G.erdf_group;
-        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.beta_group = G.beta_group;
-        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.std_group = G.std_group;
-        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.type = strB;
-        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.var_bs = G.var_bs;
-        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.c = xCon(c1);
+        TOPO.v{v1}.group.hb{h1}.c{2*c1-shb}.Tmap = G.tmap_group;
+        TOPO.v{v1}.group.hb{h1}.c{2*c1-shb}.erdf = G.erdf_group;
+        TOPO.v{v1}.group.hb{h1}.c{2*c1-shb}.beta_group = G.beta_group;
+        TOPO.v{v1}.group.hb{h1}.c{2*c1-shb}.std_group = G.std_group;
+        TOPO.v{v1}.group.hb{h1}.c{2*c1-shb}.type = strB;
+        TOPO.v{v1}.group.hb{h1}.c{2*c1-shb}.var_bs = G.var_bs;
+        TOPO.v{v1}.group.hb{h1}.c{2*c1-shb}.c = xCon(c1);
     end
     erdf_group = max(G.erdf_group(:)); %quick fix...
     filestr = [num2str(Z.p_value) '_' W.spec_hemi '_' hb];

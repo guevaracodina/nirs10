@@ -203,9 +203,9 @@ for Idx=1:size(job.NIRSmat,1)
                                             if h1 == 1 && c1 == 1 %only go through once
                                                 switch study_type
                                                     case 2
-                                                        m = TOPO.v{side_hemi}.group.hb{extract_manual_modality}.c{base_con}.Tmap;
+                                                        m = TOPO.v{side_hemi}.group.hb{extract_manual_modality}.c{2*base_con-1}.Tmap;
                                                     case {0,1}
-                                                        m = TOPO.v{side_hemi}.g.hb{extract_manual_modality}.c{base_con}.Tmap;
+                                                        m = TOPO.v{side_hemi}.g.hb{extract_manual_modality}.c{2*base_con-1}.Tmap;
                                                     case -1
                                                     otherwise
                                                 end
@@ -220,9 +220,9 @@ for Idx=1:size(job.NIRSmat,1)
                                         case 1 %extract_max_HbR - might be recalculating
                                             switch study_type
                                                 case 2
-                                                    m = TOPO.v{side_hemi}.group.hb{extract_auto_modality}.c{base_con}.Tmap;
+                                                    m = TOPO.v{side_hemi}.group.hb{extract_auto_modality}.c{2*base_con-1}.Tmap;
                                                 case {0,1}
-                                                    m = TOPO.v{side_hemi}.g.hb{extract_auto_modality}.c{base_con}.Tmap;
+                                                    m = TOPO.v{side_hemi}.g.hb{extract_auto_modality}.c{2*base_con-1}.Tmap;
                                                 case -1
                                                 otherwise
                                             end
@@ -231,9 +231,9 @@ for Idx=1:size(job.NIRSmat,1)
                                             %might want base_con here?
                                             switch study_type
                                                 case 2
-                                                    m = TOPO.v{side_hemi}.group.hb{h1}.c{con}.Tmap;
+                                                    m = TOPO.v{side_hemi}.group.hb{h1}.c{2*con-1}.Tmap;
                                                 case {0,1}
-                                                    m = TOPO.v{side_hemi}.g.hb{h1}.c{con}.Tmap;
+                                                    m = TOPO.v{side_hemi}.g.hb{h1}.c{2*con-1}.Tmap;
                                                 case -1
                                                 otherwise
                                                     
@@ -242,9 +242,9 @@ for Idx=1:size(job.NIRSmat,1)
                                         case 3 %extract_coordinates
                                             switch study_type
                                                 case 2
-                                                    m = TOPO.v{side_hemi}.group.hb{2}.c{base_con}.Tmap;
+                                                    m = TOPO.v{side_hemi}.group.hb{2}.c{2*base_con-1}.Tmap;
                                                 case {0,1}
-                                                    m = TOPO.v{side_hemi}.g.hb{2}.c{base_con}.Tmap;
+                                                    m = TOPO.v{side_hemi}.g.hb{2}.c{2*base_con-1}.Tmap;
                                                 case -1
                                                 otherwise
                                             end
@@ -372,8 +372,8 @@ for Idx=1:size(job.NIRSmat,1)
                                             ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bNmin = ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bcmin/ED.v{side_hemi}.s{f1}.hb{h1}.Ymin_Sigma;
                                             ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bNmax = ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bcmax/ED.v{side_hemi}.s{f1}.hb{h1}.Ymax_Sigma;
                                             %interpolated covariance
-                                            ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.covmin = interp_series(squeeze(TOPO.v{side_hemi}.s{f1}.hb{h1}.c_cov_interp_beta(c1,:,:)),lmin,[]);
-                                            ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.covmax = interp_series(squeeze(TOPO.v{side_hemi}.s{f1}.hb{h1}.c_cov_interp_beta(c1,:,:)),lmax,[]);
+                                            ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.covmin = interp_series(squeeze(TOPO.v{side_hemi}.s{f1}.hb{h1}.c_cov_interp_beta(c1,:,:)),lmin,[])/ED.v{side_hemi}.s{f1}.hb{h1}.Ymin_Sigma^2;
+                                            ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.covmax = interp_series(squeeze(TOPO.v{side_hemi}.s{f1}.hb{h1}.c_cov_interp_beta(c1,:,:)),lmax,[])/ED.v{side_hemi}.s{f1}.hb{h1}.Ymin_Sigma^2;
                                             %interpolated F
                                             ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.Fmin = interp_series(squeeze(TOPO.v{side_hemi}.s{f1}.hb{h1}.c_interp_F(c1,:,:)),lmin,[]);
                                             ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.Fmax = interp_series(squeeze(TOPO.v{side_hemi}.s{f1}.hb{h1}.c_interp_F(c1,:,:)),lmax,[]);
