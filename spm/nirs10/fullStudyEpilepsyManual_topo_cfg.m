@@ -1,7 +1,12 @@
 %-----------------------------------------------------------------------
 % Job configuration created by cfg_util (rev $Rev: 4252 $)
 %-----------------------------------------------------------------------
-matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy_manual1.subj2 = struct('Apath', {}, 'fnames', {}, 'prjFile', {}, 'age1', {}, 'raw_onset_files2', {}, 'anatT1', {});
+matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy_manual1.subj2.Apath = {''};
+matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy_manual1.subj2.fnames = {''};
+matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy_manual1.subj2.prjFile = {''};
+matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy_manual1.subj2.age1 = 25;
+matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy_manual1.subj2.raw_onset_files2 = {''};
+matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy_manual1.subj2.anatT1 = {''};
 matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy_manual1.config_path2.T1_path = 'T1';
 matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy_manual1.config_path2.output_path = 'dataSPM';
 matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy_manual1.cf1.Lambda = [830 690];
