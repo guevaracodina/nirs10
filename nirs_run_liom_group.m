@@ -341,7 +341,7 @@ for Idx=1:nl
             TOPO.Sess = Sess;
             TOPO.Cp = Cp;
         end
-        save(ftopo,'TOPO');
+        save(ftopo,'TOPO','-v7.3');
     catch exception
         disp(exception.identifier);
         disp(exception.stack(1));
