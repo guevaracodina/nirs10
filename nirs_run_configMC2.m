@@ -60,6 +60,7 @@ for Idx=1:size(job.NIRSmat,1)
         cs.alg = job.MC_CUDAchoice;%1=MCX ; 2=tMCimg
         if cs.alg==1, alg_nam='MCX'; else alg_nam ='tMC';end
         
+        cs.mu_subj = job.mu_subj;
         cs.par = job.MC_parameters;
         cs.NSinit = NIRS.Cf.H.S.N;
         cs.Ckpt = NIRS.Cs.temp.Ckpt;

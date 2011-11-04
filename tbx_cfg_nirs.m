@@ -2644,9 +2644,9 @@ MC_CUDAchoice.def    = @(val)nirs_get_defaults('configMC1.MC_CUDAchoice', val{:}
 MC_CUDAchoice.help   = {'Choose type of configuration files to generate.'};
 
 no_pve      = cfg_branch;
-no_pve.name = 'No';
+no_pve.name = 'No pertubation';
 no_pve.tag  = 'no_pve';
-no_pve.help = {'PVE won''t be calculated.'};
+no_pve.help = {'No a priori data about perturbation. PVE won''t be calculated.'};
 
 % calc_pve         = cfg_files;
 % calc_pve.name    = 'Mask for PVE';
@@ -2678,11 +2678,11 @@ pve_anat.help    = {['PVE will be calculated with respect to a user-chosen mask.
     ' to the space of the simulation medium.']};
 
 pve_cfg           = cfg_choice;
-pve_cfg.name      = 'PVE';
+pve_cfg.name      = 'Perturbation Mask';
 pve_cfg.tag       = 'pve_cfg';
 pve_cfg.values    = {no_pve pve_bold pve_asl pve_anat};
 pve_cfg.val       = {pve_bold};
-pve_cfg.help      = {'.'};
+pve_cfg.help      = {'A priori data about spatial location of a perturbation. It will be used fro reconstructions and PVF in perturbation mask (BOLD or other) will be computed.'};
 
 dpf_cfg        = cfg_menu;
 dpf_cfg.name   = 'Evaluate DPF';
@@ -2711,6 +2711,26 @@ MC_nam.val{1}  = 'sim';
 MC_nam.help    = {'Name of Monte Carlo simulation.'
     'If a simulation has already been run, '
     'the current date will be automatically added to the name specified'}';
+
+mulitt      = cfg_branch;
+mulitt.name = 'Litterature coefficients';
+mulitt.tag  = 'mulitt';
+mulitt.help = {'No a priori data about perturbation. PVE won''t be calculated.'};
+
+muTRS         = cfg_files;
+muTRS.name    = 'File containing subjects mua and mus';
+muTRS.tag     = 'muTRS';
+muTRS.ufilter = '.mat';
+muTRS.num     = [1 1];
+muTRS.help    = {'Values from TRS for exemple. DESCRIBE FILE'};
+
+mu_subj           = cfg_choice;
+mu_subj.name      = 'Use subject particular parameters';
+mu_subj.tag       = 'mu_subj';
+mu_subj.values    = {mulitt muTRS};
+mu_subj.val       = {mulitt};
+mu_subj.help      = {'Parameters measured thanks to TRS.'};
+ 
 
 %--------------------------------------------------------------------------
 nphotons         = cfg_entry;
@@ -2777,46 +2797,6 @@ voxelSize.num     = [1 1];     % Number of inputs required
 voxelSize.def = @(val)nirs_get_defaults('configMC1.voxelSize', val{:});
 voxelSize.help    = {'Input voxel Size.'};
 
-% gmPpties_l1         = cfg_entry;
-% gmPpties_l1.name    = 'Gray Matter first wavelength'; % The displayed name
-% gmPpties_l1.tag     = 'gmPpties_l1';       %file names
-% gmPpties_l1.strtype = 'r';
-% gmPpties_l1.num     = [1 4];     % Number of inputs required
-% gmPpties_l1.def = @(val)nirs_get_defaults('configMC1.gmPpties_l1', val{:});
-% gmPpties_l1.help    = {'Gray matter properties (\mu_a,\mu_s, g, n) for first wavelength (default = 830 nm).'};
-%
-% wmPpties_l1         = cfg_entry;
-% wmPpties_l1.name    = 'White Matter first wavelength'; % The displayed name
-% wmPpties_l1.tag     = 'wmPpties_l1';       %file names
-% wmPpties_l1.strtype = 'r';
-% wmPpties_l1.num     = [1 4];     % Number of inputs required
-% wmPpties_l1.def = @(val)nirs_get_defaults('configMC1.wmPpties_l1', val{:});
-% wmPpties_l1.help    = {'White matter properties (\mu_a,\mu_s, g, n) for first wavelength (default = 830 nm).'};
-%
-% csfPpties_l1         = cfg_entry;
-% csfPpties_l1.name    = 'CSF first wavelength'; % The displayed name
-% csfPpties_l1.tag     = 'csfPpties_l1';       %file names
-% csfPpties_l1.strtype = 'r';
-% csfPpties_l1.num     = [1 4];     % Number of inputs required
-% csfPpties_l1.def = @(val)nirs_get_defaults('configMC1.csfPpties_l1', val{:});
-% csfPpties_l1.help    = {'CSF properties (\mu_a,\mu_s, g, n) for first wavelength (default = 830 nm).'};
-%
-% skullPpties_l1         = cfg_entry;
-% skullPpties_l1.name    = 'Skull first wavelength'; % The displayed name
-% skullPpties_l1.tag     = 'skullPpties_l1';       %file names
-% skullPpties_l1.strtype = 'r';
-% skullPpties_l1.num     = [1 4];     % Number of inputs required
-% skullPpties_l1.def = @(val)nirs_get_defaults('configMC1.skullPpties_l1', val{:});
-% skullPpties_l1.help    = {'Skull properties (\mu_a,\mu_s, g, n) for first wavelength (default = 830 nm).'};
-%
-% scalpPpties_l1         = cfg_entry;
-% scalpPpties_l1.name    = 'Scalp first wavelength'; % The displayed name
-% scalpPpties_l1.tag     = 'scalpPpties_l1';       %file names
-% scalpPpties_l1.strtype = 'r';
-% scalpPpties_l1.num     = [1 4];     % Number of inputs required
-% scalpPpties_l1.def = @(val)nirs_get_defaults('configMC1.scalpPpties_l1', val{:});
-% scalpPpties_l1.help    = {'Scalp properties (\mu_a,\mu_s, g, n) for first wavelength (default = 830 nm).'};
-
 perturbationPpties_l1 = cfg_entry;
 perturbationPpties_l1.name    = 'Perturbation first wavelength'; % The displayed name
 perturbationPpties_l1.tag     = 'perturbationPpties_l1';       %file names
@@ -2825,46 +2805,6 @@ perturbationPpties_l1.num     = [1 4];     % Number of inputs required
 perturbationPpties_l1.def = @(val)nirs_get_defaults('configMC1.perturbationPpties_l1', val{:});
 perturbationPpties_l1.help    = {['Action on grey matter only: ',...
     'Perturbation properties Delta(\mu_a,\mu_s, g, n) for first wavelength (default = 830 nm).']};
-
-% gmPpties_l2         = cfg_entry;
-% gmPpties_l2.name    = 'Gray Matter second wavelength'; % The displayed name
-% gmPpties_l2.tag     = 'gmPpties_l2';       %file names
-% gmPpties_l2.strtype = 'r';
-% gmPpties_l2.num     = [1 4];     % Number of inputs required
-% gmPpties_l2.def = @(val)nirs_get_defaults('configMC1.gmPpties_l2', val{:});
-% gmPpties_l2.help    = {'Gray matter properties (\mu_a,\mu_s, g, n) for second wavelength (default = 690 nm).'};
-%
-% wmPpties_l2         = cfg_entry;
-% wmPpties_l2.name    = 'White Matter second wavelength'; % The displayed name
-% wmPpties_l2.tag     = 'wmPpties_l2';       %file names
-% wmPpties_l2.strtype = 'r';
-% wmPpties_l2.num     = [1 4];     % Number of inputs required
-% wmPpties_l2.def = @(val)nirs_get_defaults('configMC1.wmPpties_l2', val{:});
-% wmPpties_l2.help    = {'White matter properties (\mu_a,\mu_s, g, n) for second wavelength (default = 690 nm).'};
-%
-% csfPpties_l2         = cfg_entry;
-% csfPpties_l2.name    = 'CSF second wavelength'; % The displayed name
-% csfPpties_l2.tag     = 'csfPpties_l2';       %file names
-% csfPpties_l2.strtype = 'r';
-% csfPpties_l2.num     = [1 4];     % Number of inputs required
-% csfPpties_l2.def = @(val)nirs_get_defaults('configMC1.csfPpties_l2', val{:});
-% csfPpties_l2.help    = {'CSF properties (\mu_a,\mu_s, g, n) for second wavelength (default = 690 nm).'};
-%
-% skullPpties_l2         = cfg_entry;
-% skullPpties_l2.name    = 'Skull second wavelength'; % The displayed name
-% skullPpties_l2.tag     = 'skullPpties_l2';       %file names
-% skullPpties_l2.strtype = 'r';
-% skullPpties_l2.num     = [1 4];     % Number of inputs required
-% skullPpties_l2.def = @(val)nirs_get_defaults('configMC1.skullPpties_l2', val{:});
-% skullPpties_l2.help    = {'Skull properties (\mu_a,\mu_s, g, n) for second wavelength (default = 690 nm).'};
-%
-% scalpPpties_l2         = cfg_entry;
-% scalpPpties_l2.name    = 'Scalp second wavelength'; % The displayed name
-% scalpPpties_l2.tag     = 'scalpPpties_l2';       %file names
-% scalpPpties_l2.strtype = 'r';
-% scalpPpties_l2.num     = [1 4];     % Number of inputs required
-% scalpPpties_l2.def = @(val)nirs_get_defaults('configMC1.scalpPpties_l2', val{:});
-% scalpPpties_l2.help    = {'Scalp properties (\mu_a,\mu_s, g, n) for second wavelength (default = 690 nm).'};
 
 perturbationPpties_l2 = cfg_entry;
 perturbationPpties_l2.name    = 'Perturbation second wavelength'; % The displayed name
@@ -2879,14 +2819,14 @@ MC_parameters      = cfg_branch;
 MC_parameters.tag  = 'MC_parameters';
 MC_parameters.name = 'Parameters';
 MC_parameters.val  = {nphotons seed modulationFreq deltaT numTimeGates radiis radiid voxelSize ...
-    perturbationPpties_l1 perturbationPpties_l2};%gmPpties_l1 wmPpties_l1 csfPpties_l1 skullPpties_l1 scalpPpties_l1 gmPpties_l2 wmPpties_l2 csfPpties_l2 skullPpties_l2 scalpPpties_l2
+    perturbationPpties_l1 perturbationPpties_l2};
 MC_parameters.help = {'Parameters'};
 
 % Executable Branch
 configMC1      = cfg_exbranch;
 configMC1.name = 'Configure Monte Carlo inputs';
 configMC1.tag  = 'configMC1';
-configMC1.val  = {NIRSmat MC_nam mcim_cfg MC_CUDAchoice dpf_cfg pve_cfg MC_configdir MC_parameters};
+configMC1.val  = {NIRSmat MC_nam mcim_cfg MC_CUDAchoice dpf_cfg pve_cfg MC_configdir mu_subj MC_parameters};
 configMC1.prog = @nirs_run_configMC2;
 configMC1.vout = @nirs_cfg_vout_configMC;
 configMC1.help = {'Generate configuration input files for Monte Carlo simulation.'};
