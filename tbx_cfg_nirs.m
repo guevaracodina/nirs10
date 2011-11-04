@@ -716,35 +716,29 @@ AnalyzerOnsets.help = {'Select NIRS structures (optional) and/or '
 %Configuration  Read NIRS onsets from CRIUGM Eprime (Excel)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-ep_output         = cfg_files;
-ep_output.name    = 'Eprime output (Excel file)';
-ep_output.tag     = 'ep_output';
-ep_output.num     = [1 Inf];
-ep_output.help    = {'Select Excel file output from Eprime.'}';
+excelEprime    = cfg_files; %Select raw LOT data files for this subject 
+excelEprime.name    = 'Excel from E-Prime'; % The displayed name
+excelEprime.tag     = 'excelEprime';       %file names
+excelEprime.filter = '.xls';   
+excelEprime.num     = [1 Inf];     % Number of inputs required (2D-array with exactly one row and one column)
+excelEprime.help    = {'Select excel files imported from E-Prime .edat for the subject.'}; % help text displayed
 
-columns         = cfg_entry;
-columns.tag     = 'columns';
-columns.name    = 'Columns to read';
-columns.strtype = 's';
-columns.num     = [1 Inf];
-columns.def     = @(val)nirs_get_defaults('readOnsets.readEprimeOnsets.columns', val{:});
-columns.help = {''};
+readEprimeOnsets      = cfg_exbranch;      
+readEprimeOnsets.name = 'Get E-Prime Onsets';      
+readEprimeOnsets.tag  = 'readEprimeOnsets'; 
+readEprimeOnsets.val  = {NIRSmat DelPreviousData NewDirCopyNIRS excelEprime}; 
+readEprimeOnsets.prog = @nirs_run_readEprimeOnsets; 
+readEprimeOnsets.vout = @nirs_cfg_vout_readEprimeOnsets; 
+readEprimeOnsets.help = {'Write over given onset files, permuting onsets as, ',...
+    'required so that onsets are in the same order as for the first file. ',...
+    'This module should be run by itself, not as part of a larger batch.'};
 
-% Executable Branch
-readEprimeOnsets      = cfg_exbranch;
-readEprimeOnsets.name = 'Read Eprime onsets';
-readEprimeOnsets.tag  = 'readEprimeOnsets';
-readEprimeOnsets.val  = {ep_output columns};
-readEprimeOnsets.prog = @nirs_run_readEprimeOnsets;
-readEprimeOnsets.vout = @nirs_cfg_vout_readEprimeOnsets;
-readEprimeOnsets.help = {'Read Eprime output data.'}';
-
-    function vout = nirs_cfg_vout_readEprimeOnsets(job)
-        vout = cfg_dep;
-        vout.sname      = 'NIRS.mat';
-        vout.src_output = substruct('.','NIRSmat');
-        vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
-    end
+function vout = nirs_cfg_vout_readEprimeOnsets(job)
+vout = cfg_dep;                     
+vout.sname      = 'NIRS.mat';       
+vout.src_output = substruct('.','NIRSmat'); 
+vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Configuration  Permute Onsets if required
