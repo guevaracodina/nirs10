@@ -18,26 +18,23 @@ function nirs_configMC_writeCFGfiles2(job)
 % Copyright (C) 2010 Laboratoire d'Imagerie Optique et Moleculaire
 % mise a jour Clement 07/2011
 
-%%% magouille a regler proprement
-dir_a1 = fileparts(job.dir);
-[dir_a2 lstdir2] = fileparts(dir_a1);
-if strcmp(lstdir2(1:3),'roi')
-    [dir_a3 lstdir3] = fileparts(dir_a2);
-    num = str2num(lstdir3(2:4));
+if job.cs.mu_subj
+    dir_a1 = fileparts(job.dir);
+    [dir_a2 lstdir2] = fileparts(dir_a1);
+    if strcmp(lstdir2(1:3),'roi')
+        [dir_a3 lstdir3] = fileparts(dir_a2);
+        num = str2num(lstdir3(2:4));
+    else
+        num = str2num(lstdir2(2:4));
+    end
+    outOP = GetOpt_ppts('wl','D:\Users\Clément\DPF_testDuncan3\Opt_ppts_44sujets_MichP2S.mat',num);
 else
-    num = str2num(lstdir2(2:4));
+    outOP = GetOpt_ppts('wl');
 end
-outOP = GetOpt_ppts('wl','D:\Users\Clément\DPF_testDuncan3\Opt_ppts_44sujets_MichP2S.mat',num);
-%%%
-% % % % % % outOP = GetOpt_ppts('wl');
-%outOP = GetOpt_ppts('wl','D:\Users\Clément\DPF_testDuncan3\Opt_ppts_44sujets_MichP2S.mat',num);
-% il faut chqnger les propri2t2s si on chqnge lq tqille des voxels
-outOP = GetOpt_ppts('wl');
 
 % il faut changer les propriétés si on change la taille des voxels
 scalings =[1 1 1 1];%= [job.par.voxelSize 1 job.par.voxelSize 1];
 opt_ppts = outOP{1};
-
 opt_ppts_perturb = outOP{2};
 
 pve_cfg = job.pve_cfg;
