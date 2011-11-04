@@ -177,7 +177,7 @@ for is=1:sN
             
             NU=[];% number of session EST ON BIEN SUR QUE C EST PAS SESS ??????????? NOTATIONS PAS CONSISTANTES
             if ~strcmp(nirs_files,''), NU = size(nirs_files,1); end
-            Nons=[];
+            Nons=0;
             if ~strcmp(job.subj(1,is).protocol,''), Nons = size(job.subj(1,is).protocol,1); end
             % Loop over all sessions
             for iU=1:NU % # of data files

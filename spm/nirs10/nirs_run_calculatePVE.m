@@ -208,15 +208,16 @@ for iSubj=1:size(job.NIRSmat,1)
                             % source-detector distance
                             PDPF_Vi(1:6,Ci) = PDP_Vi/chord;
                             
-                            % Parcours moyen dans la perturbation (calcul
-                            % identique)
-                            L_disturb_Vphts = History{tk_Ci,2}(idx,9:14);
-                            W_phts = W0*exp(-sum(L_disturb_Vphts*muas',2));
-                            for ilayer=1:6
-                                num_disturb(1,ilayer) = sum(L_disturb_Vphts(:,ilayer).*W_phts,1);% sommation des photons
+                            if cs.nummed==12
+                                % Parcours moyen dans la zone BOLD
+                                L_disturb_Vphts = History{tk_Ci,2}(idx,9:14);
+                                W_phts = W0*exp(-sum(L_disturb_Vphts*muas',2));
+                                for ilayer=1:6
+                                    num_disturb(1,ilayer) = sum(L_disturb_Vphts(:,ilayer).*W_phts,1);% sommation des photons
+                                end
+                                PDP_disturb = num_disturb/sum(W_phts);
+                                PDPF_disturb(1:6,Ci) = PDP_disturb/chord;
                             end
-                            PDP_disturb = num_disturb/sum(W_phts);
-                            PDPF_disturb(1:6,Ci) = PDP_disturb/chord;
                     end
                     disp(['DPF and PVE calculated for channel : ' int2str(Ci)]);
                 end
@@ -225,19 +226,17 @@ for iSubj=1:size(job.NIRSmat,1)
                 PDPF_Vi(:,Ci) =-10;
             end
         end
-        % PVF partial volume factor (PVF := DPF/PPF); summed over layers,
-        % one value for each channel
-        PVF = sum(PDPF_Vi,1)./sum(PDPF_disturb,1);
-        PVF(isinf(PVF)) = 0;
+        if cs.nummed==12
+            % PVF partial volume factor (PVF := DPF/PPF);
+            PVF = sum(PDPF_Vi,1)./sum(PDPF_disturb,1);
+            PVF(isinf(PVF)) = 0;
+            save(fullfile(cs_dir,'PVF.mat'),'PVF');
+            NIRS.Dt.fir.PVF = PVF;
+        end
         
         disp(['b0 : ' int2str(b0) ' contre un total de ' int2str(b1)]);
-        
         save(fullfile(cs_dir,'PDPF.mat'),'PDPF_Vi');
         NIRS.Dt.fir.PDPF = PDPF_Vi;
-        %         save(fullfile(cs_dir,'DPF.mat'),'DPF');
-        % NIRS.Dt.fir.DPF = DPF;
-        save(fullfile(cs_dir,'PVF.mat'),'PVF');
-        NIRS.Dt.fir.PVF = PVF;
         
         % ----------------------------------------------------------------------- %
         if NewDirCopyNIRS

@@ -26,12 +26,12 @@ else
     %temporal points
     temp_pts = job.psel_choice.specific_points.temp_pts;
 end
-try 
+try
     tikh_constraint = job.tikh_constraint;
 catch
     tikh_constraint = 1;
 end
-try 
+try
     NewNIRSdir = job.NewDirCopyNIRS.CreateNIRSCopy.NewNIRSdir;
     NewDirCopyNIRS = 1;
 catch
@@ -60,8 +60,9 @@ for Idx=1:size(job.NIRSmat,1)
         
         %current tomo reconstruction
         ctm = {};
-        % b8i is...
-        % segR  is...
+        % b8i is the bin file of the 8bits image segR
+        % segR is ROI chosen in the segmented T1 image
+        
         % b8i and segR have the same orientations as there is no
         % permutation (C and Matlab conventions in nirs_run_configMC)
         
@@ -98,32 +99,32 @@ for Idx=1:size(job.NIRSmat,1)
         Xmc = sens;
         clear sens
         % Need to downsample sensitivity matrix
-%         for Ci =1:NC_cs
-%             %inefficient, why write .nii
-%             Xmci = reshape(Xmc(Ci,:),VsegR.dim);
-%             Vmc = nirs_create_vol(fullfile(cs_dir,'Xmci.nii'),...
-%                 VsegR.dim, VsegR.dt, VsegR.pinfo, VsegR.mat, Xmci);
-%             
-%             %this resizing has the same parameters as the one of segR to
-%             %segRR (lines 47 to 52)
-%             jobR.image_in ={Vmc.fname};
-%             jobR.out_autonaming = 1;
-%             jobR.out_prefix = 'R';
-%             fname =  nirs_resize(jobR);
-%             clear Xmci Vmc
-%             Vmc = spm_vol(fname);
-%             Ymc = spm_read_vols(Vmc);
-%             %
-%             XmcR(Ci,:) = reshape(Ymc,[1 prod(Vmc.dim)]);
-%         end
+        %         for Ci =1:NC_cs
+        %             %inefficient, why write .nii
+        %             Xmci = reshape(Xmc(Ci,:),VsegR.dim);
+        %             Vmc = nirs_create_vol(fullfile(cs_dir,'Xmci.nii'),...
+        %                 VsegR.dim, VsegR.dt, VsegR.pinfo, VsegR.mat, Xmci);
+        %
+        %             %this resizing has the same parameters as the one of segR to
+        %             %segRR (lines 47 to 52)
+        %             jobR.image_in ={Vmc.fname};
+        %             jobR.out_autonaming = 1;
+        %             jobR.out_prefix = 'R';
+        %             fname =  nirs_resize(jobR);
+        %             clear Xmci Vmc
+        %             Vmc = spm_vol(fname);
+        %             Ymc = spm_read_vols(Vmc);
+        %             %
+        %             XmcR(Ci,:) = reshape(Ymc,[1 prod(Vmc.dim)]);
+        %         end
         
         dimR = floor(VsegR.dim/jobR.out_vxsize);
         Xmc_cm = zeros(NC_cs,prod(dimR));
         for Ci =1:NC_cs
             %inefficient, why write .nii
             Xmci = reshape(Xmc(Ci,:),VsegR.dim);
-            tmp = nirs_resize_no_save(Xmci,dimR);  
-            Xmc_cm(Ci,:) = tmp(:);       
+            tmp = nirs_resize_no_save(Xmci,dimR);
+            Xmc_cm(Ci,:) = tmp(:);
         end
         
         Xmc = Xmc_cm;
@@ -155,14 +156,14 @@ for Idx=1:size(job.NIRSmat,1)
         end
         
         for ifnirs=1:length(pdata)
-            Y = fopen_NIR(pdata{ifnirs},NIRS.Cf.H.C.N)';           
+            Y = fopen_NIR(pdata{ifnirs},NIRS.Cf.H.C.N)';
             %creates Tmrs : tomographical reconstruction
             if ~isfield(NIRS,'Tm')
                 NIRS.Tm ={};
             end
             if pmethod
                 downstep = round(NIRS.Cf.dev.fs/downfreq);
-                TR = downstep/downfreq/NIRS.Cf.dev.fs;               
+                TR = downstep/downfreq/NIRS.Cf.dev.fs;
                 temp_pts = 1:downstep:size(Y,1);
             end
             %mkdir
@@ -175,7 +176,15 @@ for Idx=1:size(job.NIRSmat,1)
                     ctm.alg = 'PInv';
                 case 2 % avec wavelets...
                 case 3 % Li et al extended Tikhonov regularization (est ce que ca a de l interet alors qu il va falloir trouver deux hyperparametres)
-                case 4 % Tikhonov ameliore
+                    disp('pseudo inverse avec masque');
+                    ctm.alg = 'PInvM';
+                case 4 % Interpretation Bayesienne simple
+                    disp('pseudo inverse avec normes ponderes');
+                    ctm.alg = 'PInv';
+                    % IBS.1 : calcul des covariances
+                    jobC.cov{1} = 'n';
+                    jobC.cov{2} = 'p';
+                    Cov = nirs_calculatecovariances(jobC);
             end
             daate = strrep(datestr(now),':','-');
             tm_dir = ['tm_' daate '_a' ctm.alg '_' int2str(job.sens_vxsize) 'mm'];
@@ -194,7 +203,7 @@ for Idx=1:size(job.NIRSmat,1)
             [dum,namRR,extRR] = fileparts(temp.segRR);
             ctm.segRR = fullfile(ctm.p,[namRR extRR]);
             copyfile(temp.segRR,ctm.segRR);
-%             delete(temp.segRR);
+            %             delete(temp.segRR);
             NIRS.Tm.tmrs{itm} = ctm;
             NIRS.Tm.n{itm} = ctm.n;
             
@@ -204,36 +213,18 @@ for Idx=1:size(job.NIRSmat,1)
                 Y_to{1} = Y_t0(1:NC2mi,1);
                 Y_to{2} = Y_t0(NC2mi+1:end,1);
                 
-                %                 %%%% test fantome
-                %                 Yt0 = load('Yt0.nirs','-mat');
-                %                 Y_to{1} = Yt0.Yt0(1:size(Yt0.Yt0,1)/2,1);
-                %                 Y_to{2} = Yt0.Yt0(size(Yt0.Yt0,1)/2+1:size(Yt0.Yt0,1),1);
-                %                 %%%%
-                
                 % Dmua
                 Dmua{1} = zeros(Nvx,1);
                 Dmua{2} = zeros(Nvx,1);
                 
                 switch job.tikh_method
-                    case 0 % Tikhonov regularization : ancienne version
-                        for iwl=1:2
-                            Ybar = Y_to{1,iwl};
-                            X = Xwl{1,iwl};
-                            Xbar = sparse(X*Msk); %??
-                            
-                            XX =Xbar'*Xbar;
-                            YY = (Xbar'*Ybar);
-                            clear Xbar;
-                            XXLI = sparse(XX + alpha*eye(size(XX,2)));%eq19 huppert_2010_hierarchical
-                            Dmua{iwl} = XXLI \ YY;
-                        end
-                    case 1 % Tikhonov regularization
+                    case 0 % Tikhonov regularization
                         for iwl=1:2
                             if itp==1
                                 XX{iwl} =Xwl{iwl}'*Xwl{iwl};
                                 sz = size(XX{iwl},2);
                                 %takes 27 GB of memory for 4e4 x 4e4 size
-                                if tikh_constraint
+                                if tikh_constraint % spatial constraint : mask
                                     constraint_factor = 1e9;
                                     XXLI{iwl} = sparse(XX{iwl} + sparse(diag(alpha*(m_c12(:)+constraint_factor*(ones(sz,1)-m_c12(:))))));
                                 else
@@ -243,34 +234,32 @@ for Idx=1:size(job.NIRSmat,1)
                             YY = (Xwl{iwl}'*Y_to{iwl});
                             Dmua{iwl} = XXLI{iwl} \ YY;
                         end
-                    case 2 % avec wavelets...
-                    case 3 % Li et al extended Tikhonov regularization (est ce que ca a de l interet alors qu il va falloir trouver deux hyperparametres)
-                    case 4 % Tikhonov ameliore
-                        % Interpretation bayesienne simple (regularization de Tikhonov avec des valeurs de covariances non nulles)
-                        %                                 % Beta contient omega_space omega et beta_prior : pour Tikhonov pas
-                        %                                 % besoin de le definir puisque c'est nul...
-                        %                                 % Betabar = sparse(,,,beta_prior);
-                        %
-                        %                                 % ebar DE MEME, par contre on definit la matrice des covariances
-                        %                                 % des erreurs :
-                        %                                 %         coef = 0.1;%%%%% moyen de calculer ca sur les images ??????????????
-                        %                                 % of course : idee : en pratique surtout au niveau des interfaces,
-                        %                                 % peut etre sortir l'info de ci_ fournie par newsegment puisque
-                        %                                 % c'est des cartes de probabilite....
-                        %                                 %         Qs=sparse(1:2*Nvx,1:2*Nvx,coef*ones(2*Nvx,1),2*Nvx,2*Nvx); % omega_space
-                        %                                 %Set up the extended covariance model by concatinating the measurement
-                        %                                 %and parameter noise terms and spatial prior
-                        %                                 %         Q =blkdiag(Qn{1}+Qn{2},Qs,Qp{1}+Qp{2}+Qp{3}+Qp{4},Qp{1}+Qp{2}+Qp{3}+Qp{4});
-                        %
-                        %
-                        %                                 % on applique ensuite la formule de l'inversion :
-                        %                                 %%%cas de la svd
-                        %                                 %         Beta_estimate = (Xbar'*Xbar) \ (Xbar'*U'*Ybar);
+
+                        
+                    case 1 % Interpretation bayesienne simple
+                        for iwl=1:2
+                            if itp==1
+                                % IBS.2 : pseudo inversion (si necessaire on fait une svd)
+                                tXCn{iwl} = Xwl{iwl}'*Cn;
+                                tXCnX{iwl} =tXCn{iwl}*Xwl{iwl};
+                                
+                                %takes 27 GB of memory for 4e4 x 4e4 size
+                                if tikh_constraint % spatial constraint : mask
+                                    tcW = 1e9;
+                                    XXLI{iwl} = sparse(tXCnX{iwl} + sparse(diag(alpha*Cp(m_c12(:)+ tcW*(ones(sz,1)-m_c12(:))))));
+                                else
+                                    XXLI{iwl} = sparse(tXCnX{iwl} + alpha*Cp); % eq.19 huppert_2010_hierarchical
+                                end
+                            end
+                            YY = (tXCn{iwl}'*Y_to{iwl});
+                            Dmua{iwl} = XXLI{iwl} \ YY;
+                        end
                 end
                 
-                beta = Ext \ [Dmua{1} Dmua{2}]'; %get HbO HbR from Mua
-                betaR_HbO = reshape(full(beta(1,:)),VsegRR.dim);
-                betaR_HbR = reshape(full(beta(2,:)),VsegRR.dim);
+                        beta = Ext \ [Dmua{1} Dmua{2}]'; %get HbO HbR from Mua
+                        betaR_HbO = reshape(full(beta(1,:)),VsegRR.dim);
+                        betaR_HbR = reshape(full(beta(2,:)),VsegRR.dim);
+                
                 %write nifti for DHbO DHbR
                 str0 = gen_num_str(itp,4);
                 V_O = nirs_create_vol(fullfile(ctm.p,['O_' str0 '.nii']),...
@@ -288,9 +277,9 @@ for Idx=1:size(job.NIRSmat,1)
             if ~exist(dir2,'dir'), mkdir(dir2); end;
             newNIRSlocation = fullfile(dir2,'NIRS.mat');
             save(newNIRSlocation,'NIRS');
-            job.NIRSmat{Idx,1} = newNIRSlocation;          
+            job.NIRSmat{Idx,1} = newNIRSlocation;
         else
-            save(job.NIRSmat{Idx,1},'NIRS'); 
+            save(job.NIRSmat{Idx,1},'NIRS');
         end
     catch exception
         disp(exception.identifier);
