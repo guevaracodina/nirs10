@@ -105,7 +105,7 @@ for Idx=1:size(job.NIRSmat,1)
             cs.pve_cfg = 0;          
             NSess = 1; % by default only 1 MC simulation        
             cs.nummed = 6; % nombre de couches dans l'image
-            
+            do_results_ui = 0;
         end           
             
         for iSess = 1:NSess
