@@ -177,44 +177,42 @@ for is=1:sN
             
             NU=[];% number of session EST ON BIEN SUR QUE C EST PAS SESS ??????????? NOTATIONS PAS CONSISTANTES
             if ~strcmp(nirs_files,''), NU = size(nirs_files,1); end
-            Nons=0;
+            Nons=[];
+            NSess= 0;% number of session
+            Nons = 0;
+            if ~strcmp(nirs_files,''), NSess = size(nirs_files,1); end
             if ~strcmp(job.subj(1,is).protocol,''), Nons = size(job.subj(1,is).protocol,1); end
             % Loop over all sessions
-            for iU=1:NU % # of data files
-                fp = nirs_files(iU,1);
-                %clear f
-                %             f = load(fp{:},'-mat');
+            for iSess=1:NSess % # of data files
+                fp = nirs_files(iSess,1);
                 
-                NIRS.Dt.fir.pp(1).p{iU,1} = fp{:};
-                % ON ne melange pas les inputs des codes !!!            NIRS.Dt.fir.pp(1).m{iU,1} = job.subj(1,is).baseline_method;
+                NIRS.Dt.fir.pp(1).p{iSess,1} = fp{:};
                 NIRS.Dt.fir.pp(1).pre = 'readCriugm';
                 NIRS.Dt.fir.pp(1).job = job;
-                
-                %Ignore parametric modulations - cf spm_run_fmri_design.m
-                P.name = 'none';
-                P.h    = 0;
-                
-                
+                                
                 %%%%%
                 %%% MODIFIER POUR INTEGRER LES ONSETS DIFFEREMMENT %%%
                 % Protocol
-                if iU<=Nons && ~isempty(job.subj(1,is).protocol{iU,:})
-                    % Read "multiple conditions" file (.mat)
-                    clear names onsets durations;
-                    load(job.subj(1,is).protocol{iU,:},'-mat');
-                    for kk = 1:size(names, 2)
-                        NIRS.Dt.fir.Sess(iU).U(kk).name = names(kk);
-                        NIRS.Dt.fir.Sess(iU).U(kk).ons = onsets{kk};
-                        NIRS.Dt.fir.Sess(iU).U(kk).dur = durations{kk};
-                        NIRS.Dt.fir.Sess(iU).U(kk).P = P;
+                if Nons>0;
+                    %Ignore parametric modulations - cf spm_run_fmri_design.m
+                    P.name = 'none';
+                    P.h    = 0;
+                    if iSess<=Nons && ~isempty(job.subj(1,is).protocol{iSess,:})
+                        % Read "multiple conditions" file (.mat)
+                        clear names onsets durations;
+                        load(job.subj(1,is).protocol{iSess,:},'-mat');
+                        for kk = 1:size(names, 2)
+                            NIRS.Dt.fir.Sess(iSess).U(kk).name = names(kk);
+                            NIRS.Dt.fir.Sess(iSess).U(kk).ons = onsets{kk};
+                            NIRS.Dt.fir.Sess(iSess).U(kk).dur = durations{kk};
+                            NIRS.Dt.fir.Sess(iSess).U(kk).P = P;
+                        end
+                    else
+                        NIRS.Dt.fir.Sess(iSess).U.name = {};
+                        NIRS.Dt.fir.Sess(iSess).U.ons = [];
+                        NIRS.Dt.fir.Sess(iSess).U.dur = [];
+                        NIRS.Dt.fir.Sess(iSess).U.P = P;
                     end
-                else
-                    %NIRS.Dt.fir.Sess(iU).U = [];
-
-                    NIRS.Dt.fir.Sess(iU).U.name = {};
-                    NIRS.Dt.fir.Sess(iU).U.ons = [];
-                    NIRS.Dt.fir.Sess(iU).U.dur = [];
-                    NIRS.Dt.fir.Sess(iU).U.P = P;
                 end
             end
         end
