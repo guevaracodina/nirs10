@@ -18,7 +18,7 @@ function nirs_configMC_writeCFGfiles2(job)
 % Copyright (C) 2010 Laboratoire d'Imagerie Optique et Moleculaire
 % mise a jour Clement 07/2011
 
-if job.cs.mu_subj
+if isfield(job.mu_subj,'muTRS')
     dir_a1 = fileparts(job.dir);
     [dir_a2 lstdir2] = fileparts(dir_a1);
     if strcmp(lstdir2(1:3),'roi')
@@ -27,6 +27,7 @@ if job.cs.mu_subj
     else
         num = str2num(lstdir2(2:4));
     end
+    % a charger : job.mu_subj.muTRS
     outOP = GetOpt_ppts('wl','D:\Users\Clément\DPF_testDuncan3\Opt_ppts_44sujets_MichP2S.mat',num);
 else
     outOP = GetOpt_ppts('wl');

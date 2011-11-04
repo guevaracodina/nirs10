@@ -136,6 +136,11 @@ for Idx=1:size(job.NIRSmat,1)
                 cs.dir = fullfile(G.seg_p,csn);
 
             end
+            % FOR EACH SIMULATION : WRITE CONFIGURATION FILES (.inp)
+            % Directory for configuration files
+            if ~exist(cs.dir,'dir')
+                mkdir(cs.dir);
+            end
 
             if cs.pve_cfg
                 try % Resample the BOLD or user-specified mask to the space
