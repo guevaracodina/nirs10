@@ -14,12 +14,6 @@ function out = nirs_run_calculatePVE(job)
 % DPF 744 = 5.11 + 0.106 A 0.723
 % DPF 807 = 4.99 + 0.067 A 0.814
 % DPF 832 = 4.67 + 0.062 A 0.819
-
-% Get optical properties of each layer of the medium and of the perturbation
-outOP = GetOpt_ppts('wl');
-opt_ppts = outOP{1};
-opt_ppts_perturb = outOP{2};
-
 DelPreviousData  = job.DelPreviousData;
 try
     NewNIRSdir = job.NewDirCopyNIRS.CreateNIRSCopy.NewNIRSdir;
@@ -51,10 +45,31 @@ for iSubj=1:size(job.NIRSmat,1)
         end
         cs = NIRS.Cs.mcs{ics};
         if cs.alg==1, Oe='.mch'; elseif cs.alg==2, Oe='.his';end
-        % Select histtory/mch files
+        
+        % Get optical properties of each layer of the medium and of the perturbation
+        if isfield(cs,'mu_subj') && isfield(cs.mu_subj,'muTRS')
+            dir_a1 = fileparts(job.dir);
+            [dir_a2 lstdir2] = fileparts(dir_a1);
+            if strcmp(lstdir2(1:3),'roi')
+                [dir_a3 lstdir3] = fileparts(dir_a2);
+                num = str2num(lstdir3(2:4));
+            else
+                num = str2num(lstdir2(2:4));
+            end
+            % a charger : job.mu_subj.muTRS
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            outOP = GetOpt_ppts('wl','D:\Users\Clément\DPF_testDuncan3\Opt_ppts_44sujets_MichP2S.mat',num);
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        else
+            outOP = GetOpt_ppts('wl');
+        end
+        opt_ppts = outOP{1};
+        opt_ppts_perturb = outOP{2};
+
+        % Select history/mch files
         [fchar,dummy] = spm_select('FPList',cs_dir,Oe);
         for i=1:size(fchar,1)
-            f{i,1} = fchar(i,:);
+            f{i,1} = deblank(fchar(i,:));
         end
         
         % Read simulation outputs from his/mch file
@@ -118,11 +133,9 @@ for iSubj=1:size(job.NIRSmat,1)
         Cid = NIRS.Cf.H.C.id;
         % 3 x NC : channel ID; source #; det #
         
-        %Cgp (source-detector distance for each channel)
+        %Cgp (source-detector distance for each channel) : measure of the distance on the head
         Cgp = NIRS.Cf.H.C.gp;
-        %mesure par les Pfp
-        %Cgp =
-        
+
         b0=0;b1=0;
         % b0 : nombre de photons comptés sur le détecteur en cours
         % b1 : nombre total de photons comptés
@@ -132,23 +145,20 @@ for iSubj=1:size(job.NIRSmat,1)
             try
                 S_Ci = unique(Cid(2,Cid(1,:)== Ci));
                 D_Ci = unique(Cid(3,Cid(1,:)== Ci));
-                Cbloup = sum( (1:length(Cid(1,:))) .* (Cid(1,:) == Ci) );
-                %%% on reconstruit le nom
+                Cbloup = sum( (1:length(Cid(1,:))) .* (Cid(1,:) == Ci) );% vrai numero du canal
+                % SOURCE
                 if S_Ci < 10, S_Cin = ['0' int2str(S_Ci)]; else S_Cin = int2str(S_Ci);end
                 tk_wl = NIRS.Cf.dev.wl(NIRS.Cf.H.C.wl(Cbloup)); % wavelength for this channel
                 tk_n = ['S_No' S_Cin '_' int2str(tk_wl) 'nm'];
-                %                 [dummy, tk_file, dummy1] = fileparts(tk_n);
                 
                 iH=1;
                 while strcmp(tk_n,History{iH,1})==0
                     iH=iH+1;
                 end
-                tk_Ci = iH;% indice de la bonne ligne pour le canal Ci
+                tk_Ci = iH;% indice de la bonne ligne pour le canal Cbloup
                 
-                % maintenant les detecteurs sont ranges comme
-                % dans le fichier de config, il y en a le
-                % nombre de P-1 et cest dans lordre en
-                % enlevant la bonne source
+                % maintenant les detecteurs sont ranges comme dans le fichier de config, il y en a le
+                % nombre de P-1 et cest dans lordre en enlevant la bonne source
                 %%% on veut D_Ci
                 %%%% on cherche le nombre total de sources et on enleve
                 %%%% 1 :
@@ -157,10 +167,33 @@ for iSubj=1:size(job.NIRSmat,1)
                 D_Ci_cfg = offset_cfgfile+D_Ci_csPkpt-cs.NSkpt;
                 
                 idx = History{tk_Ci,2}(:,1)==D_Ci_cfg;
-                % 1 ligne par photon; 
-                % idx recense les lignes pour lesquelles c'est
+                % 1 ligne par photon; idx recense les lignes pour lesquelles c'est
                 %  le détecteur D_Ci_cfg qui a compté le photon
-                if sum(idx)==0
+                
+                % DETECTOR
+                try
+                    if D_Ci < 10, D_Cin = ['0' int2str(D_Ci)]; else D_Cin = int2str(D_Ci);end
+                    tkD_n = ['D_No' D_Cin '_' int2str(tk_wl) 'nm'];
+                    
+                    iH=1;
+                    while strcmp(tkD_n,History{iH,1})==0
+                        iH=iH+1;
+                    end
+                    tkD_Ci = iH;% indice de la bonne ligne pour le canal Ci
+                    
+                    % sources are sorted the same way in the config file and in
+                    % the NIRS matrix (in Pkpt) as they are sorted first
+                    S_Ci_csPkpt = sum((1:size(cs.Pkpt,2)).*(cs.Pkpt==S_Ci));
+                    S_Ci_cfg = S_Ci_csPkpt;
+                    
+                    idxD = History{tkD_Ci,2}(:,1)== S_Ci_cfg;
+                    % 1 ligne par photon; idx recense les lignes pour lesquelles c'est
+                    %  la source S_Ci_cfg qui a compté le photon
+                catch
+                    idxD = 0;
+                end
+
+                if sum(idx)==0 && sum(idxD)==0
                     PVF(1,Ci)=0;
                     DPF(1,Ci)=0;
                 else
@@ -180,26 +213,24 @@ for iSubj=1:size(job.NIRSmat,1)
                     test=1;
                     switch test
                         case 1
-                            % POUR MCX
-                            %                     if b==0
-                            W0 = 1;
-                            %                     else
-                            %                     end
+                            W0 = 1; % Okada : 1 for and to be calculated otherwise but it disappears anyway
                             if cs.nummed==6 % 6 layers (no perturbation)
                                 L_Vi_Vphts = History{tk_Ci,2}(idx,3:size(History{tk_Ci,2},2));
+                                L_Vi_Vphts = [L_Vi_Vphts; History{tkD_Ci,2}(idxD,3:size(History{tkD_Ci,2},2))];
                                 %                                 elseif cs.nummed==11
                                 %                                 L_Vi_Vphts = History{tk_Ci,2}(idx,3:8)+[History{tk_Ci,2}(idx,9:13),zeros(size(History{tk_Ci,2}(idx,9:13),1),1)];
                             elseif cs.nummed==12 % 12 layers (medium 6 layers + perturbation)
                                 L_Vi_Vphts = History{tk_Ci,2}(idx,3:8)+History{tk_Ci,2}(idx,9:14);
+                                L_Vi_Vphts = [L_Vi_Vphts; History{tkD_Ci,2}(idxD,3:8)+History{tkD_Ci,2}(idx,9:14)];
                             end
                             % muas' : nLayer x 1
                             % L_Vi_Vphts : nPhotons counted by this det x nLayer
                             W_phts = W0*exp(-sum(L_Vi_Vphts*muas',2));% one line per photon counted
                             b0 = b0+size(L_Vi_Vphts,1); % nPhotons counted by this det
-                            b1 = b1+size(History{tk_Ci,2},1); % total nPhotons detected
+                            b1 = b1+size(History{tk_Ci,2},1)+size(History{tkD_Ci,2},1); % total nPhotons detected
                             numerateur = zeros(1,6);
                             for ilayer=1:6
-                                numerateur(1,ilayer) = sum(L_Vi_Vphts(:,ilayer).*W_phts,1);% sommation des photons
+                                numerateur(1,ilayer) = sum(L_Vi_Vphts(:,ilayer).*W_phts,1);% sum over the photons
                             end
                             
                             PDP_Vi = numerateur/sum(W_phts);
@@ -211,6 +242,8 @@ for iSubj=1:size(job.NIRSmat,1)
                             if cs.nummed==12
                                 % Parcours moyen dans la zone BOLD
                                 L_disturb_Vphts = History{tk_Ci,2}(idx,9:14);
+                                L_disturb_Vphts = [L_disturb_Vphts; History{tkD_Ci,2}(idxD,9:14)];
+                                
                                 W_phts = W0*exp(-sum(L_disturb_Vphts*muas',2));
                                 for ilayer=1:6
                                     num_disturb(1,ilayer) = sum(L_disturb_Vphts(:,ilayer).*W_phts,1);% sommation des photons
