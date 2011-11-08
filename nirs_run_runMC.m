@@ -80,7 +80,7 @@ for Idx=1:size(job.NIRSmat,1)
                     % if his/mch needed
                     % if his/mch needed
                     if 1 %strcmp(file1(1),'S')
-% % % % % % % % % %                     if strcmp(file1(1),'S')
+                        % % % % % % % % % %                     if strcmp(file1(1),'S')
                         codeexe = 'mcx_det';
                         if countS ==0
                             countS = countS+1; %?
@@ -88,18 +88,18 @@ for Idx=1:size(job.NIRSmat,1)
                         if isempty(spm_select('FPList',dir1,'mcx_det.exe'))
                             copyfile([spm('Dir') '\toolbox\nirs10\mc_exe\' codeexe '.exe'],[dir1 filesep codeexe '.exe']);
                         end
-%                         system([codeexe ' -A -n ' int2str(cs.par.nphotons) ' -f ' file2 ' -s ' ...
-%                         file1 ' -r ' int2str(J.MCX_r) ' -g 1 -b 0 -d 1 -z 0 -l']);
-% % % % % % % % % %                     else
+                        %                         system([codeexe ' -A -n ' int2str(cs.par.nphotons) ' -f ' file2 ' -s ' ...
+                        %                         file1 ' -r ' int2str(J.MCX_r) ' -g 1 -b 0 -d 1 -z 0 -l']);
+                        % % % % % % % % % %                     else
                         
-% % % % % % % % % %                         codeexe = 'mcx';
-% % % % % % % % % %                         if countD ==0
-% % % % % % % % % %                             countD = countD+1; %?
-% % % % % % % % % %                         end
-% % % % % % % % % %                         if isempty(spm_select('FPList',dir1,'mcx.exe'))
-% % % % % % % % % %                             copyfile([spm('Dir') '\toolbox\nirs10\mc_exe\' codeexe '.exe'],[dir1 filesep codeexe '.exe']);
-% % % % % % % % % %                         end
-% % % % % % % % % %                     end
+                        % % % % % % % % % %                         codeexe = 'mcx';
+                        % % % % % % % % % %                         if countD ==0
+                        % % % % % % % % % %                             countD = countD+1; %?
+                        % % % % % % % % % %                         end
+                        % % % % % % % % % %                         if isempty(spm_select('FPList',dir1,'mcx.exe'))
+                        % % % % % % % % % %                             copyfile([spm('Dir') '\toolbox\nirs10\mc_exe\' codeexe '.exe'],[dir1 filesep codeexe '.exe']);
+                        % % % % % % % % % %                         end
+                    end
                     %                 if k1==1
                     %                     codeexe = 'mcx_det';
                     %                     copyfile([spm('Dir') '\toolbox\nirs10\mc_exe\' codeexe '.exe'],[dir1 filesep codeexe '.exe']);
@@ -112,7 +112,8 @@ for Idx=1:size(job.NIRSmat,1)
                         file1 ' -r ' int2str(J.MCX_r) ' -g 1 -b 0 -d 1 -z 0 -l']);
                 end
                 
-%                 if countD>0, delete([dir1 filesep 'mcx.exe']);end
+                
+                %                 if countD>0, delete([dir1 filesep 'mcx.exe']);end
                 if countS>0, delete([dir1 filesep 'mcx_det.exe']);end
                 
                 NIRS.Cs.mcs{ics}.MCX_t = J.MCX_t;
