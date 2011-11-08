@@ -3192,32 +3192,79 @@ alpha.help    = {'Tunes the model :'
     'If small, the solution favors minimizing the residual error with the measured data.'
     'If large, the solution is biased towards matching the prior (no activity).'}';
 
-tikh_method           = cfg_menu;
-tikh_method.name      = 'Tikhonov regularization method';
-tikh_method.tag       = 'tikh_method';
-tikh_method.labels    = {'a l''ancienne !' 'Tikhonov' 'Extended Tikhonov' 'Simple Bayesian Interpretation'};
-tikh_method.values    = {0,1,2,3};
-tikh_method.val       = {1};
-tikh_method.help      = {'Choose Tikhonov regularization reconstruction method (all taken from Hierarchical Bayesian regularization of reconstructions for diffuse optical tomography using multiple priors, Huppert).'
-    '-- a l''ancienne is the first method working (false but kept to be able to compare results)'
+alpha2         = cfg_entry;
+alpha2.name    = 'Hyperparameter Mask';
+alpha2.tag     = 'alpha2';
+alpha2.strtype = 'r';
+alpha2.num     = [1 1];
+alpha2.val     = {100};
+alpha2.help    = {'Change weight for mask. Actual weight used in the code will be alpha*alpha2.'}';
+
+wgmc      = cfg_branch;
+wgmc.name = 'Constraint on White and Grey Matter';
+wgmc.tag  = 'wgmc';
+wgmc.help = {''};
+
+samcs      = cfg_branch;
+samcs.name = 'Same as Monte Carlo simulation';
+samcs.tag  = 'samcs';
+samcs.help = {'Helmet informations will be extracted from ''.nirs'' file.'};
+
+timask         = cfg_files; %Select MC segmented volume for this subject
+timask.name    = 'Timask'; % The displayed name
+timask.tag     = 'timask';       %file names
+timask.filter  = 'image';
+timask.ufilter = '.nii';
+timask.num     = [1 1];     % Number of inputs required
+timask.help    = {'.'};
+
+tikh_mask         = cfg_choice;
+tikh_mask.tag     = 'tikh_mask';
+tikh_mask.name    = 'Mask for constraint';
+tikh_mask.values  = {wgmc samcs timask};
+tikh_mask.val     = {wgmc};
+tikh_mask.help    = {'Choose mask on witch you want to constraint reconstruction.'
+    'It can be the same as the one selected for Monte Carlo simulations then choose ''same as Monte Carlo simulations'' or any image.'}';
+
+tikh_SC      = cfg_branch;
+tikh_SC.name = 'Constraints';
+tikh_SC.tag  = 'tikh_SC';
+tikh_SC.val  = {tikh_mask alpha2};
+tikh_SC.help = {'Choose mask and hyperparameter.'};
+
+spatial_constraint         = cfg_repeat;
+spatial_constraint.tag     = 'generic1';
+spatial_constraint.name    = 'Spatial constraint for extended Tikhonov inversion';
+spatial_constraint.help    = {'Spatial constraint'}';
+spatial_constraint.values  = {tikh_SC};
+spatial_constraint.num     = [0 2];
+
+tikhonov      = cfg_branch;
+tikhonov.name = 'Tikhonov';
+tikhonov.tag  = 'tikhonov';
+tikhonov.help = {''}; 
+
+simple_bayes      = cfg_branch;
+simple_bayes.name = 'Simple Bayesian Interpretation';
+simple_bayes.tag  = 'simple_bayes';
+simple_bayes.help = {''};
+
+tikh_method         = cfg_choice;
+tikh_method.tag     = 'tikh_method';
+tikh_method.name    = 'Tikhonov regularization method';
+tikh_method.values  = {tikhonov simple_bayes};
+tikh_method.val     = {tikhonov};
+tikh_method.help    = {'Choose Tikhonov regularization reconstruction method (all taken from Hierarchical Bayesian regularization of reconstructions for diffuse optical tomography using multiple priors, Huppert).'
     '-- Tikhonov is the simplest method of regularization'
     '-- Extended Tikhonov uses Li et al. model'
     '-- Simple Bayesian Interpretation uses covariances for the norms.'
     }';
 
-tikh_constraint           = cfg_menu;
-tikh_constraint.name      = 'Reconstruction constraint';
-tikh_constraint.tag       = 'tikh_constraint';
-tikh_constraint.labels    = {'Yes','No'};
-tikh_constraint.values    = {1,0};
-tikh_constraint.val       = {1};
-tikh_constraint.help      = {'Force reconstructions to be on grey and white matter.'}';
-
 % Executable Branch
 tikhonov1      = cfg_exbranch;
 tikhonov1.name = 'Tikhonov inversion';
 tikhonov1.tag  = 'tikhonov1';
-tikhonov1.val  = {NIRSmat NewDirCopyNIRS psel_choice dir_in sens_vxsize tikh_method alpha tikh_constraint};
+tikhonov1.val  = {NIRSmat NewDirCopyNIRS psel_choice dir_in sens_vxsize tikh_method alpha spatial_constraint};
 tikhonov1.prog = @nirs_run_inverse_tikhonov;
 tikhonov1.vout = @nirs_cfg_vout_inverse_tikhonov;
 tikhonov1.help = {'Invert using Tikhonov.'};

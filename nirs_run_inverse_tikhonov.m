@@ -80,16 +80,16 @@ for Idx=1:size(job.NIRSmat,1)
         VsegRR = spm_vol(temp.segRR);
         YsegRR = spm_read_vols(VsegRR);
         YsegRR = reshape(YsegRR,[1 prod(VsegRR.dim)]);
-        %masks c1 and c5
-        m_c1 = zeros(size(YsegRR));
-        m_c1(YsegRR==1)=1;% mask for GM
-        m_c5 = zeros(size(YsegRR));
-        m_c5(YsegRR==5)=1;% mask for skin
-        if tikh_constraint
-            m_c12 = zeros(size(YsegRR));
-            m_c12(YsegRR==1 | YsegRR == 2)=1;
-        end
-        clear YsegRR;
+%         %masks c1 and c5
+%         m_c1 = zeros(size(YsegRR));
+%         m_c1(YsegRR==1)=1;% mask for GM
+%         m_c5 = zeros(size(YsegRR));
+%         m_c5(YsegRR==5)=1;% mask for skin
+%         if tikh_constraint
+%             m_c12 = zeros(size(YsegRR));
+%             m_c12(YsegRR==1 | YsegRR == 2)=1;
+%         end
+%         clear YsegRR;
         
         % Source detector pairs....
         C_cs = cs.C; %former Cmc
@@ -141,7 +141,6 @@ for Idx=1:size(job.NIRSmat,1)
         Xwl{1} = sparse(Xmc(1:NC2mi,:)); %sensitivity matrix for 1st wavelength
         Xwl{2} = sparse(Xmc(NC2mi+1:end,:));
         
-        Msk = sparse(diag(m_c1+m_c5)); % M Mask for cortex and skin
         %need to load data files prior to OD->concentration
         pdata = NIRS.Dt.fir.pp;
         wh = length(pdata);
@@ -167,25 +166,42 @@ for Idx=1:size(job.NIRSmat,1)
                 temp_pts = 1:downstep:size(Y,1);
             end
             %mkdir
-            switch job.tikh_method
-                case 0 % Tikhonov regularization : ancienne version
-                    disp('Methode a l''ancienne')
-                    ctm.alg ='anci';
-                case 1 % Tikhonov regularization
-                    disp('pseudo inverse');
-                    ctm.alg = 'PInv';
-                case 2 % avec wavelets...
-                case 3 % Li et al extended Tikhonov regularization (est ce que ca a de l interet alors qu il va falloir trouver deux hyperparametres)
-                    disp('pseudo inverse avec masque');
-                    ctm.alg = 'PInvM';
-                case 4 % Interpretation Bayesienne simple
-                    disp('pseudo inverse avec normes ponderes');
-                    ctm.alg = 'PInv';
-                    % IBS.1 : calcul des covariances
-                    jobC.cov{1} = 'n';
-                    jobC.cov{2} = 'p';
-                    Cov = nirs_calculatecovariances(jobC);
+            if isfield(job.tikh_method,'tikhonov')% Tikhonov regularization
+                disp('Tikhonov inversion');
+                ctm.alg = 'Tikhinv';
+                jobSC.Cp=0;
+            elseif isfield(job.tikh_method,'simple_bayes')% Interpretation Bayesienne simple
+                disp('pseudo inverse avec normes ponderes');
+                ctm.alg = 's_Bayes';
+                % IBS.1 : calcul des covariances
+                jobC.cov{1} = 'n';
+                jobC.cov{2} = 'p';
+                Cov = nirs_calculatecovariances(jobC);
+                jobSC.Cp = Cov(cp);
             end
+            
+            SC =0;
+            if ~isempty(job.tikh_SC)
+                for i=1:size(job.tikh_SC,2)
+                    if isfield(job.tikh_SC(i).tikh_mask,'wgmc')
+                        jobSC.Y = YsegRR;
+                        jobSC.tikh_mask = 'wgmc';
+                        
+                    elseif isfield(job.tikh_SC(i).tikh_mask,'timask')
+                        jobSC.Y = job.tikh_SC(i).tikh_mask.timask{:};
+                        jobSC.tikh_mask = 'image';
+                        
+                    elseif isfield(job.tikh_SC(i).tikh_mask,'samcs')
+                        jobSC.Y = cs.PVEmask;
+                        jobSC.tikh_mask = 'image';
+                    end
+                    jobSC.alpha = alpha;
+                    jobSC.alpha2 = job.tikh_SC(i).alpha2;
+                    out = nirs_inverse_tikhonov_SC(jobSC);
+                end
+                SC = SC+out;
+            end
+            
             daate = strrep(datestr(now),':','-');
             tm_dir = ['tm_' daate '_a' ctm.alg '_' int2str(job.sens_vxsize) 'mm'];
             ctm.p = fullfile(cs_dir,tm_dir);
@@ -217,38 +233,34 @@ for Idx=1:size(job.NIRSmat,1)
                 Dmua{1} = zeros(Nvx,1);
                 Dmua{2} = zeros(Nvx,1);
                 
-                switch job.tikh_method
-                    case 0 % Tikhonov regularization
+                switch ctm.alg
+                    case 'Tikhinv' % Tikhonov regularization
                         for iwl=1:2
                             if itp==1
                                 XX{iwl} =Xwl{iwl}'*Xwl{iwl};
                                 sz = size(XX{iwl},2);
                                 %takes 27 GB of memory for 4e4 x 4e4 size
-                                if tikh_constraint % spatial constraint : mask
-                                    constraint_factor = 1e9;
-                                    XXLI{iwl} = sparse(XX{iwl} + sparse(diag(alpha*(m_c12(:)+constraint_factor*(ones(sz,1)-m_c12(:))))));
-                                else
-                                    XXLI{iwl} = sparse(XX{iwl} + alpha*eye(sz)); % eq.19 huppert_2010_hierarchical
-                                end
+                            if isempty(job.tikh_SC)
+                                XXLI{iwl} = sparse(XX{iwl} + alpha*eye(sz)); % eq.19 huppert_2010_hierarchical
+                            else
+                                XXLI{iwl} = sparse(XX{iwl} + SC);
+                            end
                             end
                             YY = (Xwl{iwl}'*Y_to{iwl});
                             Dmua{iwl} = XXLI{iwl} \ YY;
                         end
-
-                        
-                    case 1 % Interpretation bayesienne simple
+                    case 'sBayes' % Interpretation bayesienne simple
                         for iwl=1:2
                             if itp==1
                                 % IBS.2 : pseudo inversion (si necessaire on fait une svd)
                                 tXCn{iwl} = Xwl{iwl}'*Cn;
                                 tXCnX{iwl} =tXCn{iwl}*Xwl{iwl};
-                                
+                                sz = size(XX{iwl},2);
                                 %takes 27 GB of memory for 4e4 x 4e4 size
-                                if tikh_constraint % spatial constraint : mask
-                                    tcW = 1e9;
-                                    XXLI{iwl} = sparse(tXCnX{iwl} + sparse(diag(alpha*Cp(m_c12(:)+ tcW*(ones(sz,1)-m_c12(:))))));
+                                if isempty(job.tikh_SC) % spatial constraint : mask
+                                    XXLI{iwl} = sparse(tXCnX{iwl} + alpha*Cp*eye(sz)); % eq.19 huppert_2010_hierarchical
                                 else
-                                    XXLI{iwl} = sparse(tXCnX{iwl} + alpha*Cp); % eq.19 huppert_2010_hierarchical
+                                    XXLI{iwl} = sparse(tXCnX{iwl} + SC);
                                 end
                             end
                             YY = (tXCn{iwl}'*Y_to{iwl});
@@ -256,9 +268,9 @@ for Idx=1:size(job.NIRSmat,1)
                         end
                 end
                 
-                        beta = Ext \ [Dmua{1} Dmua{2}]'; %get HbO HbR from Mua
-                        betaR_HbO = reshape(full(beta(1,:)),VsegRR.dim);
-                        betaR_HbR = reshape(full(beta(2,:)),VsegRR.dim);
+                beta = Ext \ [Dmua{1} Dmua{2}]'; %get HbO HbR from Mua
+                betaR_HbO = reshape(full(beta(1,:)),VsegRR.dim);
+                betaR_HbR = reshape(full(beta(2,:)),VsegRR.dim);
                 
                 %write nifti for DHbO DHbR
                 str0 = gen_num_str(itp,4);
