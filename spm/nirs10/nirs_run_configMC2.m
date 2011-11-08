@@ -156,8 +156,7 @@ for Idx=1:size(job.NIRSmat,1)
 
                     outP = nirs_MCsegment_PVE(jobP);
                     G.seg = outP;
-
-
+                    cs.PVEmask = outP;
                 catch
                     disp(['PVE failed for session ' iSess]);
                 end
