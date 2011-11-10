@@ -6875,6 +6875,41 @@ convert_nii_to_2Dtopo.help = {'Convert 2D topographich nifti (.nii) files '
     end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Anatomical image utilities
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+SP         = cfg_entry;
+SP.name    = 'Point for sampling';
+SP.tag     = 'SP';
+SP.strtype = 's';
+SP.num     = [0 Inf];
+SP.val     = {''};
+SP.help    = {'Enter the S** or D** or any name of a point registered thanks to Brainsight.'}';
+
+cs_in         = cfg_files;
+cs_in.tag     = 'dir_in';
+cs_in.name    = 'MonteCarlo output directory';
+cs_in.help    = {'Select the MonteCarlo simulation output directory.'};
+cs_in.filter = 'dir';
+cs_in.val{1} = {''};
+cs_in.ufilter = '.*';
+cs_in.num     = [0 1];
+
+Uthickness      = cfg_exbranch;
+Uthickness.name = 'Thickness below selected points';
+Uthickness.tag  = 'Uthickness';
+Uthickness.val  = {NIRSmat cs_in SP};
+Uthickness.prog = @nirs_run_thickness;
+Uthickness.vout = @nirs_cfg_vout_thickness;
+Uthickness.help = {'.'};
+
+    function vout = nirs_cfg_vout_thickness(job)
+        vout = cfg_dep;
+        vout.sname      = 'NIRS.mat';
+        vout.src_output = substruct('.','NIRSmat');
+        vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
+    end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Configuration main modules
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -6905,7 +6940,7 @@ preprocANAT.help   = {'These modules pre-process anatomical images '
 coregNIRS        = cfg_choice; %cfg_repeat;
 coregNIRS.name   = 'Coregister NIRS data';
 coregNIRS.tag    = 'coregNIRS';
-coregNIRS.values = {coreg1 coreg2 coreg3 coreg_manual1 view3d1 resize1};
+coregNIRS.values = {coreg1 coreg2 coreg3 coreg_manual1 view3d1};
 coregNIRS.help   = {'These modules perform coregistration ',...
     'between NIRS and an anatomical image.'};
 
@@ -6955,12 +6990,19 @@ nirs_utilities.tag    = 'nirs_utilities';
 nirs_utilities.values = {convert_nii_to_2Dtopo}; 
 nirs_utilities.help   = {'Various utilities.'};
 
+%module 11
+aMRI_utilities        = cfg_choice;
+aMRI_utilities.name   = 'Anatomical MRI utilities';
+aMRI_utilities.tag    = 'aMRI_utilities';
+aMRI_utilities.values = {resize1 Uthickness}; 
+aMRI_utilities.help   = {'Various utilities for T1 images.'};
+
 %-----------------------------------------------------------------------
 nirs10        = cfg_choice;
 nirs10.name   = 'nirs10';
 nirs10.tag    = 'nirs10'; %Careful, this tag nirs10 must be the same as
 %the name of the toolbox and when called by spm_jobman in nirs10.m
-nirs10.values = {readNIRS readOnsets preprocessNIRS preprocANAT coregNIRS ...
+nirs10.values = {readNIRS readOnsets preprocessNIRS preprocANAT coregNIRS aMRI_utilities...
     configMC1 runMC1 makesens1 calculatePVE1 model_reconstruct model_specify ...
     model_estimate nirs_utilities NIRS_HDM liom_HDM CRIUGM};
 end
