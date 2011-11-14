@@ -9,25 +9,61 @@ else
 end
 % mua mus g n
 %690
-opt_ppts(1,1,:) = [0.0178   12.5   0.9   1.4];
-opt_ppts(1,2,:) = [0.0178   12.5   0.9   1.4];
-opt_ppts(1,3,:) = [0.0004   0.10   0.9   1.4];
-opt_ppts(1,4,:) = [0.0101   10.0   0.9   1.4];
-opt_ppts(1,5,:) = [0.0159   8.00   0.9   1.4];
+% opt_ppts(1,1,:) = [0.0178   12.5   0.9   1.4];
+% opt_ppts(1,2,:) = [0.0178   12.5   0.9   1.4];
+% opt_ppts(1,3,:) = [0.0004   0.10   0.9   1.4];
+% opt_ppts(1,4,:) = [0.0101   10.0   0.9   1.4];
+% opt_ppts(1,5,:) = [0.0159   8.00   0.9   1.4];
+% opt_ppts(1,6,:) = [0.000   0.0   0   1];% air a l interieur de la tete : ex sinus
+% opt_ppts_perturb{1} =  opt_ppts(1,1,:);%job.MC_parameters.perturbationPpties_l1+
+% %830
+% opt_ppts(2,1,:) = [0.0186   11.1   0.9   1.4];
+% opt_ppts(2,2,:) = [0.0186   11.1   0.9   1.4];
+% opt_ppts(2,3,:) = [0.0026   0.10   0.9   1.4];
+% opt_ppts(2,4,:) = [0.0136   8.60   0.9   1.4];
+% opt_ppts(2,5,:) = [0.0191   6.60   0.9   1.4];
+% opt_ppts(2,6,:) = [0.000   0.0   0   1];% air a l interieur de la tete : ex sinus
+% opt_ppts_perturb{2} =  opt_ppts(2,1,:);%job.MC_parameters.perturbationPpties_l1+
+muus =0.005;
+muas = 0.01;
+opt_ppts(1,1,:) = [muas   muus   0   1.4];
+opt_ppts(1,2,:) = [muas   muus   0   1.4];
+opt_ppts(1,3,:) = [muas   muus   0   1.4];
+opt_ppts(1,4,:) = [muas   muus   0   1.4];
+opt_ppts(1,5,:) = [muas   muus   0   1.4];
 opt_ppts(1,6,:) = [0.000   0.0   0   1];% air a l interieur de la tete : ex sinus
 opt_ppts_perturb{1} =  opt_ppts(1,1,:);%job.MC_parameters.perturbationPpties_l1+
 %830
-opt_ppts(2,1,:) = [0.0186   11.1   0.9   1.4];
-opt_ppts(2,2,:) = [0.0186   11.1   0.9   1.4];
-opt_ppts(2,3,:) = [0.0026   0.10   0.9   1.4];
-opt_ppts(2,4,:) = [0.0136   8.60   0.9   1.4];
-opt_ppts(2,5,:) = [0.0191   6.60   0.9   1.4];
+opt_ppts(2,1,:) = [muas   muus   0   1.4];
+opt_ppts(2,2,:) = [muas   muus   0   1.4];
+opt_ppts(2,3,:) = [muas   muus   0   1.4];
+opt_ppts(2,4,:) = [muas   muus   0   1.4];
+opt_ppts(2,5,:) = [muas   muus   0   1.4];
 opt_ppts(2,6,:) = [0.000   0.0   0   1];% air a l interieur de la tete : ex sinus
-opt_ppts_perturb{2} =  opt_ppts(2,1,:);%job.MC_parameters.perturbationPpties_l1+
+opt_ppts_perturb{2} =  opt_ppts(2,1,:);%job.MC_parameters.per
 
 switch choice
     case 'litt'
         %default values are handed out
+        %%% mesure de l'epaisseur des couches
+        % mua mus g n
+        %690
+%         opt_ppts(1,1,:) = [0.01   0.1   0.1   1.4];
+%         opt_ppts(1,2,:) = [0.01    0.1   0.1   1.4];
+%         opt_ppts(1,3,:) = [0.01   0.1   0.1   1.4];
+%         opt_ppts(1,4,:) = [0.01   0.1   0.1   1.4];
+%         opt_ppts(1,5,:) = [0.01   0.1   0.1   1.4];
+%         opt_ppts(1,6,:) = [0   0   0   1];% air a l interieur de la tete : ex sinus
+%         opt_ppts_perturb{1} =  opt_ppts(1,1,:);%job.MC_parameters.perturbationPpties_l1+
+%         %830
+%         opt_ppts(2,1,:) = [0.01   0.1   0.1   1.4];
+%         opt_ppts(2,2,:) = [0.01   0.1   0.1   1.4];
+%         opt_ppts(2,3,:) = [0.01   0.1   0.1   1.4];
+%         opt_ppts(2,4,:) = [0.01   0.1   0.1   1.4];
+%         opt_ppts(2,5,:) = [0.01   0.1   0.1   1.4];
+%         opt_ppts(2,6,:) = [0   0   0.1   1];% air a l interieur de la tete : ex sinus
+%         opt_ppts_perturb{2} =  opt_ppts(2,1,:);%job.MC_parameters.perturbationPpties_l1+
+%         
     case 'subj'
         load(p);
         load('D:\Users\Clément\DPF_testDuncan\P2S_age.mat');
@@ -48,7 +84,7 @@ switch choice
         %             c_s2 = mean(Opt_ppts(v,2,2))/mean(Opt_ppts(:,2,2));
         %         end
         
-        % 
+        %
         load('D:\Users\Clément\DPF_article\analyses_dpf11\Mua_MichP2S44sujets.mat');
         load('D:\Users\Clément\DPF_article\analyses_dpf11\Mus_MichP2S44sujets.mat');
         % W weight en exponentielle negative
@@ -73,7 +109,7 @@ switch choice
         % % % % % %         op(2,[1 2 4 5],1) = mua_vF830*op(2,[1 2 4 5],1);
         % % % % % %         op(2,[1 2 4 5],2) = mus_vF830*op(2,[1 2 4 5],2);
         % % % % % %         opt_ppts = op;
-        end
-        out{1} = opt_ppts;
-        out{2} = opt_ppts_perturb;
+end
+out{1} = opt_ppts;
+out{2} = opt_ppts_perturb;
 end
