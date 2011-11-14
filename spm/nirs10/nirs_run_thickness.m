@@ -2,22 +2,25 @@ function out = nirs_run_thickness(job)
 
 for Idx=1:size(job.NIRSmat,1)
     %Load NIRS.mat information
-    NIRS = [];
-    load(job.NIRSmat{Idx,1});
+    %     NIRS = [];
+    %     load(job.NIRSmat{Idx,1});
     
     % Get "cs" (current simulation) info
-    if ~isempty(job.dir_in{1,1})
-        cs_dir =  fileparts(job.dir_in{1,1});
-        [dummy cs_ldir] = fileparts(cs_dir);
-        ics =1;
-        while ~strcmp(cs_ldir,NIRS.Cs.n{ics})
-            ics =ics+1;
-        end
-    else
-        [cs_dir dummy dummy1] = fileparts(job.NIRSmat{iSubj,1});
-        ics = length(NIRS.Cs.n); % Use last simulation run
-    end
-    cs = NIRS.Cs.mcs{ics};
+    %     if ~isempty(job.dir_in{1,1})
+    %
+    %         cs_dir =  fileparts(job.dir_in{1,1});
+    %         [dummy cs_ldir] = fileparts(cs_dir);
+    %         ics =1;
+    %         while ~strcmp(cs_ldir,NIRS.Cs.n{ics})
+    %             ics =ics+1;
+    %         end
+    %     else
+    %         [cs_dir dummy dummy1] = fileparts(job.NIRSmat{iSubj,1});
+    %         ics = length(NIRS.Cs.n); % Use last simulation run
+    %     end
+    load([job.dir_in{1,1} 'NIRS.mat']);
+    cs = NIRS.Cs.mcs{1};
+    
     if cs.alg==1, Oe='.mch'; elseif cs.alg==2, Oe='.his';end
     
     mu_subj ={};
@@ -30,7 +33,7 @@ for Idx=1:size(job.NIRSmat,1)
     jobW.NSinit=NIRS.Cf.H.S.N;
     jobW.Pvoid={};
     jobW.n_b8i =  cs.n_b8i;
-    jobW.dir = [cs.dir 'thickness'];
+    jobW.dir = [cs.dir 'thickness0.005'];
     if ~exist(jobW.dir,'dir')
         mkdir(jobW.dir);
     end
@@ -54,17 +57,28 @@ for Idx=1:size(job.NIRSmat,1)
                 ind = (1:NIRS.Cf.H.Q.N).*strcmp(NIRS.Cf.H.Q,SPn);
                 jobW.Pkpt = ind+NIRS.Cf.H.S.N+NIRS.Cf.H.D.N;
         end
+        
         % Mise a jour des positions c1
         Pp_c1_rmm = NIRS.Cs.temp.Pp_roi_c1_rmm(:,jobW.Pkpt);
         % Positions : Transform MNI mm -> MNI isotropic voxels
         Pp_c1_rmv = V.mat\[Pp_c1_rmm;1];
         Pp_c1_rmiv= abs(inv_mat(7:9)').*(Pp_c1_rmv(1:3)/cs.par.voxelSize);
+        Pp_c1_rmiv= Pp_c1_rmiv +(Pp_c1_rmiv-cs.P.p(:,jobW.Pkpt));% en fait c2
         jobW.P={};
-        jobW.P.p = [cs.P.p(:,jobW.Pkpt) Pp_c1_rmiv];
+        jobW.P.p = [round(cs.P.p(:,jobW.Pkpt)) round(Pp_c1_rmiv)];
         jobW.P.wd= [cs.P.wd(:,jobW.Pkpt) -cs.P.wd(:,jobW.Pkpt)];
         Sr = cs.par.radiis;
         Dr = cs.par.radiid;
         jobW.P.r = [Sr' Dr' zeros(1,size(cs.Pkpt,1)-2)];
+        
+        % mettre un trou d'air a la position du detecteur
+        Y = spm_read_vols(V);
+        Y(round(Pp_c1_rmiv(1)),round(Pp_c1_rmiv(2)),round(Pp_c1_rmiv(3)))=0;
+        Y8 = uint8(Y);
+        
+        fid = fopen(fullfile(jobW.dir,jobW.n_b8i),'wb');
+        fwrite(fid, Y8, 'uint8');
+        fclose(fid);
         
         jobW.par.nphotons = cs.par.nphotons;
         jobW.par.seed = cs.par.seed;
@@ -81,43 +95,84 @@ for Idx=1:size(job.NIRSmat,1)
         
         % Write the files
         nirs_configMC_writeCFGfiles2(jobW);
-    end
-    copyfile(cs.b8i,fullfile(jobW.dir,cs.n_b8i));
-    
-    % MCsim
-    [t,dummy] = spm_select('FPList',jobW.dir,'.inp');
-    countS =1;
-    for k1=1:size(t,1)
-        [dir1,file1,dummy] = fileparts(t(k1,:));
-        file2 = [file1 '.inp'];
-        cd(dir1);
         
-        if strcmp(file1(1),'S')
-            %%% %%% MC simulation %%% %%%
-            codeexe = 'mcx_det';
-            if isempty(spm_select('FPList',dir1,'mcx_det.exe'))
-                copyfile([spm('Dir') '\toolbox\nirs10\mc_exe\' codeexe '.exe'],[dir1 filesep codeexe '.exe']);
+        % MC simulation
+        if mem<10, PNo = ['S_No' num2str(0) num2str(mem)]; else PNo = ['S_No' num2str(mem)]; end
+        t{1} = fullfile(jobW.dir,[PNo '_' num2str(690) 'nm.inp']);
+        t{2} = fullfile(jobW.dir,[PNo '_' num2str(830) 'nm.inp']);
+        cd(jobW.dir)
+        for k1=1:2
+            [dir1,file1,dummy] = fileparts(t{k1});
+            file2 = [deblank(file1) '.inp'];
+            if strcmp(file1(1),'S')
+                %%% %%% MC simulation %%% %%%
+                codeexe = 'mcx_det';
+                if isempty(spm_select('FPList',dir1,'mcx_det.exe'))
+                    copyfile([spm('Dir') '\toolbox\nirs10\mc_exe\' codeexe '.exe'],[dir1 filesep codeexe '.exe']);
+                end
+                system([codeexe ' -E  394647137 -A -n 3e6 -f ' file2 ' -s ' ...
+                    file1 ' -r 60 -g 1 -b 0 -d 1 -z 0']);
             end
-            system([codeexe ' -A -n 1e6 -f ' file2 ' -s ' ...
-                file1 ' -r 100 -g 1 -b 0 -d 1 -z 0']);
-            
-            ms=loadmc2([file1 '.mc2'],[V.dim 1],'float');
-            nirs_create_vol(fullfile(jobW.dir,[file2 '_Green.nii']),...
-                    V.dim, [16,0], V.pinfo, V.mat, log(ms));
-            %%% %%% thickness computation %%% %%%
-            file3 = [file1 '.mch'];
-            [history, header]=loadmch(file3);
-            [dummy, tk_file, dummy] = fileparts(file3);
-            History{countS,1} = tk_file; % name of file
-            History{countS,3} = header; % header info
-            History{countS,2} = history; % for each detected photon:
-            % det # / number of scattering events / pathlength
-            % through each layer (nlayers+2 columns)
-            countS = countS+1;
         end
     end
-    if k1==size(t,1), delete([dir1 filesep 'mcx_det.exe']);end
+    
+    [t,dummy] = spm_select('FPList',jobW.dir,'.mc2');
+    count=1;
+    for k1=1:2:size(t,1)
+        [dir1,file1,dummy] = fileparts(t(k1,:));
+        numbR = str2num(file1(5:6));
+        
+        ms=loadmc2([file1 '.mc2'],[V.dim 1],'float');
+        nirs_create_vol(fullfile(jobW.dir,[file1 '_Green.nii']),...
+            V.dim, [16,0], V.pinfo, V.mat, log(ms));
+        %%% %%% thickness computation %%% %%%
+        file3 = [file1 '.mch'];
+        [history, header]=loadmch(file3);
+        [dummy, tk_file, dummy] = fileparts(file3);
+        History{count,1} = numbR; % name of file
+        History{count,2} = history; % for each detected photon:
+        % det # / number of scattering events / pathlength
+        % through each layer (nlayers+2 columns)
+        History{count,3} = header; % header info
+        count = count+1;
+    end
     save('History')
+    cccount=1;
+    for n=1:count-1;
+        clear H;
+        H = History{n,2}(:,[2 3 4 5 6 7]);
+        H1diff = H(H(:,1)==1,:);
+        %         H5c = H(sum(H>0,2)==5,:); % photons ayant traverse les 5couches
+        if ~isempty(H1diff)
+            if size(H1diff,1)==1
+                T(cccount,1:7)=[n,H1diff];
+            else
+            T(cccount,1:7)=[n,min(H1diff)];
+            end
+            cccount = cccount+1;
+        end
+    end
+    if exist('T','var')
+        save('thickness','T')
+    end
+    
+    ccount=1;
+    for n=1:count-1
+        clear H;
+        H = History{n,2}(:,[2 3 4 5 6 7]);
+        H0diff = H(H(:,1)==0,:);
+        if ~isempty(H0diff)
+            if size(H0diff,1)==1
+                T0(ccount,1:7)=[n,H0diff];
+            else
+                T0(ccount,1:7)=[n,min(H0diff)];
+            end
+            ccount =ccount+1;
+        end
+    end
+    if exist('T0','var')
+        save('thickness0','T0')
+    end
 end
 out.NIRSmat = job.NIRSmat;
 %         %segmented T1
