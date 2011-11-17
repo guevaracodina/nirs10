@@ -6748,12 +6748,129 @@ nameHDM.help    = {'Enter name for this HDM calculation.'}';
 % StimuliSign.num     = [0 Inf];
 % StimuliSign.help    = {'Enter sign of response to each stimulus, as a vector.'}';
 
+echo_time         = cfg_entry;
+echo_time.tag     = 'echo_time';
+echo_time.name    = 'Echo time (s)';
+echo_time.help    = {'For BOLD, enter echo time in seconds. For BOLD+ASL, enter echo time of BOLD only'};
+echo_time.strtype = 'e';
+echo_time.num     = [1 1];
+echo_time.val     = {0.030};
+
+dp_start         = cfg_entry;
+dp_start.tag     = 'dp_start';
+dp_start.name    = 'Data points to remove (start)';
+dp_start.help    = {'Enter number of data points to remove at the beginning of each file (to remove artefacts due to filtering)'};
+dp_start.strtype = 'e';
+dp_start.num     = [1 1];
+dp_start.val     = {2};
+
+dp_end         = cfg_entry;
+dp_end.tag     = 'dp_end';
+dp_end.name    = 'Data points to remove (end)';
+dp_end.help    = {'Enter number of data points to remove at the end of each file (to remove artefacts due to filtering)'};
+dp_end.strtype = 'e';
+dp_end.num     = [1 1];
+dp_end.val     = {2};
+
+removeWhitening           = cfg_menu;
+removeWhitening.name      = 'Remove Whitening Filter';
+removeWhitening.tag       = 'removeWhitening';
+removeWhitening.labels    = {'Yes' 'No'};
+removeWhitening.values    = {1,0};
+removeWhitening.val       = {1};
+removeWhitening.help      = {'Remove SPM whitening filter on BOLD data prior to extracting VOIs'}';
+
+restscans         = cfg_files;
+restscans.tag     = 'restscans';
+restscans.name    = 'Resting state scans';
+restscans.help    = {'Select resting state scans on which the simulated data will be added.'
+    'The code was developed to work specifically on the 4D.nii scans in folder'
+    '11-ep2d_bold_ax_4x4x4_TR_1010 of Michele subject 28'
+    'Assumptions are that these scans are  compatible with the SPM and xSPM structures'
+    '(same number number of scans in particular)'}';
+restscans.filter = 'image';
+restscans.ufilter = '.*';
+restscans.num     = [1 Inf];
+
+simuA         = cfg_entry;
+simuA.tag     = 'simuA';
+simuA.name    = 'Signal Amplitude';
+simuA.help    = {'Enter signal amplitude, as a percentage of the BOLD signal (e.g. enter 1 for a 1% amplitude)'};
+simuA.strtype = 'e';
+simuA.num     = [1 1];
+simuA.val     = {1};
+
+simuS         = cfg_entry;
+simuS.tag     = 'simuS';
+simuS.name    = 'Stimuli to simulate';
+simuS.help    = {'Enter array of stimuli types to simulated.'
+    'Enter 0 to include all stimuli types.'}';
+simuS.strtype = 'e';
+simuS.num     = [1 Inf];
+simuS.val     = {0};
+
+simuP         = cfg_entry;
+simuP.tag     = 'simuP';
+simuP.name    = 'Parameters to randomize';
+simuP.help    = {'Enter array of parameters to be sampled.'
+    'Enter 0 to randomize all parameters.'}';
+simuP.strtype = 'e';
+simuP.num     = [1 Inf];
+simuP.val     = {1};
+
+simuR         = cfg_entry;
+simuR.tag     = 'simuR';
+simuR.name    = 'Parameter range';
+simuR.help    = {'For each parameter specified, enter range to be sampled as a percentage of the prior value.'
+    'Parameters will be sampled randomly uniformly between 0.75 and 1.25 times the prior value.'
+    'If only one number is specified, it will be applied to all parameters to be sampled.'}';
+simuR.strtype = 'e';
+simuR.num     = [1 Inf];
+simuR.val     = {25};
+
+simuPrior         = cfg_entry;
+simuPrior.tag     = 'simuPrior';
+simuPrior.name    = 'Prior values of parameters';
+simuPrior.help    = {'Enter array of prior values of the previously specified parameters to be sampled.'
+    'If nothing is entered, the default prior values will be used.'}';
+simuPrior.strtype = 'e';
+simuPrior.num     = [0 Inf];
+simuPrior.val     = {''};
+
+simuIt         = cfg_entry;
+simuIt.tag     = 'simuIt';
+simuIt.name    = 'Number of simulations';
+simuIt.help    = {'Enter number of simulations'};
+simuIt.strtype = 'e';
+simuIt.num     = [1 1];
+simuIt.val     = {1};
+
+simuYes         = cfg_branch;
+simuYes.tag     = 'simuYes';
+simuYes.name    = 'HDM on simulated data';
+simuYes.val     = {simuIt simuA simuS simuP simuPrior simuR restscans};
+simuYes.help    = {'Perform HDM on real data'}';
+
+simuNo         = cfg_branch;
+simuNo.tag     = 'simuNo';
+simuNo.name    = 'HDM on real data';
+simuNo.val     = {};
+simuNo.help    = {'No simulations; perform HDM on real data'}';
+
+simuOn         = cfg_choice;
+simuOn.tag     = 'simuOn';
+simuOn.name    = 'Perform simulations';
+simuOn.values  = {simuNo simuYes};
+simuOn.val     = {simuNo};
+simuOn.help    = {'Define ROI'}';
+
 % Executable Branch
 liom_HDM      = cfg_exbranch;
 liom_HDM.name = 'LIOM Hemodynamic Modelling';
 liom_HDM.tag  = 'liom_HDM';
 liom_HDM.val  = {xSPM_Modalities Model_Choice Stimuli which_session ...
-    which_subjects genericROI HDMdisplay save_figures nameHDM};
+    which_subjects genericROI HDMdisplay save_figures nameHDM echo_time ...
+    dp_start dp_end removeWhitening simuOn};
 liom_HDM.prog = @nirs_run_liom_HDM;
 liom_HDM.vout = @nirs_cfg_vout_liom_HDM;
 liom_HDM.help = {'NIRS_SPM Hemodynamic Modeling.'};

@@ -16,18 +16,53 @@ function out = nirs_run_liom_HDM(job) %(xSPM,SPM,hReg)
 
 % Karl Friston
 % $Id: spm_hdm_ui.m 3666 2010-01-10 17:54:31Z klaas $
-try 
+try
     save_figures = job.save_figures;
 catch
     save_figures = 1;
 end
-try 
+try
     nameHDM = job.nameHDM;
 catch
     nameHDM = '';
 end
-
-TE    = 0.03; TE_ok = 1; %echo time
+try
+    TE = job.echo_time;
+    TE_ok = 1;
+catch
+    TE    = 0.03; TE_ok = 1; %echo time
+end
+try
+    dp_start = job.dp_start; %points to remove due to filter set-up
+catch
+    dp_start = 2;
+end
+try
+    dp_end = job.dp_end; %points to remove due to filter set-up
+catch
+    dp_end = 2;
+end
+try
+    removeWhitening = job.removeWhitening;
+catch
+    removeWhitening = 1;
+end
+try
+    if isfield(job.simuOn,'simuYes')
+        simuOn = 1;
+        simuS     = job.simuOn.simuYes.simuS; %Stimuli types to include
+        simuIt    = job.simuOn.simuYes.simuIt; %Number of random iterations
+        simuA     = job.simuOn.simuYes.simuA; %Signal amplitude, as % of BOLD signal
+        simuP     = job.simuOn.simuYes.simuP; %Parameters to vary
+        simuPrior = job.simuOn.simuYes.simuPrior; %Priors to use
+        simuR     = job.simuOn.simuYes.simuR; %Range to sample
+        restscans = job.simuOn.simuYes.restscans; %Rest scans to add signal to
+    else
+        simuOn = 0;
+    end
+catch
+    simuOn = 0;
+end
 %Individual figure display
 HDMdisplay = job.HDMdisplay;
 %---------------------------------------------------------------------------
@@ -106,8 +141,11 @@ try
             figDir = fullfile(rootDir,'HDM');
         end
         if ~exist(figDir,'dir'),mkdir(figDir);end
+        HDMfile = fullfile(figDir,'HDM.mat');
+    else
+        HDMfile = fullfile(rootDir,'HDM.mat');
     end
-    HDMfile = fullfile(figDir,'HDM.mat');
+    
     %Various inputs:
     %Choice of model:
     Model = job.Model_Choice;
@@ -137,9 +175,36 @@ try
                     clear SPM Y
                     fBOLD= fullfile(subjects{SubjIdx},'SPM.mat');
                     load(fBOLD);
+                    if removeWhitening
+                        SPM.xX.W = speye(size(SPM.xX.W,1));
+                        %save it as a temporary file
+                        [dir0 fil0 ext0] = fileparts(fBOLD);
+                        tmpdir = fullfile(dir0,'tmp_noWhitening');
+                        if ~exist(tmpdir,'dir')
+                            mkdir(tmpdir)
+                            fBOLD = fullfile(tmpdir,[fil0 ext0]);
+                            save(fBOLD,'SPM');
+                        end
+                    end
                     %if r1 == 1 && SubjIdx == 1 %some generic information to get
                     [Sess s] = get_session(SPM,cs1);
                     U = get_causes(Sess,Stimuli);
+                    
+                    %if simuOn, replace the data with the rest data
+                    if simuOn
+                        SPM.xY.P     = char(restscans{:});
+                        SPM.xY.VY = spm_vol(SPM.xY.P);
+                        %save SPM in a temporary location
+                        [dir00 fil00 ext00] = fileparts(fBOLD);
+                        tmpdir = fullfile(dir00,'tmp_simu');
+                        if ~exist(tmpdir,'dir')
+                            mkdir(tmpdir);
+                            fBOLD_old = fBOLD;
+                            fBOLD = fullfile(tmpdir,[fil00 ext00]);
+                            save(fBOLD,'SPM');
+                        end
+                    end
+                    %cwd = pwd;
                     %extract VOI for BOLD
                     switch modal
                         case {1,2}
@@ -153,12 +218,12 @@ try
                             fASL = fullfile(subjectsASL{SubjIdx},'SPM.mat');
                             VOI_ASL = get_VOI(fASL,ROIs(r1),cs1);
                     end
-                    
+                    %cd(cwd);
                     %xY = VOI.xY;
                     %y = VOI.Y; %/100;
                     switch modal
                         case {2,3,5}
-                            Y.y(:,2)    = VOI_ASL.Y; %y/100;
+                            Y.y(:,2)    = VOI_ASL.Y((1+dp_start):end-dp_end); %y/100;
                             %Specific to Michèle`s project:
                             %calibration factor for ASL
                             load(fASL);
@@ -166,14 +231,19 @@ try
                             load(fullfile(dir1,'CBFcalibrFactor.mat'));
                             M.CBFcalibrFactor = calibrFactor;
                     end
+                    
                     %Add high pass filter
                     %Y.y(:,2) = ButterHPF(1/SPM.xY.RT,1/128,2,Y.y(:,2));
                     %only rescale BOLD signal, not ASL:
                     y1 = VOI.Y;
-                    %y1(1:4) = mean(y1(5:10)); y1(end-4:end) = mean(y1(end-10:end-5));
+                    
+                    y1 = y1((1+dp_start):end-dp_end);
                     %y1 = ButterHPF(1/SPM.xY.RT,1/128,2,y1);
+                    %y1(1:4) = mean(y1(5:10)); y1(end-4:end) = mean(y1(end-10:end-5));
+                    
                     %y1 = 100*(y1 - repmat(median(y1),[size(y1) 1]))./repmat(median(y1),[size(y1,1) 1]); % repmat(std(y1),[size(y1,1) 1]);
-                    y1 = (y1 - repmat(mean(y1),[size(y1) 1]))./repmat(mean(y1),[size(y1,1) 1]); % repmat(std(y1),[size(y1,1) 1]);
+                    tmp_m = repmat(mean(y1),[size(y1,1) 1]);
+                    y1 = (y1 - tmp_m)./std(y1); %rescale to zero mean and unit standard deviation %tmp_m;
                     Y.y(:,1) = y1;
                     %rescale to unit variance and zero mean
                     %Y.y = 100*(Y.y - repmat(median(Y.y),[size(Y.y,1) 1]))./ repmat(std(Y.y),[size(Y.y,1) 1]);
@@ -185,9 +255,10 @@ try
                             %y      = VOI.xY.u;
                             VOI.xY.RT = SPM.xY.RT;
                             Y.dt   = VOI.xY.RT; %SPM.xY.RT;
-                            Y.X0   = VOI.xY.X0;
+                            Y.X0   = VOI.xY.X0((1+dp_start):(end-dp_end),:);
                     end
-                    
+                    %remove start and end points from stimuli too to match the data
+                    U.u = U.u( (1+dp_start*(Y.dt/U.dt)):(end-dp_end*(Y.dt/U.dt)),:);
                     % estimate
                     %===========================================================================
                     if HDMdisplay || save_figures
@@ -233,7 +304,31 @@ try
                         otherwise
                             [pE,pC] = spm_hdm_priors(m,3);
                     end
-                    
+                    if simuOn
+                        pA = repmat(pE',[simuIt 1]); %zeros(simuIt,length(pE));
+                        ct = 0;
+                        for pE1=1:length(pE)
+                            if simuP == 0 || any(pE1 == simuP)
+                                ct = ct+1;
+                                rseed = pE1;
+                                %initialize the stream
+                                mtstream = RandStream('mt19937ar','Seed',rseed);
+                                RandStream.setDefaultStream(mtstream);
+                                for it1=1:simuIt
+                                    %generate the random numbers
+                                    if ~isempty(simuPrior)
+                                        pA(it1,pE1) = simuPrior(ct);
+                                    end
+                                    tpA = pA(it1,pE1);
+                                    if length(simuR) == 1
+                                        pA(it1,pE1) = unifrnd(tpA*(1-simuR/100),tpA*(1+simuR/100));
+                                    else
+                                        pA(it1,pE1) = unifrnd(tpA*(1-simuR(ct)/100),tpA*(1+simuR(ct)/100));
+                                    end
+                                end
+                            end
+                        end
+                    end
                     % model
                     %--------------------------------------------------------------------------
                     M.modal = modal;
@@ -289,296 +384,362 @@ try
                     M.dt    = 24/M.N; %24/M.N;
                     M.TE    = TE;
                     
+                    if ~simuOn
+                        simuIt = 1;                       
+                    else
+                        Y0 = Y;
+                        if simuS == 0
+                            simuS = 1:size(U.u,2);
+                        end
+                    end
                     %--------------------------------------------------------------------------
                     warning('off','MATLAB:nearlySingularMatrix');
                     warning('off','MATLAB:singularMatrix');
-                    % nonlinear system identification
-                    %--------------------------------------------------------------------------
-                    [Ep,Cp,Eh,K0,K1,K2,M0,M1,L1,L2,F] = spm_nlsi(M,U,Y);
-                    %Store results
-                    HDM{SubjIdx,r1}{s1}.Ep = Ep;
-                    HDM{SubjIdx,r1}{s1}.Cp = Cp;
-                    HDM{SubjIdx,r1}{s1}.F = F;
-                    HDM{SubjIdx,r1}{s1}.name = ROIs(r1).nameROI;
-                    HDM{SubjIdx,r1}{s1}.subj = fBOLD; %to remove any doubt
-                    HDM{SubjIdx,r1}{s1}.session = cs1;
-                    %-display results
-                    %==========================================================================
-                    t       = [1:M.N]*M.dt;
-                    if HDMdisplay || save_figures
-                        Fhdm    = spm_figure;
-                        set(Fhdm,'name','Hemodynamic Modeling')
-                        
-                        
-                        % display input parameters
+                    for it1=1:simuIt
+                        if simuOn
+                            %Buxton-Friston balloon and other models
+                            P = pA(it1,:)';
+                            %efficacies
+                            P(end-size(U.u,2)+simuS) = 1;
+                            %tic
+                            ys = spm_int_J(P,M,U); %6.7 times slower than spm_int_D, but produces a very different result
+                            %ys = spm_int_D(P,M,U);
+                            %toc
+                            %set to zero mean and rescale to unit standard deviation
+                            tmp_m = repmat(mean(ys),[size(ys,1) 1]);
+                            ys = (ys - tmp_m)./std(ys);
+                            %                             %Canonical response
+                            %                             ns = size(Y.y,1);
+                            %                             xBF.T = 10;
+                            %                             xBF.T0 = 0;
+                            %                             xBF.dt = Y.dt/xBF.T; % - time bin length {seconds}
+                            %                             xBF.name = 'hrf'; %description of basis functions specified
+                            %                             xBF = spm_get_bf(xBF);
+                            %                             %unit area
+                            %                             xBF.bf = xBF.bf/sum(xBF.bf); %normalize
+                            %                             %convolve stimuli U with basis functions
+                            %                             [X,Xn,Fc] = spm_Volterra(U,xBF.bf,1); %
+                            %                             X = X((0:(ns - 1))*xBF.T + xBF.T0 + 32,:);
+                            %                             %add response to rest data -- direct model
+                            Y = Y0;
+                            %Y.y = Y0.y + sum(X(:,simuS),2)*simuA/100;
+                            ns = size(Y.y,1);
+                            ys = ys(round((0:(ns - 1))*Y.dt/U.dt+1));
+                            Y.y = Y0.y + ys*simuA/100;
+                        end
+                        % nonlinear system identification
                         %--------------------------------------------------------------------------
-                        subplot(2,2,1)
-                        switch job.Model_Choice
-                            case 0 %Buxton-Friston
-                                P     = Ep(7:end);
-                                C     = diag(Cp(7:end,7:end));
-                            case 1 %Zheng-Mayhew
-                                P     = Ep(9:end);                  %MODIFIER
-                                C     = diag(Cp(9:end,9:end));      %MODIFIER
-                            case 2 %Huppert1
-                                P     = Ep(11:end);                 %MODIFIER
-                                C     = diag(Cp(11:end,11:end));    %MODIFIER
-                            otherwise
-                                P     = Ep(7:end);
-                                C     = diag(Cp(7:end,7:end));
+                        [Ep,Cp,Eh,K0,K1,K2,M0,M1,L1,L2,F] = spm_nlsi(M,U,Y);
+                        %for simulations: store results in place of subjects
+                        if simuOn
+                            SubjIdx0 = SubjIdx; %should not be used
+                            SubjIdx = it1; %changed inside a for loop but it is restored later 
+                            HDM{SubjIdx,r1}{s1}.EpS = P;
                         end
-                        
-                        [dummy, j] = max(abs(P));
-                        spm_barh(P,C)
-                        axis square
-                        title({'stimulus efficacy'; 'with 90% confidence intervals'},'FontSize',10)
-                        switch job.Model_Choice
-                            case {0,1} %Buxton-Friston
-                                set(gca,'Ytick',[1:m],'YTickLabel',U.name,'FontSize',8)
-                                str = {};
-                                for i = 1:m
-                                    str{end + 1} = U.name{i};
-                                    str{end + 1} = sprintf('mean = %0.2f',P(i));
-                                    str{end + 1} = '';
-                                end
-                                set(gca,'Ytick',[1:m*3]/3 + 1/2,'YTickLabel',str)
-                            case 2
-                                m2 = 2*m;
-                                for m3=1:m
-                                    temp_labels{m3} = ['CMRO2' U.name{m3}];
-                                end
-                                labels2 = [U.name temp_labels];
-                                set(gca,'Ytick',[1:m2],'YTickLabel',labels2,'FontSize',8)
-                                str = {};
-                                for i = 1:m2
-                                    str{end + 1} = labels2{i}; %U.name{i};
-                                    str{end + 1} = sprintf('mean = %0.2f',P(i));
-                                    str{end + 1} = '';
-                                end
-                                set(gca,'Ytick',[1:m2*3]/3 + 1/2,'YTickLabel',str)
-                            otherwise
+                        %Store results
+                        if it1 == 1
+                            %information independent of simulation iteration number
+                            HDM{SubjIdx,r1}{s1}.M = M;
+                            HDM{SubjIdx,r1}{s1}.pE = pE;
+                            HDM{SubjIdx,r1}{s1}.job = job;
                         end
-                        xlabel('relative efficacy per event/sec')
-                        
-                        
-                        % display hemodynamic parameters
-                        %---------------------------------------------------------------------------
-                        subplot(2,2,3)
-                        switch job.Model_Choice
-                            case 0 %Buxton-Friston
-                                P     = Ep(1:6);
-                                pE    = pE(1:6);
-                                C     = diag(Cp(1:6,1:6));
-                                spm_barh(P,C,pE)
-                                title({ 'hemodynamic parameters'},'FontSize',10)
-                                set(gca,'Ytick',[1:18]/3 + 1/2)
-                                set(gca,'YTickLabel',{  'SIGNAL decay',...
-                                    sprintf('%0.2f per sec',P(1)),'',...
-                                    'FEEDBACK',...
-                                    sprintf('%0.2f per sec',P(2)),'',...
-                                    'TRANSIT TIME',...
-                                    sprintf('%0.2f seconds',P(3)),'',...
-                                    'EXPONENT',...
-                                    sprintf('%0.2f',P(4)),'',...
-                                    'EXTRACTION',...
-                                    sprintf('%0.0f %s',P(5)*100,'%'),'',...
-                                    'log SIGNAL RATIO',...
-                                    sprintf('%0.2f %s',P(6),'%'),''},'FontSize',8)
-                            case 1 %Zheng-Mayhew
-                                P     = Ep(1:8);            %MODIFIER
-                                pE    = pE(1:8);            %MODIFIER
-                                C     = diag(Cp(1:8,1:8));  %MODIFIER
-                                spm_barh(P,C,pE)
-                                title({ 'hemodynamic parameters'},'FontSize',10)
-                                set(gca,'Ytick',[1:18+6]/3 + 1/2)   %MODIFIER? was 18
-                                set(gca,'YTickLabel',{  'SIGNAL decay',...
-                                    sprintf('%0.2f per sec',P(1)),'',...
-                                    'FEEDBACK',...
-                                    sprintf('%0.2f per sec',P(2)),'',...
-                                    'TRANSIT TIME',...
-                                    sprintf('%0.2f seconds',P(3)),'',...
-                                    'EXPONENT',...
-                                    sprintf('%0.2f',P(4)),'',...
-                                    'EXTRACTION',...
-                                    sprintf('%0.0f %s',P(5)*100,'%'),'',...
-                                    'VASCULAR TONE',...                                %MODIFIER
-                                    sprintf('%0.2f *10 seconds',P(6)),'',...              %MODIFIER
-                                    'GAIN PARAMETER',...                               %MODIFIER
-                                    sprintf('%0.3f *10 seconds',P(7)),'',...              %MODIFIER
-                                    'log SIGNAL RATIO',...
-                                    sprintf('%0.2f %s',P(8),'%'),''},'FontSize',8)   %MODIFIER
-                            case 2 %Huppert1
-                                P     = Ep(1:10);
-                                pE    = pE(1:10);
-                                C     = diag(Cp(1:10,1:10));
-                                spm_barh(P,C,pE)
-                                title({ 'hemodynamic parameters'},'FontSize',10)
-                                set(gca,'Ytick',[1:18+12]/3 + 1/2)
-                                set(gca,'YTickLabel',{  'SIGNAL decay',...
-                                    sprintf('%0.2f per sec',P(1)),'',...
-                                    'FEEDBACK',...
-                                    sprintf('%0.2f per sec',P(2)),'',...
-                                    'TRANSIT TIME',...
-                                    sprintf('%0.2f seconds',P(3)),'',...
-                                    'EXPONENT',...
-                                    sprintf('%0.2f',P(4)),'',...
-                                    'EXTRACTION',...
-                                    sprintf('%0.0f %s',P(5)*100,'%'),'',...
-                                    'log SIGNAL RATIO',...
-                                    sprintf('%0.2f %s',P(6),'%'),''},'',...
-                                    'CMRO2 SIGNAL decay',...
-                                    sprintf('%0.2f per sec',P(7)),'',...
-                                    'CMRO2 FEEDBACK',...
-                                    sprintf('%0.2f per sec',P(8)),'',...
-                                    'Volume fraction',...
-                                    sprintf('%0.2f',P(9)),'',...
-                                    'O2 Diffusion K',...
-                                    sprintf('%0.2f per sec',P(10)),'','FontSize',8)
-                            otherwise
-                                P     = Ep(1:6);
-                                pE    = pE(1:6);
-                                C     = diag(Cp(1:6,1:6));
-                                spm_barh(P,C,pE)
-                                title({ 'hemodynamic parameters'},'FontSize',10)
-                                set(gca,'Ytick',[1:18]/3 + 1/2)
-                                set(gca,'YTickLabel',{  'SIGNAL decay',...
-                                    sprintf('%0.2f per sec',P(1)),'',...
-                                    'FEEDBACK',...
-                                    sprintf('%0.2f per sec',P(2)),'',...
-                                    'TRANSIT TIME',...
-                                    sprintf('%0.2f seconds',P(3)),'',...
-                                    'EXPONENT',...
-                                    sprintf('%0.2f',P(4)),'',...
-                                    'EXTRACTION',...
-                                    sprintf('%0.0f %s',P(5)*100,'%'),'',...
-                                    'log SIGNAL RATIO',...
-                                    sprintf('%0.2f %s',P(6),'%'),''},'FontSize',8)
-                        end
-                        
-                    end
-                    % get display state kernels (i.e. state dynamics)
-                    %==========================================================================
-                    
-                    % Volterra kernels of states
-                    %--------------------------------------------------------------------------
-                    [dummy,H1] = spm_kernels(M0,M1,M.N,M.dt);
-                    HDM{SubjIdx,r1}{s1}.H1 = H1;
-                    %save - overwriting previous
-                    save(HDMfile,'HDM');
-                    
-                    if HDMdisplay || save_figures
-                        subplot(3,2,2)
-                        if plot_algebraic_CMRO2
-                            tmp_H1 = exp(H1(:,:,j));
-                            %Algebraic relation for m = CMRO2, in arbitrary units
-                            %m = f * HbR /HbT; assuming gamma_R and gamma_T = 1; f: flow
-                            tmp_ma = tmp_H1(:,2) .* tmp_H1(:,4) ./ tmp_H1(:,3);
-                            tmp_H1 = [tmp_H1 tmp_ma];
-                            plot(t,tmp_H1)
-                            axis square
-                            title({['1st order kernels for ' U.name{j}];...
-                                'state variables'},'FontSize',9)
-                            ylabel('normalized values')
+                        HDM{SubjIdx,r1}{s1}.Ep = Ep;
+                        HDM{SubjIdx,r1}{s1}.Cp = Cp;
+                        HDM{SubjIdx,r1}{s1}.F = F;
+                        HDM{SubjIdx,r1}{s1}.name = ROIs(r1).nameROI;
+                        HDM{SubjIdx,r1}{s1}.subj = fBOLD; %to remove any doubt
+                        HDM{SubjIdx,r1}{s1}.session = cs1;
+                        %-display results
+                        %==========================================================================
+                        t       = [1:M.N]*M.dt;
+                        if HDMdisplay || save_figures
+                            Fhdm    = spm_figure;
+                            set(Fhdm,'name','Hemodynamic Modeling')
+                            
+                            
+                            % display input parameters
+                            %--------------------------------------------------------------------------
+                            subplot(2,2,1)
                             switch job.Model_Choice
                                 case 0 %Buxton-Friston
-                                    legend('s','f','v','q','ma',0);
+                                    P     = Ep(7:end);
+                                    C     = diag(Cp(7:end,7:end));
                                 case 1 %Zheng-Mayhew
-                                    legend('s','f','v','q','w','ma',0); %MODIFIER
+                                    P     = Ep(9:end);                  %MODIFIER
+                                    C     = diag(Cp(9:end,9:end));      %MODIFIER
                                 case 2 %Huppert1
-                                    legend('s','f','v','q','s2','m','Ct','Cv','ma',0)
+                                    P     = Ep(11:end);                 %MODIFIER
+                                    C     = diag(Cp(11:end,11:end));    %MODIFIER
                                 otherwise
-                                    legend('s','f','v','q','ma',0);
+                                    P     = Ep(7:end);
+                                    C     = diag(Cp(7:end,7:end));
                             end
-                            grid on
-                        else
-                            plot(t,exp(H1(:,:,j)))
+                            
+                            [dummy, j] = max(abs(P));
+                            spm_barh(P,C)
                             axis square
-                            title({['1st order kernels for ' U.name{j}];...
-                                'state variables'},'FontSize',9)
-                            ylabel('normalized values')
+                            title({'stimulus efficacy'; 'with 90% confidence intervals'},'FontSize',10)
+                            switch job.Model_Choice
+                                case {0,1} %Buxton-Friston
+                                    set(gca,'Ytick',[1:m],'YTickLabel',U.name,'FontSize',8)
+                                    str = {};
+                                    for i = 1:m
+                                        str{end + 1} = U.name{i};
+                                        str{end + 1} = sprintf('mean = %0.2f',P(i));
+                                        str{end + 1} = '';
+                                    end
+                                    set(gca,'Ytick',[1:m*3]/3 + 1/2,'YTickLabel',str)
+                                case 2
+                                    m2 = 2*m;
+                                    for m3=1:m
+                                        temp_labels{m3} = ['CMRO2' U.name{m3}];
+                                    end
+                                    labels2 = [U.name temp_labels];
+                                    set(gca,'Ytick',[1:m2],'YTickLabel',labels2,'FontSize',8)
+                                    str = {};
+                                    for i = 1:m2
+                                        str{end + 1} = labels2{i}; %U.name{i};
+                                        str{end + 1} = sprintf('mean = %0.2f',P(i));
+                                        str{end + 1} = '';
+                                    end
+                                    set(gca,'Ytick',[1:m2*3]/3 + 1/2,'YTickLabel',str)
+                                otherwise
+                            end
+                            xlabel('relative efficacy per event/sec')
+                            
+                            
+                            % display hemodynamic parameters
+                            %---------------------------------------------------------------------------
+                            subplot(2,2,3)
                             switch job.Model_Choice
                                 case 0 %Buxton-Friston
-                                    legend('s','f','v','q',0);
+                                    P     = Ep(1:6);
+                                    pE    = pE(1:6);
+                                    C     = diag(Cp(1:6,1:6));
+                                    spm_barh(P,C,pE)
+                                    title({ 'hemodynamic parameters'},'FontSize',10)
+                                    set(gca,'Ytick',[1:18]/3 + 1/2)
+                                    set(gca,'YTickLabel',{  'SIGNAL decay',...
+                                        sprintf('%0.2f per sec',P(1)),'',...
+                                        'FEEDBACK',...
+                                        sprintf('%0.2f per sec',P(2)),'',...
+                                        'TRANSIT TIME',...
+                                        sprintf('%0.2f seconds',P(3)),'',...
+                                        'EXPONENT',...
+                                        sprintf('%0.2f',P(4)),'',...
+                                        'EXTRACTION',...
+                                        sprintf('%0.0f %s',P(5)*100,'%'),'',...
+                                        'log SIGNAL RATIO',...
+                                        sprintf('%0.2f %s',P(6),'%'),''},'FontSize',8)
                                 case 1 %Zheng-Mayhew
-                                    legend('s','f','v','q','w', 0); %MODIFIER
+                                    P     = Ep(1:8);            %MODIFIER
+                                    pE    = pE(1:8);            %MODIFIER
+                                    C     = diag(Cp(1:8,1:8));  %MODIFIER
+                                    spm_barh(P,C,pE)
+                                    title({ 'hemodynamic parameters'},'FontSize',10)
+                                    set(gca,'Ytick',[1:18+6]/3 + 1/2)   %MODIFIER? was 18
+                                    set(gca,'YTickLabel',{  'SIGNAL decay',...
+                                        sprintf('%0.2f per sec',P(1)),'',...
+                                        'FEEDBACK',...
+                                        sprintf('%0.2f per sec',P(2)),'',...
+                                        'TRANSIT TIME',...
+                                        sprintf('%0.2f seconds',P(3)),'',...
+                                        'EXPONENT',...
+                                        sprintf('%0.2f',P(4)),'',...
+                                        'EXTRACTION',...
+                                        sprintf('%0.0f %s',P(5)*100,'%'),'',...
+                                        'VASCULAR TONE',...                                %MODIFIER
+                                        sprintf('%0.2f *10 seconds',P(6)),'',...              %MODIFIER
+                                        'GAIN PARAMETER',...                               %MODIFIER
+                                        sprintf('%0.3f *10 seconds',P(7)),'',...              %MODIFIER
+                                        'log SIGNAL RATIO',...
+                                        sprintf('%0.2f %s',P(8),'%'),''},'FontSize',8)   %MODIFIER
                                 case 2 %Huppert1
-                                    legend('s','f','v','q','s2','m','Ct','Cv',0)
+                                    P     = Ep(1:10);
+                                    pE    = pE(1:10);
+                                    C     = diag(Cp(1:10,1:10));
+                                    spm_barh(P,C,pE)
+                                    title({ 'hemodynamic parameters'},'FontSize',10)
+                                    set(gca,'Ytick',[1:18+12]/3 + 1/2)
+                                    set(gca,'YTickLabel',{  'SIGNAL decay',...
+                                        sprintf('%0.2f per sec',P(1)),'',...
+                                        'FEEDBACK',...
+                                        sprintf('%0.2f per sec',P(2)),'',...
+                                        'TRANSIT TIME',...
+                                        sprintf('%0.2f seconds',P(3)),'',...
+                                        'EXPONENT',...
+                                        sprintf('%0.2f',P(4)),'',...
+                                        'EXTRACTION',...
+                                        sprintf('%0.0f %s',P(5)*100,'%'),'',...
+                                        'log SIGNAL RATIO',...
+                                        sprintf('%0.2f %s',P(6),'%'),''},'',...
+                                        'CMRO2 SIGNAL decay',...
+                                        sprintf('%0.2f per sec',P(7)),'',...
+                                        'CMRO2 FEEDBACK',...
+                                        sprintf('%0.2f per sec',P(8)),'',...
+                                        'Volume fraction',...
+                                        sprintf('%0.2f',P(9)),'',...
+                                        'O2 Diffusion K',...
+                                        sprintf('%0.2f per sec',P(10)),'','FontSize',8)
                                 otherwise
-                                    legend('s','f','v','q',0);
+                                    P     = Ep(1:6);
+                                    pE    = pE(1:6);
+                                    C     = diag(Cp(1:6,1:6));
+                                    spm_barh(P,C,pE)
+                                    title({ 'hemodynamic parameters'},'FontSize',10)
+                                    set(gca,'Ytick',[1:18]/3 + 1/2)
+                                    set(gca,'YTickLabel',{  'SIGNAL decay',...
+                                        sprintf('%0.2f per sec',P(1)),'',...
+                                        'FEEDBACK',...
+                                        sprintf('%0.2f per sec',P(2)),'',...
+                                        'TRANSIT TIME',...
+                                        sprintf('%0.2f seconds',P(3)),'',...
+                                        'EXPONENT',...
+                                        sprintf('%0.2f',P(4)),'',...
+                                        'EXTRACTION',...
+                                        sprintf('%0.0f %s',P(5)*100,'%'),'',...
+                                        'log SIGNAL RATIO',...
+                                        sprintf('%0.2f %s',P(6),'%'),''},'FontSize',8)
                             end
-                            grid on
+                            
                         end
+                        % get display state kernels (i.e. state dynamics)
+                        %==========================================================================
                         
-                        
-                        
-                        % display output kernels (i.e. BOLD response)
+                        % Volterra kernels of states
                         %--------------------------------------------------------------------------
-                        subplot(3,2,4)
-                        plot(t,K1(:,:,j))
-                        axis square
-                        switch modal
-                            case 1
-                                title({ '1st order kernel';'output: BOLD'},'FontSize',9)
-                            case 2
-                                title({ '1st order kernel';'output: BOLD, ASL'},'FontSize',9)
-                            case 3
-                                title({ '1st order kernel';'output: ASL'},'FontSize',9)
-                            case 4
+                        [dummy,H1] = spm_kernels(M0,M1,M.N,M.dt);
+                        HDM{SubjIdx,r1}{s1}.H1 = H1;
+                        %save - overwriting previous
+                        save(HDMfile,'HDM');
+                        
+                        if HDMdisplay || save_figures
+                            subplot(3,2,2)
+                            if plot_algebraic_CMRO2
+                                tmp_H1 = exp(H1(:,:,j));
+                                %Algebraic relation for m = CMRO2, in arbitrary units
+                                %m = f * HbR /HbT; assuming gamma_R and gamma_T = 1; f: flow
+                                tmp_ma = tmp_H1(:,2) .* tmp_H1(:,4) ./ tmp_H1(:,3);
+                                tmp_H1 = [tmp_H1 tmp_ma];
+                                plot(t,tmp_H1)
+                                axis square
+                                title({['1st order kernels for ' U.name{j}];...
+                                    'state variables'},'FontSize',9)
+                                ylabel('normalized values')
                                 switch job.Model_Choice
-                                    case {0,1}
-                                        title({ '1st order kernel';'output: HbT, HbR'},'FontSize',9)
-                                    case 2
-                                        title({ '1st order kernel';'output: HbT, HbR, HbO'},'FontSize',9)
+                                    case 0 %Buxton-Friston
+                                        legend('s','f','v','q','ma',0);
+                                    case 1 %Zheng-Mayhew
+                                        legend('s','f','v','q','w','ma',0); %MODIFIER
+                                    case 2 %Huppert1
+                                        legend('s','f','v','q','s2','m','Ct','Cv','ma',0)
+                                    otherwise
+                                        legend('s','f','v','q','ma',0);
                                 end
-                        end
-                        %ylabel('normalized flow signal')
-                        switch modal
-                            case {1,3}
-                                ylabel('normalized measure response')
-                            case {2,4}
-                                ylabel('normalized measure responses')
-                        end
-                        grid on
-                        
-                        subplot(3,2,6)
-                        axis square
-                        switch modal
-                            case {1,2}
-                                imagesc(t,t,K2(:,:,1,j,j))
-                                title({ '2nd order kernel';'output: BOLD'},'FontSize',9)
-                            case 3
-                                imagesc(t,t,K2(:,:,1,j,j))
-                                title({ '2nd order kernel';'output: ASL'},'FontSize',9)
-                            case 4
-                                imagesc(t,t,K2(:,:,2,j,j))
-                                title({ '2nd order kernel';'output: HbR'},'FontSize',9)
-                        end
-                        xlabel({'time {seconds} for'; U.name{j}})
-                        grid on
-                        
-                        
-                        %-Reset title
-                        %--------------------------------------------------------------------------
-                        spm('FigName',header);
-                        spm('Pointer','Arrow')
-                        spm_input('Thank you',1,'d')
-                        if save_figures
-                            %Save figure
-                            filen1 = fullfile(figDir,['HDM_' gen_num_str(SubjIdx,3)]);
-                            figDir2 = fullfile(figDir,'fig');
-                            if ~exist(figDir2,'dir'),mkdir(figDir2); end
-                            filen3 = fullfile(figDir2,['HDM_' gen_num_str(SubjIdx,3)]);
-                            saveas(Fhdm,filen3,'fig');
-                            print(Fhdm, '-dtiffn', filen1);
-                            Fsi = spm_figure('GetWin','SI');
-                            filen2 = fullfile(figDir,['EHDM_' gen_num_str(SubjIdx,3)]);   
-                            filen4 = fullfile(figDir2,['EHDM_' gen_num_str(SubjIdx,3)]);   
-                            saveas(Fsi,filen4,'fig');
-                            print(Fsi, '-dtiffn', filen2);
-                            try
-                                close(Fhdm);
+                                grid on
+                            else
+                                plot(t,exp(H1(:,:,j)))
+                                axis square
+                                title({['1st order kernels for ' U.name{j}];...
+                                    'state variables'},'FontSize',9)
+                                ylabel('normalized values')
+                                switch job.Model_Choice
+                                    case 0 %Buxton-Friston
+                                        legend('s','f','v','q',0);
+                                    case 1 %Zheng-Mayhew
+                                        legend('s','f','v','q','w', 0); %MODIFIER
+                                    case 2 %Huppert1
+                                        legend('s','f','v','q','s2','m','Ct','Cv',0)
+                                    otherwise
+                                        legend('s','f','v','q',0);
+                                end
+                                grid on
+                            end
+                            
+                            
+                            
+                            % display output kernels (i.e. BOLD response)
+                            %--------------------------------------------------------------------------
+                            subplot(3,2,4)
+                            plot(t,K1(:,:,j))
+                            axis square
+                            switch modal
+                                case 1
+                                    title({ '1st order kernel';'output: BOLD'},'FontSize',9)
+                                case 2
+                                    title({ '1st order kernel';'output: BOLD, ASL'},'FontSize',9)
+                                case 3
+                                    title({ '1st order kernel';'output: ASL'},'FontSize',9)
+                                case 4
+                                    switch job.Model_Choice
+                                        case {0,1}
+                                            title({ '1st order kernel';'output: HbT, HbR'},'FontSize',9)
+                                        case 2
+                                            title({ '1st order kernel';'output: HbT, HbR, HbO'},'FontSize',9)
+                                    end
+                            end
+                            %ylabel('normalized flow signal')
+                            switch modal
+                                case {1,3}
+                                    ylabel('normalized measure response')
+                                case {2,4}
+                                    ylabel('normalized measure responses')
+                            end
+                            grid on
+                            
+                            subplot(3,2,6)
+                            axis square
+                            switch modal
+                                case {1,2}
+                                    imagesc(t,t,K2(:,:,1,j,j))
+                                    title({ '2nd order kernel';'output: BOLD'},'FontSize',9)
+                                case 3
+                                    imagesc(t,t,K2(:,:,1,j,j))
+                                    title({ '2nd order kernel';'output: ASL'},'FontSize',9)
+                                case 4
+                                    imagesc(t,t,K2(:,:,2,j,j))
+                                    title({ '2nd order kernel';'output: HbR'},'FontSize',9)
+                            end
+                            xlabel({'time {seconds} for'; U.name{j}})
+                            grid on
+                            
+                            %-Reset title
+                            %--------------------------------------------------------------------------
+                            spm('FigName',header);
+                            spm('Pointer','Arrow')
+                            spm_input('Thank you',1,'d')
+                            if save_figures
+                                fullfigDir = fullfile(figDir,['S' int2str(cs1) '_' ROIs(r1).nameROI]);
+                                if ~exist(fullfigDir,'dir'), mkdir(fullfigDir); end
+                                %Save figure
+                                filen1 = fullfile(fullfigDir,['HDM_' gen_num_str(SubjIdx,3)]);
+                                fullfigDir2 = fullfile(fullfigDir,'fig');
+                                if ~exist(fullfigDir2,'dir'),mkdir(fullfigDir2); end
+                                filen3 = fullfile(fullfigDir2,['HDM_' gen_num_str(SubjIdx,3)]);
+                                saveas(Fhdm,filen3,'fig');
+                                print(Fhdm, '-dtiffn', filen1);
+                                Fsi = spm_figure('GetWin','SI');
+                                filen2 = fullfile(fullfigDir,['EHDM_' gen_num_str(SubjIdx,3)]);
+                                filen4 = fullfile(fullfigDir2,['EHDM_' gen_num_str(SubjIdx,3)]);
+                                saveas(Fsi,filen4,'fig');
+                                print(Fsi, '-dtiffn', filen2);
+                                try
+                                    close(Fhdm);
+                                end
                             end
                         end
+                        if simuOn
+                            SubjIdx = SubjIdx0;
+                        end
+                    end
+                    %remove temp files
+                    if removeWhitening
+                        if simuOn
+                            delete(fBOLD_old);
+                        end
+                    end
+                    if simuOn
+                        delete(fBOLD);
                     end
                     out = [];
                 catch exception
