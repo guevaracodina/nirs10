@@ -159,10 +159,13 @@ for iSubj=1:size(job.NIRSmat,1)
             % Store coregistration error
             err = y - estY;
             errVal = sum(err(:).^2);
+            errValMax = (max(sum(err.^2,1))^0.5)/10;
             err %show error on each fiducial
             disp(['Error Value for subject ' int2str(iSubj) ': ' num2str(errVal)]);
+            disp(['Worst coregistration error: ' num2str(errValMax) ' cm']);
             NIRS.Dt.pro.errValofCoreg_mm2 = errVal;
             NIRS.Dt.pro.errValofCoreg_mm2_all = err;
+            NIRS.Dt.pro.errValofCoreg_cm_worst = errValMax;
             % Apply the same transformation to all points in order to
             % achieve coregistration
             try Sp_rom = NIRS.Cf.H.S.r.o.mm.p; end

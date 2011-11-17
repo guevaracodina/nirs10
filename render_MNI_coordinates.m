@@ -1,7 +1,7 @@
 function [rend, rendered_MNI] = render_MNI_coordinates(vx_MNI, wT1_info,render_subj_info)
 dat.mat = wT1_info.mat;
 dat.dim = wT1_info.dim;
-rnc = -1; %values: -1: standard treatment (normalization to template); 
+rnc = -1; %values: -1: standard treatment (normalization to template);
 %1: normalization of subject; 0: no normalization
 Nmark = size(vx_MNI, 2);
 dat.XYZ = zeros(3,Nmark);
@@ -29,9 +29,18 @@ else
                 %should be an image
                 owd = pwd;
                 cd(dir0);
+                V0 = spm_vol(rf);
                 %generate rendered image
                 spm_surf(rf,1);
-                load(fullfile(dir0,['render_' fil0 '.mat']));
+                file0 = fullfile(dir0,['render_' fil0 '.mat']);
+                load(file0);
+                %reorder the views, and save them
+                rend0 = rend;
+                rend{3} = rend0{4};
+                rend{4} = rend0{3};
+                rend{2} = rend0{5};
+                rend{5} = rend0{2}; 
+                save(file0,'rend');
                 cd(owd);
             end
         catch exception
@@ -68,7 +77,7 @@ for i=1:length(rend),
         % a straight DCT - therefore it was modified slightly
         rend{i}.dep = exp(B1*rend{i}.dep*B2')-1;
     end;
-    msk = find(rend{i}.ren>1);rend{i}.ren(msk)=1;
+    msk = rend{i}.ren>1;rend{i}.ren(msk)=1;
     msk = find(rend{i}.ren<0);rend{i}.ren(msk)=0;
 end;
 
@@ -79,8 +88,14 @@ for j=1:length(dat),
     XYZ = dat(j).XYZ;
     mm_MNI = dat(j).mm_MNI;
     t  = dat(j).t;
-    dim = dat(j).dim;
-    mat = dat(j).mat;
+    
+    if rnc == 0
+        dim = V0.dim;
+        mat = V0.mat;
+    else
+        dim = dat(j).dim;
+        mat = dat(j).mat;
+    end
     % transform from Talairach space to space of the rendered image
     %---------------------------------------------------------------
     for i=1:length(rend),
@@ -99,21 +114,43 @@ for j=1:length(dat),
         % calculate 'depth' of values
         %-------------------------------------------------------
         dep = spm_slice_vol(rend{i}.dep,spm_matrix([0 0 1])*inv(M2),d2,1);
-%         z1  = dep(round(xyz(1,:))+round(xyz(2,:)-1)*size(dep,1));
-
-        switch i
-            case 1
-                msk = find(mm_MNI(3,:) < -24 | mm_MNI(3,:) == -24); % ventral view
-            case 2
-                msk = find(mm_MNI(3,:) > -24 | mm_MNI(3,:) == -24);  %dorsal view
-            case 3
-                msk = find(mm_MNI(1,:) > 0 | mm_MNI(1,:) == 0); % lateral view (right hemisphere)
-            case 4
-                msk = find(mm_MNI(1,:) < 0 | mm_MNI(1,:) == 0); % lateral view (left hemisphere)
-            case 5
-                msk = find(mm_MNI(2,:) > -44 | mm_MNI(2,:) == -44); % frontal view
-            case 6
-                msk = find(mm_MNI(2,:) < -44 | mm_MNI(2,:) == -44); % occipital view
+        %         z1  = dep(round(xyz(1,:))+round(xyz(2,:)-1)*size(dep,1));
+        switch rnc
+            case {-1,1}
+                switch i
+                    case 1
+                        msk = find(mm_MNI(3,:) < -24 | mm_MNI(3,:) == -24); % ventral view
+                    case 2
+                        msk = find(mm_MNI(3,:) > -24 | mm_MNI(3,:) == -24);  %dorsal view
+                    case 3
+                        msk = find(mm_MNI(1,:) > 0 | mm_MNI(1,:) == 0); % lateral view (right hemisphere)
+                    case 4
+                        msk = find(mm_MNI(1,:) < 0 | mm_MNI(1,:) == 0); % lateral view (left hemisphere)
+                    case 5
+                        msk = find(mm_MNI(2,:) > -44 | mm_MNI(2,:) == -44); % frontal view
+                    case 6
+                        msk = find(mm_MNI(2,:) < -44 | mm_MNI(2,:) == -44); % occipital view
+                end
+            case 0
+                %this will depend on ...
+                vd = wT1_info.mat\ [0 0 24 1]';
+                vd = vd(1);
+                fo = wT1_info.mat\ [0 44 0 0];
+                fo = fo(1);
+                switch i
+                    case 1
+                        msk = find(mm_MNI(3,:) < -vd | mm_MNI(3,:) == -vd); % ventral view
+                    case 2
+                        msk = find(mm_MNI(3,:) > -vd | mm_MNI(3,:) == -vd);  %dorsal view
+                    case 3
+                        msk = find(mm_MNI(1,:) > 0 | mm_MNI(1,:) == 0); % lateral view (right hemisphere)
+                    case 4
+                        msk = find(mm_MNI(1,:) < 0 | mm_MNI(1,:) == 0); % lateral view (left hemisphere)
+                    case 5
+                        msk = find(mm_MNI(2,:) > -fo | mm_MNI(2,:) == -fo); % frontal view
+                    case 6
+                        msk = find(mm_MNI(2,:) < -fo | mm_MNI(2,:) == -fo); % occipital view
+                end
         end
         if ~isempty(msk),
             xyz =  xyz(:,msk);
@@ -125,14 +162,14 @@ for j=1:length(dat),
             msk = find(xyz(1,:) > 0  & xyz(2,:) > 0 & xyz(3,:) > 0);
             xyz = xyz(:,msk);
             t0  = t0(:,msk);
-            %%% 
+            %%%
             
             X0  = full(sparse(round(xyz(1,:)), round(xyz(2,:)), t0, d2(1), d2(2)));
             hld = 1; if ~isfinite(brt), hld = 0; end;
             X   = spm_slice_vol(X0,spm_matrix([0 0 1])*M2,size(rend{i}.dep),hld);
             msk = find(X<0);
             X(msk) = 0;
-        else,
+        else
             X = zeros(size(rend{i}.dep));
         end;
         % Brighten the blobs
@@ -140,7 +177,7 @@ for j=1:length(dat),
         mx(j) = max([mx(j) max(max(X))]);
         mn(j) = min([mn(j) min(min(X))]);
         rend{i}.data{j} = X;
-     end;
+    end;
 end;
 
 rend{1}.mxmx = max(mx);
@@ -158,12 +195,12 @@ end
 for kk = 1:length(rend)
     for i = 1:Nmark
         [rows, cols, vals] = find(rend{kk}.data{1} == i*10);
-        if isempty(rows) == 1 | isempty(cols) == 1
+        if isempty(rows) == 1 || isempty(cols) == 1
             rendered_MNI{kk}.rchn(i,1) = -1;
             rendered_MNI{kk}.cchn(i,1) = -1;
-        elseif isempty(rows) == 0 & isempty(cols) == 0
+        elseif isempty(rows) == 0 && isempty(cols) == 0
             rendered_MNI{kk}.rchn(i,1) = round(mean(rows));
             rendered_MNI{kk}.cchn(i,1) = round(mean(cols));
         end
-    end  
+    end
 end
