@@ -33,6 +33,7 @@ try
 catch
     ForceReprocess = 1;
 end
+
 % Loop over subjects
 for iSubj=1:size(job.NIRSmat,1)
     
@@ -40,6 +41,15 @@ for iSubj=1:size(job.NIRSmat,1)
     try
         NIRS = [];
         load(job.NIRSmat{iSubj,1});
+        
+        if NewDirCopyNIRS
+            [dirN fil1 ext1] =fileparts(job.NIRSmat{iSubj,1});
+            dir2 = [dirN filesep NewNIRSdir];
+            if ~exist(dir2,'dir'), mkdir(dir2); end;
+            newNIRSlocation = fullfile(dir2,'NIRS.mat');
+            save(newNIRSlocation,'NIRS');
+            job.NIRSmat{iSubj,1} = newNIRSlocation;          
+        end
         
         % SPATIAL NORMALIZATION OF ANATOMICAL IMAGE %
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -295,18 +305,28 @@ for iSubj=1:size(job.NIRSmat,1)
                 wT1_info.dim = V.dim;% [105,126,91]; %V.dim;
                 %let's use positions of optodes on cortex
                 %loop over channel ids
-                ch_MNI_vx = []; %%%% la notation serait Cp_rmv
+                Nch0 = size(NIRS.Cf.H.C.id,2)/2;
+                ch_MNIw_vx = zeros(4,Nch0); %%%% la notation serait Cp_rmv
+                ch_MNI_vx = zeros(4,Nch0);
+                %ch_MNI_vx_skin = zeros(4,Nch0);
                 %number of sources
                 Ns = NIRS.Cf.H.S.N;
-                for i=1:(size(NIRS.Cf.H.C.id,2)/2)
+                for i=1:Nch0
                     %indices of source and detector
                     Si = NIRS.Cf.H.C.id(2,i);
                     Di = NIRS.Cf.H.C.id(3,i)+Ns;
-                    pos = V.mat\(Q*[(Pp_c1_rmm(:,Si)+Pp_c1_rmm(:,Di))/2;1]);
-                    
-                    ch_MNI_vx = [ch_MNI_vx pos]; %%%% la notation serait Cp_rmv
+                    posmm = [(Pp_c1_rmm(:,Si)+Pp_c1_rmm(:,Di))/2;1];
+                    pos = NIRS.Dt.ana.wT1.VF.mat\posmm;
+                    ch_MNI_vx(:,i) = pos;
+                    %posmm_skin = [(Pp_rmm(:,Si)+Pp_rmm(:,Di))/2;1];
+                    %pos_skin = NIRS.Dt.ana.wT1.VF.mat\posmm_skin;
+                    %ch_MNI_vx_skin(:,i) = pos_skin;
+                    posw = V.mat\(Q*posmm);                    
+                    ch_MNIw_vx(:,i) = posw; %%%% la notation serait Cp_rmv
                 end
-                [rend, rendered_MNI] = render_MNI_coordinates(ch_MNI_vx, wT1_info,job.render_choice);
+                [rend, rendered_MNI] = render_MNI_coordinates(ch_MNIw_vx,ch_MNI_vx,wT1_info, NIRS.Dt.ana.wT1.VF,job.render_choice);
+                %[rend, rendered_MNI] = render_MNI_coordinates(ch_MNIw_vx,ch_MNI_vx_skin,wT1_info, NIRS.Dt.ana.wT1.VF,job.render_choice);
+                
                 %%%% la notation serait Cp_rmv
                 for kk = 1:6
                     rendered_MNI{kk}.ren = rend{kk}.ren;
@@ -368,16 +388,9 @@ for iSubj=1:size(job.NIRSmat,1)
             end
         end
 
-        if NewDirCopyNIRS
-            [dirN fil1 ext1] =fileparts(job.NIRSmat{iSubj,1});
-            dir2 = [dirN filesep NewNIRSdir];
-            if ~exist(dir2,'dir'), mkdir(dir2); end;
-            newNIRSlocation = fullfile(dir2,'NIRS.mat');
-            save(newNIRSlocation,'NIRS');
-            job.NIRSmat{iSubj,1} = newNIRSlocation;          
-        else
+        
             save(job.NIRSmat{iSubj,1},'NIRS'); 
-        end
+        
     catch exception
         disp(exception.identifier);
         disp(exception.stack(1));

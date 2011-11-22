@@ -1,4 +1,3 @@
-
 function nirs10 = tbx_cfg_nirs
 %_______________________________________________________________________
 % Copyright (C) 2010 LIOM Laboratoire d'Imagerie Optique et Moléculaire
@@ -1648,10 +1647,21 @@ render_template.name    = 'Render to SPM single subject template';
 render_template.val     = {};
 render_template.help    = {'Render to template.'};
 
+
+occipital_shift         = cfg_entry;
+occipital_shift.name    = 'Occipital shift';
+occipital_shift.tag     = 'occipital_shift';
+occipital_shift.strtype = 'r';
+occipital_shift.num     = [1 1];
+occipital_shift.val     = {0};
+occipital_shift.help    = {'Enter shift in millimeters (positive to move more'
+    'optodes toward the occipital view instead of on the frontal view)'
+    'For a first try, 20 is suggested.'}';
+
 render_subject         = cfg_branch;
 render_subject.tag     = 'render_subject';
 render_subject.name    = 'Render to subject';
-render_subject.val     = {render_file render_normalize_choice};
+render_subject.val     = {render_file render_normalize_choice occipital_shift};
 render_subject.help    = {'Render to subject. OPTION NOT FUNCTIONAL YET: '
     'Problem with coordinate systems and projections.'}';
 
