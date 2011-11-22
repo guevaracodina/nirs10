@@ -6270,6 +6270,27 @@ map_file.help    = {'Select statistical map of interest (file '
 %Extract map data from group and session analyses
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+extract_TOPO_map         = cfg_files; 
+extract_TOPO_map.name    = 'Select TOPO.mat for map to use'; 
+extract_TOPO_map.tag     = 'extract_TOPO_map';      
+extract_TOPO_map.filter = 'mat';
+extract_TOPO_map.ufilter = '^TOPO.mat$';
+extract_TOPO_map.num     = [1 1];
+extract_TOPO_map.val     = {''};
+extract_TOPO_map.help    = {'Optional. Default is TOPO.mat saved in specified NIRS.mat.'
+    'This is the TOPO.mat that will be used to select pixels of interest to extract'}';
+
+extract_TOPO_con         = cfg_files; 
+extract_TOPO_con.name    = 'Select (big_)TOPO.mat for contrasts to use'; 
+extract_TOPO_con.tag     = 'extract_TOPO_con';      
+extract_TOPO_con.filter = 'mat';
+extract_TOPO_con.ufilter = 'TOPO.mat$';
+extract_TOPO_con.num     = [1 1];     
+extract_TOPO_con.val     = {''};
+extract_TOPO_con.help    = {'Optional. Default is TOPO.mat saved in specified NIRS.mat.'
+    'This is the TOPO.mat that will be used to get the betas associated with specific contrasts.'
+    'For a multi-subject study, this would the big_TOPO.mat file'}';
+
 extract_auto_modality   = cfg_menu;
 extract_auto_modality.tag  = 'extract_auto_modality';
 extract_auto_modality.name = 'Modality map to extract from';
@@ -6426,7 +6447,7 @@ Volterra_ratio.help = {'Add ratio of 2nd to 1st Volterra to bNmin, bNmax info.'}
 extract_map_data      = cfg_exbranch;
 extract_map_data.name = 'Extract map data';
 extract_map_data.tag  = 'extract_map_data';
-extract_map_data.val  = {NIRSmat view extract_base_contrast ...
+extract_map_data.val  = {NIRSmat extract_TOPO_map extract_TOPO_con view extract_base_contrast ...
     extract_contrast extract_select_mode ...
     extract_average_mode extract_struct_name Volterra_ratio};
 extract_map_data.prog = @nirs_run_extract_map_data;
@@ -6845,10 +6866,26 @@ simuIt.strtype = 'e';
 simuIt.num     = [1 1];
 simuIt.val     = {1};
 
+simuNoise           = cfg_menu;
+simuNoise.name      = 'Include baseline noise';
+simuNoise.tag       = 'simuNoise';
+simuNoise.labels    = {'Yes' 'No'};
+simuNoise.values    = {1,0};
+simuNoise.val       = {1};
+simuNoise.help      = {'Include noise background scans; if No, the simulated data will be noiseless, i.e. on 0 background.'}';
+
+simuUpsample         = cfg_entry;
+simuUpsample.tag     = 'simuUpsample';
+simuUpsample.name    = 'Data upsampling factor';
+simuUpsample.help    = {'Enter an upsampling factor (max = 16)'};
+simuUpsample.strtype = 'e';
+simuUpsample.num     = [1 1];
+simuUpsample.val     = {1};
+
 simuYes         = cfg_branch;
 simuYes.tag     = 'simuYes';
 simuYes.name    = 'HDM on simulated data';
-simuYes.val     = {simuIt simuA simuS simuP simuPrior simuR restscans};
+simuYes.val     = {simuIt simuA simuS simuP simuPrior simuR simuUpsample simuNoise restscans };
 simuYes.help    = {'Perform HDM on real data'}';
 
 simuNo         = cfg_branch;

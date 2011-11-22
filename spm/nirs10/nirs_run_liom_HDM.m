@@ -56,6 +56,8 @@ try
         simuP     = job.simuOn.simuYes.simuP; %Parameters to vary
         simuPrior = job.simuOn.simuYes.simuPrior; %Priors to use
         simuR     = job.simuOn.simuYes.simuR; %Range to sample
+        simuUpsample = job.simuOn.simuYes.simuUpsample; %Upsampling factor on data 
+        simuNoise = job.simuOn.simuYes.simuNoise; %Yes to include background noise based on restscans 
         restscans = job.simuOn.simuYes.restscans; %Rest scans to add signal to
     else
         simuOn = 0;
@@ -192,6 +194,7 @@ try
                     
                     %if simuOn, replace the data with the rest data
                     if simuOn
+                        if simuNoise
                         SPM.xY.P     = char(restscans{:});
                         SPM.xY.VY = spm_vol(SPM.xY.P);
                         %save SPM in a temporary location
@@ -202,6 +205,7 @@ try
                             fBOLD_old = fBOLD;
                             fBOLD = fullfile(tmpdir,[fil00 ext00]);
                             save(fBOLD,'SPM');
+                        end
                         end
                     end
                     %cwd = pwd;
@@ -406,8 +410,8 @@ try
                             %ys = spm_int_D(P,M,U);
                             %toc
                             %set to zero mean and rescale to unit standard deviation
-                            tmp_m = repmat(mean(ys),[size(ys,1) 1]);
-                            ys = (ys - tmp_m)./std(ys);
+% %                             tmp_m = repmat(mean(ys),[size(ys,1) 1]);
+% %                             ys = (ys - tmp_m)./std(ys);
                             %                             %Canonical response
                             %                             ns = size(Y.y,1);
                             %                             xBF.T = 10;
@@ -422,10 +426,28 @@ try
                             %                             X = X((0:(ns - 1))*xBF.T + xBF.T0 + 32,:);
                             %                             %add response to rest data -- direct model
                             Y = Y0;
-                            %Y.y = Y0.y + sum(X(:,simuS),2)*simuA/100;
+                            %Y.y = Y0.y + sum(X(:,simuS),2)*simuA/100;                            
+                            %Upsample 
+                            if simuUpsample > 1
+                            Y.y = interp(Y.y,simuUpsample);
+                            for iX0=1:size(Y.X0,2)
+                                tmp0(:,iX0) = interp(Y.X0(:,iX0),simuUpsample);
+                            end
+                            Y.X0 = tmp0;
+                            end
                             ns = size(Y.y,1);
-                            ys = ys(round((0:(ns - 1))*Y.dt/U.dt+1));
+                            Y.dt = Y.dt/simuUpsample;
+                            ys = ys(round((0:(ns - 1))*Y.dt/U.dt)+1);
+                            
+                            if simuNoise
                             Y.y = Y0.y + ys*simuA/100;
+                            else
+                                Y.y = ys*simuA/100;
+                            end
+                            %Low pass filtering of the data after downsampling -- otherwise there will be aliasing 
+                            if simuUpsample < 16 %here Y0 might get LPF twice...
+                                Y.y = ButterLPF(1/Y.dt,0.95*1/(2*Y.dt),3,Y.y);
+                            end
                         end
                         % nonlinear system identification
                         %--------------------------------------------------------------------------
@@ -732,15 +754,15 @@ try
                             SubjIdx = SubjIdx0;
                         end
                     end
-                    %remove temp files
-                    if removeWhitening
-                        if simuOn
-                            delete(fBOLD_old);
-                        end
-                    end
-                    if simuOn
-                        delete(fBOLD);
-                    end
+%                     %remove temp files -- careful, this is not coded correctly, so a good SPM.mat might get deleted by mistake 
+%                     if removeWhitening
+%                         if simuOn
+%                             delete(fBOLD_old);
+%                         end
+%                     end
+%                     if simuOn
+%                         delete(fBOLD);
+%                     end
                     out = [];
                 catch exception
                     disp(exception.identifier);

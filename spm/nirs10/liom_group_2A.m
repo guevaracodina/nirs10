@@ -2,6 +2,7 @@ function G = liom_group_2A(cbeta,X,X0,s1,s2,Z)
 try
     %reshape cbeta
     [ns0 nS0 nC0 np] = size(cbeta);
+    %cbeta = reshape(cbeta,[ns0 nS0 nC0 s1 s2]);
     sX = ns0*nS0*nC0;
     cbeta = reshape(cbeta,[sX,np]);
     pX = pinv(X);
@@ -26,7 +27,7 @@ try
     F = ((rs0-rs)./rs)*(G.erdf-G.eidf)/G.eidf ;
     F(isnan(F)) = 0;
     F = reshape(F,s1,s2);
-    G.tmap_group = F;
+    G.Tmap = F;
 catch  exception
     disp(exception.identifier);
     disp(exception.stack(1));
