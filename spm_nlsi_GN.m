@@ -1,4 +1,4 @@
-function [Ep,Cp,Eh,F] = spm_nlsi_GN(M,U,Y)
+function [Ep,Cp,Eh,F,k] = spm_nlsi_GN(M,U,Y)
 % Bayesian inversion of a nonlinear model using a Gauss-Newton/EM algorithm
 % FORMAT [Ep,Cp,Eh,F] = spm_nlsi_GN(M,U,Y)
 %
@@ -269,7 +269,7 @@ C.F   = -Inf;                                   % free energy
 v     = -2;                                     % log ascent rate
 dFdh  = zeros(nh,1);
 dFdhh = zeros(nh,nh);
-for k = 1:128
+for k = 1:4*128 %number of iterations
     
     % time
     %----------------------------------------------------------------------  
@@ -490,8 +490,8 @@ for k = 1:128
     %----------------------------------------------------------------------
     dF  = dFdp'*dp;
     fprintf('%-6s: %i %6s %-6.3e %6s %.3e ',str,k,'F:',full(C.F - F0),'dF predicted:',full(dF))
-    
-    criterion = [(dF < 1e-2) criterion(1:end - 1)];
+    %criterion = [(dF < 1e-2) criterion(1:end - 1)];
+    criterion = [(dF < 1e-3) criterion(1:end - 1)];
     if all(criterion), fprintf(' convergence\n'), break, end
  
 end
@@ -501,5 +501,5 @@ end
 Ep     = spm_unvec(spm_vec(pE) + V*C.p(ip),pE);
 Cp     = V*C.Cp(ip,ip)*V';
 Eh     = C.h;
-F      = C.F;
-
+F      = full(C.F - F0); %C.F;
+k %: number of iterations used

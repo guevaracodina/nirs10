@@ -69,7 +69,8 @@ q     = x(4);
  
 switch M.modal
     case 1
-        y     = V0*(k1.*(1 - q) + k2.*(1 - (q./v)) + k3.*(1 - v));
+        %y     = V0*(k1.*(1 - q) + k2.*(1 - (q./v)) + k3.*(1 - v));
+        y     = V0*(k1.*(1 - q) + k2.*v.*(1 - (q./v)) + k3.*(1 - v));
     case 2
         %cf = 100*0.45; %x(5);
         y(2) = V0/P(3)*M.CBFcalibrFactor*x(2); %flow 

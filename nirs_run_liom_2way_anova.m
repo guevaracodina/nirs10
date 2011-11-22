@@ -389,14 +389,14 @@ try
                             X0 = [Xa Xb M Xs];
                             X = [Xab X0];
                             A = liom_group_2A(cbeta{h1},X,X0,W.s1,W.s2,Z); %careful, s1 (session counter) not same as W.s1 (size of image)!
-                            [TOPO Pu Nu Cu] = call_figure(TOPO,Pu,Nu,Cu,Z,W,F,A,CF,v1,h1,hb, 'AB');
+                            [TOPO Pu Nu Cu] = call_figure(TOPO,Pu,Nu,Cu,Z,W,F,A,CF,v1,h1,hb, 'AB',z1,0);
                         case 2
                             %Main effect of A (Sessions)
                             strA = 'mainA';
                             X0 = [Xab Xb M Xs];
                             X = [Xa X0];
                             A = liom_group_2A(cbeta{h1},X,X0,W.s1,W.s2,Z); %careful, s1 (session counter) not same as W.s1 (size of image)!
-                            [TOPO Pu Nu Cu] = call_figure(TOPO,Pu,Nu,Cu,Z,W,F,A,CF,v1,h1,hb, 'A');
+                            [TOPO Pu Nu Cu] = call_figure(TOPO,Pu,Nu,Cu,Z,W,F,A,CF,v1,h1,hb, 'A',z1,0);
                             
                         case 3
                             %Main effect of B (Intensity -- task)
@@ -404,7 +404,7 @@ try
                             X0 = [Xab Xa M Xs];
                             X = [Xb X0];
                             A = liom_group_2A(cbeta{h1},X,X0,W.s1,W.s2,Z); %careful, s1 (session counter) not same as W.s1 (size of image)!
-                            [TOPO Pu Nu Cu] = call_figure(TOPO,Pu,Nu,Cu,Z,W,F,A,CF,v1,h1,hb, 'B');
+                            [TOPO Pu Nu Cu] = call_figure(TOPO,Pu,Nu,Cu,Z,W,F,A,CF,v1,h1,hb, 'B',z1,0);
                         case 4
                             %Effect of A within levels of B
                             %loop over levels of B
@@ -419,7 +419,7 @@ try
                                 %need to adjust p value:
                                 Z.p_value = p_value/nC0;
                                 A = liom_group_2A(cbeta{h1},X,X0,W.s1,W.s2,Z); %careful, s1 (session counter) not same as W.s1 (size of image)!
-                                [TOPO Pu Nu Cu] = call_figure(TOPO,Pu,Nu,Cu,Z,W,F,A,CF,v1,h1,hb, strA);
+                                [TOPO Pu Nu Cu] = call_figure(TOPO,Pu,Nu,Cu,Z,W,F,A,CF,v1,h1,hb, strA,z1,y1);
                             end
                         case 5 
                             %Effect of B within levels of A
@@ -434,7 +434,7 @@ try
                                 %need to adjust p value:
                                 Z.p_value = p_value/nS0;
                                 A = liom_group_2A(cbeta{h1},X,X0,W.s1,W.s2,Z); %careful, s1 (session counter) not same as W.s1 (size of image)!
-                                [TOPO Pu Nu Cu] = call_figure(TOPO,Pu,Nu,Cu,Z,W,F,A,CF,v1,h1,hb, strA);            
+                                [TOPO Pu Nu Cu] = call_figure(TOPO,Pu,Nu,Cu,Z,W,F,A,CF,v1,h1,hb, strA,z1,y1);            
                             end
                     end
                     
@@ -448,6 +448,7 @@ try
         end %if view_estimated
     end %end for v1
     save(ftopo,'TOPO');
+    save(fullfile(dir_group,'big_TOPO.mat'),'big_TOPO','-v7.3');
 catch exception
     disp(exception.identifier);
     disp(exception.stack(1));
@@ -467,9 +468,13 @@ switch h1
 end
 end
 
-function [TOPO Pu Nu Cu] = call_figure(TOPO,Pu,Nu,Cu,Z,W,F,A,CF,v1,h1,hb,Astr)
+function [TOPO Pu Nu Cu] = call_figure(TOPO,Pu,Nu,Cu,Z,W,F,A,CF,v1,h1,hb,Astr,z1,y1)
 try
-    TOPO.v{v1}.group.hb{h1}.A = A;
+    if z1 <= 3
+        TOPO.v{v1}.group.hb{h1}.c{2*z1-1} = A;
+    else
+        %not stored for now
+    end
     filestr = [num2str(Z.p_value) '_' W.spec_hemi '_' hb '_' Astr];
     filestr_fig = [num2str(Z.p_value) ' ' W.spec_hemi ' ' hb ' ' Astr];
     info1 = [filestr ];
@@ -479,7 +484,7 @@ try
     F.contrast_info_both = [filestr ]; %same for Pos and Neg, used for combined figures
     F.contrast_info_both_for_fig = [filestr_fig ]; %same for Pos and Neg, used for combined figures
     
-    F.T_map = A.tmap_group;
+    F.T_map = A.Tmap;
     F.erdf = A.erdf;
     F.eidf = A.eidf;
     F.tstr = 'F'; %tstr;
