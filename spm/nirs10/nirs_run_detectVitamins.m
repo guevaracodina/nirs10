@@ -158,6 +158,13 @@ for iSubj = 1:nSubj
         Yanat_WOspots = Yanat - spots;
     end
     
+    if ~exist(fullfile(subjPath,'spots.nii'),'file')
+        % Save also as .nii
+        Vspots = Vanat;
+        Vspots.fname = fullfile(subjPath,'spots.nii');
+        spm_write_vol(Vspots,spots);
+    end
+    
     % In order to detect the fiducials, we want to isolate them from the
     % background noise. This operation will select all regional maxima
     % higher than a certain threshold (defined in % of the max intensity)
