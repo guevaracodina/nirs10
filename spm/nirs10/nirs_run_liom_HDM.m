@@ -451,7 +451,7 @@ try
                         end
                         % nonlinear system identification
                         %--------------------------------------------------------------------------
-                        [Ep,Cp,Eh,K0,K1,K2,M0,M1,L1,L2,F] = spm_nlsi(M,U,Y);
+                        [Ep,Cp,Eh,K0,K1,K2,M0,M1,L1,L2,F] = nirs_nlsi(M,U,Y);
                         %for simulations: store results in place of subjects
                         if simuOn
                             SubjIdx0 = SubjIdx; %should not be used

@@ -468,7 +468,7 @@ M.TE    = TE;
 
 % nonlinear system identification
 %--------------------------------------------------------------------------
-[Ep,Cp,dummy,dummy2,K1,K2,M0,M1] = spm_nlsi(M,U,Y);
+[Ep,Cp,dummy,dummy2,K1,K2,M0,M1] = nirs_nlsi(M,U,Y);
 
 %-display results
 %==========================================================================
