@@ -112,11 +112,11 @@ M.dt  = 1/2; %?
 P     = M.pE;
 p     = length(P);
 dp    = 1e-6;
-[k J] = spm_nlsi(M);
+[k J] = nirs_nlsi(M);
 for i = 1:9  %MODIFIER
     M.pE    = P;
     M.pE(i) = M.pE(i) + dp;
-    [k q]   = spm_nlsi(M);
+    [k q]   = nirs_nlsi(M);
     Jq(:,i) = (q - J)/dp;
 end
 
