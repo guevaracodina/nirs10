@@ -1294,7 +1294,7 @@ image_in.num     = [0 1];
 
 %_______________________________________________________________________
 output_prefix         = cfg_entry;
-output_prefix.name    = 'Prefix of the output image';
+output_prefix.name    = 'Prefix of the output image (buildroi1)';
 output_prefix.tag     = 'output_prefix';
 output_prefix.strtype = 's';
 output_prefix.num     = [1 Inf];
@@ -1351,7 +1351,7 @@ output_autonaming.help = {'Choose whether you want to choose the name of ',...
 %_______________________________________________________________________
 output_prefix      = cfg_entry;
 output_prefix.tag  = 'output_prefix';
-output_prefix.name = 'Prefix of the output image';
+output_prefix.name = 'Prefix of the output image (MCsegment1)';
 output_prefix.strtype = 's';
 output_prefix.num     = [1 Inf];
 output_prefix.def     = @(val)nirs_get_defaults('preprocANAT.MCsegment1.output_prefix', val{:});
@@ -3008,7 +3008,7 @@ out_autonaming.help = {['Choose wheather you want to choose the name ',...
 
 out_prefix      = cfg_entry;
 out_prefix.tag  = 'out_prefix';
-out_prefix.name = 'Prefix of the output image';
+out_prefix.name = 'Prefix of the output image (resize1)';
 out_prefix.strtype = 's';
 out_prefix.num     = [1 Inf];
 out_prefix.help = {['You can choose to give a particular prefix to the ',...
