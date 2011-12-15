@@ -46,31 +46,21 @@ for iSubj=1:size(job.NIRSmat,1)
         cs = NIRS.Cs.mcs{ics};
         if cs.alg==1, Oe='.mch'; elseif cs.alg==2, Oe='.his';end
         
-        % Get optical properties of each layer of the medium and of the perturbation
-        if isfield(cs,'mu_subj') && isfield(cs.mu_subj,'muTRS')
-            dir_a1 = fileparts(job.dir);
-            [dir_a2 lstdir2] = fileparts(dir_a1);
-            if strcmp(lstdir2(1:3),'roi')
-                [dir_a3 lstdir3] = fileparts(dir_a2);
-                num = str2num(lstdir3(2:4));
-            else
-                num = str2num(lstdir2(2:4));
-            end
-            % a charger : job.mu_subj.muTRS
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            outOP = GetOpt_ppts('wl','D:\Users\Clément\DPF_testDuncan3\Opt_ppts_44sujets_MichP2S.mat',num);
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        else
-            outOP = GetOpt_ppts('wl');
-        end
-        opt_ppts = outOP{1};
-        opt_ppts_perturb = outOP{2};
-
         % Select history/mch files
         [fchar,dummy] = spm_select('FPList',cs_dir,Oe);
         for i=1:size(fchar,1)
             f{i,1} = deblank(fchar(i,:));
         end
+        % Opt_ppts% Get optical properties of each layer of the medium and of the perturbatio
+        if isfield(cs,'mu_subj') && isfield(cs.mu_subj,'muTRS')
+            [dummy namef] = fileparts(f{1,1});
+            num = str2num(namef(5:6));
+            outOP = GetOpt_ppts('wl','D:\Users\Clément\DPF_testDuncan3\Opt_ppts_44sujets_MichP2S.mat',num);
+        else
+            outOP = GetOpt_ppts('wl');
+        end
+        opt_ppts = outOP{1};
+        opt_ppts_perturb = outOP{2};
         
         % Read simulation outputs from his/mch file
         switch cs.alg

@@ -1480,6 +1480,15 @@ thresh_as.help = {'Once all the ci-images have been calculated by SPM, ',...
     '(bigger than the said threshold).'};
 
 %_______________________________________________________________________
+vbm_seg      = cfg_menu;
+vbm_seg.tag  = 'vbm_seg';
+vbm_seg.name = 'Use VBM CSF and GM segmentation';
+vbm_seg.labels = {'True','False'};
+vbm_seg.values = {1,0};
+vbm_seg.val  = {0};
+vbm_seg.help = {'.'}';
+
+%_______________________________________________________________________
 rebel_surrounding      = cfg_entry;
 rebel_surrounding.tag  = 'rebel_surrounding';
 rebel_surrounding.name = 'Surrounding size for rebel voxels';
@@ -1511,7 +1520,7 @@ MCsegment1.tag  = 'MCsegment1';
 MCsegment1.name = 'MC Segmentation';
 
 MCsegment1.val  = {NIRSmat_optional DelPreviousData NewDirCopyNIRS force_reprocess  image_in output_autonaming ...
-    output_prefix skn skl csf grm wtm thresh_as head_shadow ...
+    output_prefix skn skl csf grm wtm vbm_seg thresh_as head_shadow ...
     rebel_surrounding rebel_thresh_hs process_image}; %%%%%% pk NIRSmat_optional ???
 MCsegment1.prog = @nirs_run_MCsegment3;
 MCsegment1.vout = @nirs_cfg_vout_MCsegment;
@@ -3220,12 +3229,12 @@ samcs.name = 'Same as Monte Carlo simulation';
 samcs.tag  = 'samcs';
 samcs.help = {'Helmet informations will be extracted from ''.nirs'' file.'};
 
-timask         = cfg_files; %Select MC segmented volume for this subject
-timask.name    = 'Timask'; % The displayed name
-timask.tag     = 'timask';       %file names
+timask         = cfg_files;
+timask.name    = 'Timask';
+timask.tag     = 'timask';
 timask.filter  = 'image';
 timask.ufilter = '.nii';
-timask.num     = [1 1];     % Number of inputs required
+timask.num     = [1 1];
 timask.help    = {'.'};
 
 tikh_mask         = cfg_choice;

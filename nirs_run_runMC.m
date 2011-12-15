@@ -109,7 +109,7 @@ for Idx=1:size(job.NIRSmat,1)
                     
                     % -z 1 EST ESSENTIEL !!!!!!!!!!!!!!!!!!!
                     system([codeexe ' -A -n ' int2str(cs.par.nphotons) ' -f ' file2 ' -s ' ...
-                        file1 ' -r ' int2str(J.MCX_r) ' -g 1 -b 0 -d 1 -z 0 -l']);
+                        file1 ' -r ' int2str(J.MCX_r) ' -g 1 -b 0 -d 1 -z 0']);
                 end
                 
                 
