@@ -16,10 +16,6 @@ function out = nirs_run_generate_sensitivity_matrix(job)
 % Copyright (C) 2010 Laboratoire d'Imagerie Optique et Moleculaire
 % Clément Bonnéry 03/2011
 
-outOP = GetOpt_ppts('wl');
-opt_ppts = outOP{1};
-opt_ppts_perturb = outOP{2};
-
 for Idx=1:size(job.NIRSmat,1)
     %Load NIRS.mat information
     try
@@ -52,6 +48,18 @@ for Idx=1:size(job.NIRSmat,1)
                 f{i,1} = fchar(i,:);
             end
         end
+        
+        %%%Opt_ppts
+        % % % % % % % outOP = GetOpt_ppts('wl');
+        if isfield(cs,'mu_subj') && isfield(cs.mu_subj,'muTRS')
+            [dummy namef] = fileparts(f{1,1});
+            num = str2num(namef(5:6));
+            outOP = GetOpt_ppts('wl','D:\Users\Clément\DPF_testDuncan3\Opt_ppts_44sujets_MichP2S.mat',num);
+        else
+            outOP = GetOpt_ppts('wl');
+        end
+        opt_ppts = outOP{1};
+        opt_ppts_perturb = outOP{2};
         
         try MCX_g = NIRS.Cs.mcs{ics}.MCX_g; catch, MCX_g =1; end
         
@@ -200,12 +208,12 @@ for Idx=1:size(job.NIRSmat,1)
                                 % boule autour de la position du point P
                                 vxr = 3;%voxel radius
                                 
-                                ms_N = ms(round(max(cs.Pfp_rmiv(1,S_Pkpt)-vxr,1)):round(min(cs.Pfp_rmiv(1,S_Pkpt)+vxr,size(ms,1))),... 
-                                          round(max(cs.Pfp_rmiv(2,S_Pkpt)-vxr,1)):round(min(cs.Pfp_rmiv(2,S_Pkpt)+vxr,size(ms,2))),...
-                                          round(max(cs.Pfp_rmiv(3,S_Pkpt)-vxr,1)):round(min(cs.Pfp_rmiv(3,S_Pkpt)+vxr,size(ms,3))));
+                                ms_N = ms(round(max(cs.Pfp_rmiv(1,S_Pkpt)-vxr,1)):round(min(cs.Pfp_rmiv(1,S_Pkpt)+vxr,size(ms,1))),...
+                                    round(max(cs.Pfp_rmiv(2,S_Pkpt)-vxr,1)):round(min(cs.Pfp_rmiv(2,S_Pkpt)+vxr,size(ms,2))),...
+                                    round(max(cs.Pfp_rmiv(3,S_Pkpt)-vxr,1)):round(min(cs.Pfp_rmiv(3,S_Pkpt)+vxr,size(ms,3))));
                                 md_N = md(round(max(cs.Pfp_rmiv(1,D_Pktp)-vxr,1)):round(min(cs.Pfp_rmiv(1,D_Pktp)+vxr,size(md,1))),...
-                                          round(max(cs.Pfp_rmiv(2,D_Pktp)-vxr,1)):round(min(cs.Pfp_rmiv(2,D_Pktp)+vxr,size(md,2))),...
-                                          round(max(cs.Pfp_rmiv(3,D_Pktp)-vxr,1)):round(min(cs.Pfp_rmiv(3,D_Pktp)+vxr,size(md,3))));
+                                    round(max(cs.Pfp_rmiv(2,D_Pktp)-vxr,1)):round(min(cs.Pfp_rmiv(2,D_Pktp)+vxr,size(md,2))),...
+                                    round(max(cs.Pfp_rmiv(3,D_Pktp)-vxr,1)):round(min(cs.Pfp_rmiv(3,D_Pktp)+vxr,size(md,3))));
                                 
                                 phi0_S = max(ms_N(:)); %%???
                                 phi0_D = max(md_N(:));
@@ -240,12 +248,12 @@ for Idx=1:size(job.NIRSmat,1)
                                 vxr = 3;%voxel radius in millimeters -- assumption to make more visible and explain
                                 
                                 ms_N = msR(max(cs.Pfp_rmiv(1,S_Pkpt)-vxr,1):min(cs.Pfp_rmiv(1,S_Pkpt)+vxr,size(msR,1)),...
-                                           max(cs.Pfp_rmiv(2,S_Pkpt)-vxr,1):min(cs.Pfp_rmiv(2,S_Pkpt)+vxr,size(msR,2)),...
-                                           max(cs.Pfp_rmiv(3,S_Pkpt)-vxr,1):min(cs.Pfp_rmiv(3,S_Pkpt)+vxr,size(msR,3)));
+                                    max(cs.Pfp_rmiv(2,S_Pkpt)-vxr,1):min(cs.Pfp_rmiv(2,S_Pkpt)+vxr,size(msR,2)),...
+                                    max(cs.Pfp_rmiv(3,S_Pkpt)-vxr,1):min(cs.Pfp_rmiv(3,S_Pkpt)+vxr,size(msR,3)));
                                 
                                 md_N = mdR(max(cs.Pfp_rmiv(1,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(1,D_Pktp)+vxr,size(mdR,1)),...
-                                           max(cs.Pfp_rmiv(2,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(2,D_Pktp)+vxr,size(mdR,2)),...
-                                           max(cs.Pfp_rmiv(3,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(3,D_Pktp)+vxr,size(mdR,3)));
+                                    max(cs.Pfp_rmiv(2,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(2,D_Pktp)+vxr,size(mdR,2)),...
+                                    max(cs.Pfp_rmiv(3,D_Pktp)-vxr,1):min(cs.Pfp_rmiv(3,D_Pktp)+vxr,size(mdR,3)));
                                 
                                 phi0_S = max(ms_N(:));
                                 phi0_D = max(md_N(:));
@@ -277,26 +285,26 @@ for Idx=1:size(job.NIRSmat,1)
             sens_reshaped = sens_reshaped + reshape(sens(i,:),V_segR.dim);
         end
         save(fullfile(cs_dir,'Sum_sensReshaped.mat'),'sens_reshaped','-v7.3'); %PP
-      
-%         sensR = reshape(sens,[size(sens,1) V_segR.dim]); 
-%         for i=1:size(sens,1)
-%             sens2 = squeeze(sensR(i,:,:,:));
-%             %Save as a 4D .nii volume 
-%             V(i) = nirs_create_vol(fullfile(cs_dir,['sens' int2str(i) '.nii']),...
-%                     V_segR.dim, [16,0], V_segR.pinfo, V_segR.mat, sens2);
-%         end
-%         %Save as a 4D .nii volume 
-%         V4 = spm_file_merge(V,'sens.nii',0);        
-% 
-
-
+        
+        %         sensR = reshape(sens,[size(sens,1) V_segR.dim]);
+        %         for i=1:size(sens,1)
+        %             sens2 = squeeze(sensR(i,:,:,:));
+        %             %Save as a 4D .nii volume
+        %             V(i) = nirs_create_vol(fullfile(cs_dir,['sens' int2str(i) '.nii']),...
+        %                     V_segR.dim, [16,0], V_segR.pinfo, V_segR.mat, sens2);
+        %         end
+        %         %Save as a 4D .nii volume
+        %         V4 = spm_file_merge(V,'sens.nii',0);
+        %
+        
+        
         V2 = nirs_create_vol(fullfile(cs_dir,'log_sum_sens.nii'),...
-                    V_segR.dim, [16,0], V_segR.pinfo, V_segR.mat, log(sens_reshaped));
-           
-%         m_c1 = zeros(size(Yb8i));
-%         m_c1(Yb8i==1)=1;
-%         NIRS.sens = V4; 
-
+            V_segR.dim, [16,0], V_segR.pinfo, V_segR.mat, log(sens_reshaped));
+        
+        %         m_c1 = zeros(size(Yb8i));
+        %         m_c1(Yb8i==1)=1;
+        %         NIRS.sens = V4;
+        
         save(job.NIRSmat{Idx,1},'NIRS');
     catch exception
         disp(exception.identifier);

@@ -10,7 +10,7 @@ if isfield(job.to_do,'tempcours')
         sample = job.to_do.tempcours.vox_tempcours;
     else
         %calculer le volume
-        jobC=1;
+        jobC=4;
     end
 end
 if isfield(job.to_do,'t_stats'), jobC=3;end
@@ -44,14 +44,14 @@ switch jobC
                 dec_DHbR(1,timee) = Y(sample(1),sample(2),sample(3));
             end
         end
-%         figure;
-%         subplot(2,1,1)
-%         plot(dec_DHbO,'r');
-%         subplot(2,1,2)
-%         plot(dec_DHbR);
+        %         figure;
+        %         subplot(2,1,1)
+        %         plot(dec_DHbO,'r');
+        %         subplot(2,1,2)
+        %         plot(dec_DHbR);
         
         % on interpole pour avoir un echantillonnqge qui change pas
-        x = 1:timee; 
+        x = 1:timee;
         xi = 1:Ts:timee;
         c(1,:) = interp1(x,dec_DHbR,xi);
         c(2,:) = interp1(x,dec_DHbO,xi);
@@ -61,20 +61,42 @@ switch jobC
         plot(c(2,:),'r');
         subplot(2,1,2)
         plot(c(1.,:));
-
+        
         lst = length(NIRS.Dt.fir.pp);
-        outfile = fullfile(tmr_dir,['HbOHbR_vx-' int2str(sample(1)) '-' int2str(sample(2)) '-' int2str(sample(3)) ext1]);
+        outfile = fullfile(tmr_dir,['HbOHbR_vx-' int2str(sample(1)) '-' int2str(sample(2)) '-' int2str(sample(3)) '.nirV']);
         
         if strcmp(NIRS.Dt.fir.pp(lst).pre,'CheckReconstruct') && strcmp(outfile,NIRS.Dt.fir.pp(lst).p{1,1})
             lst = lst-1;
         end
-        fwrite_NIR(outfile,c);
+        save(outfile,'c')
         NIRS.Dt.fir.pp(lst+1).p{1,1} = outfile;
         NIRS.Dt.fir.pp(lst+1).pre = 'CheckReconstruct';
         NIRS.Dt.fir.pp(lst+1).job = job;
         
         save(fullfile(tmr_dir,'NIRS.mat'),'NIRS');
- 
+        
+    case 2
+        out_muas = job.outreconstruct_Hb;
+        
+        load(job.NIRSmat{:});
+        fnirs = load(NIRS.Dt.fir.pp.p{:},'-mat');
+        
+        dec_Dmua = zeros(1,length(fnirs.d));
+        
+        for imuas =1:size(out_muas,1)
+            f = out_muas{imuas,1};
+            V = spm_vol(f);
+            Y = spm_read_vols(V);
+            
+            [dummy,name,dummy2] = fileparts(f);
+            sep =strfind(name,'_');
+            timee =str2num(name(sep(2)+2:sep(3)-1));
+            
+            dec_Dmua(1,timee:timee+25) = Y(11,8,7);
+        end
+        figure;
+        plot(dec_Dmua(1,5000:7000));
+        
     case 3
         out_Hbs = job.outreconstruct_Hb;
         load(job.NIRSmat{:});
@@ -168,27 +190,49 @@ switch jobC
         V_R = spm_create_vol(V_R);
         spm_write_vol(V_R, Y_st_R);
         
-    case 2
-        out_muas = job.outreconstruct_Hb;
+    case 4
+        out_Hbs = job.outreconstruct_Hb;
         
         load(job.NIRSmat{:});
-        fnirs = load(NIRS.Dt.fir.pp.p{:},'-mat');
+        fnirs = load(NIRS.Dt.fir.pp(1).p{:},'-mat');
+        Ts = fnirs.t(2);
         
-        dec_Dmua = zeros(1,length(fnirs.d));
+        Vbase = spm_vol(job.to_do.tempcours.roi_tempcours{1});
+        DHbO_nii = zeros([Vbase.dim 2]);
+        DHbR_nii = zeros([Vbase.dim 2]);
         
-        for imuas =1:size(out_muas,1)
-            f = out_muas{imuas,1};
+        for iHbs =1:size(out_Hbs,1)
+            f = out_Hbs{iHbs,1};
             V = spm_vol(f);
             Y = spm_read_vols(V);
             
-            [dummy,name,dummy2] = fileparts(f);
+            [tmr_dir,name,ext1] = fileparts(f);
+            %%%%
             sep =strfind(name,'_');
-            timee =str2num(name(sep(2)+2:sep(3)-1));
-            
-            dec_Dmua(1,timee:timee+25) = Y(11,8,7);
+            timee =str2num(name(sep+1:end));
+            %%%%
+            if ~isempty(strfind(name,'O'))
+                DHbO_nii(:,:,:,timee) = Y;
+            else
+                DHbR_nii(:,:,:,timee) = Y;
+            end
         end
-        figure;
-        plot(dec_Dmua(1,5000:7000));
+        
+        % vu la taille des images, on interpole pas
+        save(fullfile(tmr_dir,'HbO_wholeROI.nii'),'DHbO_nii','V');
+        save(fullfile(tmr_dir,'HbR_wholeROI.nii'),'DHbR_nii','V');
+        outfile=fullfile(tmr_dir,'HbO_wholeROI.nii');
+         
+        lst = length(NIRS.Dt.fir.pp);
+        if strcmp(NIRS.Dt.fir.pp(lst).pre,'CheckReconstruct') && strcmp(outfile,NIRS.Dt.fir.pp(lst).p{1,1})
+            lst = lst-1;
+        end
+        NIRS.Dt.fir.pp(lst+1).p{1} = fullfile(tmr_dir,'HbR_wholeROI.nii');
+        NIRS.Dt.fir.pp(lst+1).p{2} = fullfile(tmr_dir,'HbO_wholeROI.nii');
+        NIRS.Dt.fir.pp(lst+1).pre = 'CheckReconstruct';
+        NIRS.Dt.fir.pp(lst+1).job = job;
+        
+        save(fullfile(tmr_dir,'NIRS.mat'),'NIRS');
 end
 out.NIRSmat = job.NIRSmat;
 end

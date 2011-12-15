@@ -80,16 +80,16 @@ for Idx=1:size(job.NIRSmat,1)
         VsegRR = spm_vol(temp.segRR);
         YsegRR = spm_read_vols(VsegRR);
         YsegRR = reshape(YsegRR,[1 prod(VsegRR.dim)]);
-%         %masks c1 and c5
-%         m_c1 = zeros(size(YsegRR));
-%         m_c1(YsegRR==1)=1;% mask for GM
-%         m_c5 = zeros(size(YsegRR));
-%         m_c5(YsegRR==5)=1;% mask for skin
-%         if tikh_constraint
-%             m_c12 = zeros(size(YsegRR));
-%             m_c12(YsegRR==1 | YsegRR == 2)=1;
-%         end
-%         clear YsegRR;
+        %         %masks c1 and c5
+        %         m_c1 = zeros(size(YsegRR));
+        %         m_c1(YsegRR==1)=1;% mask for GM
+        %         m_c5 = zeros(size(YsegRR));
+        %         m_c5(YsegRR==5)=1;% mask for skin
+        %         if tikh_constraint
+        %             m_c12 = zeros(size(YsegRR));
+        %             m_c12(YsegRR==1 | YsegRR == 2)=1;
+        %         end
+        %         clear YsegRR;
         
         % Source detector pairs....
         C_cs = cs.C; %former Cmc
@@ -180,28 +180,6 @@ for Idx=1:size(job.NIRSmat,1)
                 jobSC.Cp = Cov(cp);
             end
             
-            SC =0;
-            if ~isempty(job.tikh_SC)
-                for i=1:size(job.tikh_SC,2)
-                    if isfield(job.tikh_SC(i).tikh_mask,'wgmc')
-                        jobSC.Y = YsegRR;
-                        jobSC.tikh_mask = 'wgmc';
-                        
-                    elseif isfield(job.tikh_SC(i).tikh_mask,'timask')
-                        jobSC.Y = job.tikh_SC(i).tikh_mask.timask{:};
-                        jobSC.tikh_mask = 'image';
-                        
-                    elseif isfield(job.tikh_SC(i).tikh_mask,'samcs')
-                        jobSC.Y = cs.PVEmask;
-                        jobSC.tikh_mask = 'image';
-                    end
-                    jobSC.alpha = alpha;
-                    jobSC.alpha2 = job.tikh_SC(i).alpha2;
-                    out = nirs_inverse_tikhonov_SC(jobSC);
-                end
-                SC = SC+out;
-            end
-            
             daate = strrep(datestr(now),':','-');
             tm_dir = ['tm_' daate '_a' ctm.alg '_' int2str(job.sens_vxsize) 'mm'];
             ctm.p = fullfile(cs_dir,tm_dir);
@@ -215,6 +193,34 @@ for Idx=1:size(job.NIRSmat,1)
             ctm.n = tm_dir;
             ctm.hyperparameter = alpha;
             ctm.sens_vxsize = job.sens_vxsize;
+            
+            SC =0;
+            if ~isempty(job.tikh_SC)
+                for i=1:size(job.tikh_SC,2)
+                    if isfield(job.tikh_SC(i).tikh_mask,'wgmc')
+                        jobSC.Y = YsegRR;
+                        jobSC.tikh_mask = 'wgmc';
+                        ctm.tikh_mask{1} = 'White and grey matter mask';
+                        ctm.tikh_mask{2} = YsegRR;
+                        
+                    elseif isfield(job.tikh_SC(i).tikh_mask,'timask')
+                        jobSC.Y = job.tikh_SC(i).tikh_mask.timask{:};
+                        jobSC.tikh_mask = 'image';
+                        ctm.tikh_mask{1} = 'User selected mask';
+                        ctm.tikh_mask{2} = jobSC.Y;
+                        
+                    elseif isfield(job.tikh_SC(i).tikh_mask,'samcs')
+                        jobSC.Y = cs.PVEmask;
+                        jobSC.tikh_mask = 'image';
+                        ctm.tikh_mask{1} = 'Same mask as for Monte-Carlo simulation';
+                        ctm.tikh_mask{2} = jobSC.Y;
+                    end
+                    jobSC.alpha = alpha;
+                    jobSC.alpha2 = job.tikh_SC(i).alpha2;
+                    out = nirs_inverse_tikhonov_SC(jobSC);
+                end
+                SC = SC+out;
+            end
             
             [dum,namRR,extRR] = fileparts(temp.segRR);
             ctm.segRR = fullfile(ctm.p,[namRR extRR]);
@@ -240,11 +246,11 @@ for Idx=1:size(job.NIRSmat,1)
                                 XX{iwl} =Xwl{iwl}'*Xwl{iwl};
                                 sz = size(XX{iwl},2);
                                 %takes 27 GB of memory for 4e4 x 4e4 size
-                            if isempty(job.tikh_SC)
-                                XXLI{iwl} = sparse(XX{iwl} + alpha*eye(sz)); % eq.19 huppert_2010_hierarchical
-                            else
-                                XXLI{iwl} = sparse(XX{iwl} + SC);
-                            end
+                                if isempty(job.tikh_SC)
+                                    XXLI{iwl} = sparse(XX{iwl} + alpha*eye(sz)); % eq.19 huppert_2010_hierarchical
+                                else
+                                    XXLI{iwl} = sparse(XX{iwl} + SC);
+                                end
                             end
                             YY = (Xwl{iwl}'*Y_to{iwl});
                             Dmua{iwl} = XXLI{iwl} \ YY;

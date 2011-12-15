@@ -44,12 +44,15 @@ for Idx=1:nsubj
             disp(['Could not find anatomical image for subject ' int2str(Idx) ]);
         end
     end
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % PROVOQUE DES MILLIARDS DE BUGS !!!!
     %Try to use field corrected image if possible
-    [dirA filA extA] = fileparts(V.fname);
-    tmp_file = fullfile(dirA,['m' filA extA]);
-    if exist(tmp_file,'file')
-        V.fname = tmp_file;
-    end
+%     [dirA filA extA] = fileparts(V.fname);
+%     tmp_file = fullfile(dirA,['m' filA extA]);
+%     if exist(tmp_file,'file')
+%         V.fname = tmp_file;
+%     end
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     
     % USER OPTIONS %
@@ -83,6 +86,7 @@ for Idx=1:nsubj
     [dir1, file1, dummy] = fileparts(V.fname);
     %tmpf = spm_select('List',dir1,['_segmented_' file1]);
     %if ~isempty(tmpf)
+    
     if spm_existfile(fullfile(dir1,[output_prefix,'_segmented_',file1,'.nii'])) && ~force_reprocess
         %         NIRS.Cs.mcs.seg = tmpf(1,:);
         %MC Segmentation already done, skipping
