@@ -192,8 +192,8 @@ for Idx=1:size(job.NIRSmat,1)
         try
             for f=1:nsess
                 iSess = idx_sess(f);
-                NIRS.Dt.fir.Sess(1).U;
-                if ~isempty(NIRS.Dt.fir.Sess(iSess).U)
+                NIRS.Dt.fir.Sess(1).U.name;
+                if ~isempty(NIRS.Dt.fir.Sess(iSess).U.name)
                     SPM.Sess(f) = NIRS.Dt.fir.Sess(iSess);
                 else % no onsets
                     SPM.Sess(f).U = [];
