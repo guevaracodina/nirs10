@@ -12,7 +12,7 @@ function out = nirs_run_detectVitamins(job)
 % 2011-03
 
 % Boolean for "semi-manual"/debug mode
-manualMode = 0;
+manualMode = 1;
 % Boolean for when the semi-automatic coregistration failed and one just
 % wants to manually define the order of the optodes
 wrongWhenAutomatic = 0;
