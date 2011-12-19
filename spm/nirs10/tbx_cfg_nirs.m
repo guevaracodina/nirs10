@@ -6918,7 +6918,7 @@ simuOn.tag     = 'simuOn';
 simuOn.name    = 'Perform simulations';
 simuOn.values  = {simuNo simuYes};
 simuOn.val     = {simuNo};
-simuOn.help    = {'Define ROI'}';
+simuOn.help    = {'Perform simulations'}';
 
 % Executable Branch
 liom_HDM      = cfg_exbranch;
