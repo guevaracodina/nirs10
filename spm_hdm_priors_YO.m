@@ -90,7 +90,8 @@ pE = [ 0.6066    0.3876    1.5570    0.3295    0.3459   -0.1527]; %from BOLD
 
 % append m efficacy priors
 %---------------------------------------------------------------------------
-pE    = [pE(:); zeros(m,1)];
+%pE    = [pE(:); zeros(m,1)];
+pE    = [pE(:); ones(m,1)]; %PP
 %pC    = blkdiag(pC,eye(m,m)*2e-7);
 pC    = blkdiag(pC,eye(m,m));
 
