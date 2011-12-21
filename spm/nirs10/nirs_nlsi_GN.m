@@ -169,7 +169,7 @@ end
 %--------------------------------------------------------------------------
 try
     spm_vec(M.P) - spm_vec(M.pE);
-    fprintf('\nParameter initialisation successful\n')
+    %fprintf('\nParameter initialisation successful\n')
 catch
     M.P = M.pE;
 end
@@ -491,7 +491,7 @@ for k = 1:4*128 %number of iterations
     dF  = dFdp'*dp;
     fprintf('%-6s: %i %6s %-6.3e %6s %.3e ',str,k,'F:',full(C.F - F0),'dF predicted:',full(dF))
     %criterion = [(dF < 1e-2) criterion(1:end - 1)];
-    criterion = [(dF < 1e-3) criterion(1:end - 1)];
+    criterion = [(dF < 1e-1) criterion(1:end - 1)];
     if all(criterion), fprintf(' convergence\n'), break, end
  
 end

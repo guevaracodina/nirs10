@@ -1,68 +1,27 @@
 function out = nirs_run_liom_HDM(job) %(xSPM,SPM,hReg)
 % user interface for hemodynamic model estimation
-% FORMAT [Ep,Cp,K1,K2] = spm_hdm_ui(xSPM,SPM,hReg);
-%
-% xSPM   - structure containing specific SPM details
-% SPM    - structure containing generic  SPM details
-% hReg   - Handle of results section XYZ registry (see spm_results_ui.m)
-%
-% Ep     - conditional expectations of the hemodynamic model parameters
-% Cp     - conditional  covariance  of the hemodynamic model parameters
-% K1     - 1st order kernels
-% K2     - 2nd order kernels
-%          (see main body of routine for details of model specification)
-%___________________________________________________________________________
 % Copyright (C) 2008 Wellcome Trust Centre for Neuroimaging
 
 % Karl Friston
 % $Id: spm_hdm_ui.m 3666 2010-01-10 17:54:31Z klaas $
-try
-    save_figures = job.save_figures;
-catch
-    save_figures = 1;
-end
-try
-    nameHDM = job.nameHDM;
-catch
-    nameHDM = '';
-end
-try
-    TE = job.echo_time;
-    TE_ok = 1;
-catch
-    TE    = 0.03; TE_ok = 1; %echo time
-end
-try
-    dp_start = job.dp_start; %points to remove due to filter set-up
-catch
-    dp_start = 2;
-end
-try
-    dp_end = job.dp_end; %points to remove due to filter set-up
-catch
-    dp_end = 2;
-end
-try
-    removeWhitening = job.removeWhitening;
-catch
-    removeWhitening = 1;
-end
-try
-    if isfield(job.simuOn,'simuYes')
-        simuOn = 1;
-        simuS     = job.simuOn.simuYes.simuS; %Stimuli types to include
-        simuIt    = job.simuOn.simuYes.simuIt; %Number of random iterations
-        simuA     = job.simuOn.simuYes.simuA; %Signal amplitude, as % of BOLD signal
-        simuP     = job.simuOn.simuYes.simuP; %Parameters to vary
-        simuPrior = job.simuOn.simuYes.simuPrior; %Priors to use
-        simuR     = job.simuOn.simuYes.simuR; %Range to sample
-        simuUpsample = job.simuOn.simuYes.simuUpsample; %Upsampling factor on data 
-        simuNoise = job.simuOn.simuYes.simuNoise; %Yes to include background noise based on restscans 
-        restscans = job.simuOn.simuYes.restscans; %Rest scans to add signal to
-    else
-        simuOn = 0;
-    end
-catch
+save_figures = job.save_figures;
+nameHDM = job.nameHDM;
+TE = job.echo_time;
+dp_start = job.dp_start; %points to remove due to filter set-up
+dp_end = job.dp_end; %points to remove due to filter set-up
+removeWhitening = job.removeWhitening;
+if isfield(job.simuOn,'simuYes')
+    simuOn = 1;
+    simuS     = job.simuOn.simuYes.simuS; %Stimuli types to include
+    simuIt    = job.simuOn.simuYes.simuIt; %Number of random iterations
+    simuA     = job.simuOn.simuYes.simuA; %Signal amplitude, as % of BOLD signal
+    simuP     = job.simuOn.simuYes.simuP; %Parameters to vary
+    simuPrior = job.simuOn.simuYes.simuPrior; %Priors to use
+    simuR     = job.simuOn.simuYes.simuR; %Range to sample
+    simuUpsample = job.simuOn.simuYes.simuUpsample; %Upsampling factor on data
+    simuNoise = job.simuOn.simuYes.simuNoise; %Yes to include background noise based on restscans
+    restscans = job.simuOn.simuYes.restscans; %Rest scans to add signal to
+else
     simuOn = 0;
 end
 %Individual figure display
@@ -195,17 +154,17 @@ try
                     %if simuOn, replace the data with the rest data
                     if simuOn
                         if simuNoise
-                        SPM.xY.P     = char(restscans{:});
-                        SPM.xY.VY = spm_vol(SPM.xY.P);
-                        %save SPM in a temporary location
-                        [dir00 fil00 ext00] = fileparts(fBOLD);
-                        tmpdir = fullfile(dir00,'tmp_simu');
-                        if ~exist(tmpdir,'dir')
-                            mkdir(tmpdir);
-                            fBOLD_old = fBOLD;
-                            fBOLD = fullfile(tmpdir,[fil00 ext00]);
-                            save(fBOLD,'SPM');
-                        end
+                            SPM.xY.P     = char(restscans{:});
+                            SPM.xY.VY = spm_vol(SPM.xY.P);
+                            %save SPM in a temporary location
+                            [dir00 fil00 ext00] = fileparts(fBOLD);
+                            tmpdir = fullfile(dir00,'tmp_simu');
+                            if ~exist(tmpdir,'dir')
+                                mkdir(tmpdir);
+                                fBOLD_old = fBOLD;
+                                fBOLD = fullfile(tmpdir,[fil00 ext00]);
+                                save(fBOLD,'SPM');
+                            end
                         end
                     end
                     %cwd = pwd;
@@ -312,11 +271,10 @@ try
                         pA = repmat(pE',[simuIt 1]); %zeros(simuIt,length(pE));
                         ct = 0;
                         for pE1=1:length(pE)
-                            if simuP == 0 || any(pE1 == simuP)
+                            if any(simuP == 0) || any(pE1 == simuP)
                                 ct = ct+1;
-                                rseed = pE1;
                                 %initialize the stream
-                                mtstream = RandStream('mt19937ar','Seed',rseed);
+                                mtstream = RandStream('mt19937ar','Seed',pE1);
                                 RandStream.setDefaultStream(mtstream);
                                 for it1=1:simuIt
                                     %generate the random numbers
@@ -389,7 +347,7 @@ try
                     M.TE    = TE;
                     
                     if ~simuOn
-                        simuIt = 1;                       
+                        simuIt = 1;
                     else
                         Y0 = Y;
                         if simuS == 0
@@ -406,12 +364,15 @@ try
                             %efficacies
                             P(end-size(U.u,2)+simuS) = 1;
                             %tic
-                            ys = spm_int_J(P,M,U); %6.7 times slower than spm_int_D, but produces a very different result
+                            %Careful! must use the same integrator for both the direct and the inverse model
+                            %otherwise, there are systematic biases in parameter estimations
+                            %ys = spm_int_J(P,M,U); %6.7 times slower than spm_int_D, but produces a very different result
+                            ys = spm_int(P,M,U); 
                             %ys = spm_int_D(P,M,U);
                             %toc
                             %set to zero mean and rescale to unit standard deviation
-% %                             tmp_m = repmat(mean(ys),[size(ys,1) 1]);
-% %                             ys = (ys - tmp_m)./std(ys);
+                            % %                             tmp_m = repmat(mean(ys),[size(ys,1) 1]);
+                            % %                             ys = (ys - tmp_m)./std(ys);
                             %                             %Canonical response
                             %                             ns = size(Y.y,1);
                             %                             xBF.T = 10;
@@ -426,26 +387,27 @@ try
                             %                             X = X((0:(ns - 1))*xBF.T + xBF.T0 + 32,:);
                             %                             %add response to rest data -- direct model
                             Y = Y0;
-                            %Y.y = Y0.y + sum(X(:,simuS),2)*simuA/100;                            
-                            %Upsample 
+                            %Y.y = Y0.y + sum(X(:,simuS),2)*simuA/100;
+                            %Upsample
                             if simuUpsample > 1
-                            Y.y = interp(Y.y,simuUpsample);
-                            for iX0=1:size(Y.X0,2)
-                                tmp0(:,iX0) = interp(Y.X0(:,iX0),simuUpsample);
-                            end
-                            Y.X0 = tmp0;
+                                Y.y = interp(Y.y,simuUpsample);
+                                for iX0=1:size(Y.X0,2)
+                                    tmp0(:,iX0) = interp(Y.X0(:,iX0),simuUpsample);
+                                end
+                                Y.X0 = tmp0;
+                                Y.X0 = [];
                             end
                             ns = size(Y.y,1);
                             Y.dt = Y.dt/simuUpsample;
-                            ys = ys(round((0:(ns - 1))*Y.dt/U.dt)+1);
+                            ys = ys(round((0:(ns - 1))*Y.dt/U.dt)+1,:); %????
                             
                             if simuNoise
-                            Y.y = Y0.y + ys*simuA/100;
+                                Y.y = Y0.y + ys*simuA/100;
                             else
                                 Y.y = ys*simuA/100;
                             end
-                            %Low pass filtering of the data after downsampling -- otherwise there will be aliasing 
-                            if simuUpsample < 16 %here Y0 might get LPF twice...
+                            %Low pass filtering of the data after downsampling -- otherwise there will be aliasing
+                            if simuUpsample < 16 && simuUpsample > 1 %here Y0 might get LPF twice...
                                 Y.y = ButterLPF(1/Y.dt,0.95*1/(2*Y.dt),3,Y.y);
                             end
                         end
@@ -455,7 +417,7 @@ try
                         %for simulations: store results in place of subjects
                         if simuOn
                             SubjIdx0 = SubjIdx; %should not be used
-                            SubjIdx = it1; %changed inside a for loop but it is restored later 
+                            SubjIdx = it1; %changed inside a for loop but it is restored later
                             HDM{SubjIdx,r1}{s1}.EpS = P;
                         end
                         %Store results
@@ -463,7 +425,7 @@ try
                             %information independent of simulation iteration number
                             HDM{SubjIdx,r1}{s1}.M = M;
                             HDM{SubjIdx,r1}{s1}.pE = pE;
-                            HDM{SubjIdx,r1}{s1}.job = job;
+                            HDM{SubjIdx,r1}{s1}.job = job;                            
                         end
                         HDM{SubjIdx,r1}{s1}.Ep = Ep;
                         HDM{SubjIdx,r1}{s1}.Cp = Cp;
@@ -754,15 +716,15 @@ try
                             SubjIdx = SubjIdx0;
                         end
                     end
-%                     %remove temp files -- careful, this is not coded correctly, so a good SPM.mat might get deleted by mistake 
-%                     if removeWhitening
-%                         if simuOn
-%                             delete(fBOLD_old);
-%                         end
-%                     end
-%                     if simuOn
-%                         delete(fBOLD);
-%                     end
+                    %                     %remove temp files -- careful, this is not coded correctly, so a good SPM.mat might get deleted by mistake
+                    %                     if removeWhitening
+                    %                         if simuOn
+                    %                             delete(fBOLD_old);
+                    %                         end
+                    %                     end
+                    %                     if simuOn
+                    %                         delete(fBOLD);
+                    %                     end
                     out = [];
                 catch exception
                     disp(exception.identifier);
