@@ -21,6 +21,8 @@ if isfield(job.simuOn,'simuYes')
     simuUpsample = job.simuOn.simuYes.simuUpsample; %Upsampling factor on data
     simuNoise = job.simuOn.simuYes.simuNoise; %Yes to include background noise based on restscans
     restscans = job.simuOn.simuYes.restscans; %Rest scans to add signal to
+    restscans_BOLD = job.simuOn.simuYes.restscans_BOLD; %Rest scans to add signal to
+    restscans_ASL = job.simuOn.simuYes.restscans_ASL; %Rest scans to add signal to
 else
     simuOn = 0;
 end
@@ -135,9 +137,17 @@ try
                     %load data
                     clear SPM Y
                     fBOLD= fullfile(subjects{SubjIdx},'SPM.mat');
+                    fBOLD_old = fBOLD;
                     load(fBOLD);
                     if removeWhitening
+                        switch modal
+                            case 1
                         SPM.xX.W = speye(size(SPM.xX.W,1));
+                            case 5
+                                %quick fix to use only one session
+                                 SPM.xX.W = speye(size(SPM.xX.W,1)/2);
+                                 SPM.xX.K = SPM.xX.K(1);
+                        end
                         %save it as a temporary file
                         [dir0 fil0 ext0] = fileparts(fBOLD);
                         tmpdir = fullfile(dir0,'tmp_noWhitening');
@@ -147,24 +157,50 @@ try
                             save(fBOLD,'SPM');
                         end
                     end
+                    switch modal
+                        case 2
+                            fASL = fullfile(subjectsASL{SubjIdx},'SPM.mat');
+                    end
+                    
                     %if r1 == 1 && SubjIdx == 1 %some generic information to get
                     [Sess s] = get_session(SPM,cs1);
                     U = get_causes(Sess,Stimuli);
                     
                     %if simuOn, replace the data with the rest data
                     if simuOn
-                        if simuNoise
-                            SPM.xY.P     = char(restscans{:});
-                            SPM.xY.VY = spm_vol(SPM.xY.P);
-                            %save SPM in a temporary location
-                            [dir00 fil00 ext00] = fileparts(fBOLD);
-                            tmpdir = fullfile(dir00,'tmp_simu');
-                            if ~exist(tmpdir,'dir')
-                                mkdir(tmpdir);
+                        %                        if simuNoise
+                        switch modal
+                            case 1
+                                SPM.xY.P     = char(restscans{:});
+                                SPM.xY.VY = spm_vol(SPM.xY.P);
+                                %save SPM in a temporary location
+                                [dir00 fil00 ext00] = fileparts(fBOLD);
+                                tmpdir = fullfile(dir00,'tmp_simu');
+                                if ~exist(tmpdir,'dir'), mkdir(tmpdir); end
                                 fBOLD_old = fBOLD;
                                 fBOLD = fullfile(tmpdir,[fil00 ext00]);
                                 save(fBOLD,'SPM');
-                            end
+                            case 5
+                                SPM.xY.P     = char(restscans_BOLD{:});
+                                SPM.xY.VY = spm_vol(SPM.xY.P);
+                                %save SPM in a temporary location
+                                [dir00 fil00 ext00] = fileparts(fBOLD);
+                                tmpdir = fullfile(dir00,'tmp_simu_BOLD');
+                                if ~exist(tmpdir,'dir'), mkdir(tmpdir); end
+                                fBOLD_old = fBOLD;
+                                fBOLD = fullfile(tmpdir,[fil00 ext00]);
+                                save(fBOLD,'SPM');
+                                
+                                SPM.xY.P     = char(restscans_ASL{:});
+                                SPM.xY.VY = spm_vol(SPM.xY.P);
+                                %save SPM in a temporary location
+                                [dir00 fil00 ext00] = fileparts(fBOLD_old);
+                                tmpdir = fullfile(dir00,'tmp_simu_ASL');
+                                if ~exist(tmpdir,'dir'), mkdir(tmpdir); end
+                                %fASL_old = fBOLD;
+                                fASL = fullfile(tmpdir,[fil00 ext00]);
+                                save(fASL,'SPM');
+                                %                            end
                         end
                     end
                     %cwd = pwd;
@@ -177,9 +213,10 @@ try
                     end
                     %extract VOI for ASL
                     switch modal
-                        case 2
-                            fASL = fullfile(subjectsASL{SubjIdx},'SPM.mat');
+                        case 2                            
                             VOI_ASL = get_VOI(fASL,ROIs(r1),cs1);
+                        case 5
+                            VOI_ASL = get_VOI5(fASL,ROIs(r1),cs1);
                     end
                     %cd(cwd);
                     %xY = VOI.xY;
@@ -190,8 +227,15 @@ try
                             %Specific to Michèle`s project:
                             %calibration factor for ASL
                             load(fASL);
+                            
                             [dir1 fil1] = fileparts(SPM.xY.P(1,:));
-                            load(fullfile(dir1,'CBFcalibrFactor.mat'));
+                            switch modal
+                                case {2,3}
+                                    
+                                    load(fullfile(dir1,'CBFcalibrFactor.mat'));
+                                case 5
+                                    load(fullfile(dir1,'flow','CBFcalibrFactor.mat'));
+                            end
                             M.CBFcalibrFactor = calibrFactor;
                     end
                     
@@ -214,7 +258,7 @@ try
                     %-place response and confounds in response structure
                     %--------------------------------------------------------------------------
                     switch modal
-                        case {1,2,3}
+                        case {1,2,3,5}
                             %y      = VOI.xY.u;
                             VOI.xY.RT = SPM.xY.RT;
                             Y.dt   = VOI.xY.RT; %SPM.xY.RT;
@@ -228,34 +272,7 @@ try
                         spm('Pointer','Watch')
                         spm('FigName','Estimation in progress');
                     end
-                    
-                    % Model specification: m input; 4 states; 1 outout; m + 6 parameters
-                    %---------------------------------------------------------------------------
-                    % u(m) - mth stimulus function     (u)
-                    %
-                    % x(1) - vascular signal           log(s)
-                    % x(2) - rCBF                      log(f)
-                    % x(3) - venous volume             log(v)
-                    % x(4) - deoyxHb                   log(q)
-                    % x(5) - normalized vascular tone  log(w)
-                    %
-                    % y(1) - BOLD                      (y)
-                    %
-                    % P(1)       - signal decay               d(ds/dt)/ds)      half-life = log(2)/P(1) ~ 1sec
-                    % P(2)       - autoregulation             d(ds/dt)/df)      2*pi*sqrt(1/P(1)) ~ 10 sec
-                    % P(3)       - transit time               (t0)              ~ 1 sec
-                    % P(4)       - exponent for Fout(v)       (alpha)           c.f. Grubb's exponent (~ 0.38)
-                    % P(5)       - resting oxygen extraction  (E0)              ~ range 20 - 50%
-                    % P(6) - time constant of vascular tone w               (tau_w)   ~range: 0 - 30?
-                    % P(7) - gain parameter b = b0 V0                       (b)       ~range: 0 - 30?
-                    % P(8) - ratio of intra- to extra-vascular components   (epsilon)  ~range 0.5 - 2
-                    %          of the gradient echo signal
-                    %
-                    % P(8 + 1:m) - input efficacies - d(ds/dt)/du)  ~0.3 per event
-                    %--------------------------------------------------------------------------
-                    
-                    % priors (3 modes of hemodynamic variation)
-                    %--------------------------------------------------------------------------
+                    %number of inputs
                     m       = size(U.u,2);
                     switch Model
                         case 0 %Buxton-Friston
@@ -330,7 +347,7 @@ try
                     
                     switch modal
                         case {1,3}
-                            M.l = 1;
+                            M.l = 1; %BOLD
                         case 2
                             M.l = 2;
                         case 4
@@ -340,6 +357,8 @@ try
                                 case 2 %Huppert1
                                     M.l = 3;
                             end
+                        case 5
+                            M.l = 2; %BOLD, ASL
                     end
                     
                     M.N     = 64;
@@ -390,19 +409,31 @@ try
                             %Y.y = Y0.y + sum(X(:,simuS),2)*simuA/100;
                             %Upsample
                             if simuUpsample > 1
-                                Y.y = interp(Y.y,simuUpsample);
+                                switch modal 
+                                    case 1
+                                        Y.y = interp(Y.y,simuUpsample);
+                                       
+                                    case {2,5}
+                                        for iX0=1:size(Y.y,2)
+                                            tmp0(:,iX0) = interp(Y.y(:,iX0),simuUpsample);
+                                        end
+                                        Y.y = tmp0; clear tmp0
+                                end
+                                
                                 for iX0=1:size(Y.X0,2)
                                     tmp0(:,iX0) = interp(Y.X0(:,iX0),simuUpsample);
                                 end
-                                Y.X0 = tmp0;
-                                Y.X0 = [];
+                                Y.X0 = tmp0; clear tmp0
+                                
                             end
+                            %get rid of drifts for now
+                            Y.X0 = [];
                             ns = size(Y.y,1);
                             Y.dt = Y.dt/simuUpsample;
                             ys = ys(round((0:(ns - 1))*Y.dt/U.dt)+1,:); %????
                             
                             if simuNoise
-                                Y.y = Y0.y + ys*simuA/100;
+                                Y.y = Y.y + ys*simuA/100;
                             else
                                 Y.y = ys*simuA/100;
                             end

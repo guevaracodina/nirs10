@@ -6830,7 +6830,26 @@ restscans.help    = {'Select resting state scans on which the simulated data wil
     '(same number number of scans in particular)'}';
 restscans.filter = 'image';
 restscans.ufilter = '.*';
-restscans.num     = [1 Inf];
+restscans.val     = {''};
+restscans.num     = [0 Inf];
+
+restscans_BOLD         = cfg_files;
+restscans_BOLD.tag     = 'restscans_BOLD';
+restscans_BOLD.name    = 'Resting state scans for BOLD';
+restscans_BOLD.help    = {'ONLY for simulating BOLD+ASL'}';
+restscans_BOLD.filter = 'image';
+restscans_BOLD.ufilter = '.*';
+restscans_BOLD.val     = {''};
+restscans_BOLD.num     = [0 Inf];
+
+restscans_ASL         = cfg_files;
+restscans_ASL.tag     = 'restscans_ASL';
+restscans_ASL.name    = 'Resting state scans for ASL';
+restscans_ASL.help    = {'ONLY for simulating BOLD+ASL'}';
+restscans_ASL.filter = 'image';
+restscans_ASL.ufilter = '.*';
+restscans_ASL.val     = {''};
+restscans_ASL.num     = [0 Inf];
 
 simuA         = cfg_entry;
 simuA.tag     = 'simuA';
@@ -6904,7 +6923,7 @@ simuUpsample.val     = {1};
 simuYes         = cfg_branch;
 simuYes.tag     = 'simuYes';
 simuYes.name    = 'HDM on simulated data';
-simuYes.val     = {simuIt simuA simuS simuP simuPrior simuR simuUpsample simuNoise restscans };
+simuYes.val     = {simuIt simuA simuS simuP simuPrior simuR simuUpsample simuNoise restscans restscans_BOLD restscans_ASL};
 simuYes.help    = {'Perform HDM on real data'}';
 
 simuNo         = cfg_branch;
