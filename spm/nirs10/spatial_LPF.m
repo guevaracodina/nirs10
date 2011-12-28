@@ -9,7 +9,7 @@ switch mode
         h       = round(4*sigma);
         h       = exp(-(-h:h).^2/(2*sigma^2));
         n       = length(h);
-        d       = 1:n - (n + 1)/2;
+        d       = (1:n) - (n + 1)/2;
         if      n == 1, h = 1; end
         
         k = K.k1;
