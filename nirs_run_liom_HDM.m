@@ -145,8 +145,14 @@ try
                         SPM.xX.W = speye(size(SPM.xX.W,1));
                             case 5
                                 %quick fix to use only one session
-                                 SPM.xX.W = speye(size(SPM.xX.W,1)/2);
+                                 %SPM.xX.W = speye(size(SPM.xX.W,1)/2);
+                                 %need to subtract 1 image too
+                                 SPM.xX.W = speye(size(SPM.xX.W,1)/2-1);
                                  SPM.xX.K = SPM.xX.K(1);
+                                 SPM.xX.K.row = SPM.xX.K.row(1:end-1);
+                                 SPM.xX.K.X0 = SPM.xX.K.X0(1:end-1,:);
+                                 %Remove HPF entirely for now
+                                 SPM.xX.K.X0 =zeros(size(SPM.xX.K.X0));
                         end
                         %save it as a temporary file
                         [dir0 fil0 ext0] = fileparts(fBOLD);
@@ -234,7 +240,8 @@ try
                                     
                                     load(fullfile(dir1,'CBFcalibrFactor.mat'));
                                 case 5
-                                    load(fullfile(dir1,'flow','CBFcalibrFactor.mat'));
+                                    load(fullfile(dir1,'CBFcalibrFactor.mat'));
+                                    %load(fullfile(dir1,'flow','CBFcalibrFactor.mat'));
                             end
                             M.CBFcalibrFactor = calibrFactor;
                     end
