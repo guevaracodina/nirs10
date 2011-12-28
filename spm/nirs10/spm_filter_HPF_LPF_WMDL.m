@@ -52,7 +52,7 @@ if nargin == 1 && isstruct(K)
                 h = real(ifft(g));
                 h = fftshift(h)';
                 n = length(h);
-                d = [1:n] - n/2 -1;
+                d = (1:n) - n/2 -1;
                 K(s).KL = spdiags(ones(k,1)*h, d, k,k);
                 K(s).KL = spdiags(1./sum(K(s).KL')',0,k,k)*K(s).KL;
             case 'Gaussian'
@@ -60,7 +60,7 @@ if nargin == 1 && isstruct(K)
                 h       = round(4*sigma);
                 h       = exp(-(-h:h).^2/(2*sigma^2));
                 n       = length(h);
-                d       = 1:n - (n + 1)/2;
+                d       = (1:n) - (n + 1)/2;
                 if      n == 1, h = 1; end
                 K(s).KL = spdiags(ones(k,1)*h, d, k,k);
                 K(s).KL = spdiags(1./sum(K(s).KL')',0,k,k)*K(s).KL;
