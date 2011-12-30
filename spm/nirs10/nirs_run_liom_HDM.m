@@ -145,12 +145,12 @@ try
                         SPM.xX.W = speye(size(SPM.xX.W,1));
                             case 5
                                 %quick fix to use only one session
-                                 %SPM.xX.W = speye(size(SPM.xX.W,1)/2);
+                                 SPM.xX.W = speye(size(SPM.xX.W,1)/2);
                                  %need to subtract 1 image too
-                                 SPM.xX.W = speye(size(SPM.xX.W,1)/2-1);
+                                 %SPM.xX.W = speye(size(SPM.xX.W,1)/2-1);
                                  SPM.xX.K = SPM.xX.K(1);
-                                 SPM.xX.K.row = SPM.xX.K.row(1:end-1);
-                                 SPM.xX.K.X0 = SPM.xX.K.X0(1:end-1,:);
+                                 %SPM.xX.K.row = SPM.xX.K.row(1:end-1);
+                                 %SPM.xX.K.X0 = SPM.xX.K.X0(1:end-1,:);
                                  %Remove HPF entirely for now
                                  SPM.xX.K.X0 =zeros(size(SPM.xX.K.X0));
                         end
@@ -229,7 +229,8 @@ try
                     %y = VOI.Y; %/100;
                     switch modal
                         case {2,3,5}
-                            Y.y(:,2)    = VOI_ASL.Y((1+dp_start):end-dp_end); %y/100;
+                            y2    = VOI_ASL.Y((1+dp_start):end-dp_end); %y/100;
+                            Y.y(:,2) = y2/mean(y2)-1;
                             %Specific to Michèle`s project:
                             %calibration factor for ASL
                             load(fASL);
@@ -256,8 +257,10 @@ try
                     %y1(1:4) = mean(y1(5:10)); y1(end-4:end) = mean(y1(end-10:end-5));
                     
                     %y1 = 100*(y1 - repmat(median(y1),[size(y1) 1]))./repmat(median(y1),[size(y1,1) 1]); % repmat(std(y1),[size(y1,1) 1]);
-                    tmp_m = repmat(mean(y1),[size(y1,1) 1]);
-                    y1 = (y1 - tmp_m)./std(y1); %rescale to zero mean and unit standard deviation %tmp_m;
+                    %tmp_m = repmat(mean(y1),[size(y1,1) 1]);
+                    %y1 = (y1 - tmp_m)./std(y1); %rescale to zero mean and unit standard deviation %tmp_m;
+                    
+                    y1 = y1/mean(y1)-1;
                     Y.y(:,1) = y1;
                     %rescale to unit variance and zero mean
                     %Y.y = 100*(Y.y - repmat(median(Y.y),[size(Y.y,1) 1]))./ repmat(std(Y.y),[size(Y.y,1) 1]);
