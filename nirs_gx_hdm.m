@@ -93,6 +93,10 @@ switch M.modal
                 y(3) = cf3*(x(8)-1); %Assume CvO2 = HbO
             otherwise
         end
+    case 6 %special case for simuIOI
+        y(1) = x(2); %f
+        y(2) = x(3); %v
+        y(3) = x(4); %q
     otherwise
 end
 y = y(:);
