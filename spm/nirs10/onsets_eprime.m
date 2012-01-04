@@ -10,7 +10,7 @@ eprime = job.eprime;
 % loop over sessions
 for iR=1:length(desc)
     % Retrieving necessary data from excelEprime sheet
-    [data, header] = xlsread(excelp, iR);
+    [data, header] = xlsread(excelp, desc{1,iR});
 
     eprime(iR).col.trig.clp = xlsColNum2Str(find(strcmp(eprime(1).col.trig.n, header(1,:))));
     eprime(iR).col.stim.clp = xlsColNum2Str(find(strcmp(eprime(1).col.stim.n, header(1,:))));
@@ -23,17 +23,17 @@ for iR=1:length(desc)
     
     Trigc = eprime(iR).col.trig.clp{1,1};
     ttl = [Trigc '2'];
-    TrigOnsetTime = xlsread(excelp,iR,ttl);
+    TrigOnsetTime = xlsread(excelp,desc{1,iR},ttl);
     
     Stimc = eprime(iR).col.stim.clp{1,1};
     s = Stimc;
     Scl = [s ':' s];
-    StimOnsetTime = xlsread(excelp,iR,Scl);
+    StimOnsetTime = xlsread(excelp,desc{1,iR},Scl);
     
     Condc = eprime(iR).col.cond.clp{1,1};
     c = Condc;
     Ccl = [c ':' c];
-    StimTags = xlsread(excelp,iR,Ccl);
+    StimTags = xlsread(excelp,desc{1,iR},Ccl);
     
     % Initialize timing by removing the delay time before start point sent
     % by trigger

@@ -85,7 +85,7 @@ for iSubj=1:size(job.NIRSmat,1)
         'FaceAlpha',0.5);
 
     % Views adjustments
-    view(90,-90)
+    view(0,0)
     daspect([1,1,1])
     lightangle(70,-70);
     set(hfig_all3D,'Renderer','zbuffer');
