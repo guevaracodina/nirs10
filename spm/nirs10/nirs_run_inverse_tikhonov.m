@@ -177,7 +177,8 @@ for Idx=1:size(job.NIRSmat,1)
                 jobC.cov{1} = 'n';
                 jobC.cov{2} = 'p';
                 Cov = nirs_calculatecovariances(jobC);
-                jobSC.Cp = Cov(cp);
+                jobSC.Cn = Cov{1};
+                jobSC.Cn = Cov{2};
             end
             
             daate = strrep(datestr(now),':','-');
