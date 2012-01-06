@@ -120,7 +120,7 @@ for Idx=1:size(job.NIRSmat,1)
             
             % on repere la qualite de chaque paire en regardant si on a les battements
             % physiologiques :
-            %Channels to keep:
+            % Channels to keep:
             k1 = [];
             for Ci=1:NC            %Loop over channels
                 %Only check channels corresponding to selected wavelength(s)
@@ -240,7 +240,7 @@ for Idx=1:size(job.NIRSmat,1)
             
             % on calcule les decours temporels de ces bonnes paires et on enleve les
             % artefacts de mouvements...(voir si on peut pas trier a plus
-            % haur niveau sur le rapport de l'nrgy du battement par rapport
+            % haut niveau sur le rapport de l'nrgy du battement par rapport
             % a l'nrgy totale dans le signal)
             
             %median1 = median(heart.pace);
@@ -256,7 +256,7 @@ for Idx=1:size(job.NIRSmat,1)
             else
                 outfile = fullfile(dir1,[prefix fil1 ext1]);
             end
-            if DelPreviousData % est ce qu;on devrait pas le supprimer dans la matrice aussi ????
+            if DelPreviousData % est ce qu on devrait pas le supprimer dans la matrice aussi ????
                 delete(rDtp{f,1});
             end
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -300,7 +300,7 @@ for Idx=1:size(job.NIRSmat,1)
             %%%%%%% ici, je rebidouille pour pouvoir revenir dans le bon
             %%%%%%% ordre....
             
-            %%% ATTENTION : dna la partie regresseur, on ne tient plus
+            %%% ATTENTION : dans la partie regresseur, on ne tient plus
             %%% compte de savoir si les paires sont les memes pour toutes
             %%% les sessions car seul compte d'obtenir un bon regresseur
             heart_regressor=1;
