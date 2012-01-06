@@ -44,14 +44,14 @@ for Idx=1:nsubj
             disp(['Could not find anatomical image for subject ' int2str(Idx) ]);
         end
     end
-<<<<<<< .mine
+
 %     %Try to use field corrected image if possible
 %     [dirA filA extA] = fileparts(V.fname);
 %     tmp_file = fullfile(dirA,['m' filA extA]);
 %     if exist(tmp_file,'file')
 %         V.fname = tmp_file;
 %     end
-=======
+
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % PROVOQUE DES MILLIARDS DE BUGS !!!!
     %Try to use field corrected image if possible
@@ -61,7 +61,7 @@ for Idx=1:nsubj
 %         V.fname = tmp_file;
 %     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
->>>>>>> .r957
+
     
     
     % USER OPTIONS %
