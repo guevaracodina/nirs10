@@ -61,8 +61,6 @@ for Idx=1:nsubj
 %         V.fname = tmp_file;
 %     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-    
     
     % USER OPTIONS %
     thresh_as = job.thresh_as;
