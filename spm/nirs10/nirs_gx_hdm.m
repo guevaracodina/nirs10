@@ -30,7 +30,7 @@ end
 
 % resting venous volume
 %--------------------------------------------------------------------------
-V0    = 100*0.08;                                
+V0    = 0.04;                                
 
 % slope r0 of intravascular relaxation rate R_iv as a function of oxygen 
 % saturation Y:  R_iv = r0*[(1-Y)-(1-Y0)]  %Liu ou Li 1.5T cited in Obata
@@ -74,7 +74,7 @@ switch M.modal
     case {2,5}
         %cf = 100*0.45; %x(5);
         %y(2) = V0/P(3)*M.CBFcalibrFactor*x(2); %flow 
-        y(2) = x(2)-1;
+        y(2) = (x(2)-1);
         %y(2) = cf*(x(2)-1); %flow 
         y(1) = V0*(k1.*(1 - q) + k2.*(1 - (q./v)) + k3.*(1 - v)); 
     case 3
