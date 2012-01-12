@@ -49,7 +49,10 @@ for iSubj = 1:nSubj
     
     % Exeception.......
     temp = needFixForMissingVit;
-    if iSubj==24 || iSubj==27
+    theNIRSmat = load(NIRSmat{iSubj});
+    if strcmp(theNIRSmat.NIRS.Dt.s.p(end-3:end),'S024') || ...
+            strcmp(theNIRSmat.NIRS.Dt.s.p(end-3:end),'S027')
+            %iSubj==24 || iSubj==27
         needFixForMissingVit = 1;
     else
         needFixForMissingVit = temp;
@@ -58,26 +61,20 @@ for iSubj = 1:nSubj
     if needFixForMissingVit % Found in Michèle's stuff... do not use except to fix
         % the bug for 2 particular subjects of study MDEIEP2 (P2S24 &
         % P2S27)
-        fix_coreg_missing_vitamin(fileparts(NIRSmat{iSubj}));
+        fix_coreg_missing_vitamin(fileparts(NIRSmat{iSubj}),theNIRSmat.NIRS.Dt.s.p(end-3:end));
         
     % Use the normal code    
     else
     
     temp = wrongWhenAutomatic;
-    if iSubj==21 || ...% iSubj==24 || iSubj==27 || ...
-            iSubj==40 || iSubj==41 || iSubj==43 || iSubj==44
-        %wrongWhenAutomatic = 1;
-        
-%         % P2S40:
-%         [13 9 6 2 11 10 7 1 12 8 5 4 3]
-%         % P2S41:
-%         [13 9 7 4 11 10 6 1 12 8 5 2 3]
-%         % P2S42:
-%         [13 10 7 2 11 9 5 1 12 8 6 4 3]
-%         % P2S43:
-%         [13 9 6 2 11 10 7 1 12 8 5 4 3]
-%         % P2S44:
-%         [13 9 6 2 12 10 7 3 11 8 5 4 1]
+    if strcmp(theNIRSmat.NIRS.Dt.s.p(end-3:end),'S021') || ...
+            strcmp(theNIRSmat.NIRS.Dt.s.p(end-3:end),'S040') || ...
+            strcmp(theNIRSmat.NIRS.Dt.s.p(end-3:end),'S041') || ...
+            strcmp(theNIRSmat.NIRS.Dt.s.p(end-3:end),'S043') || ...
+            strcmp(theNIRSmat.NIRS.Dt.s.p(end-3:end),'S044')
+    %if iSubj==21 || ...% iSubj==24 || iSubj==27 || ...
+    %        iSubj==40 || iSubj==41 || iSubj==43 || iSubj==44
+        wrongWhenAutomatic = 1;
 
     else
         wrongWhenAutomatic = temp;
@@ -187,7 +184,7 @@ for iSubj = 1:nSubj
     
     if manualMode
         % Display for manual corrections...
-        figure, plot3(coord_fid(:,1),coord_fid(:,2),coord_fid(:,3),'or')
+        figure(101), plot3(coord_fid(:,1),coord_fid(:,2),coord_fid(:,3),'or')
         %addpath(genpath('G:\MesProgrammes\tMCimg_scripts\Scripts\PourPreparerSimuMC\New_SPMnewSegment'));
         %optodesCoord_click(Yanat,'Verify correspondance of the optodes',...
         %   round(coord_fid(:,[2 1 3])))
@@ -284,7 +281,7 @@ for iSubj = 1:nSubj
     
     if manualMode
         % Display for manual corrections...
-        figure, plot(coord_fid_proj2D(:,1),coord_fid_proj2D(:,2),'or')
+        figure(102), plot(coord_fid_proj2D(:,1),coord_fid_proj2D(:,2),'or')
     end
     
     % Center helmet on 0 and use 2D coordinates
@@ -298,37 +295,52 @@ for iSubj = 1:nSubj
     
     % Fix for when semi-automatic coregistration failed...
     if wrongWhenAutomatic
-        % Then we will plot the projected 2D geometry and prompt the user
-        % to enter the optimal order in the command window... (lazier and
-        % less clean than a GUI but this situation should not arise
-        % too often...)
-        figure('Units','normalized','Position',[0.05 0.2 0.8 0.7]),
-        plot(coord_fid_proj2D(:,1),coord_fid_proj2D(:,2),'ok','MarkerSize',50,'MarkerFaceColor','k');
-        hold on;
-        for iOptode=1:nOptodes
-                hold on, 
-                text(coord_fid_proj2D(iOptode,1),...
-                    coord_fid_proj2D(iOptode,2),0,['F' int2str(iOptode)],...
-                    'Color','r','FontWeight','bold','FontSize',14)
-        end
-        %set(gca,'Visible','off')
-        xlim(1.5*[min(coord_helmet2D(:,1)) max(coord_helmet2D(:,1))])
-        ylim(2.5*[min(coord_helmet2D(:,2)) max(coord_helmet2D(:,2))])
-        idxSubjID = strfind(subjPath,'P2S');
-        subjID = subjPath(idxSubjID:idxSubjID+4);
-        title({[subjID ': Manual coregistration'];...
-            'Go to Matlab Command Window and type in the numbers of the fiducials';...
-            'in the image in the order that corresponds to S1-4, then D1-8 or 9, ';...
-            'in square brackets.      Example: [13 9 6 2 11 10 7 1 12 8 5 4 3]'})
-        optOrder = [];
-        while (length(optOrder)~=13) || (sum(sort(optOrder,'ascend')-[1:nOptodes])~=0)
-            optOrder = input(['Type in the numbers of the fiducials\n' ...
-                'in the image in the order that corresponds to S1-4,\n then D1-8 or 9, ' ...
-                'in square brackets. \n     Example: [13 9 6 2 11 10 7 1 12 8 5 4 3] :\n' ...
-                ' (or enter "0" to abort) \n\n']);
-            if length(optOrder)==1 && optOrder==0
-                optOrder = 1:nOptodes;
-                break;
+        if strcmp(theNIRSmat.NIRS.Dt.s.p(end-3:end),'S040') 
+            optOrder = [13 9 6 2 11 10 7 1 12 8 5 4 3];
+        elseif strcmp(theNIRSmat.NIRS.Dt.s.p(end-3:end),'S021') 
+            optOrder = [12 8 5 1 10 9 6 2 11 7 4 3];
+        elseif strcmp(theNIRSmat.NIRS.Dt.s.p(end-3:end),'S041') 
+            optOrder = [13 9 7 4 11 10 6 1 12 8 5 2 3];
+        elseif strcmp(theNIRSmat.NIRS.Dt.s.p(end-3:end),'S043') 
+            optOrder = [13 9 6 2 11 10 7 1 12 8 5 4 3];
+        elseif strcmp(theNIRSmat.NIRS.Dt.s.p(end-3:end),'S044') 
+            optOrder = [13 9 6 2 12 10 7 3 11 8 5 4 1];
+        else 
+        
+            % Then we will plot the projected 2D geometry and prompt the user
+            % to enter the optimal order in the command window... (lazier and
+            % less clean than a GUI but this situation should not arise
+            % too often...)
+            fff=figure(103);
+            set(fff,'Units','normalized','Position',[0.05 0.2 0.8 0.7]),
+            plot(coord_fid_proj2D(:,1),coord_fid_proj2D(:,2),'ok','MarkerSize',50,'MarkerFaceColor','k');
+            hold on;
+            for iOptode=1:nOptodes
+                    hold on, 
+                    text(coord_fid_proj2D(iOptode,1),...
+                        coord_fid_proj2D(iOptode,2),0,['F' int2str(iOptode)],...
+                        'Color','r','FontWeight','bold','FontSize',14)
+            end
+            %set(gca,'Visible','off')
+            xlim(1.5*[min(coord_helmet2D(:,1)) max(coord_helmet2D(:,1))])
+            ylim(2.5*[min(coord_helmet2D(:,2)) max(coord_helmet2D(:,2))])
+            idxSubjID = strfind(subjPath,'P2S');
+            subjID = subjPath(idxSubjID:idxSubjID+4);
+            title({[subjID ': Manual coregistration'];...
+                'Go to Matlab Command Window and type in the numbers of the fiducials';...
+                'in the image in the order that corresponds to S1-4, then D1-8 or 9, ';...
+                'in square brackets.      Example: [13 9 6 2 11 10 7 1 12 8 5 4 3]'})
+            optOrder = [];
+            while (length(optOrder)<12) || (length(optOrder)>13) ||...
+                    (sum(sort(optOrder,'ascend')-[1:nOptodes])~=0)
+                optOrder = input(['Type in the numbers of the fiducials\n' ...
+                    'in the image in the order that corresponds to S1-4,\n then D1-8 or 9, ' ...
+                    'in square brackets. \n     Example: [13 9 6 2 11 10 7 1 12 8 5 4 3] :\n' ...
+                    ' (or enter "0" to abort) \n\n']);
+                if length(optOrder)==1 && optOrder==0
+                    optOrder = 1:nOptodes;
+                    break;
+                end
             end
         end
         % Now let's go back to 3D coordinates, rearranging the order of the
@@ -344,7 +356,8 @@ for iSubj = 1:nSubj
 
 
         % Plot 2 geometries, then save as images and load them
-        figure('Units','normalized','Position',[0.05 0.2 0.8 0.7]),
+        fff=figure;
+        set(fff,'Units','normalized','Position',[0.05 0.2 0.8 0.7]),
         hfid=plot(coord_fid_proj2D(:,1),coord_fid_proj2D(:,2),'ok','MarkerSize',70,'MarkerFaceColor','k');
         set(gca,'Visible','off')
         xlim(1.5*[min(coord_helmet2D(:,1)) max(coord_helmet2D(:,1))])
@@ -521,7 +534,7 @@ for iSubj = 1:nSubj
         if manualMode
             % For displaying the 2 geometries in 2D
             names_helmet = ['S1';'S2';'S3';'S4';'D1';'D2';'D3';'D4';'D5';'D6';'D7';'D8';'D9']; 
-            figure, plot(coord_fid_proj2D_rot1(:,1),coord_fid_proj2D_rot1(:,2),'or');
+            figure(104), plot(coord_fid_proj2D_rot1(:,1),coord_fid_proj2D_rot1(:,2),'or');
             hold on, plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob')
             for iOptode=1:nOptodes
                 hold on, 
@@ -532,7 +545,7 @@ for iSubj = 1:nSubj
                     coord_helmet2D(iOptode,2),0,[names_helmet(iOptode,:)],...
                     'Color','b')
             end
-            figure, plot(coord_fid_proj2D_rot2(:,1),coord_fid_proj2D_rot2(:,2),'or');
+            figure(105), plot(coord_fid_proj2D_rot2(:,1),coord_fid_proj2D_rot2(:,2),'or');
             hold on, plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob')
             for iOptode=1:nOptodes
                 hold on, 
@@ -543,7 +556,7 @@ for iSubj = 1:nSubj
                     coord_helmet2D(iOptode,2),0,[names_helmet(iOptode,:)],...
                     'Color','b')
             end
-            figure, plot(coord_fid_proj2D_rot3(:,1),coord_fid_proj2D_rot3(:,2),'or');
+            figure(106), plot(coord_fid_proj2D_rot3(:,1),coord_fid_proj2D_rot3(:,2),'or');
             hold on, plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob')
             for iOptode=1:nOptodes
                 hold on, 
@@ -554,7 +567,7 @@ for iSubj = 1:nSubj
                     coord_helmet2D(iOptode,2),0,[names_helmet(iOptode,:)],...
                     'Color','b')
             end
-            figure, plot(coord_fid_proj2D_rot4(:,1),coord_fid_proj2D_rot4(:,2),'or');
+            figure(107), plot(coord_fid_proj2D_rot4(:,1),coord_fid_proj2D_rot4(:,2),'or');
             hold on, plot(coord_helmet2D(:,1),coord_helmet2D(:,2),'ob')
             for iOptode=1:nOptodes
                 hold on, 
@@ -646,7 +659,7 @@ for iSubj = 1:nSubj
 
     if manualMode
         % For displaying the optimized geometry in 3D
-        figure, plot3(coord_fid_opt(1:nSrc,1),coord_fid_opt(1:nSrc,2),coord_fid_opt(1:nSrc,3),'or')
+        figure(108), plot3(coord_fid_opt(1:nSrc,1),coord_fid_opt(1:nSrc,2),coord_fid_opt(1:nSrc,3),'or')
         hold on, plot3(coord_fid_opt(nSrc+1:nSrc+nDet,1),...
             coord_fid_opt(nSrc+1:nSrc+nDet,2),coord_fid_opt(nSrc+1:nSrc+nDet,3),'xb')
         for iF=1:nOptodes
@@ -676,6 +689,12 @@ for iSubj = 1:nSubj
     % with the positions of the markers
     save(NIRSmat{iSubj},'NIRS');
     spm_write_vol(Vanat_WOspots, Yanat_WOspots);
+    
+    % Avoid multiple windows when working in a loop
+    for ii=1:8
+        try close(100+ii); end
+    end
+    
     
     end  % end if needFixForMissingVit
 end
