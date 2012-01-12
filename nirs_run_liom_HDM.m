@@ -230,7 +230,8 @@ try
                     switch modal
                         case {2,3,5}
                             y2    = VOI_ASL.Y((1+dp_start):end-dp_end); %y/100;
-                            Y.y(:,2) = y2/mean(y2)-1;
+                            yf2 = ButterHPF(1/SPM.xY.RT,1/1283,y2);
+                            Y.y(:,2) = yf2/mean(y2);
                             %Specific to Michèle`s project:
                             %calibration factor for ASL
                             load(fASL);
@@ -255,12 +256,12 @@ try
                     y1 = y1((1+dp_start):end-dp_end);
                     %y1 = ButterHPF(1/SPM.xY.RT,1/128,2,y1);
                     %y1(1:4) = mean(y1(5:10)); y1(end-4:end) = mean(y1(end-10:end-5));
-                    
+                    yf1 = ButterHPF(1/SPM.xY.RT,1/128,3,y1);
                     %y1 = 100*(y1 - repmat(median(y1),[size(y1) 1]))./repmat(median(y1),[size(y1,1) 1]); % repmat(std(y1),[size(y1,1) 1]);
                     %tmp_m = repmat(mean(y1),[size(y1,1) 1]);
                     %y1 = (y1 - tmp_m)./std(y1); %rescale to zero mean and unit standard deviation %tmp_m;
                     
-                    y1 = y1/mean(y1)-1;
+                    y1 = yf1/mean(y1);
                     Y.y(:,1) = y1;
                     %rescale to unit variance and zero mean
                     %Y.y = 100*(Y.y - repmat(median(Y.y),[size(Y.y,1) 1]))./ repmat(std(Y.y),[size(Y.y,1) 1]);
@@ -391,11 +392,12 @@ try
                             %Buxton-Friston balloon and other models
                             P = pA(it1,:)';
                             %efficacies
-                            P(end-size(U.u,2)+simuS) = 1;
+                            P(end-size(U.u,2)+simuS) = 0.1;
                             %tic
                             %Careful! must use the same integrator for both the direct and the inverse model
                             %otherwise, there are systematic biases in parameter estimations
                             %ys = spm_int_J(P,M,U); %6.7 times slower than spm_int_D, but produces a very different result
+                            
                             ys = spm_int(P,M,U); 
                             %ys = spm_int_D(P,M,U);
                             %toc
