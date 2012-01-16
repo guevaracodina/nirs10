@@ -179,20 +179,37 @@ for i=1:length(rend),
         %xyz = xyz(:,msk);
         %t0  = t0(:,msk);
         %%%
-        
         X0  = full(sparse(round(xyz(1,:)), round(xyz(2,:)), t0, d2(1), d2(2)));
         hld = 1; if ~isfinite(brt), hld = 0; end;
         X   = spm_slice_vol(X0,spm_matrix([0 0 1])*M2,size(rend{i}.dep),hld);
         msk = find(X<0);
         X(msk) = 0;
+        %% Add masking for statistical maps according to possible interpolation
+        % Totally heuristic but seems to work well, 
+        % ISSUE: the 20 below works on the
+        % MNI template, have to write in mm to be consistent
+        % All this does is filter the current positions of the channel by a
+        % circular filter, keeps all voxels over a threshold of 0.01 (since
+        % we filter an image with max = 1 this hard coded number is not a
+        % problem).
+        view_mask_2d = double(X>0);
+        hh=fspecial('disk',20);
+        view_mask_2d=imfilter(view_mask_2d,hh,'same');
+        view_mask_2d=view_mask_2d>0.01;
+        %% End change
+
     else
         X = zeros(size(rend{i}.dep));
+        view_mask_2d = zeros(size(X));
     end;
     % Brighten the blobs
     if isfinite(brt), X = X.^brt; end;
     mx(j) = max([mx(j) max(max(X))]);
     mn(j) = min([mn(j) min(min(X))]);
     rend{i}.data{j} = X;
+    % Adding to rendered_MNI since this is what is saved later in TopoData,
+    % no need to change code elsewhere
+    rendered_MNI{i}.view_mask_2d=view_mask_2d;
 end;
 %end;
 
@@ -203,11 +220,12 @@ for i=1:length(rend)
     temp_dep = rend{i}.dep;
     temp_ren = rend{i}.ren;
     temp_data = rend{i}.data{1};
+    temp_viewmask_2d=rendered_MNI{i}.view_mask_2d;
     rend{i}.dep = temp_dep(size(temp_dep,1):-1:1,:);
     rend{i}.ren = temp_ren(size(temp_ren,1):-1:1,:);
     rend{i}.data{1} = temp_data(size(temp_data,1):-1:1,:);
+    rendered_MNI{i}.view_mask_2d=temp_viewmask_2d(size(temp_data,1):-1:1,:);
 end
-
 for kk = 1:length(rend)
     for i = 1:Nmark
         [rows, cols, vals] = find(rend{kk}.data{1} == i*10);
