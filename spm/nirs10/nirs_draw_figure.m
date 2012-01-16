@@ -19,6 +19,7 @@ try
     erdf = F.erdf;
     eidf = F.eidf;
     tstr = F.tstr;
+    F.T_map=F.T_map.*W.brain_view_mask_2d;
     T_map = F.T_map;
     try
         sum_kappa = F.sum_kappa;
@@ -222,6 +223,7 @@ end
 
 
 function Y = nirs_make_figure(I,F,W,Z,str_cor,th_z,combinedfig)
+
 index_over = I.index_over;
 if combinedfig
     contrast_info = F.contrast_info_both;
