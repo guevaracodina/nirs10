@@ -240,7 +240,9 @@ for Idx=1:size(job.NIRSmat,1)
                     brain = rendered_MNI{side_hemi}.ren;
                     %Fill W structure, less generic data than Z structure
                     W.brain = brain * 0.5;
-                    W.brain_view_mask_2d = rendered_MNI{side_hemi}.view_mask_2d;
+                    if isfield(rendered_MNI{side_hemi},'view_mas_2d') % for back-compatibility
+                        W.brain_view_mask_2d = rendered_MNI{side_hemi}.view_mask_2d;
+                    end
                     W.s1 = size(brain, 1);
                     W.s2 = size(brain, 2);
                     %find channels which are visible from this projection view
