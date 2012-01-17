@@ -149,6 +149,7 @@ for Idx=1:size(job.NIRSmat,1)
                     
                     if ex==0 % resting state
                         k1 = [k1 Ci];
+                        sum_HP(Ci) = sum(heart.pace(Ci,:));                        
                         %                         v = heart.pace(Ci,:);
                         %                         median1 = median(v);
                         %                         std1 = std(v);
@@ -183,6 +184,21 @@ for Idx=1:size(job.NIRSmat,1)
                         end
                     end
                 end %end if any
+            end
+            
+            % ESSAI Michèle janv. 2012 - until now, channel
+                        % selection based on heart beat worked only for
+                        % "exercise" case. Here I am trying to tune a
+                        % threshold for "resting state" case.
+            if ex==0 % resting state
+                % Checking only on 830 nm channels
+                norm_sum_HP = sum_HP(:)./max(sum_HP(:));
+                % Threshold
+                thresh_sum_HP = graythresh(norm_sum_HP(NIRS.Cf.H.C.wl==HbO_like));
+                check1 = norm_sum_HP>0;
+                check2 = norm_sum_HP<thresh_sum_HP;
+                checkk = check1&check2;
+                k1 = find(checkk)';
             end
             
             %%% a cause du fait qu'on recupere le numero de la ligne et
@@ -284,6 +300,15 @@ for Idx=1:size(job.NIRSmat,1)
             %Take median heart rate on the better channels
             if remove_no_heartbeat
                 cR = median(heart.pace(size(heart.pace,1)/2,:),1)'; %cR, fR are column vectors
+                
+                % Michèle janv 2012 :
+                % I would rather do :
+                if NIRS.Cf.H.C.wl(1)== HbO_like
+                    cR = median(heart.pace(1:size(heart.pace,1)/2,:),1)'; %cR, fR are column vectors
+                else
+                    cR = median(heart.pace(size(heart.pace,1)/2+1:end,:),1)'; %cR, fR are column vectors
+                end
+                
             else
                 cR = median(heart.pace(first_k1,:),1)';
             end
@@ -346,7 +371,11 @@ for Idx=1:size(job.NIRSmat,1)
 %                         % MICHÈLE 20 sept. 2011: enlever cette inversion
 %                         % devenue redondante... et remplacer par ceci:
 %%%%%%%%%%%%%%%%%%
-                        whpR = zeros(NC,size(whp,2)); whpR(k2,:) = whp;
+                        if remove_no_heartbeat
+                            whpR = zeros(NC,size(whp,2)); whpR(k2,:) = whp;
+                        else
+                            whpR = zeros(NC,size(whp,2)); whpR(:,:) = whp;
+                        end
 %                         if strcmp(NIRS.Cf.dev.n,'CW6')
 %                             whpR = zeros(NC,size(whp,2)); whpR([k1 k1-(NC/2)],:) = whp; 
 %                             
@@ -452,7 +481,10 @@ for Idx=1:size(job.NIRSmat,1)
                             end
                         end
                     end
-                catch
+                catch exception
+                    disp(exception.identifier);
+                    disp(exception.stack(1));
+                    disp(['Could not analyze heart rate for subject' int2str(Idx)]);
                 end
                 if sum(abs(diff(reg)))==0 %cst alors il faut eviter //////
                     interpx  =[1 size(hp,2)];
@@ -474,9 +506,9 @@ for Idx=1:size(job.NIRSmat,1)
             try NIRS.Cf.H.C.gp = NIRS.Cf.H.C.gp(first_k2); end
         end
         
-        try NIRS.Cf.H.C.ok = first_k2; end %gives good channels whether they
-        
+        try NIRS.Cf.H.C.ok = first_k2; end %gives good channels whether they        
         %were removed or not
+        
         if NewDirCopyNIRS
             newNIRSlocation = fullfile(dir2,'NIRS.mat');
             save(newNIRSlocation,'NIRS');
@@ -485,7 +517,9 @@ for Idx=1:size(job.NIRSmat,1)
             save(job.NIRSmat{Idx,1},'NIRS');
         end
         %heartpace_all = [heartpace_all; heartpace]; %cb: vide, est ce qu'on supprime ???
-    catch
+    catch exception
+        disp(exception.identifier);
+        disp(exception.stack(1));
         disp(['Could not analyze heart rate for subject' int2str(Idx)]);
     end
 end
