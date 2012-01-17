@@ -19,7 +19,9 @@ try
     erdf = F.erdf;
     eidf = F.eidf;
     tstr = F.tstr;
-    F.T_map=F.T_map.*W.brain_view_mask_2d;
+    if isfield(W,'brain_view_mask_2d') % for back-compatibility
+        F.T_map=F.T_map.*W.brain_view_mask_2d;
+    end
     T_map = F.T_map;
     try
         sum_kappa = F.sum_kappa;
