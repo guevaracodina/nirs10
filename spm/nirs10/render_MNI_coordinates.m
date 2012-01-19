@@ -173,6 +173,49 @@ for i=1:length(rend),
             t0  = t(msk);
         end;
         
+        %%% Mahnoush 2012-01
+        % Manually remove potentially duplicated* coordinates after rounding
+        % *"Any elements of s in S = sparse(i,j,s,m,n,nzmax) that have duplicate values of i and j are added together."
+        
+        rxyz = round(xyz);
+        [srxyz,ind_rxyz] = sortrows(rxyz');
+        srxyz = srxyz'; ind_rxyz = ind_rxyz';
+        dxyz(1,:) = diff(srxyz(1,:));
+        dxyz(2,:) = diff(srxyz(2,:));
+        Pdbl = find(dxyz(1,:)==0 & dxyz(2,:)==0);
+        if ~isempty(Pdbl)
+            Idbl = ind_rxyz(Pdbl);
+            for numIdbl=1:size(Idbl,2)
+                %         if dxyz(1,:)==0
+                %             coord=1;
+                %         else
+                %             coord=2;
+                %         end
+                %         change the treshold of rounding to avoid duplicates:
+                %         xyz(coord,Idbl(numIdbl)) = xyz(coord,Idbl(numIdbl)) - 0.5;
+                % elimitate the duplicate and add at the end in rend.data
+                t0(Idbl(numIdbl)) = 0;
+                dupt0 = t(msk) - t0;
+                % M "sparse: Any elements of s that are zero are ignored, along with the
+                % corresponding values of i and j."
+            end
+            dupX0  = full(sparse(round(xyz(1,:)), round(xyz(2,:)), dupt0, d2(1), d2(2)));
+            hld = 1; if ~isfinite(brt), hld = 0; end;
+            dupX   = spm_slice_vol(dupX0,spm_matrix([0 0 1])*M2,size(rend{i}.dep),hld);
+            dupmsk = msk;
+            dupmsk = find(dupX<0);
+            dupX(dupmsk) = 0;
+            Rdxyz{i}.data = rxyz(:,Idbl);
+            Rdxyz{i}.ind = Idbl;
+        else
+            dupX = 0;
+            % allocate
+            Rdxyz{i}.data = 0;
+            Rdxyz{i}.ind = 0;
+        end
+        
+        clear dxyz rxyz srxyz ind_rxyz Pdbl Idbl
+        
         %%% updated 2009-02-05
         
         %msk = find(xyz(1,:) > 0  & xyz(2,:) > 0 & xyz(3,:) > 0);
@@ -184,8 +227,14 @@ for i=1:length(rend),
         X   = spm_slice_vol(X0,spm_matrix([0 0 1])*M2,size(rend{i}.dep),hld);
         msk = find(X<0);
         X(msk) = 0;
-        %% Add masking for statistical maps according to possible interpolation
-        % Totally heuristic but seems to work well, 
+        
+        %%% Mahnoush
+        % add omited duplicated points
+        %         X = X + dupX;
+        %%% --------
+        
+        % Add masking for statistical maps according to possible interpolation
+        % Totally heuristic but seems to work well,
         % ISSUE: the 20 below works on the
         % MNI template, have to write in mm to be consistent
         % All this does is filter the current positions of the channel by a
@@ -196,10 +245,16 @@ for i=1:length(rend),
         hh=fspecial('disk',20);
         view_mask_2d=imfilter(view_mask_2d,hh,'same');
         view_mask_2d=view_mask_2d>0.01;
-        %% End change
-
+        % End change
+        
     else
         X = zeros(size(rend{i}.dep));
+        %%% Mahnoush
+        dupX = zeros(size(rend{i}.dep));
+        Rdxyz{i}.data = 0;
+        Rdxyz{i}.ind = 0;
+        %%% --------
+        
         view_mask_2d = zeros(size(X));
     end;
     % Brighten the blobs
@@ -207,6 +262,7 @@ for i=1:length(rend),
     mx(j) = max([mx(j) max(max(X))]);
     mn(j) = min([mn(j) min(min(X))]);
     rend{i}.data{j} = X;
+    rend{i}.ddata{j} = dupX; %Mahnoush
     % Adding to rendered_MNI since this is what is saved later in TopoData,
     % no need to change code elsewhere
     rendered_MNI{i}.view_mask_2d=view_mask_2d;
@@ -220,18 +276,32 @@ for i=1:length(rend)
     temp_dep = rend{i}.dep;
     temp_ren = rend{i}.ren;
     temp_data = rend{i}.data{1};
+    temp_ddata = rend{i}.ddata{1}; %Mahnoush
     temp_viewmask_2d=rendered_MNI{i}.view_mask_2d;
     rend{i}.dep = temp_dep(size(temp_dep,1):-1:1,:);
     rend{i}.ren = temp_ren(size(temp_ren,1):-1:1,:);
     rend{i}.data{1} = temp_data(size(temp_data,1):-1:1,:);
+    rend{i}.ddata{1} = temp_ddata(size(temp_ddata,1):-1:1,:); %Mahnoush
     rendered_MNI{i}.view_mask_2d=temp_viewmask_2d(size(temp_data,1):-1:1,:);
 end
 for kk = 1:length(rend)
     for i = 1:Nmark
         [rows, cols, vals] = find(rend{kk}.data{1} == i*10);
+        [drows, dcols, dvals] = find(rend{kk}.ddata{1} == i*10);
         if isempty(rows) == 1 || isempty(cols) == 1
-            rendered_MNI{kk}.rchn(i,1) = -1;
-            rendered_MNI{kk}.cchn(i,1) = -1;
+            %%% -Mahnoush-
+            if  ~isempty(find(Rdxyz{kk}.ind == i)) && ~(isempty(drows) == 1 || isempty(dcols) == 1)
+                rendered_MNI{kk}.rchn(i,1) = round(mean(drows));
+                rendered_MNI{kk}.cchn(i,1) = round(mean(dcols));
+                %                 dupCn = Rdxyz{kk}.data(:,find(Rdxyz{kk}.ind == i));
+                %                 rendered_MNI{kk}.rchn(i,1) = dupCn(1);
+                %                 rendered_MNI{kk}.cchn(i,1) = dupCn(2) ;
+            else
+                %%% -----------
+                rendered_MNI{kk}.rchn(i,1) = -1;
+                rendered_MNI{kk}.cchn(i,1) = -1;
+            end
+            
         elseif isempty(rows) == 0 && isempty(cols) == 0
             rendered_MNI{kk}.rchn(i,1) = round(mean(rows));
             rendered_MNI{kk}.cchn(i,1) = round(mean(cols));
