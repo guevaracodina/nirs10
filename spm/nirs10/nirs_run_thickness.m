@@ -2,30 +2,33 @@ function out = nirs_run_thickness(job)
 
 for Idx=1:size(job.NIRSmat,1)
     %Load NIRS.mat information
-    %     NIRS = [];
-    %     load(job.NIRSmat{Idx,1});
+          NIRS = [];
+          load(job.NIRSmat{Idx,1});
     
     % Get "cs" (current simulation) info
-    %     if ~isempty(job.dir_in{1,1})
-    %
-    %         cs_dir =  fileparts(job.dir_in{1,1});
-    %         [dummy cs_ldir] = fileparts(cs_dir);
-    %         ics =1;
-    %         while ~strcmp(cs_ldir,NIRS.Cs.n{ics})
-    %             ics =ics+1;
-    %         end
-    %     else
-    %         [cs_dir dummy dummy1] = fileparts(job.NIRSmat{iSubj,1});
-    %         ics = length(NIRS.Cs.n); % Use last simulation run
-    %     end
-    load([job.dir_in{1,1} 'NIRS.mat']);
+%          if ~isempty(job.dir_in{1,1})
+%              load([job.dir_in{1,1} 'NIRS.mat']);
+%              cs_dir =  fileparts(job.dir_in{1,1});
+%              [dummy cs_ldir] = fileparts(cs_dir);
+%              ics =1;
+%              while ~strcmp(cs_ldir,NIRS.Cs.n{ics})
+%                  ics =ics+1;
+%              end
+%          else
+%             [cs_dir dummy dummy1] = fileparts(job.NIRSmat{iSubj,1});
+%              ics = length(NIRS.Cs.n); % Use last simulation run
+%          end
+%     load([job.dir_in{1,1} 'NIRS.mat']);
     cs = NIRS.Cs.mcs{1};
     
     if cs.alg==1, Oe='.mch'; elseif cs.alg==2, Oe='.his';end
     
-    mu_subj ={};
-    mu_subj.litt ={};
-    jobW.mu_subj = mu_subj;
+%     mu_subj ={};
+%     mu_subj.litt ={};
+%     jobW.mu_subj = mu_subj;
+    dir0 = fileparts(which('spm'));
+    dirmu = fullfile(dir0,'toolbox\nirs10\nirs10_templates','thickness_measurement.mat'); 
+    jobW.mu_subj.muTRS = dirmu;
     jobW.pve_cfg=0;
     jobW.alg=1;
     jobW.NSkpt = 1;
@@ -110,8 +113,8 @@ for Idx=1:size(job.NIRSmat,1)
                 if isempty(spm_select('FPList',dir1,'mcx_det.exe'))
                     copyfile([spm('Dir') '\toolbox\nirs10\mc_exe\' codeexe '.exe'],[dir1 filesep codeexe '.exe']);
                 end
-                system([codeexe ' -E  394647137 -A -n 3e6 -f ' file2 ' -s ' ...
-                    file1 ' -r 60 -g 1 -b 0 -d 1 -z 0']);
+                system([codeexe ' -E 394647137 -A -n 2e5 -f ' file2 ' -s ' ...
+                    file1 ' -r 100 -g 1 -b 0 -d 1 -z 0']);
             end
         end
     end

@@ -28,7 +28,7 @@ if isfield(job.mu_subj,'muTRS')
         num = str2num(lstdir2(2:4));
     end
     % a charger : job.mu_subj.muTRS
-    outOP = GetOpt_ppts('wl','D:\Users\Clément\DPF_testDuncan3\Opt_ppts_44sujets_MichP2S.mat',num);
+    outOP = GetOpt_ppts('wl',job.mu_subj.muTRS,num);
 else
     outOP = GetOpt_ppts('wl');
 end
