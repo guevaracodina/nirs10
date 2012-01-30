@@ -280,7 +280,7 @@ try
                         F.contrast_info_both = [filestr xCon(c1).name]; %same for Pos and Neg, used for combined figures
                         F.contrast_info_both_for_fig = [filestr_fig xCon(c1).name]; %same for Pos and Neg, used for combined figures
                         
-                        F.T_map = A.F;
+                        F.s_map = A.F;
                         F.erdf = A.df;
                         F.eidf = A.dfbetween;
                         F.tstr = 'F'; %tstr;

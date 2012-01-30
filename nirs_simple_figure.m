@@ -4,7 +4,7 @@ try
     erdf = F.erdf;
     eidf = F.eidf;
     tstr = F.tstr;
-    T_map = F.T_map;
+    s_map = F.T_map;
     switch F.hb
         case 'HbO'
             nchn = length(W.ch_HbO);
@@ -19,8 +19,8 @@ try
     else
         th_z = spm_invFcdf(1-p_value, eidf,erdf);
     end
-    index_over = find(T_map > th_z);
-    index_over2 = [find(T_map > th_z); find(-T_map > th_z)];
+    index_over = find(s_map > th_z);
+    index_over2 = [find(s_map > th_z); find(-s_map > th_z)];
     I = [];
     I.index_over = index_over;
     I.index_over2 = index_over2;

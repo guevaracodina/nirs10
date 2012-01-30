@@ -484,7 +484,7 @@ try
     F.contrast_info_both = [filestr ]; %same for Pos and Neg, used for combined figures
     F.contrast_info_both_for_fig = [filestr_fig ]; %same for Pos and Neg, used for combined figures
     
-    F.T_map = A.Tmap;
+    F.s_map = A.Tmap;
     F.erdf = A.erdf;
     F.eidf = A.eidf;
     F.tstr = 'F'; %tstr;

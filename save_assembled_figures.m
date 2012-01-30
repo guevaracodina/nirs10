@@ -21,5 +21,5 @@ if Z.gen_tiff %label 'A' conventiently brings figures at beginning of folder lis
     print(fh0, '-dtiffn', filen2);
 end
 if strcmp(Z.cbar.visible, 'off')
-    try close(fh0); end
+    nirs_close_figure(fh0);
 end

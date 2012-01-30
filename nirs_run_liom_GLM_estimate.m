@@ -221,14 +221,12 @@ for Idx=1:size(job.NIRSmat,1)
 
                         case 'NIRS_SPM'
                              if precolor
-                                tSPM = precoloring_batch(tSPM,Y);                                 
+                                [tSPM res] = precoloring_batch(tSPM,Y);                                 
                              else
                                 %not done yet
                                 tSPM = prewhitening(tSPM, Y);
                              end 
-
-                    end
-                    
+                    end                    
                     %fill in beta and var into tSPM.xX
                     switch SPM.xX.opt.meth
                         case {'BGLM', 'WLS'}
@@ -245,7 +243,11 @@ for Idx=1:size(job.NIRSmat,1)
                                 try
                                     tSPM.xX.t(r,:) = tSPM.xX.beta(r,:)./...
                                         sqrt(tSPM.xX.ResSS(:)'*tSPM.xX.Bcov(r,r)/tSPM.xX.trRV);
-                                end
+                                catch exception
+                                    disp(exception.identifier)
+                                    disp(exception.stack(1));
+                                    disp('Problem calculating t stat');
+                                end                               
                             end
                             %b2 =SPM.xXn{1}.beta(1,:)./sqrt(SPM.xXn{1}.ResSS/SPM.xXn{1}.trRV);
                     end
@@ -315,6 +317,7 @@ for Idx=1:size(job.NIRSmat,1)
                     catch exception
                         disp(exception.identifier)
                         disp(exception.stack(1));
+                        disp('Problem generating OtaVmax, etc.');
                     end
                     %Add piece of SPM to the whole SPM 
                     try 
@@ -325,7 +328,8 @@ for Idx=1:size(job.NIRSmat,1)
                     iSPM = iSPM + 1;
                     SPM.xXn{iSPM} = tSPM.xX;
                     %save
-                    save_dataON = 1;
+                    save_dataON = 1; %we need the residuals for statistics calculations and the 
+                    %filtered data is often useful too
                     if save_dataON
                         try
                             if iSPM == 1
@@ -337,11 +341,15 @@ for Idx=1:size(job.NIRSmat,1)
                         %have 50% more channels than the user expected...
                         fwrite_NIR(outfile,temp(:)); 
                         SPM.xY.Pf{iSPM,1} = outfile; %filtered 
+                        res_outfile = fullfile(fGLM{g},['res_Sess' int2str(iSPM) '.nir']);
+                        fwrite_NIR(res_outfile,res(:));
+                        SPM.xXn{iSPM}.res = res_outfile;
                         SPM.xY.Cf = size(temp,1); %number of filtered channels stored
                         NIRS.Dt.fir.pp(nlst+1).p{iSPM,1} = outfile;
                         catch exception
                             disp(exception.identifier);
                             disp(exception.stack(1));
+                            disp('Failed to save residuals or filtered data');
                         end
                     end                  
                 end %end for 1:nSubSess
@@ -389,6 +397,7 @@ for Idx=1:size(job.NIRSmat,1)
             catch exception
                 disp(exception.identifier)
                 disp(exception.stack(1));
+                disp('Problem generating betaa, etc.');
             end
             try
                 K = SPM.xX.K;

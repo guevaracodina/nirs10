@@ -1,4 +1,13 @@
-function [fh0P,fh0N,fh0C] = nirs_copy_figure(fh0P,fh0N,fh0C,DF,CF,c1,hb,Inv,tstr)
+function H = nirs_copy_figure(H,DF,CF,c1,hb,Inv,tstr,fwe,write_neg_pos)
+if fwe
+    fh0P = H.Pt;
+    fh0N = H.Nt;
+    fh0C = H.Ct;
+else
+    fh0P = H.Pu;
+    fh0N = H.Nu;
+    fh0C = H.Cu;
+end
 %Begin with no colorbars
 load split
 cbar1 = 0; cbar2 = 0;
@@ -54,6 +63,7 @@ if ~isempty(DF) %&& DF.GroupColorbars %Separated colorbars too far from working 
         %1st contrast is the 1st Volterra kernel, 2nd contrast is the 2nd (T-contrasts)
         %3rd contrast is an F contrast for 1st Volterra, 4th contrast is an
         %F-contrast for 2nd Volterra
+        if write_neg_pos
         if exist('fh1','var')
             if GInv %Both positive and negative responses generated
                 if Inv %Increase if 1
@@ -138,6 +148,7 @@ if ~isempty(DF) %&& DF.GroupColorbars %Separated colorbars too far from working 
                 %otherwise, don't close the figure as it is needed below (for F
                 %contrasts only
             end            
+        end
         end
         %Repeat for combined positive + negative figure:
         if exist('fh2','var') 
@@ -320,7 +331,16 @@ if ~isempty(DF) %&& DF.GroupColorbars %Separated colorbars too far from working 
                 close(fh1); %For F contrasts, this will be the same as fh1
             end
         %end
-        
+ if fwe
+    H.Pt = fh0P;
+    H.Nt = fh0N;
+    H.Ct = fh0C;
+else
+    H.Pu = fh0P;
+    H.Nu = fh0N;
+    H.Cu = fh0C;
+end
+       
     catch exception
         disp(exception.identifier);
         disp(exception.stack(1));
