@@ -51,42 +51,44 @@ try
         TOPO.xX = SPM.xX;    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     else %if Z.automated_contrasts || ~Z.GroupMultiSession
-        if Z.automated_contrasts
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %2- Generate automated contrasts if required
-            %number of regressors for one session
-            nr = size(SPM.xXn{1}.X,2);
-            sC.contrastT = {}; sC.contrastF = {};
-            sC.contrastT_name = {}; sC.contrastF_name = {};
-            if Z.NonlinearEpilepsyOn
-                sC = nirs_nonlinear_epilepsy_contrasts(SPM,nr);
-            else
-                for i0=1:nr-1
-                    sC.contrastT{i0} = [zeros(1,i0-1) 1 zeros(1,nr-i0)];
-                    try
-                        sC.contrastT_name{i0} = ['_' validate_name(SPM.Sess(1).U(i0).name{1})];
-                    catch %exception
-                        %disp(exception.identifier);
-                        %disp('Using default names for contrasts');
-                        sC.contrastT_name{i0} = ['C' int2str(i0)];
-                    end
-                end
-            end
-            for j1=1:length(sC.contrastT)
-                TF.consess{j1}.tcon.name = sC.contrastT_name{j1};
-                TF.consess{j1}.tcon.convec = sC.contrastT{j1};
-                TF.consess{j1}.tcon.sessrep = 'none';
-            end
-            for j1=1:length(sC.contrastF)
-                TF.consess{j1+length(contrastT)}.fcon.name = sC.contrastF_name{j1};
-                TF.consess{j1+length(contrastT)}.fcon.convec = sC.contrastF{j1};
-                TF.consess{j1+length(contrastT)}.fcon.sessrep = 'none';
-            end
-        end
+        TF0 = TF;
         %loop over selected sessions
         C_done = 0;
         for s1=1:length(SPM.xXn)
             if Z.sessions == 0 || any(s1 == Z.sessions)
+                if Z.automated_contrasts
+                    TF = TF0;
+                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                    %2- Generate automated contrasts if required
+                    %number of regressors for one session
+                    nr = size(SPM.xXn{s1}.X,2);
+                    sC.contrastT = {}; sC.contrastF = {};
+                    sC.contrastT_name = {}; sC.contrastF_name = {};
+                    if Z.NonlinearEpilepsyOn
+                        sC = nirs_nonlinear_epilepsy_contrasts(SPM,nr);
+                    else
+                        for i0=1:nr-1
+                            sC.contrastT{i0} = [zeros(1,i0-1) 1 zeros(1,nr-i0)];
+                            try
+                                sC.contrastT_name{i0} = ['_' validate_name(SPM.Sess(1).U(i0).name{1})];
+                            catch %exception
+                                %disp(exception.identifier);
+                                %disp('Using default names for contrasts');
+                                sC.contrastT_name{i0} = ['C' int2str(i0)];
+                            end
+                        end
+                    end
+                    for j1=1:length(sC.contrastT)
+                        TF.consess{j1}.tcon.name = sC.contrastT_name{j1};
+                        TF.consess{j1}.tcon.convec = sC.contrastT{j1};
+                        TF.consess{j1}.tcon.sessrep = 'none';
+                    end
+                    for j1=1:length(sC.contrastF)
+                        TF.consess{j1+length(contrastT)}.fcon.name = sC.contrastF_name{j1};
+                        TF.consess{j1+length(contrastT)}.fcon.convec = sC.contrastF{j1};
+                        TF.consess{j1+length(contrastT)}.fcon.sessrep = 'none';
+                    end
+                end
                 if ~C_done
                     SPM = SPM0;
                     SPM.xCon = [];

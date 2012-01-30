@@ -107,8 +107,8 @@ for Idx=1:size(job.NIRSmat,1)
                     cchn = rendered_MNI{W.side_hemi}.cchn;                  
                     %find channels which are visible from this projection view
                     W.index_ch = find(rchn ~= -1);
-                    if isfield(rendered_MNI{side_hemi},'view_mask_2d') % for back-compatibility
-                        W.brain_view_mask_2d = rendered_MNI{side_hemi}.view_mask_2d;
+                    if isfield(rendered_MNI{W.side_hemi},'view_mask_2d') % for back-compatibility
+                        W.brain_view_mask_2d = rendered_MNI{W.side_hemi}.view_mask_2d;
                     end
 
                     if isempty(W.index_ch)
