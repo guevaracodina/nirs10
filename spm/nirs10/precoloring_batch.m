@@ -1,13 +1,8 @@
-function [SPM] = precoloring_batch(varargin)
+function [SPM res] = precoloring_batch(varargin)
 % NIRS_SPM: this function is used for estimation of GLM parameters.
 SPM = varargin{1};
 Y = varargin{2};
-overrideJ0 = 0;
-if size(varargin) == 3
-    J0 = varargin{3};
-    overrideJ0 = 1;
-end
-[nScan nBeta] = size(SPM.xX.X);
+nScan = size(SPM.xX.X,1);
 
 % Set up of the filters / Design space and projector matrix [pseudoinverse] for WLS
 %==================================================================
@@ -30,16 +25,20 @@ SPM.xX.pKX = spm_sp('x-', SPM.xX.xKXs); % projector
 %filtering of the data
 KY = spm_filter_HPF_LPF_WMDL(SPM.xX.K, Y);
 %For testing
-%figure; nn = 8; plot(Y(:,nn)); hold on; plot(KY(:,nn),'r'); hold off
-
 %GLM inversion: calculating beta and residuals - would be SPM.Vbeta,
 %SPM.VResMS if we had full images as with fMRI
 SPM.xX.beta = SPM.xX.pKX * KY; % beta : least square estimate
-res = spm_sp('r', SPM.xX.xKXs, KY); % Residuals 
-SPM.xX.ResSS = sum(res.^2); % Residual SSQ
+%Residuals are grouped as [HbO; HbR; HbT] and saved for each session
+res = spm_sp('r', SPM.xX.xKXs, KY); % Residuals
+% update for calculating the channel-wise least-square residual correlation
+% date: Aug 10, 2011
+SPM.xX.ResSS = sum(res.^2); %old residuals
+ResSS = (KY' * KY) - (KY' * SPM.xX.xKXs.X) * SPM.xX.pKX * KY; %channel by channel
+SPM.xX.ResSSch = ResSS; % Residual sum of squares
 %data no longer required
 SPM.KY = KY;
-clear KY Y res
+res = res'; %residuals now as channels by time, ready to save as .nii
+clear KY Y 
 
 %more filtering operations
 switch SPM.xX.K.LParam.type
@@ -49,9 +48,9 @@ switch SPM.xX.K.LParam.type
         S = speye(nScan);
 end
 
-switch SPM.xX.K.HParam.type 
+switch SPM.xX.K.HParam.type
     case 'DCT'
-         S = S - SPM.xX.K.X0 * (SPM.xX.K.X0' * S);                                    
+        S = S - SPM.xX.K.X0 * (SPM.xX.K.X0' * S);
         %note NIRS_SPM has a catch if out of memory occurs (- deleted here)
 end
 
@@ -63,9 +62,13 @@ else
 end
 SPM.xX.trRV = trRV; % <R'*y'*y*R>
 SPM.xX.trRVRV = trRVRV; %- Satterthwaite
-try SPM.xX.erdf = trRV^2/trRVRV; end
+try 
+    SPM.xX.erdf = trRV^2/trRVRV; 
+catch exception
+    disp(exception.identifier);
+    disp(exception.stack(1));
+    disp('Problem calculating degrees of freedom');    
+end
 % SPM.xX.Bcov = SPM.xX.pKX*V*SPM.xX.pKX';
 SPM.xX.Bcov = (SPM.xX.pKX * S);
 SPM.xX.Bcov = SPM.xX.Bcov * SPM.xX.Bcov';
-%SPM.nirs.step = 'estimation';
-end

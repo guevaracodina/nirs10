@@ -1,41 +1,6 @@
 %-----------------------------------------------------------------------
 % Job configuration created by cfg_util (rev $Rev: 4252 $)
 %-----------------------------------------------------------------------
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.subj.fnames = {
-%                                                               'W:\epiNIRSb\epi113AG\dataBOXY\epi113_AG.001'
-%                                                               'W:\epiNIRSb\epi113AG\dataBOXY\epi113_AG.002'
-%                                                               'W:\epiNIRSb\epi113AG\dataBOXY\epi113_AG.003'
-%                                                               'W:\epiNIRSb\epi113AG\dataBOXY\epi113_AG.004'
-%                                                               'W:\epiNIRSb\epi113AG\dataBOXY\epi113_AG.005'
-%                                                               'W:\epiNIRSb\epi113AG\dataBOXY\epi113_AG.006'
-%                                                               'W:\epiNIRSb\epi113AG\dataBOXY\epi113_AG.007'
-%                                                               };
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.subj.age1 = 35;
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.subj.raw_onset_files = {
-%                                                                        'W:\epiNIRSb\epi113AG\eeg\epi113agtanc1'
-%                                                                        'W:\epiNIRSb\epi113AG\eeg\epi113agtanc2'
-%                                                                        'W:\epiNIRSb\epi113AG\eeg\epi113agtanc3'
-%                                                                        'W:\epiNIRSb\epi113AG\eeg\epi113agtanc4'
-%                                                                        'W:\epiNIRSb\epi113AG\eeg\epi113agtanc5'
-%                                                                        'W:\epiNIRSb\epi113AG\eeg\epi113agtanc6'
-%                                                                        'W:\epiNIRSb\epi113AG\eeg\epi113agtanc7'
-%                                                                        };
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.subj.anatT1 = {'W:\epiNIRSb\epi113AG\T1\sN2056798-0601-00001-000001-01.nii,1'};
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.config_path.prj_path = 'mtg';
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.config_path.T1_path = 'T1';
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.config_path.output_path = 'dataSPM';
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.Lambda = [830 690];
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.freq = 19.5312;
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.distmin = 1;
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.distmax = 6;
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.save_bin1 = true;
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.sizebloc = 1024;
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.nb_Mux = 32;
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.MaxSources = 64;
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.nb_Det = 16;
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.MaxElectrodes = 19;
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.use10_10system = true;
-% matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.cf1.resample = 1;
 matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.subj = struct('fnames', {}, 'age1', {}, 'raw_onset_files', {}, 'anatT1', {});
 matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.config_path.prj_path = 'mtg';
 matlabbatch{1}.spm.tools.nirs10.readNIRS.boxy1.config_path.T1_path = 'T1';
@@ -104,7 +69,8 @@ matlabbatch{5}.spm.tools.nirs10.preprocessNIRS.ODtoHbOHbR.NIRSmat(1).src_exbranc
 matlabbatch{5}.spm.tools.nirs10.preprocessNIRS.ODtoHbOHbR.NIRSmat(1).src_output = substruct('.','NIRSmat');
 matlabbatch{5}.spm.tools.nirs10.preprocessNIRS.ODtoHbOHbR.DelPreviousData = 0;
 matlabbatch{5}.spm.tools.nirs10.preprocessNIRS.ODtoHbOHbR.NewDirCopyNIRS.CreateNIRSCopy_false = struct([]);
-matlabbatch{5}.spm.tools.nirs10.preprocessNIRS.ODtoHbOHbR.PVF = [50 50];
+matlabbatch{5}.spm.tools.nirs10.preprocessNIRS.ODtoHbOHbR.DPF.DPFlit = struct([]);
+matlabbatch{5}.spm.tools.nirs10.preprocessNIRS.ODtoHbOHbR.PVF.PVFval = [50 50];
 matlabbatch{6}.spm.tools.nirs10.coregNIRS.coreg1.NIRSmat(1) = cfg_dep;
 matlabbatch{6}.spm.tools.nirs10.coregNIRS.coreg1.NIRSmat(1).tname = 'NIRS.mat';
 matlabbatch{6}.spm.tools.nirs10.coregNIRS.coreg1.NIRSmat(1).tgt_spec{1}(1).name = 'filter';
@@ -158,7 +124,6 @@ matlabbatch{7}.spm.tools.nirs10.model_specify.wls_bglm_specify.generate_trRV = 1
 matlabbatch{7}.spm.tools.nirs10.model_specify.wls_bglm_specify.filter_design_matrix = 1;
 matlabbatch{7}.spm.tools.nirs10.model_specify.wls_bglm_specify.wls_or_bglm.NIRS_SPM.nirs_noise = 0;
 matlabbatch{7}.spm.tools.nirs10.model_specify.wls_bglm_specify.wls_or_bglm.NIRS_SPM.nirs_hpf.hpf_wavelet.hpf_wavelet_iter = 4;
-%matlabbatch{7}.spm.tools.nirs10.model_specify.wls_bglm_specify.wls_or_bglm.NIRS_SPM.nirs_hpf.hpf_none = struct([]);
 matlabbatch{7}.spm.tools.nirs10.model_specify.wls_bglm_specify.wls_or_bglm.NIRS_SPM.nirs_lpf.lpf_gauss.fwhm1 = 1.5;
 matlabbatch{7}.spm.tools.nirs10.model_specify.wls_bglm_specify.LiomDeleteLarge = 0;
 matlabbatch{8}.spm.tools.nirs10.model_estimate.wls_bglm_estimate.NIRSmat(1) = cfg_dep;
@@ -180,24 +145,25 @@ matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.NIRSmat(1).tgt_spec
 matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.NIRSmat(1).sname = 'LIOM GLM Estimation: NIRS.mat';
 matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.NIRSmat(1).src_exbranch = substruct('.','val', '{}',{8}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1});
 matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.NIRSmat(1).src_output = substruct('.','NIRSmat');
-matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.NewDirCopyNIRS.CreateNIRSCopy_false = struct([]);
-matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.ProcessContrastsBySession = 1;
-matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.GroupMultiSession = 0;
+matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.NIRSmatCopyChoice.NIRSmatOverwrite = struct([]);
+matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.ContrastChoice.automated_contrasts.NonlinearEpilepsyOn = 0;
+matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.Sessions = '';
 matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.view = [3 4 2 5];
-matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.consess = {};
-matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.spatial_LPF.spatial_LPF_Off = struct([]);
-matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.GenerateInverted = 1;
-matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.GroupColorbars = 0;
-matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.contrast_p_value = 0.05;
-matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.contrast_figures = 3;
-matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.override_colorbar.colorbar_default = struct([]);
-matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.figures_visible = 0;
-matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.GroupFiguresIntoSubplots = 1;
-matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.output_unc = 0;
-matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.SmallFigures = 1;
-matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.write_neg_pos = 0;
 matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.TopoData = {''};
-matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.save_nifti_contrasts = 0;
+matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.StatMethod = 1;
+matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.UseCorrelRes = 1;
+matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.spatial_LPF.spatial_LPF_Off = struct([]);
+matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.contrast_p_value = 0.05;
+matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.display_options.GenerateInverted = 1;
+matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.display_options.GroupColorbars = 0;
+matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.display_options.contrast_figures = 3;
+matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.display_options.override_colorbar.colorbar_default = struct([]);
+matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.display_options.figures_visible = 0;
+matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.display_options.GroupFiguresIntoSubplots = 1;
+matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.display_options.output_unc = 0;
+matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.display_options.SmallFigures = 1;
+matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.display_options.write_neg_pos = 0;
+matlabbatch{9}.spm.tools.nirs10.model_estimate.liom_contrast.display_options.save_nifti_contrasts = 0;
 matlabbatch{10}.spm.tools.nirs10.model_estimate.liom_group.NIRSmat(1) = cfg_dep;
 matlabbatch{10}.spm.tools.nirs10.model_estimate.liom_group.NIRSmat(1).tname = 'NIRS.mat';
 matlabbatch{10}.spm.tools.nirs10.model_estimate.liom_group.NIRSmat(1).tgt_spec{1}(1).name = 'filter';
@@ -210,6 +176,7 @@ matlabbatch{10}.spm.tools.nirs10.model_estimate.liom_group.NIRSmat(1).src_output
 matlabbatch{10}.spm.tools.nirs10.model_estimate.liom_group.group_dir_name = 'Group';
 matlabbatch{10}.spm.tools.nirs10.model_estimate.liom_group.FFX_or_RFX = 1;
 matlabbatch{10}.spm.tools.nirs10.model_estimate.liom_group.contrast_figures = 3;
+matlabbatch{10}.spm.tools.nirs10.model_estimate.liom_group.StatMethod = 1;
 matlabbatch{10}.spm.tools.nirs10.model_estimate.liom_group.contrast_p_value = 0.05;
 matlabbatch{10}.spm.tools.nirs10.model_estimate.liom_group.GenerateInverted = 1;
 matlabbatch{10}.spm.tools.nirs10.model_estimate.liom_group.GroupColorbars = 0;
@@ -221,3 +188,4 @@ matlabbatch{10}.spm.tools.nirs10.model_estimate.liom_group.SmallFigures = 1;
 matlabbatch{10}.spm.tools.nirs10.model_estimate.liom_group.write_neg_pos = 0;
 matlabbatch{10}.spm.tools.nirs10.model_estimate.liom_group.group_session_to_average = 1;
 matlabbatch{10}.spm.tools.nirs10.model_estimate.liom_group.save_nifti_contrasts = 0;
+matlabbatch{10}.spm.tools.nirs10.model_estimate.liom_group.simple_sum = 0;

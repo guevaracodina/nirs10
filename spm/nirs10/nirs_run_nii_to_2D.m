@@ -71,7 +71,7 @@ if side_hemi
     F.erdf;
     F.eidf;
     F.tstr;
-    F.T_map;
+    F.s_map;
     F.hb;
     nirs_simple_figure(F,W);       
 else

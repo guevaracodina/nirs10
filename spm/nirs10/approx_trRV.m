@@ -21,8 +21,6 @@ else
     trRVRVon = 0;
 end
   
-   
-
 %computation of var1 and var2 is fairly quick - actually, no: var1 takes
 %about 3.5 minutes. Why is it slower this time than in the earlier test?
 var1 = S * S';
