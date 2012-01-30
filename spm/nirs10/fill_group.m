@@ -76,7 +76,7 @@ try
             else
                 if ~isfield(big_TOPO{f1}.v{v1},'s')
                     %group analysis of a group of sessions analysis
-                    tmp = squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_interp_F(c1,:,:));
+                    tmp = squeeze(big_TOPO{f1}.v{v1}.g{1}.hb{h1}.c_interp_F(c1,:,:));
                     cbeta(f1,:) = tmp(:);
                 else
                     %do each session separately
