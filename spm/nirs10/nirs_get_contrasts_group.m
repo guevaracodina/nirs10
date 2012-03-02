@@ -10,7 +10,7 @@ try
     else
         Sess = [];
         Cp = [];
-        if Z.FFX || Z.nS
+        if Z.FFX || Z.nS == 1
             SSxCon = TOPO.SSxCon;
             ns = length(SSxCon);
             
