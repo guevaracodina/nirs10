@@ -26,6 +26,7 @@ FFX_or_RFX.help = {'Use fixed effects (FFX) for group of sessions (intra-subject
     'RFX can also be used for one subject with multiple sessions, '
     'to take into account the variance between sessions.'}';
 
+
 StatMethod      = cfg_menu;
 StatMethod.tag  = 'StatMethod';
 StatMethod.name = 'Statistical method for spatial correlations';
@@ -57,6 +58,18 @@ group_dir_name.strtype = 's';
 group_dir_name.num     = [1 Inf];
 group_dir_name.val{1}  = 'Group';
 group_dir_name.help    = {'Enter name of folder to store the analysis.'}';
+
+
+number_dir_to_remove         = cfg_entry;
+number_dir_to_remove.name    = 'Number of directories to remove to specify Group data storage';
+number_dir_to_remove.tag     = 'number_dir_to_remove';
+number_dir_to_remove.strtype = 'r';
+number_dir_to_remove.num     = [1 1];
+number_dir_to_remove.val     = {3};
+number_dir_to_remove.help    = {'Specify the location where group data will be saved.'
+    'This will be calculated by removing the specified number of directories'
+    'from the file path of the first subject NIRS.mat file.'
+    'Typically, 3 folders need to be removed, but sometimes only 2, sometimes 4 or more.'}';
 
 simple_sum = cfg_menu;
 simple_sum.tag    = 'simple_sum';
@@ -101,7 +114,7 @@ liom_group      = cfg_exbranch;
 liom_group.name = 'Liom Group Model Estimation';
 liom_group.tag  = 'liom_group';
 liom_group.val  = {NIRSmat ...
-    group_dir_name FFX_or_RFX ContrastChoice ...
+    group_dir_name number_dir_to_remove FFX_or_RFX ContrastChoice ...
     StatMethod contrast_p_value ...
      group_session_to_average simple_sum display_options}; % factorial_design};
 liom_group.prog = @nirs_run_liom_group;

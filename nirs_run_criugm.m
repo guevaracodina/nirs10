@@ -215,6 +215,11 @@ for is=1:sN
                     end
                 end
             end
+            if isfield(job.subj,'TopoData')
+                try
+                NIRS.Dt.ana.rend = job.subj(is).TopoData{1};
+                end
+            end
         end
         
         %%% on lance la coregistration pour le premier sujet uniquement
@@ -246,6 +251,7 @@ for is=1:sN
             copyfile(fullfile(study_p, 'TopoData.mat'),fullfile(sDtp, 'TopoData.mat'));
         end
         
+            
         save(fullfile(sDtp, 'NIRS.mat'),'NIRS');
         outNIRSmat = [outNIRSmat; fullfile(sDtp,'NIRS.mat')];
     catch exception

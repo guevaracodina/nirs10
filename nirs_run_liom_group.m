@@ -26,6 +26,11 @@ Z.simple_sum = job.simple_sum;
 Z.min_s = 2;
 Z.nS = size(job.NIRSmat,1);
 nS = Z.nS;
+try 
+    number_dir_to_remove = job.number_dir_to_remove;
+catch
+    number_dir_to_remove = 3;
+end
 %SPM contrasts or automatic contrasts
 if isfield(job.ContrastChoice,'user_contrasts')
     if isempty(job.ContrastChoice.user_contrasts.consess)
@@ -95,7 +100,7 @@ for Idx=1:nl
             [dir0,dummy,dummy2] = fileparts(job.NIRSmat{1});
             %extract previous directory
             tmp = strfind(dir0,filesep);
-            dir_root = dir0(1:tmp(end-3));
+            dir_root = dir0(1:tmp(end-number_dir_to_remove));
             dir_group = fullfile(dir_root, Z.group_dir_name);
         end
         if ~exist(dir_group,'dir'), mkdir(dir_group); end
@@ -130,13 +135,15 @@ for Idx=1:nl
             view_estimated = 0;
             try
                 if isfield(TOPOsrc.v{v1},'s1')
-%                     s1 = TOPOsrc.v{v1}.s1;
-%                     s2 = TOPOsrc.v{v1}.s2;
                     ns = length(TOPOsrc.v{v1}.s); %number of sessions
                     view_estimated = 1;
                 end
-            catch
-                view_estimated = 0;
+            end
+            try
+                if isfield(TOPOsrc{1}.v{v1},'s1')
+                    ns = length(TOPOsrc); %number of subjects
+                    view_estimated = 1;
+                end
             end
             
             if view_estimated   
