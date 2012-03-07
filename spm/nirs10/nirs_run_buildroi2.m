@@ -31,9 +31,13 @@ for Idx=1:size(job.NIRSmat,1)
         [dir0,dummy,dummy2] = fileparts(job.NIRSmat{Idx,1});
         
         if ~isempty(job.image_in{:})
-            V = spm_vol(job.image_in{:});            
+            V = spm_vol(job.image_in{:});
         else
-            V = spm_vol(NIRS.Dt.ana.T1seg);
+            if isfield(NIRS.Dt.ana,'T1seg')
+                V = spm_vol(NIRS.Dt.ana.T1seg);
+            else
+                V = spm_vol(NIRS.Dt.ana.T1);
+            end
         end
         Y = spm_read_vols(V);
         [dir,name] = fileparts(V.fname);
@@ -96,19 +100,19 @@ for Idx=1:size(job.NIRSmat,1)
         end
         Pfp_roi_rmv = Pfp_roi_rmvtemp(1:3,:);
         
-%        method = 'ancienne';% 'S_cubecenter';
-       % method = 'S_cubecenter';
+        %        method = 'ancienne';% 'S_cubecenter';
+        % method = 'S_cubecenter';
         method = 'ancienne';
         switch method
             case 'ancienne'
-%                 bbv(1,1) = min(Pfp_roi_rmv(1,:));
-%                 bbv(1,2) = max(Pfp_roi_rmv(1,:));
-%                 
-%                 bbv(2,1) = min(Pfp_roi_rmv(2,:));
-%                 bbv(2,2) = max(Pfp_roi_rmv(2,:));
-%                 
-%                 bbv(3,1) = min(Pfp_roi_rmv(3,:));
-%                 bbv(3,2) = max(Pfp_roi_rmv(3,:));
+                %                 bbv(1,1) = min(Pfp_roi_rmv(1,:));
+                %                 bbv(1,2) = max(Pfp_roi_rmv(1,:));
+                %
+                %                 bbv(2,1) = min(Pfp_roi_rmv(2,:));
+                %                 bbv(2,2) = max(Pfp_roi_rmv(2,:));
+                %
+                %                 bbv(3,1) = min(Pfp_roi_rmv(3,:));
+                %                 bbv(3,2) = max(Pfp_roi_rmv(3,:));
                 
                 bbv(:,1) = min(Pfp_roi_rmv,[],2);
                 bbv(:,2) = max(Pfp_roi_rmv,[],2);
@@ -116,7 +120,7 @@ for Idx=1:size(job.NIRSmat,1)
                 marge = 40;%5
                 
             case 'S_cubecenter'
-                %additional 4 cm (40 mm) added to source 
+                %additional 4 cm (40 mm) added to source
                 ray = 40;%max(NIRS.Cf.H.C.gp(Ckpt)+3);
                 nSkpt = length(Skpt);
                 bbm = zeros(3,nSkpt);
@@ -126,11 +130,11 @@ for Idx=1:size(job.NIRSmat,1)
                     S_cc = Pfp_roi_rmm(:,iS);
                     bbm(:,iS) = S_cc-ray*ones(3,1);
                     bbM(:,iS) = S_cc+ray*ones(3,1);
-
+                    
                     bbmv1 = V.mat\[bbm;ones(1,nSkpt)];
                     bbMv1 = V.mat\[bbM;ones(1,nSkpt)];
-                                        
-                    %min and max of 
+                    
+                    %min and max of
                     bbmv(1:3,iS) = round(bbmv1(1:3,iS));
                     bbMv(1:3,iS) = round(bbMv1(1:3,iS));
                 end
@@ -150,15 +154,15 @@ for Idx=1:size(job.NIRSmat,1)
         mat_roi2raw = eye(4) + [zeros(4,3) [bbv(:,1);0]];
         
         V_roi.dim = [bbv(1,2)-bbv(1,1)+1 ...
-                     bbv(2,2)-bbv(2,1)+1 ...
-                     bbv(3,2)-bbv(3,1)+1];
+            bbv(2,2)-bbv(2,1)+1 ...
+            bbv(3,2)-bbv(3,1)+1];
         % V_roi.mat is the mat from voxel ROI to the raw image space in mm
         V_roi.mat = V.mat*mat_roi2raw; %just a translation
         %select data in ROI
         Y_roi = Y(bbv(1,1):bbv(1,2),bbv(2,1):bbv(2,2),bbv(3,1):bbv(3,2));
-       
+        
         V_roi = nirs_create_vol(fullfile(dir2,[job.output_prefix,name,'.nii']),...
-                    V_roi.dim, V.dt, V.pinfo, V_roi.mat, Y_roi);               
+            V_roi.dim, V.dt, V.pinfo, V_roi.mat, Y_roi);
         
         % Sources and detectors positions must be updated also
         %voxel positions only are updated (real positions are unchanged)
@@ -174,7 +178,7 @@ for Idx=1:size(job.NIRSmat,1)
         NIRS.Cs.temp.NSkpt = size(Skpt,2);
         NIRS.Cs.temp.NDkpt = size(Dkpt,2);
         %Fitted position of points in MNI voxel space
-        NIRS.Cs.temp.Pfp_roi_rmv = PfpR_roi_rmv(1:3,:); 
+        NIRS.Cs.temp.Pfp_roi_rmv = PfpR_roi_rmv(1:3,:);
         %Same but in MNI real space
         NIRS.Cs.temp.Pfp_roi_rmm = Pfp_roi_rmm;
         NIRS.Cs.temp.Pp_roi_rmm = Pp_roi_rmm;

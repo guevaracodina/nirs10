@@ -20,7 +20,14 @@ switch varargin{1}
         out{2} = Pfp_rmiv_i;
         
     case 'find_bound_o'
-        while Y(round(Pfp_rmiv_i(1)),round(Pfp_rmiv_i(2)),round(Pfp_rmiv_i(3)))~=5
+        [nx ny nz] = size(Y);
+        flag0 = 1;
+        while Y(max(1,min(nx,round(Pfp_rmiv_i(1)))),max(1,min(ny,round(Pfp_rmiv_i(2)))),max(1,min(nz,round(Pfp_rmiv_i(3)))))~=5 && flag0 
+            if nx == round(Pfp_rmiv_i(1)) || 1 == round(Pfp_rmiv_i(1)) || ...
+               ny == round(Pfp_rmiv_i(2)) || 1 == round(Pfp_rmiv_i(2)) || ...
+               nz == round(Pfp_rmiv_i(3)) || 1 == round(Pfp_rmiv_i(3)) 
+                flag0 = 0;
+            end
             Pfp_rmiv_i = Pfp_rmiv_i + prec*Pd_rmiv_i;
         end
         out{1} = (2*Pfp_rmiv_i - prec*Pd_rmiv_i)/2; % boundary sur la direction de Pi et passant par Pi
