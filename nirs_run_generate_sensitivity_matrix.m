@@ -134,6 +134,11 @@ for Idx=1:size(job.NIRSmat,1)
             NS = NfS/2;
         end
         
+        %Pre-define the size of the sensitivity matrix for the memory
+        sens = zeros(length(Cwl),length(Yb8i));
+        
+%added to show progress
+        disp('sens matrix pre-created');
         
         for fiS = 1:NfS
             [dummy,fSn,dummy2] = fileparts(fS{fiS,:});
@@ -181,6 +186,9 @@ for Idx=1:size(job.NIRSmat,1)
             end
             
             D_Sn =  unique(Cid(3,Cid(2,:)== Sn));% Detectors seeing source Sn
+            %Assign array
+            %sens = zeros(NfS,length(Yb8i));
+            %sens = zeros(length(Cwl),length(Yb8i));
             for i = 1:size(D_Sn,2)% overview of detectors seen by source according to Cid
                 for j = 1:NfD% only if detector has been selected by user...
                     [dummy,fD_n,dummy2] = fileparts(fD{j,:});
@@ -222,6 +230,9 @@ for Idx=1:size(job.NIRSmat,1)
                                 sens_sd = ms.*md / ((phi0_S + phi0_D)/2);
                                 sens(isd+1,:) = reshape(sens_sd,[numel(sens_sd),1]);
                                 isd = isd+1;
+  %add to show which step                              
+                                disp(['sens matrix treated for the colomn' num2str(isd)]);
+                                
                                 C = [C c]; % channels in the sensitivity matrix
                                 
                             case 2 % tMCimg
@@ -269,22 +280,43 @@ for Idx=1:size(job.NIRSmat,1)
                 end
             end
         end
+     
+%added to show which step
+        disp('Before save sen matrix');
+        
+%pre-define SensC to be prepared for memory
+        %tempCsize = size(C);
+        %sens_index = zeros(tempCsize(2), tempCsize(1)+ length(Yb8i));
+        %sensC = zeros(tempCsize(2), tempCsize(1)+ length(Yb8i));
+        
         NIRS.Cs.mcs{ics}.C = C;
         save(job.NIRSmat{1,1},'NIRS');
         
-        sens_index = [C' sens];
-        sensC = sortrows(sens_index);
-        sensC(isnan(sensC))=0;
-        %disp([int2str(sum(sum(sum(isnan(sensC))))) ' NaNs have been corrected in sensitivity matrix (' int2str(numel(sensC)) ' values)']);
-        sens = sensC(:,2:end);
+        sens_sparse = sparse(sens);
+        clear sens;
+        sens = sens_sparse;
+        clear sens_sparse;
         
-        save(fullfile(cs_dir,'sens.mat'),'sens','-v7.3'); %PP
+        [Csorted Cindex] = sortrows(C');
+        sens = sens(Cindex,:);
+        %sens_index = [C' sens];
+        %sensC = sortrows(sens_index);
+        %sensC(isnan(sensC))=0;
+        %disp([int2str(sum(sum(sum(isnan(sensC))))) ' NaNs have been corrected in sensitivity matrix (' int2str(numel(sensC)) ' values)']);
+        %sens = sensC(:,2:end);
+        save_sens(cs_dir,sens);
+        
+        %save(fullfile(cs_dir,'sens.mat'),'sens','-v7.3'); %PP
         
         sens_reshaped = zeros(V_segR.dim);
         for i=1:size(sens,1)
             sens_reshaped = sens_reshaped + reshape(sens(i,:),V_segR.dim);
         end
         save(fullfile(cs_dir,'Sum_sensReshaped.mat'),'sens_reshaped','-v7.3'); %PP
+        
+        
+%added to show progress
+        disp('after save sen matrix');
         
         %         sensR = reshape(sens,[size(sens,1) V_segR.dim]);
         %         for i=1:size(sens,1)

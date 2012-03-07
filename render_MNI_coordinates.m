@@ -176,7 +176,7 @@ for i=1:length(rend),
         %%% Mahnoush 2012-01
         % Manually remove potentially duplicated* coordinates after rounding
         % *"Any elements of s in S = sparse(i,j,s,m,n,nzmax) that have duplicate values of i and j are added together."
-        
+        if size(xyz,2) > 1
         rxyz = round(xyz);
         [srxyz,ind_rxyz] = sortrows(rxyz');
         srxyz = srxyz'; ind_rxyz = ind_rxyz';
@@ -209,6 +209,12 @@ for i=1:length(rend),
             Rdxyz{i}.ind = Idbl;
         else
             dupX = 0;
+            % allocate
+            Rdxyz{i}.data = 0;
+            Rdxyz{i}.ind = 0;
+        end
+        else
+             dupX = 0;
             % allocate
             Rdxyz{i}.data = 0;
             Rdxyz{i}.ind = 0;
