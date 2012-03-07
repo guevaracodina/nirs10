@@ -18,7 +18,7 @@ try
     try
         sum_kappa = F.sum_kappa;
     end
-    if ~(fign == 4) && ~(fign == 5)
+    if ~(fign == 4) && ~(fign == 5) && ~(fign == 6)
         switch F.hb
             case 'HbO'
                 nchn = length(W.ch_HbO);
@@ -139,7 +139,7 @@ try
                     end
                     th_z = 0;
                 else
-                    if Z.LKC 
+                    if Z.LKC  
                         th_z = calc_EC(LKC,p_value,tstr,[eidf,erdf]);
                         str_cor = Z.StatStr;
                     else
@@ -167,6 +167,32 @@ try
                 end
                 index_over = find(s_map > th_z);
                 index_over2 = []; %not used
+            end
+        case 6 %group, uncorrected
+            str_cor = 'Group_unc';
+            %threshold
+            if tstr == 'T'
+                th_z = spm_invTcdf(1-p_value, erdf);
+            else
+                th_z = spm_invFcdf(1-p_value, eidf,erdf);
+            end
+            if erdf == 0
+                disp([F.contrast_info ' : Problem with number of degrees of freedom']);
+                index_over = [];
+                if GInv
+                    index_over2 = [];
+                end
+                th_z = 0;
+            else
+                index_over = find(s_map > th_z);
+                %if GInv, index_over2 = find(-T_map > th_z); end
+                if GInv,
+                    if Z.GroupColorbars
+                        index_over2 = [find(s_map > th_z); find(-s_map > th_z)];
+                    else
+                        index_over2 = find(-s_map > th_z);
+                    end
+                end
             end
     end
     I = [];

@@ -24,6 +24,10 @@ try
                     if isfield(TOPO.v{v1}.s{f1}.hb{h1},'stat_map')
                         tmp = sign_hb*squeeze(TOPO.v{v1}.s{f1}.hb{h1}.beta_map(Cp{c1,f1},:,:));
                         cbeta(fc,:) = tmp(:);
+                        if ~Z.simple_sum
+                            tmp = squeeze(TOPO.v{v1}.s{f1}.hb{h1}.beta_map(Cp{c1,f1},:,:))./squeeze(TOPO.v{v1}.s{f1}.hb{h1}.stat_map(Cp{c1,f1},:,:));
+                        end
+                        ccov_beta(fc,:) = tmp(:).^2;
                         new_version = 1;
                     else
                         %now use Cp{c1,f1} to access the required c_interp_beta instead of c1
@@ -38,6 +42,10 @@ try
                     if isfield(big_TOPO{f1}.v{v1}.g{1}.hb{h1},'stat_map')
                         tmp = sign_hb*squeeze(big_TOPO{f1}.v{v1}.g{1}.hb{h1}.beta_map(c1,:,:));
                         cbeta(f1,:) = tmp(:);
+                        if ~Z.simple_sum
+                            tmp = squeeze(big_TOPO{f1}.v{v1}.g{1}.hb{h1}.beta_map(c1,:,:))./squeeze(big_TOPO{f1}.v{v1}.g{1}.hb{h1}.stat_map(c1,:,:));
+                        end
+                        ccov_beta(f1,:) = tmp(:).^2;
                         new_version = 1;
                     else
                         %group analysis of a group of sessions analysis
@@ -53,6 +61,10 @@ try
                     if isfield(big_TOPO{f1}.v{v1}.s{is1}.hb{h1},'stat_map')
                         tmp = sign_hb*squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.beta_map(c1,:,:));
                         cbeta(f1,:) = tmp(:);
+                        if ~Z.simple_sum
+                            tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.beta_map(c1,:,:))./squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.stat_map(c1,:,:));
+                        end
+                        ccov_beta(f1,:) = tmp(:).^2;
                         new_version = 1;
                     else
                         tmp = sign_hb*squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_beta(c1,:,:));
@@ -91,8 +103,9 @@ try
     end
     %Generate group result as t-stat
     try
-        if Z.LKC || new_version
+        if (Z.LKC || new_version) 
             G = liom_group_new(cbeta,W.s1,W.s2);
+            LKC0 = G.LKC; %store
         else
             if strcmp(xCon(c1).STAT,'T')
                 G = liom_group(cbeta,ccov_beta,W.s1,W.s2,Z.min_s,Z.FFX,Z.simple_sum);
@@ -100,6 +113,14 @@ try
                 G = liom_group_F(cbeta,W.s1,W.s2);
             end
             G.LKC = [];
+        end
+        if (Z.LKC || new_version) && ~Z.simple_sum
+            if strcmp(xCon(c1).STAT,'T')
+                G = liom_group(cbeta,ccov_beta,W.s1,W.s2,Z.min_s,Z.FFX,Z.simple_sum);
+            else
+                G = liom_group_F(cbeta,W.s1,W.s2);
+            end
+            G.LKC = LKC0;
         end
     catch exception2
         disp(exception2.identifier);
@@ -141,6 +162,21 @@ try
     %         F.ess = G.beta_group;
     %     end
     DF = [];
+    if Z.output_unc
+        try
+            DF = nirs_draw_figure(6,F,W,Z,G.LKC);
+        catch exception2
+            disp(exception2.identifier);
+            disp(exception2.stack(1));
+        end
+        try
+            if Z.GFIS, H = nirs_copy_figure(H,DF,CF,c1,hb,shb,F.tstr,1-Z.output_unc,Z.write_neg_pos); end
+        catch exception2
+            disp(exception2.identifier);
+            disp(exception2.stack(1));
+        end
+    end
+    DF = [];
     try
         DF = nirs_draw_figure(4,F,W,Z,G.LKC);
     catch exception2
@@ -152,7 +188,7 @@ try
     catch exception2
         disp(exception2.identifier);
         disp(exception2.stack(1));
-    end
+    end    
 catch exception
     disp(exception.identifier);
     disp(exception.stack(1));
