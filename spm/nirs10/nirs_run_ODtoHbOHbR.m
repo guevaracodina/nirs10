@@ -14,6 +14,7 @@ end
 for Idx=1:size(job.NIRSmat,1)
     % Load NIRS.mat information
     try
+        clear PVF PVF2 DPF EPF
         NIRS = [];
         load(job.NIRSmat{Idx,1});
         

@@ -10,16 +10,16 @@ Z.StatStr = 'EC';
 Z.FFX = job.FFX_or_RFX;
 Z.p_value = job.contrast_p_value;
 Z.LKC = job.StatMethod;
-if ~Z.LKC
-    %at the group level, two ways to get corrected statistics:
-    %1-LKC
-    %2-Bonferroni
-    %currently using output_unc for Bonferroni? That's not clear and that's
-    %confusing
-    Z.output_unc = 1;
-    %Also, if at the contrast module, LKC was run, then some of the older
-    %options will not be available
-end
+% if ~Z.LKC
+%     %at the group level, two ways to get corrected statistics:
+%     %1-LKC
+%     %2-Bonferroni
+%     %currently using output_unc for Bonferroni? That's not clear and that's
+%     %confusing
+%     Z.output_unc = 1;
+%     %Also, if at the contrast module, LKC was run, then some of the older
+%     %options will not be available
+% end
 Z.group_session_to_average = job.group_session_to_average;
 Z.group_dir_name = job.group_dir_name;
 Z.simple_sum = job.simple_sum;

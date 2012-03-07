@@ -27,11 +27,6 @@ switch level
             Q = R./norm(R);
             S = [(R_right./norm(R_right) - Q) (R_down./norm(R_down) - Q)];
             L2 = L2 + sqrt(abs(det(S'*S)));
-%             tmpL2 = sqrt(abs(det(S'*S)));
-%             if ~isnan(tmpL2)
-%                 L2 = L2 + tmpL2;
-%             end
-            %x(aa) = tmpL2;
         end
     case 'group'
         % rename of input variables 
@@ -47,7 +42,7 @@ switch level
         [data_row, data_col] = find(common_mask == 1);
         nvox = length(data_row);
         
-        gres = zeros(nsubj, bs(1), bs(2));
+        %gres = zeros(nsubj, bs(1), bs(2));
         %gres(:, index_group) = res;
         gres = res;
         gres = gres .* reshape(ones(nsubj, 1) * gmask(:)', [nsubj, bs(1), bs(2)]);
@@ -60,10 +55,6 @@ switch level
             Q = R./norm(R);
             S = [(R_right./norm(R_right) - Q) (R_down./norm(R_down) - Q)];
             L2 = L2 + sqrt(abs(det(S'*S)));
-%             tmpL2 = sqrt(abs(det(S'*S)));
-%             if ~isnan(tmpL2)
-%                 L2 = L2 + tmpL2;
-%             end
         end
 end
 
