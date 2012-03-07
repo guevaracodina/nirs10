@@ -51,7 +51,12 @@ try
 catch
     filter_design_matrix = 0;
 end
-
+if isfield(job.vasomotion_choice,'vasomotion_on')
+    vasomotion_on = 1;
+    select_chromophore = job.vasomotion_choice.vasomotion_on.select_chromophore;
+else
+    vasomotion_on = 0;
+end
 %Currently, only NIRS_SPM method works well
 %Specify WLS, BGLM or NIRS_SPM parameters
 meth0=job.wls_or_bglm;
@@ -192,7 +197,7 @@ for Idx=1:size(job.NIRSmat,1)
         try
             for f=1:nsess
                 iSess = idx_sess(f);
-                %PLEASE DO NOT MODIFY THE nEXT TWO LINES!!!!!!!!!!!!!!!!
+				%PLEASE DO NOT MODIFY THE nEXT TWO LINES!!!!!!!!!!!!!!!!
                 NIRS.Dt.fir.Sess(1).U(1).name;
                 if ~isempty(NIRS.Dt.fir.Sess(iSess).U(1).name)
                     SPM.Sess(f) = NIRS.Dt.fir.Sess(iSess);
@@ -252,6 +257,31 @@ for Idx=1:size(job.NIRSmat,1)
                     C = [C NIRS.Dt.fir.Sess(iSess).mR{1}];
                     Cname = [Cname {'M'}];
                 end
+                wl = NIRS.Cf.dev.wl;
+                HbO_like = [];
+                for i=1:length(wl)
+                    if wl(i) > 750 %in nanometer
+                        %found a wavelength that is HbO-like
+                        HbO_like = [HbO_like i];
+                    end
+                end
+                %HbO channels
+                chHbO = NIRS.Cf.H.C.wl== HbO_like;
+                fullHbO = NIRS.Cf.H.C.gp(chHbO);
+                if vasomotion_on
+                    %get data for that session
+                    d = fopen_NIR(rDtp{iSess,1},NC);
+                    switch select_chromophore
+                        case 1 %HbT
+                            tmpC = 2*mean(d,1);
+                        case 2 %HbR
+                            tmpC = mean(d(logical(1-chHbO),:),1);
+                        case 3 %HbO
+                            tmpC = mean(d(chHbO,:),1);
+                    end
+                    C = [C tmpC'];
+                    Cname = [Cname {'V'}];
+                end
                 if ~isempty(job.subj.multi_reg)
                     %"Multiple regressors" file
                     %nb = 0;
@@ -290,6 +320,7 @@ for Idx=1:size(job.NIRSmat,1)
                     %HbO channels
                     chHbO = NIRS.Cf.H.C.wl== HbO_like;
                     fullHbO = NIRS.Cf.H.C.gp(chHbO);
+                    
                     [B_HbO IX] = sort(fullHbO); %sort in ascending order
                     %Impose minimum and maximum bounds
                     IXmax = IX(B_HbO <= MaxChDist);

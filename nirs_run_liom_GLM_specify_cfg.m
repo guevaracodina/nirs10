@@ -37,6 +37,41 @@ CreateNIRSCopy.name    = 'Create new directory and copy NIRS structure';
 CreateNIRSCopy.val     = {NewNIRSdir};
 CreateNIRSCopy.help    = {'Create new directory and copy NIRS structure there.'}';
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+select_chromophore         = cfg_menu;
+select_chromophore.tag     = 'select_chromophore';
+select_chromophore.name    = 'Select chromophore';
+select_chromophore.help    = {'Select chromophore'};
+select_chromophore.labels = {
+    'HbT'
+    'HbR'
+    'HbO'};
+select_chromophore.values  = {
+    1
+    2
+    3};
+select_chromophore.val = {1};
+
+vasomotion_on         = cfg_branch;
+vasomotion_on.tag     = 'vasomotion_on';
+vasomotion_on.name    = 'Include vasomotion regressor';
+vasomotion_on.val     = {select_chromophore};
+vasomotion_on.help    = {'Include vasomotion regressor.'};
+
+no_vasomotion         = cfg_branch;
+no_vasomotion.tag     = 'no_vasomotion';
+no_vasomotion.name    = 'No vasomotion regressor';
+no_vasomotion.val     = {};
+no_vasomotion.help    = {};
+
+vasomotion_choice        = cfg_choice;
+vasomotion_choice.name   = 'Choose vasomotion method';
+vasomotion_choice.tag    = 'vasomotion_choice';
+vasomotion_choice.values = {no_vasomotion,vasomotion_on};
+vasomotion_choice.val    = {no_vasomotion};
+vasomotion_choice.help   = {'Choose whether to include a vasomotion regressor in the GLM.'}';
+
 %Common to most modules: for creating a new directory and copying NIRS.mat
 NewDirCopyNIRS           = cfg_choice;
 NewDirCopyNIRS.name      = 'Create new directory and copy NIRS.mat';
@@ -482,6 +517,20 @@ GLM_include_cardiac.def    = @(val)nirs_get_defaults(...
     'model_specify.wls_bglm_specify.GLM_include_cardiac', val{:});
 GLM_include_cardiac.help   = {'Include cardiac regressor if available.'};
 
+%**************************************************************************************
+%Include the heart rate
+%02/03/2012 Ke Peng Laboratoire d'Imagerie Optique et Moculaire
+%**************************************************************************************
+%GLM_include_HeartRate    = cfg_menu;
+%GLM_include_HeartRate.name   = 'Include HeartRate regressor';
+%GLM_include_HeartRate.tag    = 'GLM_include_HeartRate';
+%GLM_include_HeartRate.labels = {'Yes','No'};
+%GLM_include_HeartRate.values = {1,0};
+%GLM_include_HeartRate.def    = @(val)nirs_get_defaults(...
+%    'model_specify.wls_bglm_specify.GLM_include_HeartRate', val{:});
+%GLM_include_HeartRate.help   = {'Include HeartRate regressor if available.'};
+%**************************************************************************************
+
 GLM_include_Mayer    = cfg_menu;
 GLM_include_Mayer.name   = 'Include Mayer wave regressor';
 GLM_include_Mayer.tag    = 'GLM_include_Mayer';
@@ -618,7 +667,7 @@ wls_bglm_specify      = cfg_exbranch;
 wls_bglm_specify.name = 'LIOM GLM Specification';
 wls_bglm_specify.tag  = 'wls_bglm_specify';
 wls_bglm_specify.val  = {NIRSmat dir1 sessions subj units time_res derivs bases ...
-    volt GLM_include_cardiac GLM_include_Mayer NIRSchannelsConfound GenerateHbT flag_window ...
+    volt GLM_include_cardiac GLM_include_Mayer vasomotion_choice NIRSchannelsConfound GenerateHbT flag_window ...
     channel_pca hpf_butter generate_trRV filter_design_matrix ...
     wls_or_bglm LiomDeleteLarge};
 wls_bglm_specify.prog = @nirs_run_liom_GLM_specify;
