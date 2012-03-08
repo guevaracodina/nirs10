@@ -137,6 +137,7 @@ try
     TOPO.v{v1}.(fg).hb{h1}.c{2*c1-shb}.beta_group = G.beta_group;
     TOPO.v{v1}.(fg).hb{h1}.c{2*c1-shb}.std_group = G.std_group;
     TOPO.v{v1}.(fg).hb{h1}.c{2*c1-shb}.type = strB;
+    TOPO.v{v1}.(fg).hb{h1}.c{2*c1-shb}.LKC = G.LKC;
     TOPO.v{v1}.(fg).hb{h1}.c{2*c1-shb}.var_bs = G.var_bs;
     TOPO.v{v1}.(fg).hb{h1}.c{2*c1-shb}.c = xCon(c1);
     erdf_group = max(G.erdf_group(:)); %quick fix...
