@@ -243,17 +243,23 @@ try
             Ns = NIRS.Cf.H.S.N;
             for i=1:(size(NIRS.Cf.H.C.id,2)/2)
                 %indices of source and detector
-                Si = NIRS.Cf.H.C.id(2,i);
-                Di = NIRS.Cf.H.C.id(3,i)+Ns;
-                pos = V.mat\(Q*[(Pp_c1_rmm(:,Si)+Pp_c1_rmm(:,Di))/2;1]);
-                
-                ch_MNI_vx = [ch_MNI_vx pos]; %%%% la notation serait Cp_rmv
+                    Si = NIRS.Cf.H.C.id(2,i);
+                    Di = NIRS.Cf.H.C.id(3,i)+Ns;
+                    posmm = [(Pp_c1_rmm(:,Si)+Pp_c1_rmm(:,Di))/2;1];
+                    pos = NIRS.Dt.ana.wT1.VF.mat\posmm;
+                    ch_MNI_vx(:,i) = pos;
+                    %posmm_skin = [(Pp_rmm(:,Si)+Pp_rmm(:,Di))/2;1];
+                    %pos_skin = NIRS.Dt.ana.wT1.VF.mat\posmm_skin;
+                    %ch_MNI_vx_skin(:,i) = pos_skin;
+                    posw = V.mat\(Q*posmm);                    
+                    ch_MNIw_vx(:,i) = posw; %%%% la notation serait Cp_rmv
             end
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             job.render_choice.render_template = '';
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            [rend, rendered_MNI] = render_MNI_coordinates(ch_MNI_vx, wT1_info,job.render_choice);
+            [rend, rendered_MNI] = render_MNI_coordinates(ch_MNIw_vx,ch_MNI_vx,wT1_info, NIRS.Dt.ana.wT1.VF,job.render_choice);
+            %ch_MNI_vx, wT1_info,job.render_choice);
             %%%% la notation serait Cp_rmv
             for kk = 1:6
                 rendered_MNI{kk}.ren = rend{kk}.ren;
@@ -300,12 +306,16 @@ try
                     end
                 end
             end
-        catch
+        catch exception
+            disp(exception.identifier);
+            disp(exception.stack(1));
             disp('Could not create TopoData.mat file');
         end
     end
     
-catch
+catch exception
+    disp(exception.identifier);
+    disp(exception.stack(1));
     disp('Coregistration failed for the 0th subject.');
 end
 
