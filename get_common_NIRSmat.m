@@ -1,11 +1,23 @@
-function [NIRSmat NIRSmatCopyChoice] = get_common_NIRSmat(NIRSmatReq,dir_name)
+function [NIRSmat redo1 NIRSmatCopyChoice] = get_common_NIRSmat(NIRSmatReq,dir_name)
+redo1      = cfg_menu;
+redo1.tag  = 'force_redo';
+redo1.name = 'Force processing';
+redo1.labels = {'False','True'};
+redo1.values = {0,1};
+redo1.val  = {0};
+redo1.help = {'Force redoing this processing even when it has been done already'};
+
 NIRSmat         = cfg_files; %Select NIRS.mat for this subject
-NIRSmat.name    = 'NIRS.mat'; % The displayed name
+if NIRSmatReq
+    NIRSmat.name    = 'NIRS.mat'; % The displayed name
+else
+    NIRSmat.name    = 'NIRS.mat (optional)'; % The displayed name    
+end
+NIRSmat.help    = {'Select NIRS.mat for the subject(s).'}; % help text displayed
 NIRSmat.tag     = 'NIRSmat';       %file names
 NIRSmat.filter  = 'mat';
 NIRSmat.ufilter = '^NIRS.mat$';
 NIRSmat.num     = [NIRSmatReq Inf];     % Number of inputs required
-NIRSmat.help    = {'Select NIRS.mat for the subject(s).'}; % help text displayed
 
 NIRSmatOverwrite         = cfg_branch;
 NIRSmatOverwrite.tag     = 'NIRSmatOverwrite';

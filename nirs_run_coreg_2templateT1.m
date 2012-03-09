@@ -5,9 +5,8 @@ function out = nirs_run_coreg_2templateT1(job)
 
 % don't load NIRS.mat
 try
-    NIRS = [];
-    load(job.NIRSmat{:});
-    
+    [NIRS newNIRSlocation]= nirs_load(job.NIRSmat{1,1},job.NIRSmatCopyChoice,job.force_redo);
+    job.NIRSmat{1,1} = newNIRSlocation;
     % SPATIAL NORMALIZATION OF ANATOMICAL IMAGE
     % Allow user-specified image of subject to overwrite previous
     % anatomical image in NIRS.mat; unlikely to ever happen
@@ -57,7 +56,7 @@ try
         matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.wrap = [0 0 0];
         matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.prefix = 'w';
         
-        spm_jobman('run_nogui',matlabbatch);
+        spm_jobman('run',matlabbatch);
     end
     
     %Recreate name of _sn.mat file just created by spm_normalise, and load it

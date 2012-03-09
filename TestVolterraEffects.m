@@ -1,4 +1,4 @@
-%spm_Volterra
+%nirs_spm_Volterra
 SPM = [];
 %SPM's session
 s = 1;
@@ -35,7 +35,7 @@ SPM.Sess(s).U = U;
 U = spm_get_ons(SPM,s);
 V = SPM.xBF.Volterra;
 %convolve stimuli U with basis functions
-[X,Xn,Fc] = spm_Volterra(U,bf,V); 
+[X,Xn,Fc] = nirs_spm_Volterra(U,bf,V); 
 try
     X = X((0:(ns - 1))*SPM.xBF.T + SPM.xBF.T0 + 32,:);
 end
@@ -45,14 +45,14 @@ try
     tSPM = SPM;
     tSPM.Sess(s).U.ons = U.ons(1); %first stim
     U1 = spm_get_ons(tSPM,s);
-    [Xt,Xn,Fc] = spm_Volterra(U1,bf,V); 
+    [Xt,Xn,Fc] = nirs_spm_Volterra(U1,bf,V); 
     Xt = Xt((0:(ns - 1))*SPM.xBF.T + SPM.xBF.T0 + 32,:);
 end
 try
     uSPM = SPM;
     uSPM.Sess(s).U.ons = U.ons(2); %second stim
     U2 = spm_get_ons(uSPM,s);
-    [Xu,Xn,Fc] = spm_Volterra(U2,bf,V); 
+    [Xu,Xn,Fc] = nirs_spm_Volterra(U2,bf,V); 
     Xu = Xu((0:(ns - 1))*SPM.xBF.T + SPM.xBF.T0 + 32,:);
     Xtu = Xt+Xu;
 end

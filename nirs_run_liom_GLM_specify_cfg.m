@@ -1,57 +1,17 @@
 function wls_bglm_specify = nirs_run_liom_GLM_specify_cfg
+[NIRSmat redo1 NIRSmatCopyChoice] = get_common_NIRSmat(1,'Stat');
 
-
-NIRSmat         = cfg_files; %Select NIRS.mat for this subject
-NIRSmat.name    = 'NIRS.mat'; % The displayed name
-NIRSmat.tag     = 'NIRSmat';       %file names
-NIRSmat.filter  = 'mat';
-NIRSmat.ufilter = '^NIRS.mat$';
-NIRSmat.num     = [1 Inf];     % Number of inputs required
-NIRSmat.help    = {'Select NIRS.mat for the subject(s).'}; % help text displayed
-
-DelPreviousData      = cfg_menu;
-DelPreviousData.tag  = 'DelPreviousData';
-DelPreviousData.name = 'Delete Previous data file';
-DelPreviousData.labels = {'True','False'};
-DelPreviousData.values = {1,0};
-DelPreviousData.val  = {0};
-DelPreviousData.help = {'Delete the previous data file.'}';
-
-CreateNIRSCopy_false         = cfg_branch;
-CreateNIRSCopy_false.tag     = 'CreateNIRSCopy_false';
-CreateNIRSCopy_false.name    = 'Do not copy NIRS structure';
-CreateNIRSCopy_false.help    = {'Do not copy NIRS structure.'
-    'This will write over the previous NIRS.mat'}';
-
-NewNIRSdir         = cfg_entry;
-NewNIRSdir.name    = 'Directory for NIRS.mat';
-NewNIRSdir.tag     = 'NewNIRSdir';
-NewNIRSdir.strtype = 's';
-NewNIRSdir.val{1}    = 'NewDir';
-NewNIRSdir.num     = [1 Inf];
-NewNIRSdir.help    = {'Directory for NIRS.mat.'}';
-
-CreateNIRSCopy         = cfg_branch;
-CreateNIRSCopy.tag     = 'CreateNIRSCopy';
-CreateNIRSCopy.name    = 'Create new directory and copy NIRS structure';
-CreateNIRSCopy.val     = {NewNIRSdir};
-CreateNIRSCopy.help    = {'Create new directory and copy NIRS structure there.'}';
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Vasomotion
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 select_chromophore         = cfg_menu;
 select_chromophore.tag     = 'select_chromophore';
 select_chromophore.name    = 'Select chromophore';
 select_chromophore.help    = {'Select chromophore'};
-select_chromophore.labels = {
-    'HbT'
-    'HbR'
-    'HbO'};
-select_chromophore.values  = {
-    1
-    2
-    3};
-select_chromophore.val = {1};
+select_chromophore.labels = {'HbT' 'HbR' 'HbO'};
+select_chromophore.values  = {  1   2   3};
+select_chromophore.val = {3};
 
 vasomotion_on         = cfg_branch;
 vasomotion_on.tag     = 'vasomotion_on';
@@ -71,16 +31,6 @@ vasomotion_choice.tag    = 'vasomotion_choice';
 vasomotion_choice.values = {no_vasomotion,vasomotion_on};
 vasomotion_choice.val    = {no_vasomotion};
 vasomotion_choice.help   = {'Choose whether to include a vasomotion regressor in the GLM.'}';
-
-%Common to most modules: for creating a new directory and copying NIRS.mat
-NewDirCopyNIRS           = cfg_choice;
-NewDirCopyNIRS.name      = 'Create new directory and copy NIRS.mat';
-NewDirCopyNIRS.tag       = 'NewDirCopyNIRS';
-NewDirCopyNIRS.values    = {CreateNIRSCopy_false CreateNIRSCopy};
-NewDirCopyNIRS.val       = {CreateNIRSCopy_false};
-NewDirCopyNIRS.help      = {'Choose whether to overwrite the NIRS.mat structure'
-    'or to create a new directory'
-    'and copy the NIRS.mat structure there'}';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % General Linear Model Specification
@@ -275,24 +225,15 @@ volt.val = {1};
 % LIOM General Linear Model Specification
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-dir1         = cfg_entry;
-dir1.name    = 'Stats Directory';
-dir1.tag     = 'dir1';
-dir1.strtype = 's';
-dir1.num     = [1 Inf];
-dir1.val{1}  = 'Stat';
-%dir1.def    = @(val)nirs_get_defaults('readNIRS.boxy1.cf1.sizebloc', val{:});
-dir1.help    = {'Enter a subdirectory name where the NIRS_SPM.mat files '
-    'containing the specified design matrix will be written.'}';
-
-LiomDeleteLarge      = cfg_menu;
-LiomDeleteLarge.tag  = 'LiomDeleteLarge';
-LiomDeleteLarge.name = 'Delete large files';
-LiomDeleteLarge.labels = {'Yes','No'};
-LiomDeleteLarge.values = {1,0};
-LiomDeleteLarge.def = @(val)nirs_get_defaults(...
-    'model_specify.wls_bglm_specify.LiomDeleteLarge', val{:});
-LiomDeleteLarge.help = {'Delete large files (.nir and NIRS.mat) after each estimation.'};
+% dir1         = cfg_entry;
+% dir1.name    = 'Stats Directory';
+% dir1.tag     = 'dir1';
+% dir1.strtype = 's';
+% dir1.num     = [1 Inf];
+% dir1.val{1}  = 'Stat';
+% %dir1.def    = @(val)nirs_get_defaults('readNIRS.boxy1.cf1.sizebloc', val{:});
+% dir1.help    = {'Enter a subdirectory name where the NIRS_SPM.mat files '
+%     'containing the specified design matrix will be written.'}';
 
 GenerateHbT      = cfg_menu;
 GenerateHbT.tag  = 'GenerateHbT';
@@ -468,26 +409,7 @@ nirs_lpf.values    = {lpf_none
     lpf_gauss
     lpf_hrf};
 nirs_lpf.val       = {lpf_gauss};
-%nirs_lpf.def    = @(val)nirs_get_defaults('nirs_lpf', val{:});
 nirs_lpf.help      = {'Choose low-pass filter.'};
-
-
-% % Executable Branch
-% HPF_LPF      = cfg_exbranch;
-% HPF_LPF.name = 'Filters';
-% HPF_LPF.tag  = 'HPF_LPF';
-% HPF_LPF.val  = {NIRSmat DelPreviousData NewDirCopyNIRS nirs_hpf nirs_lpf};
-% HPF_LPF.prog = @nirs_run_HPF_LPF;
-% HPF_LPF.vout = @nirs_cfg_vout_HPF_LPF;
-% HPF_LPF.help = {'Filters: currently only low pass, with or without ',...
-%     'a downsampling factor.'};
-%
-% function vout = nirs_cfg_vout_HPF_LPF(job)
-% vout = cfg_dep;
-% vout.sname      = 'NIRS.mat';
-% vout.src_output = substruct('.','NIRSmat');
-% vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
-% end
 
 NIRS_SPM         = cfg_branch;
 NIRS_SPM.tag     = 'NIRS_SPM';
@@ -666,10 +588,10 @@ hpf_butter.help = {'Choose whether to include a Butterworth High Pass Filter.'
 wls_bglm_specify      = cfg_exbranch;
 wls_bglm_specify.name = 'LIOM GLM Specification';
 wls_bglm_specify.tag  = 'wls_bglm_specify';
-wls_bglm_specify.val  = {NIRSmat dir1 sessions subj units time_res derivs bases ...
+wls_bglm_specify.val  = {NIRSmat redo1 NIRSmatCopyChoice sessions subj units time_res derivs bases ...
     volt GLM_include_cardiac GLM_include_Mayer vasomotion_choice NIRSchannelsConfound GenerateHbT flag_window ...
     channel_pca hpf_butter generate_trRV filter_design_matrix ...
-    wls_or_bglm LiomDeleteLarge};
+    wls_or_bglm};
 wls_bglm_specify.prog = @nirs_run_liom_GLM_specify;
 wls_bglm_specify.vout = @nirs_cfg_vout_liom_GLM_specify;
 wls_bglm_specify.help = {'Specify LIOM General Linear Model.'};

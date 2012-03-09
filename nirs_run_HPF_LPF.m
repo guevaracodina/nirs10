@@ -1,13 +1,6 @@
 function out = nirs_run_HPF_LPF(job)
 %filename prefix
 prefix = 'f'; %for "filter"
-DelPreviousData  = job.DelPreviousData;
-try 
-    NewNIRSdir = job.NewDirCopyNIRS.CreateNIRSCopy.NewNIRSdir;
-    NewDirCopyNIRS = 1;
-catch
-    NewDirCopyNIRS = 0;
-end
 
 for Idx=1:size(job.NIRSmat,1)
     %Load NIRS.mat information

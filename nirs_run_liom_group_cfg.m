@@ -1,8 +1,17 @@
 function liom_group = nirs_run_liom_group_cfg
-[NIRSmat NIRSmatCopyChoice] = get_common_NIRSmat(1,'Group');
+[NIRSmat redo1 NIRSmatCopyChoice] = get_common_NIRSmat(1,'Group');
 display_options = liom_contrast_group_options;
-consess = spm_get_consess;
-%factorial_design = spm_get_factorial_design;
+consess = nirs_spm_get_consess;
+
+% redo1      = cfg_menu;
+% redo1.tag  = 'force_redo';
+% redo1.name = 'Force processing';
+% redo1.labels = {'False','True'};
+% redo1.values = {0,1};
+% redo1.val  = {0};
+% redo1.help = {'Force redoing this processing even when it has been done already'};
+
+%factorial_design = nirs_spm_get_factorial_design;
 
 % session_number         = cfg_entry;
 % session_number.name    = 'Session number';
@@ -113,7 +122,7 @@ ContrastChoice.help      = {'Choose method to generate contrasts'}';
 liom_group      = cfg_exbranch;
 liom_group.name = 'Liom Group Model Estimation';
 liom_group.tag  = 'liom_group';
-liom_group.val  = {NIRSmat ...
+liom_group.val  = {NIRSmat redo1 NIRSmatCopyChoice ...
     group_dir_name number_dir_to_remove FFX_or_RFX ContrastChoice ...
     StatMethod contrast_p_value ...
      group_session_to_average simple_sum display_options}; % factorial_design};

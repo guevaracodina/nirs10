@@ -414,7 +414,7 @@ try
                             %                             %unit area
                             %                             xBF.bf = xBF.bf/sum(xBF.bf); %normalize
                             %                             %convolve stimuli U with basis functions
-                            %                             [X,Xn,Fc] = spm_Volterra(U,xBF.bf,1); %
+                            %                             [X,Xn,Fc] = nirs_spm_Volterra(U,xBF.bf,1); %
                             %                             X = X((0:(ns - 1))*xBF.T + xBF.T0 + 32,:);
                             %                             %add response to rest data -- direct model
                             Y = Y0;

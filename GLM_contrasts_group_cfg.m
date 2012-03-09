@@ -23,7 +23,6 @@ matlabbatch{1}.spm.tools.nirs10.model_specify.wls_bglm_specify.filter_design_mat
 matlabbatch{1}.spm.tools.nirs10.model_specify.wls_bglm_specify.wls_or_bglm.NIRS_SPM.nirs_noise = 0;
 matlabbatch{1}.spm.tools.nirs10.model_specify.wls_bglm_specify.wls_or_bglm.NIRS_SPM.nirs_hpf.hpf_wavelet.hpf_wavelet_iter = 4;
 matlabbatch{1}.spm.tools.nirs10.model_specify.wls_bglm_specify.wls_or_bglm.NIRS_SPM.nirs_lpf.lpf_gauss.fwhm1 = 1.5;
-matlabbatch{1}.spm.tools.nirs10.model_specify.wls_bglm_specify.LiomDeleteLarge = 0;
 matlabbatch{2}.spm.tools.nirs10.model_estimate.wls_bglm_estimate.NIRSmat(1) = cfg_dep;
 matlabbatch{2}.spm.tools.nirs10.model_estimate.wls_bglm_estimate.NIRSmat(1).tname = 'NIRS.mat';
 matlabbatch{2}.spm.tools.nirs10.model_estimate.wls_bglm_estimate.NIRSmat(1).tgt_spec{1}(1).name = 'filter';

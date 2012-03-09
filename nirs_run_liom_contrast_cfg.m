@@ -1,6 +1,6 @@
 function liom_contrast = nirs_run_liom_contrast_cfg
-[NIRSmat NIRSmatCopyChoice] = get_common_NIRSmat(1,'Contrast');
-consess = spm_get_consess;
+[NIRSmat redo1 NIRSmatCopyChoice] = get_common_NIRSmat(1,'Con');
+consess = nirs_spm_get_consess;
 display_options = liom_contrast_group_options;
 
 %Select view
@@ -160,7 +160,7 @@ liom_contrast      = cfg_exbranch;
 liom_contrast.name = 'Liom Contrast Calculations';
 liom_contrast.tag  = 'liom_contrast';
 %PP removed: liom_contrast_struct
-liom_contrast.val  = {NIRSmat NIRSmatCopyChoice ContrastChoice Sessions ...
+liom_contrast.val  = {NIRSmat redo1 NIRSmatCopyChoice ContrastChoice Sessions ...
     view TopoData StatMethod UseCorrelRes ...
     spatial_LPF contrast_p_value display_options}; %Study_type
 liom_contrast.prog = @nirs_run_liom_contrast;
