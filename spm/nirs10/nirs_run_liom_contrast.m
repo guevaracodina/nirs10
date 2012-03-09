@@ -62,92 +62,95 @@ end
 for Idx=1:size(job.NIRSmat,1)
     %Load NIRS.mat information
     try
-        NIRS = [];
         run_contrast_OK = 1;
-        load(job.NIRSmat{Idx,1});
-        NC = NIRS.Cf.H.C.N;
-        [rendered_MNI run_contrast_OK] = nirs_load_TopoData(job,NIRS,run_contrast_OK);
-        %load SPM - first GLM - might want to generalize
-        dir1 = NIRS.SPM{1};
-        load(fullfile(dir1,'SPM.mat'));
-        if ~exist('SPM','var')
-            run_contrast_OK = 0;
-            disp('SPM not found');
-        end
-        if run_contrast_OK
-            %load TOPO (topographic maps) if already (partially) generated
-            ftopo = fullfile(dir1,'TOPO.mat');
-            TOPO = [];
-            
-            [newDir job] = nirs_get_current_dir(job,Idx);
-            %Update ftopo
-            [dir fil1 ext1] = fileparts(ftopo); %#ok<ASGLU>
-            ftopo = fullfile(newDir, [fil1 ext1]);
-            if exist(ftopo,'file'), load(ftopo); end
-            %Careful, this is one aspect of Z that is subject specific
-            Z.dir1 = newDir;
-            Z.Idx = Idx;         
-            %Calculate xCon and put it in TOPO -- also may need SSxCon
-            TOPO = nirs_get_contrasts(SPM,Z,TF,TOPO);
-            %Calculate required information on F-stats, which is
-            %independent of the view
-            if Z.LKC || Z.UseCorrelRes
-                TOPO = precalculate_F(SPM,Z,TOPO);
+        [NIRS newNIRSlocation]= nirs_load(job.NIRSmat{Idx,1},job.NIRSmatCopyChoice,job.force_redo);
+        job.NIRSmat{Idx,1} = newNIRSlocation;
+        if ~isempty(NIRS) && (~isfield(NIRS.flags,'con_OK') || job.force_redo)
+            NC = NIRS.Cf.H.C.N;
+            [rendered_MNI run_contrast_OK] = nirs_load_TopoData(job,NIRS,run_contrast_OK);
+            %load SPM - first GLM - might want to generalize
+            [dir1 dummy] = fileparts(NIRS.SPM{1});
+            load(NIRS.SPM{1});
+            if ~exist('SPM','var')
+                run_contrast_OK = 0;
+                disp('SPM not found');
             end
-            %Big loop over views
-            for v1=1:size(Z.views_to_run,2)
-                try
-                    %Fill W structure, which is view and subject specific
-                    %Structure for passing GLM and interpolation data
-                    clear W
-                    brain_view = Z.views_to_run(v1);
-                    [W.side_hemi W.spec_hemi] = nirs_get_brain_view(brain_view);
-                    % channel information
-                    rchn = rendered_MNI{W.side_hemi}.rchn;
-                    cchn = rendered_MNI{W.side_hemi}.cchn;                  
-                    %find channels which are visible from this projection view
-                    W.index_ch = find(rchn ~= -1);
-                    if isfield(rendered_MNI{W.side_hemi},'view_mask_2d') % for back-compatibility
-                        W.brain_view_mask_2d = rendered_MNI{W.side_hemi}.view_mask_2d;
-                    end
-
-                    if isempty(W.index_ch)
-                        TOPO.v{side_hemi}.Warning = 'No channel found for this view';
-                        disp(['No channel for view ' int2str(v1) ': Probable coregistration problem. Skipping this view']);
-                    else
-                        %rendering surface
-                        brain = rendered_MNI{W.side_hemi}.ren;
-                        W.brain = brain * 0.5;
-                        W.s1 = size(brain, 1);
-                        W.s2 = size(brain, 2);
-                        %split into HbO and HbR interpolations
-                        W.ch_HbO = W.index_ch;
-                        W.ch_HbR = NC/2 + W.index_ch;
-                        W.ch_HbT = NC+W.index_ch;
-                        W.rchn = rchn(W.index_ch);
-                        W.cchn = cchn(W.index_ch);
-                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                        %Generate the contrasts
-                        TOPO = prepare_constrast_core_call(Z,W,SPM,TOPO);
-                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                    end
-                    TOPO.v{W.side_hemi}.s1 = W.s1; %sizes of topographic projection
-                    TOPO.v{W.side_hemi}.s2 = W.s2;
-                    TOPO.v{W.side_hemi}.view = W.spec_hemi; %%% view of the brain
-                catch exception
-                    disp(exception.identifier);
-                    disp(exception.stack(1));
-                    disp(['Could not create contrasts for view ' W.spec_hemi ' for subject ' int2str(Idx)]);
+            if run_contrast_OK
+                %load TOPO (topographic maps) if already (partially) generated
+                ftopo = fullfile(dir1,'TOPO.mat');
+                TOPO = [];
+                
+                [newDir job] = nirs_get_current_dir(job,Idx);
+                %Update ftopo
+                [dir fil1 ext1] = fileparts(ftopo); %#ok<ASGLU>
+                ftopo = fullfile(newDir, [fil1 ext1]);
+                if exist(ftopo,'file'), load(ftopo); end
+                %Careful, this is one aspect of Z that is subject specific
+                Z.dir1 = newDir;
+                Z.Idx = Idx;
+                %Calculate xCon and put it in TOPO -- also may need SSxCon
+                TOPO = nirs_get_contrasts(SPM,Z,TF,TOPO);
+                %Calculate required information on F-stats, which is
+                %independent of the view
+                if Z.LKC || Z.UseCorrelRes
+                    TOPO = precalculate_F(SPM,Z,TOPO);
                 end
-            end %end for v1
-            save(ftopo,'TOPO','-v7.3'); %file can be large - because it stores all the contrast data
+                %Big loop over views
+                for v1=1:size(Z.views_to_run,2)
+                    try
+                        %Fill W structure, which is view and subject specific
+                        %Structure for passing GLM and interpolation data
+                        clear W
+                        brain_view = Z.views_to_run(v1);
+                        [W.side_hemi W.spec_hemi] = nirs_get_brain_view(brain_view);
+                        % channel information
+                        rchn = rendered_MNI{W.side_hemi}.rchn;
+                        cchn = rendered_MNI{W.side_hemi}.cchn;
+                        %find channels which are visible from this projection view
+                        W.index_ch = find(rchn ~= -1);
+                        if isfield(rendered_MNI{W.side_hemi},'view_mask_2d') % for back-compatibility
+                            W.brain_view_mask_2d = rendered_MNI{W.side_hemi}.view_mask_2d;
+                        end
+                        
+                        if isempty(W.index_ch)
+                            TOPO.v{side_hemi}.Warning = 'No channel found for this view';
+                            disp(['No channel for view ' int2str(v1) ': Probable coregistration problem. Skipping this view']);
+                        else
+                            %rendering surface
+                            brain = rendered_MNI{W.side_hemi}.ren;
+                            W.brain = brain * 0.5;
+                            W.s1 = size(brain, 1);
+                            W.s2 = size(brain, 2);
+                            %split into HbO and HbR interpolations
+                            W.ch_HbO = W.index_ch;
+                            W.ch_HbR = NC/2 + W.index_ch;
+                            W.ch_HbT = NC+W.index_ch;
+                            W.rchn = rchn(W.index_ch);
+                            W.cchn = cchn(W.index_ch);
+                            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                            %Generate the contrasts
+                            TOPO = prepare_constrast_core_call(Z,W,SPM,TOPO);
+                            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                        end
+                        TOPO.v{W.side_hemi}.s1 = W.s1; %sizes of topographic projection
+                        TOPO.v{W.side_hemi}.s2 = W.s2;
+                        TOPO.v{W.side_hemi}.view = W.spec_hemi; %%% view of the brain
+                    catch exception
+                        disp(exception.identifier);
+                        disp(exception.stack(1));
+                        disp(['Could not create contrasts for view ' W.spec_hemi ' for subject ' int2str(Idx) ' for ' job.NIRSmat{Idx,1}]);
+                    end
+                end %end for v1
+                save(ftopo,'TOPO','-v7.3'); %file can be large - because it stores all the contrast data
+            end
+            NIRS.flags.con_OK = 1;
+            NIRS.TOPO = ftopo;
+            save(job.NIRSmat{Idx,1},'NIRS');
         end
     catch exception
         disp(exception.identifier);
         disp(exception.stack(1));
-        disp(['Could not create contrasts for subject' int2str(Idx)]);
+        disp(['Could not create contrasts for subject' int2str(Idx) ' for ' job.NIRSmat{Idx,1}]);
     end
-    NIRS.TOPO = ftopo;
-    save(job.NIRSmat{Idx,1},'NIRS');
 end
 out.NIRSmat = job.NIRSmat;

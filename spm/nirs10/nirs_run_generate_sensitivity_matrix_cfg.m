@@ -1,11 +1,5 @@
 function makesens1 = nirs_run_generate_sensitivity_matrix_cfg
-NIRSmat         = cfg_files; %Select NIRS.mat for this subject
-NIRSmat.name    = 'NIRS.mat'; % The displayed name
-NIRSmat.tag     = 'NIRSmat';       %file names
-NIRSmat.filter  = 'mat';
-NIRSmat.ufilter = '^NIRS.mat$';
-NIRSmat.num     = [1 Inf];     % Number of inputs required
-NIRSmat.help    = {'Select NIRS.mat for the subject(s).'}; % help text displayed
+[NIRSmat redo1 NIRSmatCopyChoice] = get_common_NIRSmat(1,'sens');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Configuration: generate sensitivity matrix
@@ -23,7 +17,7 @@ outMCfiles.help    = {'Select .mc2 or .2pt files for this subject.'};
 makesens1      = cfg_exbranch;
 makesens1.name = 'Sensitivity Matrix';
 makesens1.tag  = 'makesens1';
-makesens1.val  = {NIRSmat outMCfiles};
+makesens1.val  = {NIRSmat redo1 NIRSmatCopyChoice outMCfiles};
 makesens1.prog = @nirs_run_generate_sensitivity_matrix;
 makesens1.vout = @nirs_cfg_vout_generate_sensitivity_matrix;
 makesens1.help = {'Generate sensitivity matrix.'};

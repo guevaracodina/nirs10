@@ -1,4 +1,6 @@
 function AnalyzerOnsets = nirs_run_AnalyzerOnsets_cfg
+[NIRSmat redo1 NIRSmatCopyChoice] = get_common_NIRSmat(0,'ons');
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Configuration  Read NIRS onsets to generate input to General Linear Model
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -32,23 +34,11 @@ dp_NIRS1.strtype = 'r';
 dp_NIRS1.num     = [0 Inf];
 dp_NIRS1.help    = {'Specify number of data time points in NIRS data for the GLM (optional).'};
 
-NIRSmat_optional         = cfg_files; %Select NIRS.mat for this subject
-NIRSmat_optional.name    = 'NIRS.mat'; % The displayed name
-NIRSmat_optional.tag     = 'NIRSmat_optional';       %file names
-NIRSmat_optional.filter  = 'mat';
-NIRSmat_optional.ufilter = '^NIRS.mat$';
-NIRSmat_optional.val{1}  = {''};
-NIRSmat_optional.num     = [0 Inf];     % Number of inputs required
-NIRSmat_optional.help    = {'Select NIRS.mat for the subject(s).'
-    'If selecting more than one NIRS.mat, the onsets must have been already '
-    'specified at an earlier stage. Otherwise, only one subject can be processed.'}'; % help text displayed
-
-
 % Executable Branch
 AnalyzerOnsets      = cfg_exbranch;
 AnalyzerOnsets.name = 'Read NIRS onsets';
 AnalyzerOnsets.tag  = 'AnalyzerOnsets';
-AnalyzerOnsets.val  = {NIRSmat_optional raw_onset_files freq_NIRS1 dp_NIRS1};
+AnalyzerOnsets.val  = {NIRSmat redo1 NIRSmatCopyChoice raw_onset_files freq_NIRS1 dp_NIRS1};
 AnalyzerOnsets.prog = @nirs_run_AnalyzerOnsets;
 AnalyzerOnsets.vout = @nirs_cfg_vout_AnalyzerOnsets;
 AnalyzerOnsets.help = {'Select NIRS structures (optional) and/or '

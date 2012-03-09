@@ -1,50 +1,11 @@
 function boxy1 = nirs_run_boxy_cfg
-
-NIRSmat         = cfg_files; %Select NIRS.mat for this subject
-NIRSmat.name    = 'NIRS.mat'; % The displayed name
-NIRSmat.tag     = 'NIRSmat';       %file names
-NIRSmat.filter  = 'mat';
-NIRSmat.ufilter = '^NIRS.mat$';
-NIRSmat.num     = [1 Inf];     % Number of inputs required
-NIRSmat.help    = {'Select NIRS.mat for the subject(s).'}; % help text displayed
-
-DelPreviousData      = cfg_menu;
-DelPreviousData.tag  = 'DelPreviousData';
-DelPreviousData.name = 'Delete Previous data file';
-DelPreviousData.labels = {'True','False'};
-DelPreviousData.values = {1,0};
-DelPreviousData.val  = {0};
-DelPreviousData.help = {'Delete the previous data file.'}';
-
-CreateNIRSCopy_false         = cfg_branch;
-CreateNIRSCopy_false.tag     = 'CreateNIRSCopy_false';
-CreateNIRSCopy_false.name    = 'Do not copy NIRS structure';
-CreateNIRSCopy_false.help    = {'Do not copy NIRS structure.'
-    'This will write over the previous NIRS.mat'}';
-
-NewNIRSdir         = cfg_entry;
-NewNIRSdir.name    = 'Directory for NIRS.mat';
-NewNIRSdir.tag     = 'NewNIRSdir';
-NewNIRSdir.strtype = 's';
-NewNIRSdir.val{1}    = 'NewDir';
-NewNIRSdir.num     = [1 Inf];
-NewNIRSdir.help    = {'Directory for NIRS.mat.'}';
-
-CreateNIRSCopy         = cfg_branch;
-CreateNIRSCopy.tag     = 'CreateNIRSCopy';
-CreateNIRSCopy.name    = 'Create new directory and copy NIRS structure';
-CreateNIRSCopy.val     = {NewNIRSdir};
-CreateNIRSCopy.help    = {'Create new directory and copy NIRS structure there.'}';
-
-%Common to most modules: for creating a new directory and copying NIRS.mat
-NewDirCopyNIRS           = cfg_choice;
-NewDirCopyNIRS.name      = 'Create new directory and copy NIRS.mat';
-NewDirCopyNIRS.tag       = 'NewDirCopyNIRS';
-NewDirCopyNIRS.values    = {CreateNIRSCopy_false CreateNIRSCopy};
-NewDirCopyNIRS.val       = {CreateNIRSCopy_false};
-NewDirCopyNIRS.help      = {'Choose whether to overwrite the NIRS.mat structure'
-    'or to create a new directory'
-    'and copy the NIRS.mat structure there'}';
+redo1      = cfg_menu;
+redo1.tag  = 'force_redo';
+redo1.name = 'Force processing';
+redo1.labels = {'False','True'};
+redo1.values = {0,1};
+redo1.val  = {0};
+redo1.help = {'Force redoing this processing even when it has been done already'};
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Configuration for BOXY   (boxy1)
@@ -284,7 +245,7 @@ cf1.help    = {'Configuration used for all subjects to be preprocessed.'};
 boxy1      = cfg_exbranch;
 boxy1.name = 'ReadBoxy';
 boxy1.tag  = 'boxy1';
-boxy1.val  = {generic1 config_path cf1};
+boxy1.val  = {generic1 redo1 config_path cf1};
 boxy1.prog = @nirs_run_boxy;
 boxy1.vout = @nirs_cfg_vout_boxy;
 boxy1.help = {'Select raw BOXY data files for this subject.'};

@@ -2,6 +2,13 @@ function boxy_manual1 = nirs_run_boxy_manual_cfg
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Configuration for BOXY MANUAL  (boxy1)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+redo1      = cfg_menu;
+redo1.tag  = 'force_redo';
+redo1.name = 'Force processing';
+redo1.labels = {'False','True'};
+redo1.values = {0,1};
+redo1.val  = {0};
+redo1.help = {'Force redoing this processing even when it has been done already'};
 
 Apath        = cfg_files;
 Apath.name    = 'Analysis path';
@@ -255,7 +262,7 @@ cf1.help    = {'Configuration used for all subjects to be preprocessed.'};
 boxy_manual1      = cfg_exbranch;
 boxy_manual1.name = 'ReadBoxyManual';
 boxy_manual1.tag  = 'boxy_manual1';
-boxy_manual1.val  = {generic2 config_path2 cf1};
+boxy_manual1.val  = {generic2 redo1 config_path2 cf1};
 boxy_manual1.prog = @nirs_run_boxy_manual;
 boxy_manual1.vout = @nirs_cfg_vout_boxy_manual;
 boxy_manual1.help = {'Select raw BOXY data files for this subject.'};

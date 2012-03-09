@@ -238,7 +238,7 @@ for Idx=1:size(job.NIRSmat,1)
             U = spm_get_ons(SPM,s);
             V = SPM.xBF.Volterra;
             %convolve stimuli U with basis functions
-            [X,Xn,Fc] = spm_Volterra(U,bf,V);
+            [X,Xn,Fc] = nirs_spm_Volterra(U,bf,V);
             try
                 X = X((0:(ns - 1))*SPM.xBF.T + SPM.xBF.T0 + 32,:);
             end
@@ -360,7 +360,7 @@ for Idx=1:size(job.NIRSmat,1)
         U = spm_get_ons(SPM,s);
         V = SPM.xBF.Volterra;
         %convolve stimuli U with basis functions
-        [X,Xn,Fc] = spm_Volterra(U,bf,V);
+        [X,Xn,Fc] = nirs_spm_Volterra(U,bf,V);
         try
             X = X((0:(ns - 1))*SPM.xBF.T + SPM.xBF.T0 + 32,:);
         end

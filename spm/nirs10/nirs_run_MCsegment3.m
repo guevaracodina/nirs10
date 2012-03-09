@@ -9,18 +9,14 @@ function out = nirs_run_MCsegment3(job)
 %outVsegmented = {};
 outNIRSmat = {};
 try
-    outNIRSmat = job.NIRSmat_optional;%%%%%%%job.NIRSmat_optional;
+    outNIRSmat = job.NIRSmat;
     nsubj = length(outNIRSmat);
     NIRSok = 1;
 catch
     NIRSok = 0;
     nsubj = length(job.image_in);
 end
-try 
     force_reprocess = job.force_reprocess;
-catch
-    force_reprocess = 0;
-end
 for Idx=1:nsubj
     if NIRSok
         try
@@ -45,23 +41,6 @@ for Idx=1:nsubj
         end
     end
 
-%     %Try to use field corrected image if possible
-%     [dirA filA extA] = fileparts(V.fname);
-%     tmp_file = fullfile(dirA,['m' filA extA]);
-%     if exist(tmp_file,'file')
-%         V.fname = tmp_file;
-%     end
-
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % PROVOQUE DES MILLIARDS DE BUGS !!!!
-    %Try to use field corrected image if possible
-%     [dirA filA extA] = fileparts(V.fname);
-%     tmp_file = fullfile(dirA,['m' filA extA]);
-%     if exist(tmp_file,'file')
-%         V.fname = tmp_file;
-%     end
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
     % USER OPTIONS %
     thresh_as = job.thresh_as;
     rebel_surrounding = job.rebel_surrounding;
@@ -99,7 +78,7 @@ for Idx=1:nsubj
         %MC Segmentation already done, skipping
         if NIRSok
             NIRS.Dt.ana.T1seg = fullfile(dir1,[output_prefix,'_segmented_',file1,'.nii']);
-            disp(['MC Segment already run for file ' NIRS.Dt.ana.T1seg ' - skipping.'])
+            %disp(['MC Segment already run for file ' NIRS.Dt.ana.T1seg ' - skipping.'])
             save(outNIRSmat{Idx},'NIRS');
         end
         
@@ -243,7 +222,8 @@ for Idx=1:nsubj
             jobr.Yb = fullfile(dir,'belongs2n_ci.nii');
             jobr.Yh = fullfile(dir,'head_shadow.nii');
             outr = nirs_MCsegment_rebels2(jobr);
-            
+            %Close spm_progress_bar
+            spm_progress_bar('clear');
             % Save name of segmented image in NIRS matrix
             NIRS.Dt.ana.T1seg = outr;
             if NIRSok

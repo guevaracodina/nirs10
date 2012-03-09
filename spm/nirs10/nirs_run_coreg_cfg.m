@@ -1,54 +1,19 @@
 function coreg1 = nirs_run_coreg_cfg
-NIRSmat         = cfg_files; %Select NIRS.mat for this subject
-NIRSmat.name    = 'NIRS.mat'; % The displayed name
-NIRSmat.tag     = 'NIRSmat';       %file names
-NIRSmat.filter  = 'mat';
-NIRSmat.ufilter = '^NIRS.mat$';
-NIRSmat.num     = [1 Inf];     % Number of inputs required
-NIRSmat.help    = {'Select NIRS.mat for the subject(s).'}; % help text displayed
-
-DelPreviousData      = cfg_menu;
-DelPreviousData.tag  = 'DelPreviousData';
-DelPreviousData.name = 'Delete Previous data file';
-DelPreviousData.labels = {'True','False'};
-DelPreviousData.values = {1,0};
-DelPreviousData.val  = {0};
-DelPreviousData.help = {'Delete the previous data file.'}';
-
-CreateNIRSCopy_false         = cfg_branch;
-CreateNIRSCopy_false.tag     = 'CreateNIRSCopy_false';
-CreateNIRSCopy_false.name    = 'Do not copy NIRS structure';
-CreateNIRSCopy_false.help    = {'Do not copy NIRS structure.'
-    'This will write over the previous NIRS.mat'}';
-
-NewNIRSdir         = cfg_entry;
-NewNIRSdir.name    = 'Directory for NIRS.mat';
-NewNIRSdir.tag     = 'NewNIRSdir';
-NewNIRSdir.strtype = 's';
-NewNIRSdir.val{1}    = 'NewDir';
-NewNIRSdir.num     = [1 Inf];
-NewNIRSdir.help    = {'Directory for NIRS.mat.'}';
-
-CreateNIRSCopy         = cfg_branch;
-CreateNIRSCopy.tag     = 'CreateNIRSCopy';
-CreateNIRSCopy.name    = 'Create new directory and copy NIRS structure';
-CreateNIRSCopy.val     = {NewNIRSdir};
-CreateNIRSCopy.help    = {'Create new directory and copy NIRS structure there.'}';
-
-%Common to most modules: for creating a new directory and copying NIRS.mat
-NewDirCopyNIRS           = cfg_choice;
-NewDirCopyNIRS.name      = 'Create new directory and copy NIRS.mat';
-NewDirCopyNIRS.tag       = 'NewDirCopyNIRS';
-NewDirCopyNIRS.values    = {CreateNIRSCopy_false CreateNIRSCopy};
-NewDirCopyNIRS.val       = {CreateNIRSCopy_false};
-NewDirCopyNIRS.help      = {'Choose whether to overwrite the NIRS.mat structure'
-    'or to create a new directory'
-    'and copy the NIRS.mat structure there'}';
-
+[NIRSmat redo1 NIRSmatCopyChoice] = get_common_NIRSmat(1,'coreg');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Configuration for coregistration: coreg
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+template_mode = cfg_menu;
+template_mode.tag    = 'template_mode';
+template_mode.name   = 'Using a template for all subjects?';
+template_mode.labels = {'Yes','No'};
+template_mode.values = {1,0};
+template_mode.val{1} = 0;
+template_mode.help   = {'If coregistration is to be performed for each subject '
+    'separately, choose No. If coregistration should be performed only once, '
+    'for the first subject, since a tem47plate has been specified to use for all subjects, choose Yes.'}';
 
 segT1_4fit         = cfg_files;
 segT1_4fit.name    = 'Images segmented to fit P on.'; % The displayed name
@@ -125,11 +90,11 @@ Save6Projections.help = {'Save images of channel locations for the 6 projections
 
 ForceReprocess      = cfg_menu;
 ForceReprocess.tag  = 'ForceReprocess';
-ForceReprocess.name = 'Force reprocessing';
+ForceReprocess.name = 'Force reprocessing of normalization';
 ForceReprocess.labels = {'True','False'};
 ForceReprocess.values = {1,0};
 ForceReprocess.val  = {0};
-ForceReprocess.help = {'Force reprocessing.'}';
+ForceReprocess.help = {'Force reprocessing of the calculation of the normalization -- only.'}';
 
 render_file         = cfg_files;
 render_file.name    = 'Render file';
@@ -209,7 +174,7 @@ anatT1_template.help    = {'Select anatomical template image for this subject.'}
 coreg1      = cfg_exbranch;
 coreg1.name = 'NIRScoreg';
 coreg1.tag  = 'coreg1';
-coreg1.val  = {NIRSmat DelPreviousData NewDirCopyNIRS anatT1 segT1_4fit ...
+coreg1.val  = {NIRSmat redo1 NIRSmatCopyChoice template_mode anatT1 segT1_4fit ...
     anatT1_template fid_in_subject_MNI nasion_wMNI AL_wMNI AR_wMNI ...
     GenDataTopo render_choice View6Projections Save6Projections ForceReprocess};
 coreg1.prog = @nirs_run_coreg;

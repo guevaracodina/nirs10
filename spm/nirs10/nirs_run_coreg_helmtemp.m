@@ -12,43 +12,34 @@ function out = nirs_run_coreg_helmtemp(job)
 %3) find a rotation that matches the subject fiducials to the atlas
 %4) output an updated NIRS.mat that contains the transformations and
 %the transformed coordinates
-try 
-    viewer_ON = job.View6Projections;
-catch
-    viewer_ON = 0;
-end
-try 
-    NewNIRSdir = job.NewDirCopyNIRS.CreateNIRSCopy.NewNIRSdir;
-    NewDirCopyNIRS = 1;
-catch
-    NewDirCopyNIRS = 0;
-end
+viewer_ON = job.View6Projections;
+
 
 % Loop over subjects
 for iSubj=1:size(job.NIRSmat,1)
     
     % Load NIRS.mat
     try
-        NIRS = [];
-        load(job.NIRSmat{iSubj,1});
+        [NIRS newNIRSlocation]= nirs_load(job.NIRSmat{iSubj,1},job.NIRSmatCopyChoice,job.force_redo);
+        job.NIRSmat{iSubj,1} = newNIRSlocation;
         
         % SPATIAL NORMALIZATION OF ANATOMICAL IMAGE %
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
-%         NIRS.Dt.fir.stax.n = 'Brainsight(c)';
-%             NIRS.Dt.fir.stax.nota = 'Helmet template';
-%             NIRS_ht = load(job.subj(1,is).helmet.helm_temp{:});
-%             NIRS.Cf.H.P.w = NIRS_ht.NIRS.Cf.H.P.w;
-%             NIRS.Cf.H.C = NIRS_ht.NIRS.Cf.H.C;
-%             NIRS.Cf.H.p = NIRS_ht.NIRS.Cf.H.p;
-%             NIRS.Cf.H.n = NIRS_ht.NIRS.Cf.H.n;
-%             
-%             f = load(job.subj(1,is).nirs_files{:},'-mat');
-%             NIRS.Cf.H.S.n = f.SD.SrcNam;
-%             NIRS.Cf.H.S.N = size(f.SD.SrcPos,1);
-%             NIRS.Cf.H.D.n = f.SD.SrcNam;
-%             NIRS.Cf.H.D.N = size(f.SD.DetPos,1);
-%             NIRS.Cf.H.P.N = NIRS.Cf.H.S.N + NIRS.Cf.H.D.N;
+        %         NIRS.Dt.fir.stax.n = 'Brainsight(c)';
+        %             NIRS.Dt.fir.stax.nota = 'Helmet template';
+        %             NIRS_ht = load(job.subj(1,is).helmet.helm_temp{:});
+        %             NIRS.Cf.H.P.w = NIRS_ht.NIRS.Cf.H.P.w;
+        %             NIRS.Cf.H.C = NIRS_ht.NIRS.Cf.H.C;
+        %             NIRS.Cf.H.p = NIRS_ht.NIRS.Cf.H.p;
+        %             NIRS.Cf.H.n = NIRS_ht.NIRS.Cf.H.n;
+        %
+        %             f = load(job.subj(1,is).nirs_files{:},'-mat');
+        %             NIRS.Cf.H.S.n = f.SD.SrcNam;
+        %             NIRS.Cf.H.S.N = size(f.SD.SrcPos,1);
+        %             NIRS.Cf.H.D.n = f.SD.SrcNam;
+        %             NIRS.Cf.H.D.N = size(f.SD.DetPos,1);
+        %             NIRS.Cf.H.P.N = NIRS.Cf.H.S.N + NIRS.Cf.H.D.N;
         
         % Allow user-specified image of subject to overwrite previous
         % anatomical image in NIRS.mat; unlikely to ever happen
@@ -62,22 +53,22 @@ for iSubj=1:size(job.NIRSmat,1)
             %Store T1 file location
             NIRS.Dt.ana.T1 = job.anatT1{1,1};
         end
-%         try
-%             tmpf = job.anatT1_template{1,1};
-%             if spm_existfile(tmpf)
-%                 NIRS.Dt.ana.tT1 = tmpf;
-%             else
-%                 [DirSPM,dummy,dummy2] = fileparts(which('spm'));
-%                 NIRS.Dt.ana.tT1 = fullfile(DirSPM,'templates','T1.nii');
-%             end
-%         end
+        %         try
+        %             tmpf = job.anatT1_template{1,1};
+        %             if spm_existfile(tmpf)
+        %                 NIRS.Dt.ana.tT1 = tmpf;
+        %             else
+        %                 [DirSPM,dummy,dummy2] = fileparts(which('spm'));
+        %                 NIRS.Dt.ana.tT1 = fullfile(DirSPM,'templates','T1.nii');
+        %             end
+        %         end
         
         [dirT1, fil, ext] = fileparts(NIRS.Dt.ana.T1);
         fwT1 = [dirT1 filesep 'w' fil ext(1:4)];
         if spm_existfile(fwT1)
             disp(['Spatial normalisation already run in file ' fwT1 ' - skipping']);
         else
-        
+            
             %Various options that we don't make available to the user in the GUI
             matlabbatch{1}.spm.spatial.normalise.estwrite.subj.source = {NIRS.Dt.ana.T1};
             matlabbatch{1}.spm.spatial.normalise.estwrite.subj.wtsrc = '';
@@ -97,16 +88,16 @@ for iSubj=1:size(job.NIRSmat,1)
             matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.interp = 1;
             matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.wrap = [0 0 0];
             matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.prefix = 'w';
-
-            spm_jobman('run_nogui',matlabbatch);
-        
+            
+            spm_jobman('run',matlabbatch);
+            
         end
-
+        
         %Recreate name of _sn.mat file just created by spm_normalise, and load it
         [pth,nam] = spm_fileparts(deblank(NIRS.Dt.ana.T1));
         sn_filename  = fullfile(pth,[nam,'_sn.mat']);
         NIRS.Dt.ana.wT1 = load(sn_filename);
-
+        
         %There are two physical objects: the MRI image, and the NIRS construct
         %for the MRI image, it can be normalized to a standard atlas (Talairach Tournoux) or not
         %for the MRI image, it can be in mm or in voxels
@@ -118,7 +109,7 @@ for iSubj=1:size(job.NIRSmat,1)
         %   c) in MNI or DGT coordinates
         %   d) surface positions can be on cortex or on skin / helmet / head
         %For the MonteCarlo simulation, we want MNI in mm, not normalized, on skin
-
+        
         %Matrix Q maps unnormalized world coordinates to normalized world coordinates
         %Affine maps unnormalized voxelcoordinates to normalized voxel coordinates
         %Note that transformations always act on the right, on column vectors of
@@ -126,7 +117,7 @@ for iSubj=1:size(job.NIRSmat,1)
         %Hence the need to transpose our matrices of coordinates in NIRS.mat
         %Below: label with temp_ all the transposed coordinates to avoid confusion
         Q = (NIRS.Dt.ana.wT1.VG.mat/NIRS.Dt.ana.wT1.Affine)/NIRS.Dt.ana.wT1.VF.mat;
-          
+        
         
         %         NP = NIRS.Cf.H.P.N;
         NP = size(NIRS.Cf.H.P.w.m.mm.p,2);
@@ -183,7 +174,7 @@ for iSubj=1:size(job.NIRSmat,1)
                 fsegT1_4fit = NIRS.Dt.ana.T1seg;
             catch
                 fsegT1_4fit = NIRS.Dt.ana.T1;
-%                 disp('Could not find a segmented image to fit positions on scalp.');
+                %                 disp('Could not find a segmented image to fit positions on scalp.');
             end
         else
             % Store segmented image file location
@@ -245,7 +236,7 @@ for iSubj=1:size(job.NIRSmat,1)
                 %%%% la notation serait Cp_rmv
                 for kk = 1:6
                     rendered_MNI{kk}.ren = rend{kk}.ren;
-                end 
+                end
                 rend_file = fullfile(pth2,'TopoData.mat');
                 save(rend_file, 'rendered_MNI');
                 NIRS.Dt.ana.rend = rend_file;
@@ -280,29 +271,22 @@ for iSubj=1:size(job.NIRSmat,1)
                         colormap(split);
                         axis image;
                         axis off;
-                    
+                        
                         for jj = 1:Nch
                             if rchn(jj) ~= -1 && cchn(jj) ~= -1 %% updated 2009-02-25
                                 text(cchn(jj)-5, rchn(jj), num2str(jj), 'color', 'r');
                             end
                         end
                     end
-                 end
+                end
             catch
                 disp('Could not create TopoData.mat file');
             end
         end
-
-        if NewDirCopyNIRS
-            [dirN fil1 ext1] =fileparts(job.NIRSmat{iSubj,1});
-            dir2 = [dirN filesep NewNIRSdir];
-            if ~exist(dir2,'dir'), mkdir(dir2); end;
-            newNIRSlocation = fullfile(dir2,'NIRS.mat');
-            save(newNIRSlocation,'NIRS');
-            job.NIRSmat{iSubj,1} = newNIRSlocation;          
-        else
-            save(job.NIRSmat{iSubj,1},'NIRS'); 
-        end
+        
+        
+        save(job.NIRSmat{iSubj,1},'NIRS');
+        
     catch exception
         disp(exception.identifier);
         disp(exception.stack(1));

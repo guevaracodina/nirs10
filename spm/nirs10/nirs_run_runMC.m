@@ -14,30 +14,17 @@ function out = nirs_run_runMC(job)
 % si on garde la meme seed pour plusieurs simulations (tous les autres parametres etant les memes), on obtient la meme chose
 
 
-try
     MCtestOneChannel = job.MCtestOneChannel;
-catch
-    MCtestOneChannel = 0;
-end
-try
-    NewNIRSdir = job.NewDirCopyNIRS.CreateNIRSCopy.NewNIRSdir;
-    NewDirCopyNIRS = 1;
-catch
-    NewDirCopyNIRS = 0;
-end
 
 for Idx=1:size(job.NIRSmat,1)
     %Load NIRS.mat information
     try
-        NIRS = [];
-        load(job.NIRSmat{Idx,1});
+        [NIRS newNIRSlocation]= nirs_load(job.NIRSmat{Idx,1},job.NIRSmatCopyChoice,job.force_redo);
+        job.NIRSmat{Idx,1} = newNIRSlocation;
         [dir0,dummy,dummy2] = fileparts(job.NIRSmat{Idx,1});
-        if NewDirCopyNIRS
-            dir2 = [dir0 filesep NewNIRSdir];
-            if ~exist(dir2,'dir'), mkdir(dir2); end;
-        else
+        
             dir2 = dir0;
-        end
+        
         
         try
             f = job.MC_runCUDAchoice.MCX1.MCXconfigFiles;
@@ -138,13 +125,9 @@ for Idx=1:size(job.NIRSmat,1)
                 end
         end
         
-        if NewDirCopyNIRS
-            newNIRSlocation = fullfile(dir2,'NIRS.mat');
-            save(newNIRSlocation,'NIRS');
-            job.NIRSmat{Idx,1} = newNIRSlocation;
-        else
+        
             save(job.NIRSmat{Idx,1},'NIRS');
-        end
+        
     catch exception
         disp(exception.identifier);
         disp(exception.stack(1));

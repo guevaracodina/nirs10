@@ -1,23 +1,5 @@
 function out = nirs_run_testreconstruct(job)
-%nirs_run_testreconstruct
-
-% DelPreviousData  = job.DelPreviousData;
-% try
-%     NewNIRSdir = job.NewDirCopyNIRS.CreateNIRSCopy.NewNIRSdir;
-%     NewDirCopyNIRS = 1;
-% catch
-%     NewDirCopyNIRS = 0;
-% end
-% % Loop over subjects
-% for iSubj=1:size(job.NIRSmat,1)
-%
-%     % Load NIRS.mat
-%     try
-%         NIRS = [];
-%         load(job.NIRSmat{iSubj,1});
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%% fait avec le sujet 003 et les 9 premiers canaux
+% fait avec le sujet 003 et les 9 premiers canaux
 sDtp = 'D:\Users\Clément\Projet_ReML\donnees\fantome_ptitet\S002';
 % if exist([sDtp '\phantom'],'dir')==7
 % else
@@ -63,29 +45,3 @@ Vphantom = struct('fname',fullfile(sDtp,['phantom' int2str(job.layers_opt) 'l_' 
     'mat',  V.mat);
 Vphantom = spm_create_vol(Vphantom);
 spm_write_vol(Vphantom, Yphantom);
-
-%         %--------------------------------------------------------------------------%
-%         [dir1,fil1,ext1] = fileparts(NIRS.Dt.s.p);%rDtp{f,1} !!! eventuellement ????
-%         if NewDirCopyNIRS
-%             dir2 = [dir1 filesep NewNIRSdir];
-%             if ~exist(dir2,'dir'), mkdir(dir2); end;
-%             outfile = fullfile(dir2,[prefix fil1 ext1]);
-%         else
-%             outfile = fullfile(dir1,[prefix fil1 ext1]);
-%         end
-%         if DelPreviousData
-%             delete(rDtp{f,1});%%%%% voir plus haut
-%         end
-%         if NewDirCopyNIRS
-%             newNIRSlocation = fullfile(dir2,'NIRS.mat');
-%             save(newNIRSlocation,'NIRS');
-%             job.NIRSmat{Idx,1} = newNIRSlocation;
-%         else
-%             save(job.NIRSmat{Idx,1},'NIRS');
-%         end
-%     catch
-%         disp(['Test reconstruction failed for subject ' int2str(Idx)]);
-%     end
-% end
-% out.NIRSmat = job.NIRSmat;
-% end

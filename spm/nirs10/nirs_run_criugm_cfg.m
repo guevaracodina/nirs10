@@ -1,5 +1,13 @@
 function criugm1 = nirs_run_criugm_cfg
 
+redo1      = cfg_menu;
+redo1.tag  = 'force_redo';
+redo1.name = 'Force processing';
+redo1.labels = {'False','True'};
+redo1.values = {0,1};
+redo1.val  = {0};
+redo1.help = {'Force redoing this processing even when it has been done already'};
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Configuration for IUGM (Techen CW5 [UNF] or CW6 [LESCA])
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -210,7 +218,7 @@ study_cfg.help    = {''};
 criugm1      = cfg_exbranch;
 criugm1.name = 'Read and format CRIUGM data';
 criugm1.tag  = 'criugm1';
-criugm1.val  = {study_cfg  generic2};
+criugm1.val  = {study_cfg redo1 generic2};
 criugm1.prog = @nirs_run_criugm;
 criugm1.vout = @nirs_cfg_vout_criugm;
 criugm1.help = {'Help'};

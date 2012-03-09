@@ -15,22 +15,10 @@ Nu = [];
 Cu = [];
 %Run simple group level analysis as a one sample t-test
 p_value = job.contrast_p_value;
-try
     GroupColorbars = job.GroupColorbars;
-catch
-    GroupColorbars = 0;
-end
-try
     SmallFigures = job.SmallFigures;
-catch
-    SmallFigures = 0;
-end
 write_neg_pos = 0;
-try
     group_session_to_average = job.group_session_to_average;
-catch
-    group_session_to_average = 1;
-end
 %Booleans to choose which figures to write to disk, if any
 switch job.contrast_figures
     case 0
@@ -46,35 +34,27 @@ switch job.contrast_figures
         gen_fig = 0;
         gen_tiff = 1;
 end
-try
+if isfield(job.override_colorbar,'colorbar_override')
     cbar.c_min = job.override_colorbar.colorbar_override.colorbar_min;
     cbar.c_max = job.override_colorbar.colorbar_override.colorbar_max;
     cbar.c_min2 = job.override_colorbar.colorbar_override.colorbar_min2;
     cbar.c_max2 = job.override_colorbar.colorbar_override.colorbar_max2;
     cbar.colorbar_override = 1;
-catch
+else
     cbar.colorbar_override = 0;
 end
 
 output_unc = 1;
-try
     switch job.figures_visible
         case 1
             cbar.visible = 'on';
         case 0
             cbar.visible = 'off';
     end
-catch
-    cbar.visible = 'off';
-end
 %Generate contrasts for inverted responses
 GInv = 1;
 GFIS = 1;
-try
     anova_dir_name = job.anova_dir_name;
-catch
-    anova_dir_name = 'Anova';
-end
 %Structure for passing more generic data
 Z = [];
 Z.gen_fig = gen_fig;

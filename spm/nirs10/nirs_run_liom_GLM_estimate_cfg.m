@@ -1,12 +1,5 @@
 function wls_bglm_estimate = nirs_run_liom_GLM_estimate_cfg
-
-NIRSmat         = cfg_files; %Select NIRS.mat for this subject
-NIRSmat.name    = 'NIRS.mat'; % The displayed name
-NIRSmat.tag     = 'NIRSmat';       %file names
-NIRSmat.filter  = 'mat';
-NIRSmat.ufilter = '^NIRS.mat$';
-NIRSmat.num     = [1 Inf];     % Number of inputs required
-NIRSmat.help    = {'Select NIRS.mat for the subject(s).'}; % help text displayed
+[NIRSmat redo1 NIRSmatCopyChoice] = get_common_NIRSmat(1,'GLM');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % LIOM General Linear Model Estimation
@@ -24,7 +17,7 @@ NIRS_SPM_which_GLM.help = {'Choose which GLM (if more than one available) to est
 wls_bglm_estimate      = cfg_exbranch;
 wls_bglm_estimate.name = 'LIOM GLM Estimation';
 wls_bglm_estimate.tag  = 'wls_bglm_estimate';
-wls_bglm_estimate.val  = {NIRSmat NIRS_SPM_which_GLM};
+wls_bglm_estimate.val  = {NIRSmat redo1 NIRSmatCopyChoice NIRS_SPM_which_GLM};
 wls_bglm_estimate.prog = @nirs_run_liom_GLM_estimate;
 wls_bglm_estimate.vout = @nirs_cfg_vout_liom_GLM_estimate;
 wls_bglm_estimate.help = {'LIOM GLM Estimation: WLS (wavelet least square)'

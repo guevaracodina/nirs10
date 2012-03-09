@@ -7,7 +7,6 @@ function nirs_LIOM_specify_defaults
 
 global nirs10
 % 
-nirs10.model_specify.wls_bglm_specify.LiomDeleteLarge = 0;
 nirs10.model_specify.wls_bglm_specify.channel_pca = 0;
 nirs10.model_specify.wls_bglm_specify.lpf_butter.lpf_butter_On.lpf_butter_freq = 0.667; %1/1.5s
 nirs10.model_specify.wls_bglm_specify.hpf_butter.hpf_butter_On.hpf_butter_freq = 0.004;

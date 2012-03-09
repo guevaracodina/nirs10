@@ -26,11 +26,7 @@ Z.simple_sum = job.simple_sum;
 Z.min_s = 2;
 Z.nS = size(job.NIRSmat,1);
 nS = Z.nS;
-try 
-    number_dir_to_remove = job.number_dir_to_remove;
-catch
-    number_dir_to_remove = 3;
-end
+number_dir_to_remove = job.number_dir_to_remove;
 %SPM contrasts or automatic contrasts
 if isfield(job.ContrastChoice,'user_contrasts')
     if isempty(job.ContrastChoice.user_contrasts.consess)
@@ -80,18 +76,17 @@ else
     TOPO.xCon = big_TOPO{1}.xCon;
 end
 
-
 %Loop over all subjects for FFX but go through only once for RFX
 for Idx=1:nl
     %Load NIRS.mat information
     try
         if Z.FFX || nS==1
-            NIRS = [];
-            load(job.NIRSmat{Idx,1});
+            [NIRS newNIRSlocation]= nirs_load(job.NIRSmat{Idx,1},job.NIRSmatCopyChoice,job.force_redo);
+            job.NIRSmat{Idx,1} = newNIRSlocation;
             %load topographic information (formerly known as preproc_info)
             fname_ch = NIRS.Dt.ana.rend;
             load(fname_ch);
-            ftopo = NIRS.TOPO; 
+            ftopo = NIRS.TOPO;
             [dir1 fil1 ext1] = fileparts(ftopo);
             TOPO = [];
             load(ftopo);
@@ -146,7 +141,7 @@ for Idx=1:nl
                 end
             end
             
-            if view_estimated   
+            if view_estimated
                 %Structure for passing GLM and interpolation data
                 W = [];
                 [W.side_hemi W.spec_hemi] = nirs_get_brain_view(v1);
@@ -169,7 +164,7 @@ for Idx=1:nl
                 TOPO.v{v1}.(fg).min_s = Z.min_s;
                 TOPO.v{v1}.(fg).s1 = W.s1;
                 TOPO.v{v1}.(fg).s2 = W.s2;
-            
+                
                 %Handles for assembled figures
                 H = initialize_assembled_figure_handles;
                 H = initialize_assembled_figures(Z,H,0,'Group');
@@ -181,7 +176,7 @@ for Idx=1:nl
                         %Negative stats
                         [H,TOPO,big_TOPO] = fill_group(H,TOPO,big_TOPO,v1,c1,h1,Z,W,F,CF,xCon,ns,0);
                     end
-                end                
+                end
                 call_save_assembled_figures(Z,W,H,0);
             end %if view_estimated
         end %end for v1
