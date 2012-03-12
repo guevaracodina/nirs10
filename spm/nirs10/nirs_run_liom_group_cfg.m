@@ -3,13 +3,6 @@ function liom_group = nirs_run_liom_group_cfg
 display_options = liom_contrast_group_options;
 consess = nirs_spm_get_consess;
 
-% redo1      = cfg_menu;
-% redo1.tag  = 'force_redo';
-% redo1.name = 'Force processing';
-% redo1.labels = {'False','True'};
-% redo1.values = {0,1};
-% redo1.val  = {0};
-% redo1.help = {'Force redoing this processing even when it has been done already'};
 
 %factorial_design = nirs_spm_get_factorial_design;
 
@@ -78,7 +71,7 @@ number_dir_to_remove.val     = {3};
 number_dir_to_remove.help    = {'Specify the location where group data will be saved.'
     'This will be calculated by removing the specified number of directories'
     'from the file path of the first subject NIRS.mat file.'
-    'Typically, 3 folders need to be removed, but sometimes only 2, sometimes 4 or more.'}';
+    'Typically, 3 folders need to be removed, but sometimes only 1 or 2, sometimes 4 or more.'}';
 
 simple_sum = cfg_menu;
 simple_sum.tag    = 'simple_sum';
@@ -92,12 +85,12 @@ simple_sum.help   = {'Choice of averaging at the group level.'
     'more likely to be false positives.'}';
 
 contrast_p_value         = cfg_entry;
-contrast_p_value.name    = 'Contrast uncorrected p_value';
+contrast_p_value.name    = 'Corrected p_value';
 contrast_p_value.tag     = 'contrast_p_value';
 contrast_p_value.strtype = 'r';
 contrast_p_value.num     = [1 1];
 contrast_p_value.val     = {0.05};
-contrast_p_value.help    = {'Contrast uncorrected p_value'};
+contrast_p_value.help    = {'Corrected p_value'};
 
 user_contrasts         = cfg_branch;
 user_contrasts.tag     = 'user_contrasts';

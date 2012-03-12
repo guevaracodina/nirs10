@@ -18,7 +18,7 @@ try
     try
         sum_kappa = F.sum_kappa;
     end
-    if ~(fign == 4) && ~(fign == 5) && ~(fign == 6)
+    if ~(fign == 4) && ~(fign == 5) && ~(fign == 6) && ~(fign == 7)
         switch F.hb
             case 'HbO'
                 nchn = length(W.ch_HbO);
@@ -105,7 +105,7 @@ try
             
             if strcmp(F.tstr,'F')
                 %if length(erdf) > 1 %?
-                str_cor = 'Anova';
+                str_cor = [Z.StatStr '_Anova'];
                 xth_z = zeros(1,length(erdf));
                 index_over = [];
                 xerdf = erdf(:);
@@ -130,7 +130,7 @@ try
                 th_z = min(xth_z(xth_z>0));
                 %end
             else
-                str_cor = 'Group';
+                str_cor = [Z.StatStr '_Group'];
                 if erdf == 0
                     disp([F.contrast_info ' : Problem with number of degrees of freedom']);
                     index_over = [];
@@ -139,7 +139,7 @@ try
                     end
                     th_z = 0;
                 else
-                    if Z.LKC  
+                    if Z.LKC
                         th_z = calc_EC(LKC,p_value,tstr,[eidf,erdf]);
                         str_cor = Z.StatStr;
                     else
@@ -157,19 +157,23 @@ try
                 end
             end
         case 5
-            %for 2-anova
-            str_cor = ['2A' int2str(eidf) '_' int2str(erdf-eidf)];
+            %for 2-anova -- LKC
+            str_cor = [Z.StatStr '_2A' int2str(eidf) '_' int2str(erdf-eidf)];
             if strcmp(F.tstr,'F') % should always be the case
-                if Z.LKC || Z.UseCorrelRes
-                    th_z = calc_EC(LKC,p_value,tstr,[eidf,erdf]);
-                else
-                    th_z = spm_invFcdf(1-p_value, eidf, erdf);
-                end
+                th_z = calc_EC(LKC,p_value,tstr,[eidf,erdf]);
+                index_over = find(s_map > th_z);
+                index_over2 = []; %not used
+            end
+        case 7
+            %for 2-anova -- uncorrected
+            str_cor = ['unc' '_2A' int2str(eidf) '_' int2str(erdf-eidf)];
+            if strcmp(F.tstr,'F') % should always be the case
+                th_z = spm_invFcdf(1-p_value, eidf, erdf);
                 index_over = find(s_map > th_z);
                 index_over2 = []; %not used
             end
         case 6 %group, uncorrected
-            str_cor = 'Group_unc';
+            str_cor = 'unc_Group';
             %threshold
             if tstr == 'T'
                 th_z = spm_invTcdf(1-p_value, erdf);

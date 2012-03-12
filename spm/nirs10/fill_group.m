@@ -155,36 +155,17 @@ try
     F.eidf = xCon(c1).eidf;
     F.tstr = 'T'; %xCon(c1).STAT; %tstr;
     F.hb = hb;
-    %     if strcmp(F.tstr,'T')
-    %         F.con = G.beta_group;
-    %         F.ess = [];
-    %     else
-    %         F.con = [];
-    %         F.ess = G.beta_group;
-    %     end
-    DF = [];
     if Z.output_unc
         try
             DF = nirs_draw_figure(6,F,W,Z,G.LKC);
-        catch exception2
-            disp(exception2.identifier);
-            disp(exception2.stack(1));
-        end
-        try
             if Z.GFIS, H = nirs_copy_figure(H,DF,CF,c1,hb,shb,F.tstr,1-Z.output_unc,Z.write_neg_pos); end
         catch exception2
             disp(exception2.identifier);
             disp(exception2.stack(1));
         end
     end
-    DF = [];
     try
         DF = nirs_draw_figure(4,F,W,Z,G.LKC);
-    catch exception2
-        disp(exception2.identifier);
-        disp(exception2.stack(1));
-    end
-    try
         if Z.GFIS, H = nirs_copy_figure(H,DF,CF,c1,hb,shb,F.tstr,Z.LKC,Z.write_neg_pos); end
     catch exception2
         disp(exception2.identifier);

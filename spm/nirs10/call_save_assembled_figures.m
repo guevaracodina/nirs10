@@ -2,6 +2,11 @@ function call_save_assembled_figures(Z,W,H,f1)
 pos_label = 'pos';
 neg_label = 'neg';
 unc_label = 'unc';
+if isfield(Z,'strA')
+    %for 2-anova
+    Z.StatStr = [Z.StatStr '_' Z.strA];
+    unc_label = [unc_label '_' Z.strA];
+end
 try %works for both group and single sessions
     if Z.GFIS
         if Z.write_neg_pos || ~Z.GInv

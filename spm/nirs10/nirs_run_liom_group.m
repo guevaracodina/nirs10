@@ -103,89 +103,110 @@ for Idx=1:nl
         ftopo = fullfile(dir_group,'TOPO.mat');
         %save a NIRS structure for the group
         newNIRSlocation = fullfile(dir_group,'NIRS.mat');
+        if ~(Z.FFX || nS==1)
+            job.NIRSmat{nl,1} = newNIRSlocation;
+            try
+            [NIRS newNIRSlocation]= nirs_load(job.NIRSmat{Idx,1},job.NIRSmatCopyChoice,job.force_redo);
+            end
+        end
+        job.NIRSmat{Idx,1} = newNIRSlocation;
+        
         NIRS.TOPO = ftopo;
         save(newNIRSlocation,'NIRS');
-        job.NIRSmat{nl,1} = newNIRSlocation;
-        Z.dir1 = dir_group;
-        %contrasts
-        TOPO = nirs_get_contrasts_group(Z,TF,TOPO);
-        if Z.FFX || nS==1
-            fg = 'g';
-            TOPOsrc = TOPO;
-        else
-            fg = 'group';
-            TOPOsrc = big_TOPO;
+        if ~isfield(NIRS,'flags')
+            NIRS.flags = [];
         end
-        load Split
-        F.split = split;
-        F.pathn = Z.dir1;
-        %CF: copy figure structure
-        CF.GInv = Z.GInv;
-        CF.split = split;
-        xCon = TOPO.xCon;
-        nC = length(xCon);
-        CF.nC = nC;
-        %Big loop over views
-        for v1=1:6
-            view_estimated = 0;
-            try
-                if isfield(TOPOsrc.v{v1},'s1')
-                    ns = length(TOPOsrc.v{v1}.s); %number of sessions
-                    view_estimated = 1;
-                end
-            end
-            try
-                if isfield(TOPOsrc{1}.v{v1},'s1')
-                    ns = length(TOPOsrc); %number of subjects
-                    view_estimated = 1;
-                end
-            end
+        if (( (Z.FFX || nS==1) && ~isfield(NIRS.flags,'session_groupOK') || job.force_redo) || ...
+                (~(Z.FFX || nS==1) && ~isfield(NIRS.flags,'groupOK') || job.force_redo))
             
-            if view_estimated
-                %Structure for passing GLM and interpolation data
-                W = [];
-                [W.side_hemi W.spec_hemi] = nirs_get_brain_view(v1);
-                %View dependent info for figures
-                brain = rendered_MNI{v1}.ren;
-                if issparse(brain), %does not apply?
-                    d = size(brain);
-                    B1 = spm_dctmtx(d(1),d(1));
-                    B2 = spm_dctmtx(d(2),d(2));
-                    brain = B1*brain*B2';
-                end;
-                msk = brain>1;brain(msk)=1;
-                msk = brain<0;brain(msk)=0;
-                %brain = brain(end:-1:1,:); %???
-                brain = brain * 0.5;
-                W.brain = brain;
-                W.s1 = size(brain, 1);
-                W.s2 = size(brain, 2);
-                TOPO.v{v1}.(fg).ns = ns;
-                TOPO.v{v1}.(fg).min_s = Z.min_s;
-                TOPO.v{v1}.(fg).s1 = W.s1;
-                TOPO.v{v1}.(fg).s2 = W.s2;
-                
-                %Handles for assembled figures
-                H = initialize_assembled_figure_handles;
-                H = initialize_assembled_figures(Z,H,0,'Group');
-                %Loop over chromophores
-                for h1=1:3 %including HbT
-                    for c1=1:nC %Loop over contrasts
-                        %Positive stats
-                        [H,TOPO,big_TOPO] = fill_group(H,TOPO,big_TOPO,v1,c1,h1,Z,W,F,CF,xCon,ns,1);
-                        %Negative stats
-                        [H,TOPO,big_TOPO] = fill_group(H,TOPO,big_TOPO,v1,c1,h1,Z,W,F,CF,xCon,ns,0);
+            Z.dir1 = dir_group;
+            %contrasts
+            TOPO = nirs_get_contrasts_group(Z,TF,TOPO);
+            if Z.FFX || nS==1
+                fg = 'g';
+                TOPOsrc = TOPO;
+            else
+                fg = 'group';
+                TOPOsrc = big_TOPO;
+            end
+            load Split
+            F.split = split;
+            F.pathn = Z.dir1;
+            %CF: copy figure structure
+            CF.GInv = Z.GInv;
+            CF.split = split;
+            xCon = TOPO.xCon;
+            nC = length(xCon);
+            CF.nC = nC;
+            %Big loop over views
+            for v1=1:6
+                view_estimated = 0;
+                try
+                    if isfield(TOPOsrc.v{v1},'s1')
+                        ns = length(TOPOsrc.v{v1}.s); %number of sessions
+                        view_estimated = 1;
                     end
                 end
-                call_save_assembled_figures(Z,W,H,0);
-            end %if view_estimated
-        end %end for v1
-        
-        if exist('Sess','var')
-            TOPO.Sess = Sess;
-            TOPO.Cp = Cp;
+                try
+                    if isfield(TOPOsrc{1}.v{v1},'s1')
+                        ns = length(TOPOsrc); %number of subjects
+                        view_estimated = 1;
+                    end
+                end
+                
+                if view_estimated
+                    %Structure for passing GLM and interpolation data
+                    W = [];
+                    [W.side_hemi W.spec_hemi] = nirs_get_brain_view(v1);
+                    %View dependent info for figures
+                    brain = rendered_MNI{v1}.ren;
+                    if issparse(brain), %does not apply?
+                        d = size(brain);
+                        B1 = spm_dctmtx(d(1),d(1));
+                        B2 = spm_dctmtx(d(2),d(2));
+                        brain = B1*brain*B2';
+                    end;
+                    msk = brain>1;brain(msk)=1;
+                    msk = brain<0;brain(msk)=0;
+                    %brain = brain(end:-1:1,:); %???
+                    brain = brain * 0.5;
+                    W.brain = brain;
+                    W.s1 = size(brain, 1);
+                    W.s2 = size(brain, 2);
+                    TOPO.v{v1}.(fg).ns = ns;
+                    TOPO.v{v1}.(fg).min_s = Z.min_s;
+                    TOPO.v{v1}.(fg).s1 = W.s1;
+                    TOPO.v{v1}.(fg).s2 = W.s2;
+                    
+                    %Handles for assembled figures
+                    H = initialize_assembled_figure_handles;
+                    H = initialize_assembled_figures(Z,H,0,'Group');
+                    %Loop over chromophores
+                    for h1=1:3 %including HbT
+                        for c1=1:nC %Loop over contrasts
+                            %Positive stats
+                            [H,TOPO,big_TOPO] = fill_group(H,TOPO,big_TOPO,v1,c1,h1,Z,W,F,CF,xCon,ns,1);
+                            %Negative stats
+                            [H,TOPO,big_TOPO] = fill_group(H,TOPO,big_TOPO,v1,c1,h1,Z,W,F,CF,xCon,ns,0);
+                        end
+                    end
+                    call_save_assembled_figures(Z,W,H,0);
+                end %if view_estimated
+            end %end for v1
+            
+            if exist('Sess','var')
+                TOPO.Sess = Sess;
+                TOPO.Cp = Cp;
+            end
+            save(ftopo,'TOPO','-v7.3');
+            %save NIRS
+            if Z.FFX || nS==1
+                NIRS.flags.session_groupOK = 1;
+            else
+                NIRS.flags.groupOK = 1;
+            end
+            save(newNIRSlocation,'NIRS');
         end
-        save(ftopo,'TOPO','-v7.3');
     catch exception
         disp(exception.identifier);
         disp(exception.stack(1));
