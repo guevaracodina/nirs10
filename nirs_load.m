@@ -28,6 +28,7 @@ try
     else
         disp(['Looking for NIRS.mat file that does not exist at location: ' NIRSmat]);
         NIRS = [];
+        newNIRSlocation = NIRSmat;
     end
 catch exception
     disp(exception.identifier);

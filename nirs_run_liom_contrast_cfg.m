@@ -55,13 +55,12 @@ UseCorrelRes.help = {'This option only applies to the tube formula.'
     'of NIRS_SPM tube calculation, which ignored correlations of residuals'}';
 
 contrast_p_value         = cfg_entry;
-contrast_p_value.name    = 'Contrast p_value';
+contrast_p_value.name    = 'Corrected p_value';
 contrast_p_value.tag     = 'contrast_p_value';
 contrast_p_value.strtype = 'r';
 contrast_p_value.num     = [1 1];
 contrast_p_value.val     = {0.05};
-contrast_p_value.help    = {'Contrast FWE corrected p_value.'
-    'Specify the desired p-value after family-wise error correction.'}';
+contrast_p_value.help    = {'Corrected p_value'};
 
 spatial_LPF_radius         = cfg_entry;
 spatial_LPF_radius.name    = 'Spatial LPF radius';

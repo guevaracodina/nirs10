@@ -4,69 +4,21 @@ try
     %this is not coded up at all
     out = nirs_spm_run_factorial_design(job);
 end
+Z = get_contrast_group_common_options(job);
 %Get anova info
-anova_level = job.anova_level;
+Z.anova_level = job.anova_level;
 for l1=1:anova_level
     level_name{l1} = job.level(l1).level_name;
     level_subj{l1} = job.level(l1).level_subj;
 end
-Pu = [];
-Nu = [];
-Cu = [];
 %Run simple group level analysis as a one sample t-test
-p_value = job.contrast_p_value;
-    GroupColorbars = job.GroupColorbars;
-    SmallFigures = job.SmallFigures;
-write_neg_pos = 0;
-    group_session_to_average = job.group_session_to_average;
-%Booleans to choose which figures to write to disk, if any
-switch job.contrast_figures
-    case 0
-        gen_fig = 0;
-        gen_tiff = 0;
-    case 1
-        gen_fig = 1;
-        gen_tiff = 1;
-    case 2
-        gen_fig = 1;
-        gen_tiff = 0;
-    case 3
-        gen_fig = 0;
-        gen_tiff = 1;
-end
-if isfield(job.override_colorbar,'colorbar_override')
-    cbar.c_min = job.override_colorbar.colorbar_override.colorbar_min;
-    cbar.c_max = job.override_colorbar.colorbar_override.colorbar_max;
-    cbar.c_min2 = job.override_colorbar.colorbar_override.colorbar_min2;
-    cbar.c_max2 = job.override_colorbar.colorbar_override.colorbar_max2;
-    cbar.colorbar_override = 1;
-else
-    cbar.colorbar_override = 0;
-end
-
-output_unc = 1;
-    switch job.figures_visible
-        case 1
-            cbar.visible = 'on';
-        case 0
-            cbar.visible = 'off';
-    end
+Z.group_session_to_average = job.group_session_to_average;
 %Generate contrasts for inverted responses
-GInv = 1;
-GFIS = 1;
-    anova_dir_name = job.anova_dir_name;
+Z.GInv = 1;
+Z.GFIS = 1;
+Z.anova_dir_name = job.anova_dir_name;
+number_dir_to_remove = job.number_dir_to_remove;
 %Structure for passing more generic data
-Z = [];
-Z.gen_fig = gen_fig;
-Z.gen_tiff = gen_tiff;
-Z.p_value = p_value;
-Z.GroupColorbars = GroupColorbars;
-Z.cbar = cbar;
-Z.GInv = GInv;
-Z.GFIS = GFIS;
-Z.output_unc = output_unc;
-Z.SmallFigures = SmallFigures;
-Z.write_neg_pos = write_neg_pos;
 min_s = 2;
 
 nS = size(job.NIRSmat,1);
@@ -102,7 +54,7 @@ try
     [dir0,dummy,dummy2] = fileparts(job.NIRSmat{1});
     %extract previous directory
     tmp = strfind(dir0,filesep);
-    dir_root = dir0(1:tmp(end-2));
+    dir_root = dir0(1:tmp(end-number_dir_to_remove));
     dir_group = fullfile(dir_root,anova_dir_name);
     if ~exist(dir_group,'dir'), mkdir(dir_group); end
     %store in same directory as first subject
@@ -168,11 +120,8 @@ try
             ccov_beta = zeros(ns,s1*s2);
             tmp = zeros(s1,s2);
             nC = length(xCon);
-            if GFIS
-                Pu = figure('Visible',cbar.visible,'Name',['Group' '_' num2str(p_value) '_Pos'],'NumberTitle','off');
-                Nu = figure('Visible',cbar.visible,'Name',['Group' '_' num2str(p_value) '_Neg'],'NumberTitle','off');
-                Cu = figure('Visible',cbar.visible,'Name',['Group' '_' num2str(p_value)],'NumberTitle','off');
-            end
+            H = initialize_assembled_figure_handles;
+            H = initialize_assembled_figures(Z,H,0,'Group');
             load Split
             F.split = split;
             F.pathn = Z.dir1;
@@ -267,12 +216,7 @@ try
                         F.hb = hb;
                         try
                             DF = nirs_draw_figure(4,F,W,Z);
-                        catch exception2
-                            disp(exception2.identifier);
-                            disp(exception2.stack(1));
-                        end
-                        try
-                            if GFIS, [Pu,Nu,Cu] = nirs_copy_figure(Pu,Nu,Cu,DF,CF,c1,hb,1,F.tstr); end;
+                            H = nirs_copy_figure(H,DF,CF,c1,hb,1,F.tstr);
                         catch exception2
                             disp(exception2.identifier);
                             disp(exception2.stack(1));
@@ -285,29 +229,13 @@ try
                 end
             end
             %save assembled figures
-            save_assembled_figures(Z,W,Cu,'','unc',0);
-            try close(Pu); end
-            try close(Nu); end
-            try close(Cu); end
+            call_save_assembled_figures(Z,W,H,0);  
         end %if view_estimated
     end %end for v1
     save(ftopo,'TOPO');
 catch exception
     disp(exception.identifier);
     disp(exception.stack(1));
-    disp(['Could not do anova analysis']);
+    disp(['Could not do 1-way anova analysis']);
 end
 out.NIRSmat = job.NIRSmat;
-end
-
-function hb = get_chromophore(h1)
-switch h1
-    case 1
-        hb = 'HbO';
-    case 2
-        hb = 'HbR';
-    case 3
-        hb = 'HbT';
-end
-end
-
