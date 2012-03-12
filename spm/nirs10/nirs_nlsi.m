@@ -1,4 +1,4 @@
-function varargout = nirs_nlsi(M,U,Y)
+function varargout = nirs_nlsi(M,U,Y,fullfigDir,SubjIdx)
 % nonlinear system identification of a MIMO system
 % FORMAT [Ep,Cp,Eh,K0,K1,K2,M0,M1,L1,L2] = spm_nlsi(M,U,Y)
 % FORMAT [K0,K1,K2,M0,M1,L1,L2]          = spm_nlsi(M)
@@ -101,11 +101,12 @@ end
 
 % Expansion point (in parameter space) for Bilinear-kernel representations
 %--------------------------------------------------------------------------
-if nargin == 3
+%%%%% michele nargin = 5 for figures saving %%%%%
+if nargin == 3 || nargin == 5 %if nargin == 3
 
     % Gauss-Newton/Bayesian/EM estimation
     %======================================================================
-    [Ep,Cp,Eh,F] = nirs_nlsi_GN(M,U,Y);
+    [Ep,Cp,Eh,F] = nirs_nlsi_GN(M,U,Y,fullfigDir,SubjIdx);
 
     if nargout < 4, varargout = {Ep,Cp,Eh}; return, end
 
@@ -167,7 +168,8 @@ end
 
 % output arguments
 %--------------------------------------------------------------------------
-if nargin == 3
+%%%%% michele nargin = 5 for figures saving %%%%%
+if nargin == 3 || nargin == 5 %if nargin == 3
     varargout = {Ep,Cp,Eh,K0,K1,K2,M0,M1,L1,L2,F};
 else
     varargout = {K0,K1,K2,M0,M1,L1,L2};
