@@ -1,4 +1,4 @@
-function [Ep,Cp,Eh,F,k] = nirs_nlsi_GN(M,U,Y)
+function [Ep,Cp,Eh,F,k,hfigevolution,hfigevolution2] = nirs_nlsi_GN(M,U,Y,fullfigDir,SubjIdx)
 % Bayesian inversion of a nonlinear model using a Gauss-Newton/EM algorithm
 % FORMAT [Ep,Cp,Eh,F] = spm_nlsi_GN(M,U,Y)
 %
@@ -93,6 +93,17 @@ function [Ep,Cp,Eh,F,k] = nirs_nlsi_GN(M,U,Y)
  
 % Karl Friston
 % $Id: spm_nlsi_GN.m 4261 2011-03-24 16:39:42Z karl $
+
+
+% EM options (LIOM)
+%--------------------------------------------------------------------------
+EM = M.EM;
+% EM.spm_integrator = job.EM_parameters.spm_integrator;
+% EM.Niterations = job.EM_parameters.Niterations;
+% EM.dFcriterion = job.EM_parameters.dFcriterion;
+% EM.LogAscentRate = job.EM_parameters.LogAscentRate;
+% EM.Mstep_iterations = job.EM_parameters.Mstep_iterations;
+
  
 % figure (unless disabled)
 %--------------------------------------------------------------------------
@@ -103,12 +114,18 @@ catch
 end
 if ~M.nograph
     Fsi = spm_figure('GetWin','SI');
+    hfigevolution = figure;
+    set(hfigevolution,'Name',['EM Evolution'],'Units','normalized',...
+        'Position',[0.01 0.15 0.89 0.75]);
+    hfigevolution2 = figure;
+    set(hfigevolution2,'Name',['EM Evolution'],'Units','normalized',...
+        'Position',[0.01 0.15 0.89 0.75]);
 end
 
 % check integrator
 %--------------------------------------------------------------------------
 try
-    M.IS;
+    M.IS = EM.spm_integrator;
 catch
     M.IS = 'spm_int';
 end
@@ -266,11 +283,28 @@ Ep    = spm_unvec(spm_vec(pE) + V*p(ip),pE);
 criterion = [0 0 0 0];
 
 C.F   = -Inf;                                   % free energy
-v     = -2;                                     % log ascent rate
+v     = EM.LogAscentRate; % -2                  % log ascent rate
 dFdh  = zeros(nh,1);
 dFdhh = zeros(nh,nh);
-for k = 1:4*128 %number of iterations
-    
+
+% initialise mean square error
+x0 = y;
+MSE = sum(x0(:).^2)/length(x0(:));
+x0_BOLD = x0(:,1);
+MSE_BOLD = sum(x0_BOLD.^2)/length(x0_BOLD(:));
+nMSE = 1; %used when plotting
+MSEall = MSE;
+if size(x0,2)==2 % flow also included
+    nMSE = 3;
+    x0_flow = x0(:,1);
+    MSE_flow = sum(x0_flow.^2)/length(x0_flow(:));    
+    MSEall = [MSE MSE_BOLD MSE_flow];
+end
+
+
+EM.maxNorm_J = 32; %exp will be taken; is 32 in SPM
+for k = 1:EM.Niterations % was 4*128 in SPM, max. number of iterations
+
     % time
     %----------------------------------------------------------------------  
     tStart = tic;
@@ -281,6 +315,16 @@ for k = 1:4*128 %number of iterations
     % prediction f, and gradients; dfdp
     %----------------------------------------------------------------------
     [dfdp f] = spm_diff(IS,Ep,M,U,1,{V});
+     
+%     % MICHÈLE % 16 Feb. 2012
+%     % A TEST (model stability): compute dfdx and its singular values
+%     %----------------------------------------------------------------------
+%     % no... x = M.x;
+%     IS2 = inline(['spm_int2' '(P,M,U,x)'],'P','M','U','x');
+%     %xNow = % integrator of M.f? car [f] = spm_fx_hdm(x,u,P,M) donne dxdt
+%     %en sortie?? A VÉRIFIER DEMAIN!!
+%     [dfdx ff] = spm_diff(IS2,Ep,M,U,xNow,4,{V});
+    
     
        
     % prediction error and full gradients
@@ -292,23 +336,23 @@ for k = 1:4*128 %number of iterations
  
     % M-step; Fisher scoring scheme to find h = max{F(p,h)}
     %======================================================================
-    for m = 1:8
+    for m = 1:EM.Mstep_iterations  % 8
  
         % check for stability
         %------------------------------------------------------------------
-        if norm(J,'inf') > exp(32), break, end
+        if norm(J,'inf') > exp(EM.maxNorm_J), break, end % was 32
         
         % precision and conditional covariance
         %------------------------------------------------------------------
         iS    = sparse(0);
         for i = 1:nh
-            iS = iS + Q{i}*(exp(-32) + exp(h(i)));
+            iS = iS + Q{i}*(exp(-EM.maxNorm_J) + exp(h(i)));
         end
         S     = spm_inv(iS);
         iS    = kron(speye(nq),iS);
         Pp    = real(J)'*iS*real(J) + imag(J)'*iS*imag(J);
         Cp    = spm_inv(Pp + ipC);
-        if any(isnan(Cp(:))) || rcond(full(Cp)) < exp(-32), break, end
+        if any(isnan(Cp(:))) || rcond(full(Cp)) < exp(-EM.maxNorm_J), break, end
  
         % precision operators for M-Step
         %------------------------------------------------------------------
@@ -349,7 +393,7 @@ for k = 1:4*128 %number of iterations
         % convergence
         %------------------------------------------------------------------
         dF    = dFdh'*dh;
-        if dF < 1e-2, break, end
+        if dF < EM.dFcriterion, break, end % 1e-2
  
     end
 
@@ -397,7 +441,7 @@ for k = 1:4*128 %number of iterations
         
         % decrease regularization
         %------------------------------------------------------------------
-        v     = min(v + 1/2,4);
+        v     = min(v + 1/2,abs(EM.MaxLogAscentRate));  %4);
         str   = 'EM:(+)';
         
     else
@@ -414,7 +458,7 @@ for k = 1:4*128 %number of iterations
  
         % and increase regularization
         %------------------------------------------------------------------
-        v     = min(v - 2,-4);
+        v     = min(v - 2,-abs(EM.LogAscentRate));  %-4);
         str   = 'EM:(-)';
         
     end
@@ -423,7 +467,9 @@ for k = 1:4*128 %number of iterations
     %======================================================================
     dp    = spm_dx(dFdpp,dFdp,{v});
     p     = p + dp;
+    Ep_prev = Ep;
     Ep    = spm_unvec(spm_vec(pE) + V*p(ip),pE);
+    dEp = Ep - Ep_prev;
  
     % graphics
     %----------------------------------------------------------------------
@@ -449,10 +495,10 @@ for k = 1:4*128 %number of iterations
             
             subplot(2,1,1)
             plot(x,f,'-b'), hold on
-            plot(x,y,':r'), hold on
-            plot(x,f + spm_unvec(e,f),':k'), hold off
+            %plot(x,y,':r'), hold on
+            plot(x,f + spm_unvec(e,f),'k','LineWidth',0.5), hold off
             xlabel(xLab)
-            title(sprintf('%s: %i','prediction (blue) and filtered response (black): E-Step',k))
+            title(sprintf('%s: %i','prediction (solid blue) and filtered response (dashed black): E-Step',k))
             grid on
             
         else
@@ -475,6 +521,26 @@ for k = 1:4*128 %number of iterations
             
         end
         
+        % Compute mean square error MSE
+        x0 = spm_unvec(e,f);
+        prevMSE = MSE;
+        prevMSE_BOLD = MSE_BOLD;
+        prevMSEall = MSEall;
+        MSE = sum(x0(:).^2)/length(x0(:));
+        x0_BOLD = x0(:,1);
+        MSE_BOLD = sum(x0_BOLD.^2)/length(x0_BOLD(:));
+        MSEall = MSE;
+        if size(x0,2)==2 % flow also included
+            MSEall = [MSE MSE_BOLD MSE_flow];
+            prevMSE_flow = MSE_flow;
+            x0_flow = x0(:,2);
+            MSE_flow = sum(x0_flow.^2)/length(x0_flow(:));
+            legend(['MSE: ' sprintf('%2.3f',MSE)], ['(MSE BOLD: ' sprintf('%2.3f',MSE_BOLD) ...
+                ', MSE flow: ' sprintf('%2.3f',MSE_flow) ')']);
+        else
+            legend(['MSE: ' sprintf('%g',MSE)]);
+        end
+        
         % subplot parameters
         %------------------------------------------------------------------
         subplot(2,1,2)
@@ -484,17 +550,185 @@ for k = 1:4*128 %number of iterations
         grid on
         drawnow
         
+        % separate plot: evolution of convergence of dp,dF,F,MSE
+        %------------------------------------------------------------------
+        figure(hfigevolution);
+        colors = 'cgbrmykkkkkkkkkkkk';
+        xiter = (min(0,k-20)):k;%1:EM.Niterations;
+        
+        % Parameters
+        subplot(2,4,1)
+        for ii=1:size(Ep,1)
+            plot(k,Ep(ii),[colors(ii) '.']), hold on
+        end
+        xlabel('Iteration'), ylabel('Parameters')
+        title(sprintf('%s: %i','Evolution: E-Step',k))
+        %grid on
+        
+        % Change in parameters
+        subplot(2,4,2)
+        for ii=1:size(dEp,1)
+            plot(k,dEp(ii),[colors(ii) '.']), hold on
+        end
+        xlabel('Iteration'), ylabel('\Delta Parameters')
+        %title(sprintf('%s: %i','Evolution: E-Step',k))
+        %grid on
+        
+        % Free energy
+        subplot(2,4,3)
+        plot(k,F,['k.']), hold on
+        xlabel('Iteration'), ylabel('Free energy')
+        %title(sprintf('%s: %i','Evolution: E-Step',k))
+        %grid on
+        
+        % Change in free energy
+        subplot(2,4,4)
+        dF1  = dFdp'*dp;
+        plot(k,dF1,['k.']), hold on
+        xlabel('Iteration'), ylabel('\DeltaF')
+        %title(sprintf('%s: %i','Evolution: E-Step',k))
+        %grid on
+        
+        % MSE
+        subplot(2,4,5)
+        for ii=1:nMSE
+            plot(k,MSEall(ii),[colors(ii) '.']), hold on
+        end
+        xlabel('Iteration'), ylabel('Mean square error')
+        %title(sprintf('%s: %i','Evolution: E-Step',k))
+        %grid on
+        
+        % Change in MSE
+        subplot(2,4,6)
+        for ii=1:nMSE
+            plot(k,(MSEall(ii)-prevMSEall(ii))*1e10,[colors(ii) '.']), hold on
+        end
+        xlabel('Iteration'), ylabel('\Delta MSE * 1e10')
+        %title(sprintf('%s: %i','Evolution: E-Step',k))
+        %grid on
+        
+        % Log ascent rate
+        subplot(2,4,7)
+        plot(k,v,['k.']), hold on
+        xlabel('Iteration'), ylabel('Log Ascent Rate v')
+        %title(sprintf('%s: %i','Evolution: E-Step',k))
+        %grid on
+        
+        % separate plot: evolution of convergence of dp,dF,F,MSE
+        %------------------------------------------------------------------
+        figure(hfigevolution2);
+        colors = 'cgbrmykkkkkkkkkkkk';
+        evolWindow = 100; % display evolution over last evolWindow E-steps
+        xiter = (max(0,k-evolWindow)):k;%1:EM.Niterations;
+        
+        % Parameters
+        subplot(2,4,1)
+        for ii=1:size(Ep,1)
+            plot(k,Ep(ii),[colors(ii) '.']), hold on
+        end
+        xlim([(max(0,k-evolWindow)) k])
+        xlabel('Iteration'), ylabel('Parameters')
+        title(sprintf('%s: %i','Evolution: E-Step',k))
+        %grid on
+        
+        % Change in parameters
+        subplot(2,4,2)
+        for ii=1:size(dEp,1)
+            plot(k,dEp(ii),[colors(ii) '.']), hold on
+        end
+        xlim([(max(0,k-evolWindow)) k])
+        xlabel('Iteration'), ylabel('\Delta Parameters')
+        %title(sprintf('%s: %i','Evolution: E-Step',k))
+        %grid on
+        
+        % Free energy
+        subplot(2,4,3)
+        plot(k,F,['k.']), hold on
+        xlim([(max(0,k-evolWindow)) k])
+        xlabel('Iteration'), ylabel('Free energy')
+        %title(sprintf('%s: %i','Evolution: E-Step',k))
+        %grid on
+        
+        % Change in free energy
+        subplot(2,4,4)
+        dF1  = dFdp'*dp;
+        plot(k,dF1,['k.']), hold on
+        xlim([(max(0,k-evolWindow)) k])
+        xlabel('Iteration'), ylabel('\DeltaF')
+        %title(sprintf('%s: %i','Evolution: E-Step',k))
+        %grid on
+        
+        % MSE
+        subplot(2,4,5)
+        for ii=1:nMSE
+            plot(k,MSEall(ii),[colors(ii) '.']), hold on
+        end
+        xlim([(max(0,k-evolWindow)) k])
+        xlabel('Iteration'), ylabel('Mean square error')
+        %title(sprintf('%s: %i','Evolution: E-Step',k))
+        %grid on
+        
+        % Change in MSE
+        subplot(2,4,6)
+        for ii=1:nMSE
+            plot(k,(MSEall(ii)-prevMSEall(ii))*1e10,[colors(ii) '.']), hold on
+        end
+        xlim([(max(0,k-evolWindow)) k])
+        xlabel('Iteration'), ylabel('\Delta MSE * 1e10')
+        %title(sprintf('%s: %i','Evolution: E-Step',k))
+        %grid on
+        
+        % Log ascent rate
+        subplot(2,4,7)
+        plot(k,v,['k.']), hold on
+        xlim([(max(0,k-evolWindow)) k])
+        xlabel('Iteration'), ylabel('Log Ascent Rate v')
+        %title(sprintf('%s: %i','Evolution: E-Step',k))
+        %grid on
+        
+        % Save these figures
+        if exist('fullfigDir') && ~isempty(fullfigDir)
+            if ~exist(fullfigDir,'dir'), mkdir(fullfigDir); end
+            fullfigDir2 = fullfile(fullfigDir,'fig');
+            if ~exist(fullfigDir2,'dir'),mkdir(fullfigDir2); end
+            filen5 = fullfile(fullfigDir2,['evolution_' gen_num_str(SubjIdx,3)]);
+            filen6 = fullfile(fullfigDir2,['evolZoom_' gen_num_str(SubjIdx,3)]);
+            filen7 = fullfile(fullfigDir,['evolution_' gen_num_str(SubjIdx,3)]);
+            filen8 = fullfile(fullfigDir,['evolZoom_' gen_num_str(SubjIdx,3)]);
+            try
+                saveas(hfigevolution,filen5,'fig');
+                print(hfigevolution, '-dtiffn', filen7);
+                saveas(hfigevolution2,filen6,'fig');
+                print(hfigevolution2, '-dtiffn', filen8);
+            end
+        end
+        
     end
  
     % convergence
     %----------------------------------------------------------------------
     dF  = dFdp'*dp;
+    fprintf('%6s %.3e ','dp',norm(dp))
     fprintf('%-6s: %i %6s %-6.3e %6s %.3e ',str,k,'F:',full(C.F - F0),'dF predicted:',full(dF))
     %criterion = [(dF < 1e-2) criterion(1:end - 1)];
-    criterion = [(dF < 1e-1) criterion(1:end - 1)];
+    criterion = [(dF < EM.dFcriterion) criterion(1:end - 1)];
     if all(criterion), fprintf(' convergence\n'), break, end
+    
+    if k == EM.Niterations
+        fprintf(' max number of iterations - ending\n')
+    end
+    
+%     %%%%% MICHELE 9 Feb 2012 
+%     %%%%% Stop non-converging estimations
+%     if any(isnan(p))
+%         fprintf(' Diverging - updated p = NaNs - stopping this estimation \n');
+%         C.F = 0; F0=0;
+%         break
+%     end
  
 end
+close(hfigevolution);
+close(hfigevolution2);
  
 % outputs
 %--------------------------------------------------------------------------
