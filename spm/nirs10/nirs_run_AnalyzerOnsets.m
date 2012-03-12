@@ -4,7 +4,7 @@ function out = nirs_run_AnalyzerOnsets(job)
 %Returns TR, the EPI repetition time, and the name of the new onset file
 outNIRSmat = {};
 try 
-    outNIRSmat = job.NIRSmat_optional;
+    outNIRSmat = job.NIRSmat;
     if ~isempty(outNIRSmat{1})
         nsubj = length(outNIRSmat);
         NIRSok = 1;   
@@ -66,7 +66,7 @@ for Idx=1:nsubj
     try
         NIRS = [];
         if NIRSok
-            load(job.NIRSmat_optional{Idx,1});
+            load(job.NIRSmat{Idx,1});
             if isempty(freq_NIRS1)
                 freq_NIRS1 = NIRS.Cf.dev.fs;
             end   
@@ -248,7 +248,7 @@ for Idx=1:nsubj
                 NIRS.Dt.fir.Sess(i3).vR = {vR};
                 NIRS.Dt.fir.Sess(i3).fR = {fR};
                 end
-                save(job.NIRSmat_optional{Idx,1},'NIRS'); 
+                save(job.NIRSmat{Idx,1},'NIRS'); 
             else
                 outfile = fullfile(dir1, [fil1 '.mat']);
                 try 
