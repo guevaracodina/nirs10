@@ -718,13 +718,13 @@ for k = 1:EM.Niterations % was 4*128 in SPM, max. number of iterations
         fprintf(' max number of iterations - ending\n')
     end
     
-%     %%%%% MICHELE 9 Feb 2012 
-%     %%%%% Stop non-converging estimations
-%     if any(isnan(p))
-%         fprintf(' Diverging - updated p = NaNs - stopping this estimation \n');
-%         C.F = 0; F0=0;
-%         break
-%     end
+    %%%%% MICHELE 9 Feb 2012 
+    %%%%% Stop non-converging estimations
+    if any(isnan(p))
+        fprintf(' Diverging : updated p = NaNs ; stopping this estimation \n');
+        C.F = 0; F0=0;
+        break
+    end
  
 end
 close(hfigevolution);
