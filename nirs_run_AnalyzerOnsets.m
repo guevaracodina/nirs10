@@ -230,6 +230,14 @@ for Idx=1:nsubj
                     %vRi = vRi - mean(vRi); %PP not required: will be done by spm_detrend
                     fR = 60./vRi'; % vRi2']; %cardiac frequency in heart beats per minute, as a column vector
                     %save(fRegress,'fR','-ascii');
+                    %*****************************************************
+                    %Ke Peng, 12/03/2012
+                    %*****************************************************
+                    
+                    [fR,Flag_Repair,TotalAdded_Repair] = HeartRate_Repair(fR,5,1.9);
+                    disp(['Flag_Repair = ' num2str(Flag_Repair)]);
+                    disp(['TotalAdded_Repair = ' num2str(TotalAdded_Repair)]);
+                    
                 catch 
                 end
             end
