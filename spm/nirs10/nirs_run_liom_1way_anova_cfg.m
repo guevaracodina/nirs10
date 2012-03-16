@@ -70,13 +70,37 @@ number_dir_to_remove.help    = {'Specify the location where group data will be s
     'from the file path of the first subject NIRS.mat file.'
     'Typically, 3 folders need to be removed, but sometimes only 1 or 2, sometimes 4 or more.'}';
 
+StatMethod      = cfg_menu;
+StatMethod.tag  = 'StatMethod';
+StatMethod.name = 'Statistical method for spatial correlations';
+StatMethod.labels = {'EC/LKC','Bonf'};
+StatMethod.values = {1,0};
+StatMethod.val  = {1};
+StatMethod.help = {'Choose statistical method to account '
+    'for false positives due to spatial correlations.'
+    '(Family-wise error rate)'
+    'Preferred choice: Euler characteristic calculated via Lipschitz-Killing curvature'
+    'Other choice: Bonferroni correction.'}';
+
+%%%%%%%%%%%%%%%%%%%%%%%%%
+group_session_to_average         = cfg_entry;
+group_session_to_average.name    = 'Session to average';
+group_session_to_average.tag     = 'group_session_to_average';
+group_session_to_average.strtype = 'r';
+group_session_to_average.num     = [1 1];
+group_session_to_average.val     = {1};
+group_session_to_average.help    = {'This is only used for multi-session group studies.'
+    'Specify here which session the group analysis should be done upon. '
+    'Only one session can be specified.'}';
+
 % Executable Branch
 liom_1way_anova      = cfg_exbranch;
 liom_1way_anova.name = 'Liom 1-way Anova Estimation';
 liom_1way_anova.tag  = 'liom_1way_anova';
 liom_1way_anova.val  = {NIRSmat redo1 NIRSmatCopyChoice ...
-    anova_dir_name number_dir_to_remove anova_level level_repeat contrast_p_value ...
-    display_options}; % factorial_design};
+    anova_dir_name number_dir_to_remove anova_level level_repeat ...
+    StatMethod contrast_p_value ...
+    group_session_to_average display_options}; % factorial_design};
 liom_1way_anova.prog = @nirs_run_liom_1way_anova;
 liom_1way_anova.vout = @nirs_cfg_vout_liom_1way_anova;
 liom_1way_anova.help = {'Liom 1way anova estimation.'};

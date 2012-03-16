@@ -7,7 +7,7 @@ end
 Z = get_contrast_group_common_options(job);
 %Get anova info
 Z.anova_level = job.anova_level;
-for l1=1:anova_level
+for l1=1:Z.anova_level
     level_name{l1} = job.level(l1).level_name;
     level_subj{l1} = job.level(l1).level_subj;
 end
@@ -20,7 +20,8 @@ Z.anova_dir_name = job.anova_dir_name;
 number_dir_to_remove = job.number_dir_to_remove;
 %Structure for passing more generic data
 min_s = 2;
-
+Z.StatStr = 'EC';
+Z.LKC = job.StatMethod;
 nS = size(job.NIRSmat,1);
 %RFX - loop over subjects done later
 nl = 1;
@@ -35,7 +36,7 @@ for Idx=1:nS
         fname_ch = NIRS.Dt.ana.rend;
         load(fname_ch);
     end
-    try 
+    try
         ftopo = NIRS.TOPO;
     catch
         ftopo = fullfile(dir1,'TOPO.mat');
@@ -55,7 +56,7 @@ try
     %extract previous directory
     tmp = strfind(dir0,filesep);
     dir_root = dir0(1:tmp(end-number_dir_to_remove));
-    dir_group = fullfile(dir_root,anova_dir_name);
+    dir_group = fullfile(dir_root,Z.anova_dir_name);
     if ~exist(dir_group,'dir'), mkdir(dir_group); end
     %store in same directory as first subject
     ftopo = fullfile(dir_group,'TOPO.mat');
@@ -126,7 +127,7 @@ try
             F.split = split;
             F.pathn = Z.dir1;
             %CF: copy figure structure
-            CF.GInv = GInv;
+            CF.GInv = Z.GInv;
             CF.split = split;
             CF.nC = nC;
             
@@ -136,28 +137,40 @@ try
                 for c1=1:nC
                     try
                         %Skip F contrasts for now
-                        if xCon(c1).STAT == 'T'
+                        if xCon{Z.group_session_to_average}(c1).STAT == 'T'
                             %fill in cbeta and ccov_beta
                             for f1=1:ns
                                 try
                                     if ~isfield(big_TOPO{f1}.v{v1},'s')
                                         %group analysis of a group of
                                         %sessions analysis
-                                        
-                                        tmp = squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_interp_beta(c1,:,:));
-                                        cbeta(f1,:) = tmp(:);
-                                        tmp = squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_cov_interp_beta(c1,:,:));
-                                        ccov_beta(f1,:) = tmp(:);
-                                        
+                                        if isfield(big_TOPO{f1}.v{v1}.g.hb{h1},'beta_map')
+                                            tmp = squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.beta_map(c1,:,:));
+                                            cbeta(f1,:) = tmp(:);
+                                            tmp = (tmp./squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.stat_map(c1,:,:))).^2;
+                                            ccov_beta(f1,:) = tmp(:);
+                                        else
+                                            tmp = squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_interp_beta(c1,:,:));
+                                            cbeta(f1,:) = tmp(:);
+                                            tmp = squeeze(big_TOPO{f1}.v{v1}.g.hb{h1}.c_cov_interp_beta(c1,:,:));
+                                            ccov_beta(f1,:) = tmp(:);
+                                        end
                                     else
                                         %for is1=1:length(big_TOPO{f1}.v{v1}.s)
-                                        is1 = group_session_to_average;
-                                        %do each session separately
-                                        tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_beta(c1,:,:));
-                                        cbeta(f1,:) = tmp(:);
-                                        tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_cov_interp_beta(c1,:,:));
-                                        ccov_beta(f1,:) = tmp(:);
-                                        %end
+                                        is1 = Z.group_session_to_average;
+                                        if isfield(big_TOPO{f1}.v{v1}.s{is1}.hb{h1},'beta_map')
+                                            %do each session separately
+                                            tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.beta_map(c1,:,:));
+                                            cbeta(f1,:) = tmp(:);
+                                            tmp = (tmp./squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.stat_map(c1,:,:))).^2;
+                                            ccov_beta(f1,:) = tmp(:);
+                                        else
+                                            %do each session separately
+                                            tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_beta(c1,:,:));
+                                            cbeta(f1,:) = tmp(:);
+                                            tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_cov_interp_beta(c1,:,:));
+                                            ccov_beta(f1,:) = tmp(:);
+                                        end
                                     end
                                 catch
                                     disp(['No data for subject ' int2str(f1) ' contrast ' int2str(c1)  ' chromophore ' hb ' and view ' int2str(v1)]);
@@ -176,7 +189,7 @@ try
                                         ccov_beta(f1,:) = tmp(:);
                                     else
                                         %do each session separately
-                                        is1 = group_session_to_average;
+                                        is1 = Z.group_session_to_average;
                                         %for is1=1:length(big_TOPO{f1}.v{v1}.s)
                                         tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_F(c1,:,:));
                                         cbeta(f1,:) = tmp(:);
@@ -200,14 +213,14 @@ try
                         TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.A = A;
                         TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.c = xCon(c1);
                         
-                        filestr = [num2str(p_value) '_' spec_hemi '_' hb];
-                        filestr_fig = [num2str(p_value) ' ' spec_hemi ' ' hb];
-                        info1 = [filestr xCon(c1).name];
-                        info_for_fig1 = [filestr_fig xCon(c1).name];
+                        filestr = [num2str(Z.p_value) '_' spec_hemi '_' hb];
+                        filestr_fig = [num2str(Z.p_value) ' ' spec_hemi ' ' hb];
+                        info1 = [filestr xCon{Z.group_session_to_average}(c1).name];
+                        info_for_fig1 = [filestr_fig xCon{Z.group_session_to_average}(c1).name];
                         F.contrast_info = info1;
                         F.contrast_info_for_fig = info_for_fig1;
-                        F.contrast_info_both = [filestr xCon(c1).name]; %same for Pos and Neg, used for combined figures
-                        F.contrast_info_both_for_fig = [filestr_fig xCon(c1).name]; %same for Pos and Neg, used for combined figures
+                        F.contrast_info_both = [filestr xCon{Z.group_session_to_average}(c1).name]; %same for Pos and Neg, used for combined figures
+                        F.contrast_info_both_for_fig = [filestr_fig xCon{Z.group_session_to_average}(c1).name]; %same for Pos and Neg, used for combined figures
                         
                         F.s_map = A.F;
                         F.erdf = A.df;
@@ -215,8 +228,14 @@ try
                         F.tstr = 'F'; %tstr;
                         F.hb = hb;
                         try
-                            DF = nirs_draw_figure(4,F,W,Z);
-                            H = nirs_copy_figure(H,DF,CF,c1,hb,1,F.tstr);
+                            if Z.LKC
+                                DF = nirs_draw_figure(8,F,W,Z,A.LKC);
+                                H = nirs_copy_figure(H,DF,CF,c1,hb,1,F.tstr,1,0);
+                            end
+                            if Z.output_unc
+                                DF = nirs_draw_figure(9,F,W,Z,[]);
+                                H = nirs_copy_figure(H,DF,CF,c1,hb,1,F.tstr,0,0);
+                            end
                         catch exception2
                             disp(exception2.identifier);
                             disp(exception2.stack(1));
@@ -229,13 +248,13 @@ try
                 end
             end
             %save assembled figures
-            call_save_assembled_figures(Z,W,H,0);  
+            call_save_assembled_figures(Z,W,H,0);
         end %if view_estimated
     end %end for v1
     save(ftopo,'TOPO');
 catch exception
     disp(exception.identifier);
     disp(exception.stack(1));
-    disp(['Could not do 1-way anova analysis']);
+    disp('Could not do 1-way anova analysis');
 end
 out.NIRSmat = job.NIRSmat;

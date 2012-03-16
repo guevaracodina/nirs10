@@ -8,8 +8,8 @@ try
     pX = pinv(X);
     b = pX*cbeta;
     %residuals
-    r = cbeta - X*b;
-    rs = sum(r.^2);
+    res = cbeta - X*b;
+    rs = sum(res.^2);
     if Z.includeSubjectEffects
         pX0 = pinv(X0);
         b0 = pX0*cbeta;
@@ -22,8 +22,8 @@ try
     end
     G.erdf = sX-rank(X0);
     %Only valid if ...
-    G.eidf = size(X,2)-size(X0,2); %(nS0-1)*(nC0-1);
-    
+    %G.eidf = size(X,2)-size(X0,2); %(nS0-1)*(nC0-1);
+    G.eidf = rank(X) - rank(X0); 
     F = ((rs0-rs)./rs)*(G.erdf-G.eidf)/G.eidf ;
     F(isnan(F)) = 0;
     F = reshape(F,s1,s2);
@@ -34,7 +34,7 @@ try
     tmp_mask(cbeta == 0) = 1;
     mask = sum(tmp_mask,1);
     index_group = find(mask == 0);
-    [L2] = calc_LKC(index_group,[s1 s2], reshape(r,[size(r,1) s1 s2]), 'group');
+    [L2] = calc_LKC(index_group,[s1 s2], reshape(res,[size(r,1) s1 s2]), 'group');
     r = sqrt(L2./pi);
     L1 = pi * r;
     L0 = 1;
