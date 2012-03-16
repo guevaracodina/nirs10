@@ -198,6 +198,58 @@ try
                     end
                 end
             end
+        case 8
+            if strcmp(F.tstr,'F')
+                %if length(erdf) > 1 %?
+                str_cor = [Z.StatStr '_Anova'];
+                xth_z = zeros(1,length(erdf));
+                index_over = [];
+                xerdf = erdf(:);
+                udf = unique(xerdf);
+                xth = zeros(1,length(udf));
+                for i1=2:length(udf) %exclude 0
+                    if Z.LKC %|| Z.UseCorrelRes
+                        xth(i1) = calc_EC(LKC,p_value,tstr,[eidf,udf(i1)]);
+                    else
+                        xth(i1) = spm_invFcdf(1-p_value, eidf, udf(i1));
+                    end
+                end
+                s_map = s_map(:); %??
+                for i1 = 1:length(xerdf)
+                    if xerdf(i1) > 0
+                        xth_z(i1) = xth(xerdf(i1)==udf);
+                        if s_map(i1) > xth_z(i1)
+                            index_over = [index_over i1];
+                        end
+                    end
+                end
+                th_z = min(xth_z(xth_z>0));
+            end
+        case 9
+            if strcmp(F.tstr,'F')
+                %if length(erdf) > 1 %?
+                str_cor = [Z.StatStr '_Anova'];
+                xth_z = zeros(1,length(erdf));
+                index_over = [];
+                xerdf = erdf(:);
+                udf = unique(xerdf);
+                xth = zeros(1,length(udf));
+                for i1=2:length(udf) %exclude 0
+                    
+                        xth(i1) = spm_invFcdf(1-p_value, eidf, udf(i1));
+                    
+                end
+                s_map = s_map(:); %??
+                for i1 = 1:length(xerdf)
+                    if xerdf(i1) > 0
+                        xth_z(i1) = xth(xerdf(i1)==udf);
+                        if s_map(i1) > xth_z(i1)
+                            index_over = [index_over i1];
+                        end
+                    end
+                end
+                th_z = min(xth_z(xth_z>0));
+            end
     end
     I = [];
     I.index_over = index_over;
