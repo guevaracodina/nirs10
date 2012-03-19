@@ -135,6 +135,10 @@ for Idx=1:size(job.NIRSmat,1)
     try
         %Objective is to fill SPM structure
         SPM = [];
+        %always store SPM analysis in some directory
+        if ~isfield(job.NIRSmatCopyChoice,'NIRSmatCopy')
+            job.NIRSmatCopyChoice.NIRSmatCopy.NewNIRSdir = 'Stat';
+        end            
         [NIRS newNIRSlocation]= nirs_load(job.NIRSmat{Idx,1},job.NIRSmatCopyChoice,job.force_redo);
         job.NIRSmat{Idx,1} = newNIRSlocation;
         if ~isempty(NIRS) && (~isfield(NIRS.flags,'GLMspec_OK') || job.force_redo)
@@ -163,7 +167,7 @@ for Idx=1:size(job.NIRSmat,1)
             try
                 for f=1:nsess
                     iSess = idx_sess(f);
-                    %PLEASE DO NOT MODIFY THE nEXT TWO LINES!!!!!!!!!!!!!!!!
+                    %PLEASE DO NOT MODIFY THE NEXT TWO LINES!!!!!!!!!!!!!!!!
                     NIRS.Dt.fir.Sess(1).U(1).name;
                     if ~isempty(NIRS.Dt.fir.Sess(iSess).U(1).name)
                         SPM.Sess(f) = NIRS.Dt.fir.Sess(iSess);

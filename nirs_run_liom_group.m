@@ -56,10 +56,13 @@ else
         load(job.NIRSmat{Idx,1});
         dir1 = NIRS.SPM{1};
         %load topographic information (formerly known as preproc_info)
-        if Idx == 1 %assume same configuration for each subject - could be generalized
-            fname_ch = NIRS.Dt.ana.rend;
-            load(fname_ch);
+        %if Idx == 1 %assume same configuration for each subject - could be generalized
+        fname_ch = NIRS.Dt.ana.rend;
+        load(fname_ch);
+        if Idx == 1
+            rendered_MNI0 = rendered_MNI;
         end
+        %end
         try
             ftopo = NIRS.TOPO;
         catch
@@ -70,6 +73,7 @@ else
         load(ftopo);
         %large structure
         big_TOPO{Idx} = TOPO;
+        big_TOPO{Idx}.rendered_MNI = rendered_MNI;
     end
     %create a new TOPO at the group level
     TOPO = [];
@@ -86,10 +90,12 @@ for Idx=1:nl
             %load topographic information (formerly known as preproc_info)
             fname_ch = NIRS.Dt.ana.rend;
             load(fname_ch);
+            rendered_MNI0 = rendered_MNI;
             ftopo = NIRS.TOPO;
             [dir1 fil1 ext1] = fileparts(ftopo);
             TOPO = [];
             load(ftopo);
+            TOPO.rendered_MNI = rendered_MNI;
             dir_group = fullfile(dir1, Z.group_dir_name);
         else
             [dir0,dummy,dummy2] = fileparts(job.NIRSmat{1});
@@ -106,7 +112,7 @@ for Idx=1:nl
         if ~(Z.FFX || nS==1)
             job.NIRSmat{nl,1} = newNIRSlocation;
             try
-            [NIRS newNIRSlocation]= nirs_load(job.NIRSmat{Idx,1},job.NIRSmatCopyChoice,job.force_redo);
+                [NIRS newNIRSlocation]= nirs_load(job.NIRSmat{Idx,1},job.NIRSmatCopyChoice,job.force_redo);
             end
         end
         job.NIRSmat{Idx,1} = newNIRSlocation;
@@ -159,7 +165,7 @@ for Idx=1:nl
                     W = [];
                     [W.side_hemi W.spec_hemi] = nirs_get_brain_view(v1);
                     %View dependent info for figures
-                    brain = rendered_MNI{v1}.ren;
+                    brain = rendered_MNI0{v1}.ren;
                     if issparse(brain), %does not apply?
                         d = size(brain);
                         B1 = spm_dctmtx(d(1),d(1));

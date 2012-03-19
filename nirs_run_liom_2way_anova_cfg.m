@@ -17,6 +17,28 @@ StatMethod.help = {'Choose statistical method to account '
     'Preferred choice: Euler characteristic calculated via Lipschitz-Killing curvature'
     'Other choice: Bonferroni correction.'}';
 
+CorrectionMethod      = cfg_menu;
+CorrectionMethod.tag  = 'CorrectionMethod';
+CorrectionMethod.name = 'Degree of freedom adjustment method for nonsphericity';
+CorrectionMethod.labels = {'Huynh-Feldt','Greenhouse-Gasser'}; 
+CorrectionMethod.values = {1,0};
+CorrectionMethod.val  = {1};
+CorrectionMethod.help = {'Choose the method for adjusting the number of degrees of freedom to correct'
+    'for nonsphericity.'
+    'Note that this applies only for repeated measures anovas.'}';
+
+PosthocMethod      = cfg_menu;
+PosthocMethod.tag  = 'PosthocMethod';
+PosthocMethod.name = 'p_value adjustment method for multiple comparisons';
+PosthocMethod.labels = {'Tukey HSD (post-hoc)','Scheffé (post-hoc)','Dunn/Sidak (omnibus)','Bonferroni (omnibus)'}; 
+PosthocMethod.values = {1,2,3,4};
+PosthocMethod.val  = {1};
+PosthocMethod.help = {'If conducting post-hoc tests, use either' 
+    'Tukey''s HSD: honestly significant difference(!) or'
+    'Scheffé''s '
+    'If conducted previously an omnibus test, then use either'
+    'Dunn/Sidak or Bonferroni.'}';
+
 %%%%%%%%%%%%%%%%%%%%%%%%%
 anova_level         = cfg_entry;
 anova_level.name    = 'Number of levels';
@@ -110,7 +132,8 @@ liom_2way_anova      = cfg_exbranch;
 liom_2way_anova.name = 'Liom 2-way Anova Estimation';
 liom_2way_anova.tag  = 'liom_2way_anova';
 liom_2way_anova.val  = {NIRSmat redo1 NIRSmatCopyChoice  ...
-    anova_dir_name number_dir_to_remove StatMethod anova2_sessions anova2_contrasts ...
+    anova_dir_name number_dir_to_remove StatMethod CorrectionMethod ...
+    PosthocMethod anova2_sessions anova2_contrasts ...
     includeSubjectEffects contrast_p_value display_options};
 liom_2way_anova.prog = @nirs_run_liom_2way_anova;
 liom_2way_anova.vout = @nirs_cfg_vout_liom_2way_anova;
