@@ -116,12 +116,14 @@ switch fign
                 th_z = 0;
             else
                 if LKC
-                    test_LKC_by_pixel = 1;
-                    if test_LKC_by_pixel && isstruct(G)
+                    test_LKC_by_pixel = 0;
+                    if test_LKC_by_pixel && isfield(G,'ns')
                         th_zi = zeros(1,G.ns-G.min_subj+1);
                         for i0=1:(G.ns-G.min_subj+1)
                             th_zi(i0) = calc_EC(G.LKCi{i0},p_value,tstr,[G.eidfi(i0),G.erdfi(i0)]);
                         end
+                        th_z = max(th_zi(1:end/2)); %completely heuristic
+                        %a=[]; for i0=1:(G.ns-G.min_subj+1), a = [a length(G.idxi{i0})]; end, a
                     else
                         th_z = calc_EC(LKC,p_value,tstr,[eidf,erdf]);
                     end
@@ -208,7 +210,8 @@ switch fign
                 end
             end
             th_z = min(xth_z(xth_z>0));
-        end
+            index_over2 = [];
+        end        
     case 9
         if strcmp(F.tstr,'F')
             %if length(erdf) > 1 %?
@@ -219,9 +222,7 @@ switch fign
             udf = unique(xerdf);
             xth = zeros(1,length(udf));
             for i1=2:length(udf) %exclude 0
-                
-                xth(i1) = spm_invFcdf(1-p_value, eidf, udf(i1));
-                
+                xth(i1) = spm_invFcdf(1-p_value, eidf, udf(i1));                
             end
             s_map = s_map(:); %??
             for i1 = 1:length(xerdf)
@@ -233,5 +234,6 @@ switch fign
                 end
             end
             th_z = min(xth_z(xth_z>0));
+            index_over2 = [];
         end
 end

@@ -6,7 +6,7 @@ try
     %mask counts the number of missing subjects at each pixel
     mask = sum(tmp_mask,1);
     
-    calc_by_pixel = 1;
+    calc_by_pixel = 0;
     if ~calc_by_pixel
         index_group = find(mask == 0); %intersection of all the subjects
         %design matrix
@@ -38,7 +38,7 @@ try
         for i0=1:(ns-min_subj+1)
             %indices of pixels where exactly i0-1 subjects are missing
             %at least min_subj subjects must be present
-            idx = find(mask == (i0-1));           
+            idx = find(mask == (i0-1));
             b(idx) = sum(cbeta(:,idx),1)/(ns-i0+1);
             s(idx) = std(sbeta(:,idx),1);
             res(:,idx) = cbeta(:,idx) - X' * b(1,idx);
@@ -58,16 +58,18 @@ try
                 L1 = L1i;
                 L0 = L0i;
             end
-        end        
+        end
+        %L2b = []; for i0=1:(ns-min_subj+1) , L2b = [L2b LKCi{i0}(3)]; end; figure; plot(L2b)
+        G.LKCi = LKCi;
+        G.idxi = idxi;
+        G.eidfi = eidfi;
+        G.erdfi = erdfi;
     end
     beta_group = reshape(b,s1,s2);
     std_group = reshape(s,s1,s2);
     t = b./s;
     t(isnan(t)) = 0;
     
-    %L2b = []; for i0=1:(ns-min_subj+1) , L2b = [L2b LKCi{i0}(3)]; end; figure; plot(L2b)
-    G.LKCi = LKCi;
-    G.idxi = idxi;
     G.ns = ns;
     G.min_subj = min_subj;
     G.erdf_group = ns-1;
