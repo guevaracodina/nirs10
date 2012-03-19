@@ -24,7 +24,8 @@ try
         sum_kappa = 0;
     end
     nchn = 0;
-    if ~(fign == 4) && ~(fign == 5) && ~(fign == 6) && ~(fign == 7)
+    if ~(fign == 4) && ~(fign == 5) && ~(fign == 6) && ~(fign == 7) ...
+            && ~(fign == 8) && ~(fign == 9)
         switch F.hb
             case 'HbO'
                 nchn = length(W.ch_HbO);
