@@ -9,6 +9,7 @@ Z.anova2_sessions = job.anova2_sessions;
 Z.anova2_contrasts = job.anova2_contrasts;
 Z.LKC = job.StatMethod;
 Z.StatStr = 'EC';
+Z.CorrectionMethod = job.CorrectionMethod;
 Z.GInv = 1; %enforce
 Z.GFIS = 1; %enforce
 Z.anova_dir_name = job.anova_dir_name;
@@ -132,7 +133,7 @@ try
                 CF.nC = nC;
                 nC0 = length(Z.anova2_contrasts);
                 nS0 = length(Z.anova2_sessions);
-                
+                Z.p_value = job.contrast_p_value; %reset because of redefinition of p_value later for post-hoc contrasts
                 %Loop over chromophores
                 for h1=1:3 %including HbT
                     hb = get_chromophore(h1);
@@ -177,8 +178,7 @@ try
                                 end
                             end
                         end
-                    end %end for s1
-                    
+                    end %end for s1                                
                     if z1==1 && h1 == 1%no need to repeat calculation
                         
                         %Construct each part of design matrix separately
@@ -294,6 +294,7 @@ try
                             X0 = [Xa Xb M Xs];
                             X = [Xab X0];
                             A = liom_group_2A(cbeta{h1},X,X0,W.s1,W.s2,Z); %careful, s1 (session counter) not same as W.s1 (size of image)!
+                            A = calc_hfgg(cbeta{h1},A,ns0,W.s1,W.s2,B,2);
                             [TOPO H] = call_figure_2anova(TOPO,H,Z,W,F,A,CF,v1,h1,hb,strA,z1,A.LKC);
                         case 2
                             %Main effect of A (Sessions)
@@ -324,6 +325,11 @@ try
                                 %need to adjust p value:
                                 Z.p_value = p_value0/nC0;
                                 A = liom_group_2A(cbeta{h1},X,X0,W.s1,W.s2,Z); %careful, s1 (session counter) not same as W.s1 (size of image)!
+                                A.includeSubjectEffects = Z.includeSubjectEffects;
+                                B = [];
+                                B.Xs = Xs;
+                                B.Xbw = [Xa Xb]; %Xb; %?
+                                A = calc_hfgg(cbeta{h1},A,ns0,B,2);
                                 [TOPO H] = call_figure_2anova(TOPO,H,Z,W,F,A,CF,v1,h1,hb,strA,z1,A.LKC);
                             end
                         case 5
@@ -339,6 +345,11 @@ try
                                 %need to adjust p value:
                                 Z.p_value = p_value0/nS0;
                                 A = liom_group_2A(cbeta{h1},X,X0,W.s1,W.s2,Z); %careful, s1 (session counter) not same as W.s1 (size of image)!
+                                A.includeSubjectEffects = Z.includeSubjectEffects;
+                                B = [];
+                                B.Xs = Xs;
+                                B.Xbw = [Xa Xb]; %Xa; %?
+                                A = calc_hfgg(cbeta{h1},A,ns0,B,2);
                                 [TOPO H] = call_figure_2anova(TOPO,H,Z,W,F,A,CF,v1,h1,hb,strA,z1,A.LKC);
                             end
                     end

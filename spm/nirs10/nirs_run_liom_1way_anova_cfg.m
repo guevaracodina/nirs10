@@ -82,6 +82,30 @@ StatMethod.help = {'Choose statistical method to account '
     'Preferred choice: Euler characteristic calculated via Lipschitz-Killing curvature'
     'Other choice: Bonferroni correction.'}';
 
+CorrectionMethod      = cfg_menu;
+CorrectionMethod.tag  = 'CorrectionMethod';
+CorrectionMethod.name = 'p-value adjustment method for multiple comparisons';
+CorrectionMethod.labels = {'Huynh-Feldt','Greenhouse-Gasser'}; %,'Bonferroni'};
+CorrectionMethod.values = {1,0};
+CorrectionMethod.val  = {1};
+CorrectionMethod.help = {'Choose the method for adjusting p-value to correct'
+    'for multiple comparisons.'
+    'Note that this applies only for repeated measures anovas.'
+    'Since the 1-way anova coded up so far is only for non-repeated measures,'
+    'currently this option does not apply.'}';
+
+PosthocMethod      = cfg_menu;
+PosthocMethod.tag  = 'PosthocMethod';
+PosthocMethod.name = 'p_value adjustment method for multiple comparisons';
+PosthocMethod.labels = {'Tukey HSD (post-hoc)','Scheffé (post-hoc)','Dunn/Sidak (omnibus)','Bonferroni (omnibus)'}; 
+PosthocMethod.values = {1,2,3,4};
+PosthocMethod.val  = {1};
+PosthocMethod.help = {'If conducting post-hoc tests, use either' 
+    '1- Tukey''s HSD: honestly significant difference(!) or'
+    '2- Scheffé''s method'
+    'If conducted previously an omnibus test, then use either'
+    '1- Dunn/Sidak or 2- Bonferroni.'}';
+
 %%%%%%%%%%%%%%%%%%%%%%%%%
 group_session_to_average         = cfg_entry;
 group_session_to_average.name    = 'Session to average';
@@ -99,7 +123,7 @@ liom_1way_anova.name = 'Liom 1-way Anova Estimation';
 liom_1way_anova.tag  = 'liom_1way_anova';
 liom_1way_anova.val  = {NIRSmat redo1 NIRSmatCopyChoice ...
     anova_dir_name number_dir_to_remove anova_level level_repeat ...
-    StatMethod contrast_p_value ...
+    StatMethod CorrectionMethod PosthocMethod contrast_p_value ...
     group_session_to_average display_options}; % factorial_design};
 liom_1way_anova.prog = @nirs_run_liom_1way_anova;
 liom_1way_anova.vout = @nirs_cfg_vout_liom_1way_anova;

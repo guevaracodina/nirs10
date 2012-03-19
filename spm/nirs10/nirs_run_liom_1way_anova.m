@@ -22,6 +22,7 @@ number_dir_to_remove = job.number_dir_to_remove;
 min_s = 2;
 Z.StatStr = 'EC';
 Z.LKC = job.StatMethod;
+Z.CorrectionMethod = job.CorrectionMethod;
 nS = size(job.NIRSmat,1);
 %RFX - loop over subjects done later
 nl = 1;
@@ -205,6 +206,7 @@ try
                         end
                         try
                             A = liom_anova(cbeta,ccov_beta,s1,s2,ns,min_s,level_subj);
+                            %A = calc_hfgg(cbeta,A,ns,level_subj,1);
                         catch exception2
                             disp(exception2.identifier);
                             disp(exception2.stack(1));
@@ -223,19 +225,42 @@ try
                         F.contrast_info_both_for_fig = [filestr_fig xCon{Z.group_session_to_average}(c1).name]; %same for Pos and Neg, used for combined figures
                         
                         F.s_map = A.F;
+                        
                         F.erdf = A.df;
                         F.eidf = A.dfbetween;
                         F.tstr = 'F'; %tstr;
                         F.hb = hb;
+                        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.F.erdf = F.erdf;
+                        TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.F.eidf = F.eidf;
                         try
-                            if Z.LKC
-                                DF = nirs_draw_figure(8,F,W,Z,A.LKC);
-                                H = nirs_copy_figure(H,DF,CF,c1,hb,1,F.tstr,1,0);
-                            end
                             if Z.output_unc
                                 DF = nirs_draw_figure(9,F,W,Z,[]);
                                 H = nirs_copy_figure(H,DF,CF,c1,hb,1,F.tstr,0,0);
                             end
+                                          
+                            if Z.LKC
+                                DF = nirs_draw_figure(8,F,W,Z,A.LKC);
+                                H = nirs_copy_figure(H,DF,CF,c1,hb,1,F.tstr,1,0);
+                            end
+                            
+                            %A = calc_hfgg(cbeta,A,ns,B,nfac);
+                            %For post-hoc contrasts only -- not done yet
+                            switch Z.CorrectionMethod
+                                case 1 %Huynh-Feldt
+                                    F.erdf = F.erdf;
+                                    F.eidf = F.eidf;
+                                case 2 %Bonferroni
+                                    p_value = Z.p_value/length(level_subj-1);
+                                case 3 %Greenhouse-Gasser
+                                    F.erdf = F.erdf;
+                                    F.eidf = F.eidf;
+                            end
+                            %Calculate Huynh-Feldt and Greenhouse-Gasser corrections
+                            %Where: at the site of minimal or maximal
+                            %activation? or even at the highest of the two in absolute value 
+                            
+                            %[EpsHF EpsList EpsGG]=GenCalcHFEps(Y,BTFacs,WInFacs,S)
+              
                         catch exception2
                             disp(exception2.identifier);
                             disp(exception2.stack(1));

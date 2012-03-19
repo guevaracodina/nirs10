@@ -1,5 +1,10 @@
 function Y = nirs_make_figure(I,F,W,Z,str_cor,th_z,combinedfig)
-index_over = I.index_over;
+index_over = I.index_over; 
+if isfield(I,'index_over2')
+index_over2 = I.index_over2;
+else
+    index_over2 = [];
+end
 if combinedfig
     contrast_info = F.contrast_info_both;
     contrast_info_for_fig = F.contrast_info_both_for_fig;
@@ -13,11 +18,16 @@ else
         contrast_info_for_fig = F.contrast_info_both_for_fig;
     end
 end
+if isfield(Z,'Idx')
+    contrast_info = ['S' gen_num_str(Z.Idx,2) '_' contrast_info];
+    contrast_info_for_fig = ['S' gen_num_str(Z.Idx,2) ' ' contrast_info_for_fig];
+end
 %choose font for figure here
 fontsize_choice = 16;
 tick_number = 7;
 th_z_shrink = 0.9; %some value slightly less than 1 required
 min_max_gap = 0.0001; %some small value required -- min resolution
+cmap_res = 3*64;
 try
     cbar = Z.cbar;
     gen_fig = Z.gen_fig;
@@ -30,169 +40,22 @@ try
     tstr = F.tstr;
     fcool = 64; %default, but may get overwritten later
     %choose to overwrite max_T and min_T for map thresholds
+    TC = [];
     if cbar.colorbar_override == 1
         overwrite_map_thresholds = 1;
-        max_T_choice = cbar.c_max;
-        min_T_choice = cbar.c_min;
+        TC.max_T_choice = cbar.c_max;
+        TC.min_T_choice = cbar.c_min;
         if ~Z.GroupColorbars
-            max_T_choice2 = cbar.c_max2;
-            min_T_choice2 = cbar.c_min2;
+            TC.max_T_choice2 = cbar.c_max2;
+            TC.min_T_choice2 = cbar.c_min2;
         end
     else
         overwrite_map_thresholds = 0;
     end
     if ~isempty(index_over) || (combinedfig && ~isempty(index_over2))
-        if Z.GroupColorbars
-            if ~combinedfig
-                if ~isempty(index_over)
-                    min_T = min(s_map(index_over));
-                    max_T = max(s_map(index_over));
-                    if min_T == max_T %for example if only one data point in index_over
-                        min_T = min_T - min_max_gap;
-                    end
-                else
-                    max_T = -th_z;
-                    min_T = -th_z-min_max_gap;
-                end
-            else
-                min_T = min(s_map(index_over2));
-                max_T = max(s_map(index_over2));
-                if min_T == max_T %for example if only one data point in index_over
-                    if max_T > 0
-                        min_T = -min_T; % - min_max_gap; %careful -- need to include grey
-                    else
-                        max_T = -min_T;
-                    end
-                end
-            end
-        else
-            if ~isempty(index_over)
-                min_T = min(s_map(index_over));
-                max_T = max(s_map(index_over));
-                if min_T == max_T %for example if only one data point in index_over
-                    min_T = min_T - min_max_gap;
-                end
-            else
-                max_T = -th_z;
-                min_T = -th_z-min_max_gap;
-            end
-            if combinedfig && ~isempty(index_over2)
-                min_T2 = min(s_map(index_over2));
-                max_T2 = max(s_map(index_over2));
-                if min_T2 == max_T2 %for example if only one data point in index_over2
-                    min_T2 = min_T2 - min_max_gap;
-                end
-            else
-                max_T2 = th_z+min_max_gap;
-                min_T2 = th_z;
-            end
-        end
-        if overwrite_map_thresholds
-            max_T = max_T_choice;
-            min_T = min_T_choice;
-            if ~Z.GroupColorbars
-                max_T2 = max_T_choice2;
-                min_T2 = min_T_choice2;
-            end
-        end
-        if ~isempty(index_over) && (~combinedfig || tstr == 'F')
-            smin_T = max_T - ((max_T - min_T)./63) * 127;
-            sbar = linspace(smin_T, max_T, 128);
-            T_brain_over = ((-sbar(1) + sbar(64))/(0.5)).*brain + sbar(1);
-            T_brain_over(index_over) = s_map(index_over);
-            if overwrite_map_thresholds
-                %need to rescale T_brain_over to match the specified scale
-                T_brain_over(T_brain_over>max_T) = max_T;
-                T_brain_over(1,1) = max_T;
-                T_brain_over(end,end) = min_T;
-            end
-        else
-            if tstr == 'T'
-                %colormap resolution:
-                cmap_res = 3*64;
-                if Z.GroupColorbars
-                    sbar = linspace(min_T, max_T, cmap_res); %for colormap in 1-192 range
-                    %fraction of colorbar in each of cool, gray and hot areas:
-                    fcool = round((-th_z-min_T)/(max_T-min_T)*cmap_res);
-                    fgray = round(2*th_z/(max_T-min_T)*cmap_res);
-                    fhot = round((max_T-th_z)/(max_T-min_T)*cmap_res);
-                    
-                    %Choose location of background brain as a function of th_z:
-                    %want it to be in between -th_z and +th_z
-                    %To ensure no overlap between background brain and
-                    %(de)activations, reduce th_z by a factor
-                    th_z_eff = th_z*th_z_shrink;
-                    maxb = max(brain(:)); %minb = min(brain(:)); %expect =0
-                    T_brain_over = (2*th_z_eff/maxb).*brain -th_z_eff;
-                    %add both negative and positive regions of interest
-                    if ~isempty(index_over)
-                        T_brain_over(index_over) = s_map(index_over);
-                    end
-                    if combinedfig && ~isempty(index_over2)
-                        T_brain_over(index_over2) = s_map(index_over2);
-                    end
-                    if overwrite_map_thresholds
-                        %need to rescale T_brain_over to match the specified scale
-                        T_brain_over(T_brain_over>max_T) = max_T;
-                        T_brain_over(T_brain_over<min_T2) = min_T2; %PROBLEM:
-                        %The lower cut for the positive map, and the upper cut for
-                        %the negative map, will not be implemented
-                        %required for unclear reason:
-                        T_brain_over(1,1) = max_T;
-                        T_brain_over(end,end) = min_T2;
-                    end
-                    
-                else
-                    if ~isempty(index_over) && ~isempty(index_over2)
-                        sbar = linspace(min_T2, max_T, cmap_res);
-                        fcool = round((-th_z-min_T2)/(max_T-min_T2)*cmap_res);
-                        fgray = round(2*th_z/(max_T-min_T2)*cmap_res);
-                        fhot = round((max_T-th_z)/(max_T-min_T2)*cmap_res);
-                        th_z_eff = th_z*th_z_shrink;
-                        maxb = max(brain(:)); %minb = min(brain(:)); %expect =0
-                        T_brain_over = (2*th_z_eff/maxb).*brain -th_z_eff;
-                        %add both negative and positive regions of interest
-                        if ~isempty(index_over)
-                            T_brain_over(index_over) = s_map(index_over);
-                        end
-                        if combinedfig && ~isempty(index_over2)
-                            T_brain_over(index_over2) = s_map(index_over2);
-                        end
-                        if overwrite_map_thresholds
-                            T_brain_over(T_brain_over>max_T) = max_T;
-                            T_brain_over(T_brain_over<min_T2) = min_T2;
-                            T_brain_over(1,1) = max_T;
-                            T_brain_over(end,end) = min_T2;
-                        end
-                    else
-                        if ~isempty(index_over) && isempty(index_over2)
-                            smin_T = max_T - ((max_T - min_T)./63) * 127;
-                            sbar = linspace(smin_T, max_T, 128);
-                            T_brain_over = ((-sbar(1) + sbar(64))/(0.5)).*brain + sbar(1);
-                            T_brain_over(index_over) = s_map(index_over);
-                            if overwrite_map_thresholds
-                                T_brain_over(T_brain_over>max_T) = max_T;
-                                T_brain_over(1,1) = max_T;
-                                T_brain_over(end,end) = min_T;
-                            end
-                        else
-                            if isempty(index_over) && ~isempty(index_over2)
-                                fcool = 64;
-                                smax_T = min_T2 + ((max_T2 - min_T2)./63) * 127;
-                                sbar = linspace(min_T2,smax_T,128);
-                                T_brain_over = ((-sbar(65) + sbar(128))/(0.5)).*brain + sbar(65);
-                                T_brain_over(index_over2) = s_map(index_over2);
-                                if overwrite_map_thresholds
-                                    T_brain_over(T_brain_over<min_T2) = min_T2;
-                                    T_brain_over(1,1) = max_T2;
-                                    T_brain_over(end,end) = min_T2;
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
+        %Get T_brain_over
+        [min_T max_T min_T2 max_T2 T_brain_over fcool fgray fhot sbar] = nirs_get_Tmap(F.tstr,Z.GroupColorbars,combinedfig,index_over,index_over2,...
+            th_z,min_max_gap,s_map,overwrite_map_thresholds,brain,th_z_shrink,TC);
         write_fig = 1;
     end
     if write_fig
@@ -357,72 +220,9 @@ try
     else
         Y = [];
     end
-    %Save as nifti
-    if Z.save_nifti_contrasts && ( Z.write_neg_pos || combinedfig || tstr == 'F' )
-        pathnii = fullfile(pathn,'nii');
-        if ~exist(pathnii,'dir'),mkdir(pathnii); end
-        %NP = not permuted
-        filen5 = fullfile(pathnii,[tstr '_' str_cor '_' contrast_info 'NP.nii']);
-        filen3 = fullfile(pathnii,[tstr '_' str_cor '_' contrast_info '.nii']);
-        %note it is the contrast that should be written, not the T or F-stat maps
-        M = [[0 1;-1 0] zeros(2); zeros(2) eye(2)];
-        if strcmp(tstr,'T')
-            V = nirs_create_vol(filen5,...
-                [W.s1 W.s2 1], [16,0], [1;0;352],M, F.con);
-        else
-            V = nirs_create_vol(filen5,...
-                [W.s1 W.s2 1], [16,0], [1;0;352],M, F.ess);
-        end
-        %             end
-        % test : on se trompe pas pour le milieu
-        % 1:ventral, 2:dorsal, 3:right, 4:left, 5:frontal, 6:occipital
-        switch W.side_hemi
-            case 2% s2 x vx and s1 z vx
-                dim = [W.s2 1 W.s1];
-                M = [[0 0 1;1 0 0;0 1 0;0 0 0] zeros(4,1)];
-                vecta = -M(1:3,1:3)*[round(dim(1)/2);1;round(dim(3)/2)];
-                Fcon = permute(F.con,[2,3,1]);
-                Fess = permute(F.ess,[2,3,1]);
-                
-            case 3% s2 -x vx and s1 y vx
-                dim = [W.s2 W.s1 1];
-                M = [[0 0 1;1 0 0;0 1 0;0 0 0] zeros(4,1)];
-                vecta = -M(1:3,1:3)*[round(dim(1)/2);round(dim(2)/2);1];
-                Fcon = permute(F.con,[2,1,3]);
-                Fess = permute(F.ess,[2,1,3]);
-            case 4% s2 x vx and s1 y vx
-                dim = [W.s2 W.s1 1];
-                M = [[0 0 1;-1 0 0;0 1 0;0 0 0] zeros(4,1)];%%% matrice de base
-                vecta = -M(1:3,1:3)*[round(dim(1)/2);round(dim(2)/2);1];
-                Fcon = permute(F.con,[2,1,3]);
-                Fess = permute(F.ess,[2,1,3]);
-                
-            case 5% s2 -z vx and s1 y vx
-                dim = [1 W.s1 W.s2];
-                M = [[0 0 1;-1 0 0;0 -1 0;0 0 0] zeros(4,1)];
-                vecta = -M(1:3,1:3)*[1;round(dim(1)/2);round(dim(2)/2)];
-                Fcon = permute(F.con,[3,1,2]);
-                Fess = permute(F.ess,[3,1,2]);
-                %case 6% s2 z vx and s1 y vx
-            otherwise % cas sans interet
-        end
-        M(:,4) = [vecta;1];
-        % test : use the V.mat of the T1
-        %         path_T1 = [fileparts(fileparts(pathn)) '\T1'];
-        %         V = spm_vol([path_T1 '\T1.nii']);
-        %         M(1:3,1:3) = V.mat(1:3,1:3)./norm(V.mat(1:3,1:3));
-        if strcmp(tstr,'T')
-            V = nirs_create_vol(filen3,...
-                dim, [16,0], [1;0;352],M, Fcon);
-            %                 [W.s1 W.s2 1], [16,0], [1;0;352],M, F.con);
-            
-        else
-            V = nirs_create_vol(filen3,...
-                dim, [16,0], [1;0;352],M, Fess);
-            %                 [W.s1 W.s2 1], [16,0], [1;0;352],M, F.ess);
-            
-        end
-    end
+    
+    nirs_save_fig_as_nifti(Z,W,pathn,combinedfig,tstr,str_cor,contrast_info,F);
+    
 catch exception
     disp(exception.identifier);
     disp(exception.stack(1));

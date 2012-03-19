@@ -1,9 +1,11 @@
-function A = liom_anova(cbeta,ccov_beta,s1,s2, nsubj, min_subj,level_subj)
+function A = liom_anova(cbeta,ccov_beta,s1,s2,nsubj,min_subj,level_subj)
 try
-    %Careful -- subjects must be in correct order, nones missing 
+    %Careful -- subjects must be in correct order, none missing 
     %number of levels
     nl = length(level_subj);
-    msk = zeros(nl,s1*s2); %a mask for each level
+    for l1=1:nl
+        msk{l1} = zeros(1,s1*s2); %a mask for each level
+    end
     msk_subj = zeros(nsubj,nl);
     X = zeros(nsubj,nl+1);
     for i1 = 1:nsubj
@@ -11,15 +13,15 @@ try
             if any(i1 == level_subj{l1})
                 X(i1,l1) = 1;
                 index = find(cbeta(i1,:) ~= 0);
-                msk(l1,index) = msk(l1,index) + 1;
-                clear index
+                msk{l1}(index) = msk{l1}(index) + 1;
+                %clear index
                 msk_subj(i1,l1) = 1;
             end
         end
         X(i1,nl+1) = 1; %constant
     end
     for l1 = 1:nl
-        index_msk{l1} = find(msk(l1,:) > min_subj-1);
+        index_msk{l1} = find(msk{l1} > min_subj-1);
     end
     ind = [];
     for kk = 1:length(index_msk{1})
@@ -55,14 +57,14 @@ try
     mean_beta = zeros(1,lm);
     for l1 = 1:nl
         MSwithin = MSwithin + SSwithin{l1};
-        dfwithin = dfwithin + msk(l1,ind)-1;
+        dfwithin = dfwithin + msk{l1}(ind)-1;
         mean_beta = mean_beta+ avg_beta{l1};
     end
     MSwithin = MSwithin./dfwithin;
     mean_beta = mean_beta/nl;
     SSbetween = zeros(1,lm);
     for l1 = 1:nl
-        SSbetween = SSbetween + msk(l1,ind).*(avg_beta{l1}-mean_beta).^2;
+        SSbetween = SSbetween + msk{l1}(ind).*(avg_beta{l1}-mean_beta).^2;
     end
     dfbetween = nl-1;
     MSbetween = SSbetween/dfbetween;
@@ -144,9 +146,25 @@ try
     L1 = pi * r;
     L0 = 1;
     A.LKC = [L0 L1 L2];
+    
+    for l1 = 1:nl
+    msk2{l1} = zeros(1,s1*s2);
+    msk2{l1}(ind) = msk{l1}(ind);
+    msk2{l1} = reshape(msk2{l1},s1,s2);
+    end
+    
+    for l1 = 1:nl
+    msk3{l1} = zeros(1,s1*s2);
+    msk3{l1}(index_msk{l1}) = msk{l1}(index_msk{l1});
+    msk3{l1} = reshape(msk3{l1},s1,s2);
+    end
+    
+    for l1 = 1:nl
+    msk4{l1} = zeros(1,s1*s2);
+    msk4{l1} = msk{l1};
+    msk4{l1} = reshape(msk4{l1},s1,s2);
+    end
 catch  exception
     disp(exception.identifier);
     disp(exception.stack(1));
-end
-
 end

@@ -10,7 +10,12 @@ end
 if ~isempty(Inv)
     Inv = ['_' Inv];
 end
-filestr = [str_grp str_cor '_' num2str(Z.p_value) '_' W.spec_hemi strf Inv];
+if isfield(Z,'Idx')
+    subj_str = ['S' gen_num_str(Z.Idx,2)];
+else
+    subj_str = ''; %group analysis
+end
+filestr = [subj_str str_grp str_cor '_' num2str(Z.p_value) '_' W.spec_hemi strf Inv];
 
 filen1 = fullfile(Z.dir1,[filestr '.fig']);
 if Z.gen_fig
