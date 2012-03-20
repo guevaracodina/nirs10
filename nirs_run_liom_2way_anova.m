@@ -27,9 +27,10 @@ for Idx=1:nS
     load(job.NIRSmat{Idx,1});
     dir1 = NIRS.SPM{1};
     %load topographic information (formerly known as preproc_info)
-    if Idx == 1 %assume same configuration for each subject - could be generalized
-        fname_ch = NIRS.Dt.ana.rend;
-        load(fname_ch);
+    fname_ch = NIRS.Dt.ana.rend;
+    load(fname_ch);
+    if Idx == 1
+        rendered_MNI0 = rendered_MNI;
     end
     try
         ftopo = NIRS.TOPO;
@@ -40,6 +41,7 @@ for Idx=1:nS
     load(ftopo);
     %large structure
     big_TOPO{Idx} = TOPO;
+    big_TOPO{Idx}.rendered_MNI = rendered_MNI;
 end
 %create a new TOPO at the group level
 TOPO = [];
@@ -80,7 +82,7 @@ try
             [side_hemi spec_hemi] = nirs_get_brain_view(v1);
             %View dependent info for figures
             %brain = rend{v1}.ren;
-            brain = rendered_MNI{v1}.ren;
+            brain = rendered_MNI0{v1}.ren;
             if issparse(brain), %does not apply?
                 d = size(brain);
                 B1 = spm_dctmtx(d(1),d(1));
@@ -165,6 +167,9 @@ try
                                                     end
                                                     %now fill cbeta
                                                     cbeta{h1}(fC,sC,cC,:) = tmp(:);
+                                                    if isfield(big_TOPO{f1}.rendered_MNI{v1},'view_mask_2d')                                                        
+                                                        cbeta{h1}(fC,sC,cC,:) = cbeta{h1}(fC,sC,cC,:).*big_TOPO{f1}.rendered_MNI{v1}.view_mask_2d(:)';
+                                                    end
                                                 catch exception %exception for difficulty filling cbeta
                                                     disp(exception.identifier);
                                                     disp(exception.stack(1));
@@ -178,7 +183,8 @@ try
                                 end
                             end
                         end
-                    end %end for s1                                
+                    end %end for s1
+                    
                     if z1==1 && h1 == 1%no need to repeat calculation
                         
                         %Construct each part of design matrix separately

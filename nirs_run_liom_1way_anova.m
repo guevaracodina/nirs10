@@ -33,9 +33,11 @@ for Idx=1:nS
     load(job.NIRSmat{Idx,1});
     dir1 = NIRS.SPM{1};
     %load topographic information (formerly known as preproc_info)
-    if Idx == 1 %assume same configuration for each subject - could be generalized
-        fname_ch = NIRS.Dt.ana.rend;
-        load(fname_ch);
+    fname_ch = NIRS.Dt.ana.rend;
+    load(fname_ch);
+    
+    if Idx == 1
+        rendered_MNI0 = rendered_MNI;
     end
     try
         ftopo = NIRS.TOPO;
@@ -46,13 +48,13 @@ for Idx=1:nS
     load(ftopo);
     %large structure
     big_TOPO{Idx} = TOPO;
+    big_TOPO{Idx}.rendered_MNI = rendered_MNI;
 end
 %create a new TOPO at the group level
 TOPO = [];
 
 %Load NIRS.mat information
 try
-    
     [dir0,dummy,dummy2] = fileparts(job.NIRSmat{1});
     %extract previous directory
     tmp = strfind(dir0,filesep);
@@ -86,7 +88,7 @@ try
             [side_hemi spec_hemi] = nirs_get_brain_view(v1);
             %View dependent info for figures
             %brain = rend{v1}.ren;
-            brain = rendered_MNI{v1}.ren;
+            brain = rendered_MNI0{v1}.ren;
             if issparse(brain), %does not apply?
                 d = size(brain);
                 B1 = spm_dctmtx(d(1),d(1));
@@ -204,6 +206,11 @@ try
                                 end
                             end
                         end
+                        if isfield(big_TOPO{1}.rendered_MNI{v1},'view_mask_2d')
+                            for i0=1:length(big_TOPO)
+                                cbeta(i0,:) = cbeta(i0,:).*big_TOPO{i0}.rendered_MNI{v1}.view_mask_2d(:)';
+                            end
+                        end
                         try
                             A = liom_anova(cbeta,ccov_beta,s1,s2,ns,min_s,level_subj);
                             %A = calc_hfgg(cbeta,A,ns,level_subj,1);
@@ -237,7 +244,7 @@ try
                                 DF = nirs_draw_figure(9,F,W,Z,[]);
                                 H = nirs_copy_figure(H,DF,CF,c1,hb,1,F.tstr,0,0);
                             end
-                                          
+                            
                             if Z.LKC
                                 DF = nirs_draw_figure(8,F,W,Z,A.LKC);
                                 H = nirs_copy_figure(H,DF,CF,c1,hb,1,F.tstr,1,0);
@@ -257,10 +264,10 @@ try
                             end
                             %Calculate Huynh-Feldt and Greenhouse-Gasser corrections
                             %Where: at the site of minimal or maximal
-                            %activation? or even at the highest of the two in absolute value 
+                            %activation? or even at the highest of the two in absolute value
                             
                             %[EpsHF EpsList EpsGG]=GenCalcHFEps(Y,BTFacs,WInFacs,S)
-              
+                            
                         catch exception2
                             disp(exception2.identifier);
                             disp(exception2.stack(1));
