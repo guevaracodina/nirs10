@@ -41,7 +41,7 @@ try
     end
     %Get threshold for maps
     [th_z str_cor index_over index_over2] = nirs_get_threshold(fign,F,tstr,erdf,...
-        eidf,s_map,GInv,p_value,Z.StatStr,Z.StatStr2,Z.GroupColorbars,G,Z.UseCorrelRes,sum_kappa,nchn);
+        eidf,s_map,GInv,p_value,Z.StatStr,Z.StatStr2,Z.GroupColorbars,G,Z.UseCorrelRes,sum_kappa,nchn,Z.LKC);
     
     I = [];
     I.index_over = index_over;
