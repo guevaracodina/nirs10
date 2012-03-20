@@ -64,6 +64,7 @@ try
         G.idxi = idxi;
         G.eidfi = eidfi;
         G.erdfi = erdfi;
+        G.min_subj = min_subj;
     end
     beta_group = reshape(b,s1,s2);
     std_group = reshape(s,s1,s2);
@@ -71,7 +72,6 @@ try
     t(isnan(t)) = 0;
     
     G.ns = ns;
-    G.min_subj = min_subj;
     G.erdf_group = ns-1;
     G.var_bs = [];
     G.beta_group = beta_group;
