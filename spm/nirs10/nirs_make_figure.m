@@ -38,7 +38,7 @@ try
     split = F.split;
     s_map = F.s_map;
     tstr = F.tstr;
-    fcool = 64; %default, but may get overwritten later
+    %fcool = 64; %default, but may get overwritten later
     %choose to overwrite max_T and min_T for map thresholds
     TC = [];
     if cbar.colorbar_override == 1

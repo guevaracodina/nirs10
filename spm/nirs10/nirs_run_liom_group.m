@@ -56,13 +56,11 @@ else
         load(job.NIRSmat{Idx,1});
         dir1 = NIRS.SPM{1};
         %load topographic information (formerly known as preproc_info)
-        %if Idx == 1 %assume same configuration for each subject - could be generalized
         fname_ch = NIRS.Dt.ana.rend;
         load(fname_ch);
         if Idx == 1
             rendered_MNI0 = rendered_MNI;
         end
-        %end
         try
             ftopo = NIRS.TOPO;
         catch

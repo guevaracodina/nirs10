@@ -2,9 +2,9 @@ function [min_T max_T min_T2 max_T2 T_brain_over fcool fgray fhot sbar] = ...
     nirs_get_Tmap(tstr,GroupColorbars,combinedfig,index_over,index_over2,...
     th_z,min_max_gap,s_map,overwrite_map_thresholds,brain,th_z_shrink,TC)
 %Now we always use GroupColorbars = 0 and combinedfig = 1;
-fcool = [];
-fgray = [];
-fhot = [];
+fcool = 64;
+fgray = 64;
+fhot = 64;
 min_T2 = 0;
 max_T2 = 0;
 if GroupColorbars
