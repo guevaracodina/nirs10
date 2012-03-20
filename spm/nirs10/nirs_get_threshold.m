@@ -1,5 +1,5 @@
 function [th_z str_cor index_over index_over2] = nirs_get_threshold(fign,F,tstr,erdf,eidf,...
-    s_map,GInv,p_value,StatStr,StatStr2,GroupColorbars,G,UseCorrelRes,sum_kappa,nchn)
+    s_map,GInv,p_value,StatStr,StatStr2,GroupColorbars,G,UseCorrelRes,sum_kappa,nchn,LKCflag)
     if ~isstruct(G)
         LKC = G;
     else
@@ -32,7 +32,7 @@ switch fign
     case 3
         %%%%%%%%%%%%%%%%%
         %Get threshold
-        if LKC || UseCorrelRes
+        if LKCflag || UseCorrelRes
             th_z = calc_EC(LKC,p_value,tstr,[eidf,erdf]);
             str_cor = StatStr;
         else
@@ -88,7 +88,7 @@ switch fign
             udf = unique(xerdf);
             xth = zeros(1,length(udf));
             for i1=2:length(udf) %exclude 0
-                if LKC || UseCorrelRes
+                if LKCflag || UseCorrelRes
                     xth(i1) = calc_EC(LKC,p_value,tstr,[eidf,udf(i1)]);
                 else
                     xth(i1) = spm_invFcdf(1-p_value, eidf, udf(i1));
@@ -115,7 +115,7 @@ switch fign
                 end
                 th_z = 0;
             else
-                if LKC
+                if LKCflag
                     test_LKC_by_pixel = 0;
                     if test_LKC_by_pixel && isfield(G,'ns')
                         th_zi = zeros(1,G.ns-G.min_subj+1);
@@ -194,7 +194,7 @@ switch fign
             udf = unique(xerdf);
             xth = zeros(1,length(udf));
             for i1=2:length(udf) %exclude 0
-                if LKC %|| Z.UseCorrelRes
+                if LKCflag %|| Z.UseCorrelRes
                     xth(i1) = calc_EC(LKC,p_value,tstr,[eidf,udf(i1)]);
                 else
                     xth(i1) = spm_invFcdf(1-p_value, eidf, udf(i1));
