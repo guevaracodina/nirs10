@@ -1,4 +1,9 @@
 function Y = nirs_make_figure(I,F,W,Z,str_cor,th_z,combinedfig)
+% leak_test1 = 1;
+% if leak_test1
+%     %return empty -- don't do any figures
+%     Y = [];
+% else
 index_over = I.index_over; 
 if isfield(I,'index_over2')
 index_over2 = I.index_over2;
