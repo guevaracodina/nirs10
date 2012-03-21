@@ -57,4 +57,3 @@ switch level
             L2 = L2 + sqrt(abs(det(S'*S)));
         end
 end
-
