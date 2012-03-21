@@ -80,7 +80,8 @@ for Idx=1:size(job.NIRSmat,1)
                 ftopo = fullfile(dir1,'TOPO.mat');
                 TOPO = [];
                 
-                [newDir job] = nirs_get_current_dir(job,Idx);
+                %[newDir job] = nirs_get_current_dir(job,Idx);
+                [newDir dummy1 dummy2] = fileparts(job.NIRSmat{Idx,1});
                 %Update ftopo
                 [dir fil1 ext1] = fileparts(ftopo); %#ok<ASGLU>
                 ftopo = fullfile(newDir, [fil1 ext1]);
