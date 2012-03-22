@@ -190,9 +190,9 @@ if ~isempty(DF) %&& DF.GroupColorbars %Separated colorbars too far from working 
                 %                         hcNew2 = colorbar;
                 % %                     end
                 %                 end
-                if cbar2 
+                %if cbar2 
                 hcNew2 = colorbar;
-                end
+                %end
                 %make the subplots larger
                 if DF.GroupColorbars
                     p = get(axNew2, 'pos');
@@ -228,7 +228,7 @@ if ~isempty(DF) %&& DF.GroupColorbars %Separated colorbars too far from working 
                 if ~exist('hc1_max','var')
                     hc1_max = hc2_max;
                 end
-                if cbar2
+                %if cbar2
                 set(hcNew2,'YLim', [hc2_min hc1_max]);
                 y_tick = linspace(hc2_min, hc1_max, tick_number)';
                 set(hcNew2, 'YTick', y_tick);
@@ -239,7 +239,7 @@ if ~isempty(DF) %&& DF.GroupColorbars %Separated colorbars too far from working 
                 %hold on
                 %caxis([hc2_min hc2_max+(hc2_max-hc2_min)])
                 cbfreeze(hcNew2);
-                end
+                %end
                 %                 end
                 %
                 close(fh2); %For F contrasts, this will be the same as fh1
