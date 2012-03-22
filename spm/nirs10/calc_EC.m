@@ -10,15 +10,15 @@ function [threshold] = calc_EC(LKC, p_value, stat, df)
 L0 = LKC(1);
 L1 = LKC(2);
 L2 = LKC(3);
-v = df(2);
-cstT = 1/ power(2*pi,3/2) / sqrt(v/2) / gamma(v/2);
-dv2 = (1-v)/2;
-gam2 = gamma((v+1)/2);
-a = 1/(2*pi);
 pOK = 0;
 lc = 0;
 while ~pOK && lc < 2
     lc = lc+1;
+    v = df(2);
+    cstT = 1/ power(2*pi,3/2) / sqrt(v/2) / gamma(v/2);
+    dv2 = (1-v)/2;
+    gam2 = gamma((v+1)/2);
+    a = 1/(2*pi);
     switch stat
         case 'T'
             t = 0:0.001:7;
