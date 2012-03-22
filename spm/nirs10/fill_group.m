@@ -24,7 +24,7 @@ try
     [cbeta ccov_beta new_version] = fill_group_arrays(TOPO,big_TOPO,v1,c1,h1,Z,xCon,ns,shb);
     if ~isempty(BV)
         if length(BV.brain_view_mask_2d) == 1
-            cbeta = cbeta(i0,:).*repmat(BV.brain_view_mask_2d{1}(:)',[size(cbeta,1) 1]);
+            cbeta = cbeta.*repmat(BV.brain_view_mask_2d{1}(:)',[size(cbeta,1) 1]);
         else
             for i0=1:size(cbeta,1)
                 cbeta(i0,:) = cbeta(i0,:).*BV.brain_view_mask_2d{i0}(:)';
