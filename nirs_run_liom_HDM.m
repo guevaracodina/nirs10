@@ -75,7 +75,7 @@ if isfield(job.simuOn,'simuYes')
         S.simuPriorDistr = 2;
         S.simuPrior1 = job.simuOn.simuYes.simuParamDistr.distr_bimodal.simuMean1; %Priors to use
         S.simuR1     = job.simuOn.simuYes.simuParamDistr.distr_bimodal.simuR1; %Range to sample
-        simuDiffPrior = job.simuOn.simuYes.simuParamDistr.distr_bimodal.simuMean21; %Priors to use
+        S.simuDiffPrior = job.simuOn.simuYes.simuParamDistr.distr_bimodal.simuMean21; %Priors to use
         S.simuR2     = job.simuOn.simuYes.simuParamDistr.distr_bimodal.simuR2; %Range to sample
     end
 
@@ -340,7 +340,7 @@ try
                             ylabel('BOLD (%)')
                             try
                                 hold on, plot(tt,Y.y(:,2)*100,'.-r')
-                                ylim([-3 18])
+                                %ylim([-3 18])
                                 ylabel('ASL (%)')
                             end
                             try 
@@ -556,8 +556,8 @@ function pA = generate_random_param(S,pE)
 
                     for it1=round(S.simuIt/2)+1:S.simuIt % for 2nd half of simulations                                                                                      
                         % User-specified priors
-                        if ~isempty(simuDiffPrior)
-                            pA(it1,pE1) = pA(it1-round(S.simuIt/2),pE1)*(1+simuDiffPrior(ct)/100);
+                        if ~isempty(S.simuDiffPrior)
+                            pA(it1,pE1) = pA(it1-round(S.simuIt/2),pE1)*(1+S.simuDiffPrior(ct)/100);
                         end
                         tpA = pA(it1,pE1);
                         % User-specified range of simulated
