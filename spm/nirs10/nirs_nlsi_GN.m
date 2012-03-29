@@ -494,9 +494,14 @@ for k = 1:EM.Niterations % was 4*128 in SPM, max. number of iterations
         if isreal(f)
             
             subplot(2,1,1)
-            plot(x,f,'-b'), hold on
+            plot(x,f(:,1),'-b'), hold on
             %plot(x,y,':r'), hold on
-            plot(x,f + spm_unvec(e,f),'k','LineWidth',0.5), hold off
+            temp = f + spm_unvec(e,f);
+            plot(x,temp(:,1),'k','LineWidth',0.5), hold off
+            if size(f,2)==2
+                hold on, plot(x,f(:,2)/10,'-m')
+                plot(x,temp(:,1)/10,'r','LineWidth',0.5), hold off
+            end
             xlabel(xLab)
             title(sprintf('%s: %i','prediction (solid blue) and filtered response (dashed black): E-Step',k))
             grid on
@@ -535,8 +540,8 @@ for k = 1:EM.Niterations % was 4*128 in SPM, max. number of iterations
             prevMSE_flow = MSE_flow;
             x0_flow = x0(:,2);
             MSE_flow = sum(x0_flow.^2)/length(x0_flow(:));
-            legend(['MSE: ' sprintf('%2.3f',MSE)], ['(MSE BOLD: ' sprintf('%2.3f',MSE_BOLD) ...
-                ', MSE flow: ' sprintf('%2.3f',MSE_flow) ')']);
+            legend(['MSE: ' sprintf('%2.3f',MSE)], ['(MSE BOLD (k-b): ' sprintf('%2.3f',MSE_BOLD) ...
+                ', MSE flow (r-m): ' sprintf('%2.3f',MSE_flow) ')']);
         else
             legend(['MSE: ' sprintf('%g',MSE)]);
         end
