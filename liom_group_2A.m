@@ -34,7 +34,7 @@ try
     tmp_mask(cbeta == 0) = 1;
     mask = sum(tmp_mask,1);
     index_group = find(mask == 0);
-    [L2] = calc_LKC(index_group,[s1 s2], reshape(res,[size(r,1) s1 s2]), 'group');
+    [L2] = calc_LKC(index_group,[s1 s2], reshape(res,[size(res,1) s1 s2]), 'group');
     r = sqrt(L2./pi);
     L1 = pi * r;
     L0 = 1;
