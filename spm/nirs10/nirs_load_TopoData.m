@@ -1,4 +1,4 @@
-function [rendered_MNI run_contrast_OK] = nirs_load_TopoData(job,NIRS,run_contrast_OK)
+function [rendered_MNI run_contrast_OK NIRS] = nirs_load_TopoData(job,NIRS,run_contrast_OK)
 %load topographic information (formerly known as preproc_info)
 try
     %If present, this loads NIRS_SPM's rendered_MNI structure

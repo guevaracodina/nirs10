@@ -4,7 +4,11 @@ function varargout = approx_trRV(varargin)
 %with a few very large values. Strategy is to calculate the values that
 %contribute to TrRV exactly, and since the indices where they occur will
 %be the same as for trRVRV, approximate trRVRV by those values.
-exact = 0;
+if nargin == 5
+    exact = varargin{5};
+else
+    exact = 0;
+end
 
 X = varargin{1};
 pKX = varargin{2};

@@ -346,9 +346,16 @@ for iSubj=1:size(job.NIRSmat,1)
                                 try
                                     if Save6Projections
                                         [side_hemi spec_hemi] = nirs_get_brain_view(kk);
-                                        filen1 = fullfile(pth2,[spec_hemi '.fig']);
+                                        subj_str = '';
+                                        try
+                                            if isfield(NIRS.Dt.s,'subj_id')
+                                                subj_str = [NIRS.Dt.s.subj_id '_'];
+                                            end
+                                        end
+                                        
+                                        filen1 = fullfile(pth2,[subj_str spec_hemi '.fig']);
                                         saveas(fh0(kk),filen1,'fig');
-                                        filen2 = fullfile(pth2,[spec_hemi '.tif']);
+                                        filen2 = fullfile(pth2,[subj_str spec_hemi '.tif']);
                                         print(fh0(kk), '-dtiffn', filen2);
                                         close(fh0(kk));
                                     end

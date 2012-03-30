@@ -669,6 +669,11 @@ for Idx=1:size(job.NIRSmat,1)
                 iSess = idx_sess(f);
                 SPM.xY.P{f} = NIRS.Dt.fir.pp(lst).p{iSess};
             end
+            if isfield(job,'TrRVRVexact')
+                SPM.TrRVRVexact = job.TrRVRVexact;
+            else
+                SPM.TrRVRVexact = 0; %approximate
+            end
             SPM.generate_trRV = generate_trRV;
             SPM.filter_design_matrix = filter_design_matrix;
             SPM.job = job;

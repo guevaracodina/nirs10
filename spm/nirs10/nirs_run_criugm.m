@@ -42,6 +42,9 @@ for is=1:sN
             NIRS.flags.NIRS_OK = 1;
             NIRS.Dt.s.age = age;
             NIRS.Dt.s.p = sDtp;
+            if isfield(job.subj(1,is),'subj_id')
+                NIRS.Dt.s.subj_id = job.subj(1,is).subj_id;
+            end
             % on ecrase tout sujet deja existant
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %if exist(sDtp,'dir')==7, rmdir(sDtp,'s'); end
