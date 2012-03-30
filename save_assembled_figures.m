@@ -11,7 +11,14 @@ if ~isempty(Inv)
     Inv = ['_' Inv];
 end
 if isfield(Z,'Idx')
-    subj_str = ['S' gen_num_str(Z.Idx,2)];
+    subj_str = ['_S' gen_num_str(Z.Idx,2)];
+    try 
+    if isfield(Z,'subj_id')
+        %This is useful if the subject numbers are not preserved due to
+        %some subjects being dropped for various reasons
+        subj_str = [Z.subj_id subj_str]; 
+    end
+    end
 else
     subj_str = ''; %group analysis
 end

@@ -53,9 +53,12 @@ switch SPM.xX.K.HParam.type
         S = S - SPM.xX.K.X0 * (SPM.xX.K.X0' * S);
         %note NIRS_SPM has a catch if out of memory occurs (- deleted here)
 end
+if ~isfield(SPM,'TrRVRVexact')
+    SPM.TrRVRVexact = 0; %approximation
+end
 
 if SPM.generate_trRV
-    [trRV trRVRV ] = approx_trRV(SPM.xX.xKXs.X,SPM.xX.pKX,S);
+    [trRV trRVRV ] = approx_trRV(SPM.xX.xKXs.X,SPM.xX.pKX,S,[],SPM.TrRVRVexact);
 else
     trRV = 0;
     trRVRV = 0;

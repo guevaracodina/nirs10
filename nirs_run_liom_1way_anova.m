@@ -34,6 +34,8 @@ for Idx=1:nS
     dir1 = NIRS.SPM{1};
     %load topographic information (formerly known as preproc_info)
     fname_ch = NIRS.Dt.ana.rend;
+    %quick fix for Claudine's study:
+    %fname_ch = 'W:\Claudine\SPMDataNT\S003\TopoData.mat';
     load(fname_ch);
     
     if Idx == 1
@@ -68,8 +70,7 @@ try
     NIRS.TOPO = ftopo;
     save(newNIRSlocation,'NIRS');
     job.NIRSmat{nl,1} = newNIRSlocation;
-    Z.dir1 = dir_group;
-    
+    Z.dir1 = dir_group;    
     %Big loop over views
     for v1=1:6
         view_estimated = 0;

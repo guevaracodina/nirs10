@@ -67,7 +67,7 @@ for Idx=1:size(job.NIRSmat,1)
         job.NIRSmat{Idx,1} = newNIRSlocation;
         if ~isempty(NIRS) && (~isfield(NIRS.flags,'con_OK') || job.force_redo)
             NC = NIRS.Cf.H.C.N;
-            [rendered_MNI run_contrast_OK] = nirs_load_TopoData(job,NIRS,run_contrast_OK);
+            [rendered_MNI run_contrast_OK NIRS] = nirs_load_TopoData(job,NIRS,run_contrast_OK);
             %load SPM - first GLM - might want to generalize
             [dir1 dummy] = fileparts(NIRS.SPM{1});
             load(NIRS.SPM{1});
@@ -89,6 +89,11 @@ for Idx=1:size(job.NIRSmat,1)
                 %Careful, this is one aspect of Z that is subject specific
                 Z.dir1 = newDir;
                 Z.Idx = Idx;
+                try
+                if isfield(NIRS.Dt.s,'subj_id')
+                    Z.subj_id = NIRS.Dt.s.subj_id;
+                end
+                end
                 %Calculate xCon and put it in TOPO -- also may need SSxCon
                 TOPO = nirs_get_contrasts(SPM,Z,TF,TOPO);
                 %Calculate required information on F-stats, which is

@@ -26,6 +26,14 @@ end
 if isfield(Z,'Idx')
     contrast_info = ['S' gen_num_str(Z.Idx,2) '_' contrast_info];
     contrast_info_for_fig = ['S' gen_num_str(Z.Idx,2) ' ' contrast_info_for_fig];
+    try 
+    if isfield(Z,'subj_id')
+        %This is useful if the subject numbers are not preserved due to
+        %some subjects being dropped for various reasons
+        contrast_info = [Z.subj_id '_' contrast_info]; 
+        contrast_info_for_fig = [Z.subj_id ' ' contrast_info_for_fig]; 
+    end
+    end
 end
 %choose font for figure here
 fontsize_choice = 16;

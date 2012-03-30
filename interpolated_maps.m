@@ -28,8 +28,8 @@ else
     strf = '';
     strf_fig = '';
 end
-filestr = [num2str(p_value) '_' spec_hemi '_' hb strf];
-filestr_fig = [num2str(p_value) ' ' spec_hemi ' ' hb strf_fig];
+filestr = [num2str(p_value) '_' spec_hemi '_' hb strf '_'];
+filestr_fig = [num2str(p_value) ' ' spec_hemi ' ' hb strf_fig ' '];
 
 %CF: copy figure structure
 CF.GInv = GInv;

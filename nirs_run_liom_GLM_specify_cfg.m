@@ -564,6 +564,16 @@ generate_trRV.val = {1};
 generate_trRV.help = {'Generate TrRV and TrRVRV - needed for interpolated maps.'
     'Careful! Note that TrRV is required for the NIRS_SPM method, to calculate t-stats.'}';
 
+TrRVRVexact      = cfg_menu;
+TrRVRVexact.tag  = 'TrRVRVexact';
+TrRVRVexact.name = 'Exact calculation of TrRVRV';
+TrRVRVexact.labels = {'Yes','No'};
+TrRVRVexact.values = {1,0};
+TrRVRVexact.val = {0};
+TrRVRVexact.help = {'Perform an exact calculation for TrRVRV (long for long data files)'
+    'Note that discrepancies of 30% have been found between this approximation and the exact result.'
+    'This will affect the number of degrees of freedom, and therefore the statistical thresholds'}';
+
 filter_design_matrix      = cfg_menu;
 filter_design_matrix.tag  = 'filter_design_matrix';
 filter_design_matrix.name = 'Filter the design matrix';
@@ -590,7 +600,7 @@ wls_bglm_specify.name = 'LIOM GLM Specification';
 wls_bglm_specify.tag  = 'wls_bglm_specify';
 wls_bglm_specify.val  = {NIRSmat redo1 NIRSmatCopyChoice sessions subj units time_res derivs bases ...
     volt GLM_include_cardiac GLM_include_Mayer vasomotion_choice NIRSchannelsConfound GenerateHbT flag_window ...
-    channel_pca hpf_butter generate_trRV filter_design_matrix ...
+    channel_pca hpf_butter generate_trRV TrRVRVexact filter_design_matrix ...
     wls_or_bglm};
 wls_bglm_specify.prog = @nirs_run_liom_GLM_specify;
 wls_bglm_specify.vout = @nirs_cfg_vout_liom_GLM_specify;

@@ -36,11 +36,8 @@ function [argout] = spm_filter_HPF_LPF_WMDL(K,Y)
 % this code has been updated for NIRS-SPM and wavelet-MDL detrending
 
 % set or apply
-%---------------------------------------------------------------------------
 if nargin == 1 && isstruct(K)
-
     % set K.X0
-    %-------------------------------------------------------------------
     for s = 1:length(K)
         k = length(K(s).row);
         % low pass filter
@@ -74,52 +71,35 @@ if nargin == 1 && isstruct(K)
                 K(s).X0 = X0(:,2:end);
         end
     end
-
     % return structure
-    %-------------------------------------------------------------------
     argout = K;
-
 else
-    % apply
-    %-------------------------------------------------------------------
+    % apply filter
     if isstruct(K)
-
            for s = 1:length(K)
-
             % select data
-            %---------------------------------------------------
             y = Y(K(s).row,:);
-    
             switch K(s).LParam.type
                 case {'hrf', 'Gaussian'}
                     y = K(s).KL*y;
-            end
-            
+            end            
             % apply high pass filter
-            %---------------------------------------------------
             switch K(s).HParam.type
                 case 'Wavelet-MDL'
                     [biasM] = detrend_wavelet_MDL(full(y), K(s).X(:,1:end-1));                    
                     y = y - biasM;
                 case 'DCT'
                     y = y - K(s).X0*(K(s).X0'*y);                    
-            end
-            
+            end         
             % reset filtered data in Y
-            %---------------------------------------------------
             Y(K(s).row,:) = y;
-
            end
-
-        % K is simply a filter matrix
-        %-------------------------------------------------------------------
     else
+        % K is simply a filter matrix
         Y = K*Y;
     end
-
     % return filtered data
-    %-------------------------------------------------------------------
-    %if any(~finite(Y)), warning('Found non-finite values in Y (could be the data).'); end;
+    if any(~isfinite(Y)), disp('Found non-finite values in Y (check the data).'); end;
     argout = Y;
 end
 

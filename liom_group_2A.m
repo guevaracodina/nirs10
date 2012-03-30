@@ -39,6 +39,12 @@ try
     L1 = pi * r;
     L0 = 1;
     G.LKC = [L0 L1 L2];
+    
+    %effect size:
+    %eta_squared = SSbetween./(SSbetween+SSwithin); %biased -- it overestimates 
+    %how much variance is explained
+    %Omega_squared: do not use for repeated measures! (i.e. not for this
+    %2-anova as coded up so far
 catch  exception
     disp(exception.identifier);
     disp(exception.stack(1));
