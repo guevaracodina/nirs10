@@ -16,7 +16,7 @@ else
     scon = '';
 end
 if isfield(Z,'Idx')
-    subj_str = ['_S' gen_num_str(Z.Idx,2)];
+    subj_str = ['S' gen_num_str(Z.Idx,2)];
     try 
     if isfield(Z,'subj_id')
         %This is useful if the subject numbers are not preserved due to
