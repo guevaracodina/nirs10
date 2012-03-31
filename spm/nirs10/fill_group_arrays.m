@@ -49,9 +49,10 @@ try
             else
                 if ~isfield(big_TOPO{f1}.v{v1},'s')
                     if isfield(big_TOPO{f1}.v{v1}.g{1}.hb{h1},'stat_map')
+                        %group analysis of a group of sessions analysis -- new version 
                         tmp = sign_hb*squeeze(big_TOPO{f1}.v{v1}.g{1}.hb{h1}.beta_map(c1,:,:));
                         if f1 == 1
-                            cbeta = zeros(length(Sess{c1}),length(tmp(:)));
+                            cbeta = zeros(ns,length(tmp(:)));
                             ccov_beta = cbeta;
                         end
                         cbeta(f1,:) = tmp(:);
@@ -61,10 +62,10 @@ try
                         ccov_beta(f1,:) = tmp(:).^2;
                         new_version = 1;
                     else
-                        %group analysis of a group of sessions analysis
+                        %group analysis of a group of sessions analysis -- old version 
                         tmp = sign_hb*squeeze(big_TOPO{f1}.v{v1}.g{1}.hb{h1}.c_interp_beta(c1,:,:));
                         if f1 == 1
-                            cbeta = zeros(length(Sess{c1}),length(tmp(:)));
+                            cbeta = zeros(ns,length(tmp(:)));
                             ccov_beta = cbeta;
                         end
                         cbeta(f1,:) = tmp(:);

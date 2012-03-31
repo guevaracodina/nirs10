@@ -38,7 +38,21 @@ CF.nC = nC;
 
 %loop over contrasts
 try
+    nCl = 0;
     for c1=1:nC
+        if isfield(Z,'use_nCloop')
+            if Z.use_nCloop               
+                Z.c1eff = mod(c1,Z.nCloop);
+                if Z.c1eff == 0
+                    Z.c1eff = Z.nCloop;
+                end
+                if Z.c1eff == 1
+                    nCl = nCl + 1;
+                end
+            end
+        else
+            nCl = 1;
+        end
         if xCon(c1).STAT == 'T'
             impose_T_bound = 1;
             if ~isempty(c_cov_interp_beta)
@@ -120,17 +134,18 @@ try
         else 
             LKC = [];
         end
+        CF.Z = Z; %horrible, but needed for nirs_copy_figure (near line 17)
         %uncorrected - if we generate inverted responses, or HbO or HbT
         if GInv || strcmp(hb,'HbO') || strcmp(hb,'HbT')
             if Z.output_unc
                 DF = nirs_draw_figure(2,F,W,Z,LKC); %DF: draw figure structure: handles to figure, axes and colorbar
                 %copy figure structure
-                if GFIS, H = nirs_copy_figure(H,DF,CF,c1,hb,1,tstr,0,Z.write_neg_pos); end
+                if GFIS, H{nCl} = nirs_copy_figure(H{nCl},DF,CF,c1,hb,1,tstr,0,Z.write_neg_pos); end
             end
             %tube formula corrected for Tstats - or Bonferroni for Fstats
             %if tstr == 'T' %only for Tstats for now
             DF = nirs_draw_figure(3,F,W,Z,LKC);
-            if GFIS, H = nirs_copy_figure(H,DF,CF,c1,hb,1,tstr,1,Z.write_neg_pos); end
+            if GFIS, H{nCl} = nirs_copy_figure(H{nCl},DF,CF,c1,hb,1,tstr,1,Z.write_neg_pos); end
             %end
         end
         if  tstr == 'T' %for F-stat, do not invert the map - always positive
@@ -151,10 +166,10 @@ try
         if GInv || strcmp(hb,'HbR')
             if Z.output_unc
                 DF = nirs_draw_figure(2,F,W,Z,LKC);
-                if GFIS, H = nirs_copy_figure(H,DF,CF,c1,hb,0,tstr,0,Z.write_neg_pos); end
+                if GFIS, H{nCl} = nirs_copy_figure(H{nCl},DF,CF,c1,hb,0,tstr,0,Z.write_neg_pos); end
             end
             DF = nirs_draw_figure(3,F,W,Z,LKC);
-            if GFIS, H = nirs_copy_figure(H,DF,CF,c1,hb,0,tstr,1,Z.write_neg_pos); end
+            if GFIS, H{nCl} = nirs_copy_figure(H{nCl},DF,CF,c1,hb,0,tstr,1,Z.write_neg_pos); end
         end
     end
 catch exception

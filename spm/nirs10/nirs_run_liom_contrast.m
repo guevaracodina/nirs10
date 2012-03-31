@@ -109,6 +109,7 @@ for Idx=1:size(job.NIRSmat,1)
                         clear W
                         brain_view = Z.views_to_run(v1);
                         [W.side_hemi W.spec_hemi] = nirs_get_brain_view(brain_view);
+                        Z.spec_hemi = W.spec_hemi; %needed to initialize assembled figures
                         % channel information
                         rchn = rendered_MNI{W.side_hemi}.rchn;
                         cchn = rendered_MNI{W.side_hemi}.cchn;

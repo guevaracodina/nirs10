@@ -29,13 +29,14 @@ try
                 W.res = [W.res tmp_res];
                 %How to calculate those? for now, just take the average
                 if f2 == 1
-                    tmp_var = xXn{f2}.ResSS0./xXn{f1}.trRV;
+                    tmp_var = xXn{f2}.ResSS./xXn{f1}.trRV;
                     tmp_varch = xXn{f2}.ResSSch./xXn{f1}.trRV;
                     tmp_corr = xXn{f2}.Bcov;
+                else
+                    tmp_var = tmp_var + xXn{f2}.ResSS./xXn{f1}.trRV;
+                    tmp_varch = tmp_varch + xXn{f2}.ResSSch./xXn{f1}.trRV;
+                    tmp_corr = blkdiag(tmp_corr, xXn{f2}.Bcov);
                 end
-                tmp_var = tmp_var + xXn{f2}.ResSS0./xXn{f1}.trRV;
-                tmp_varch = tmp_varch + xXn{f2}.ResSSch./xXn{f1}.trRV;
-                tmp_corr = blkdiag(tmp_corr, xXn{f2}.Bcov);
             end
             W.var = tmp_var/length(xXn);
             W.varch = tmp_varch/length(xXn);

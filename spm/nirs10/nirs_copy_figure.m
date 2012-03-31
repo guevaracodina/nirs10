@@ -10,11 +10,22 @@ else
 end
 %Begin with no colorbars
 load split
-cbar1 = 0; cbar2 = 0;
+cbar1 = 0; %cbar2 = 0;
 if ~isempty(DF) %&& DF.GroupColorbars %Separated colorbars too far from working -- just skip
     try
         GInv = CF.GInv;
-        nC = CF.nC;
+        try
+            Z = CF.Z;
+        end
+        if exist('Z','var') && isfield(Z,'nCloop')
+            nC = Z.nCloop;
+            c1 = mod(c1,nC);
+            if c1 == 0
+                c1 = nC; %same as Z.c1eff
+            end
+        else
+            nC = CF.nC;
+        end
         if isfield(DF,'fh1')
             fh1 = DF.fh1;
             ax1 = DF.ax1;
@@ -115,6 +126,7 @@ if ~isempty(DF) %&& DF.GroupColorbars %Separated colorbars too far from working 
                             axNew=subplot(nC,3,3*(c1-1)+1);
                     end
                 end
+                
                 set(fh1,'CurrentAxes',ax1);
                 copyobj(allchild(ax1),axNew);
                 colormap(split)
@@ -348,13 +360,8 @@ if ~isempty(DF) %&& DF.GroupColorbars %Separated colorbars too far from working 
             close(fh1);
             close(fh2);
         end
-        try %try to remove all dangling objects
-            
-        end
     catch exception
         disp(exception.identifier);
         disp(exception.stack(1));
     end
 end
-end
-
