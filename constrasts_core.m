@@ -14,8 +14,35 @@ end
 %Initialize figures
 %Handles for assembled figures
 try
-    H = initialize_assembled_figure_handles;
-    H = initialize_assembled_figures(Z,H,f1,'Z');
+    Z.use_nCloop = 1;
+    if Z.use_nCloop
+        %maximal number of contrasts to group in assembled
+        %figures
+        nC = length(xCon);
+        Z.nCloop = 4;
+        nCl = 0;
+        for c1=1:nC %Loop over contrasts
+            Z.c1eff = mod(c1,Z.nCloop);
+            if Z.c1eff == 0
+                Z.c1eff = Z.nCloop;
+            end
+            if Z.c1eff == 1
+                nCl = nCl + 1;
+                Z.scon = '';
+                for k0=c1:(c1+Z.nCloop-1)
+                    if k0 <= nC
+                        Z.scon = [Z.scon '_' xCon(k0).name];
+                    end
+                end
+                %Handles for assembled figures
+                H{nCl} = initialize_assembled_figure_handles;
+                H{nCl} = initialize_assembled_figures(Z,H{nCl},f1,'Z');
+            end
+        end
+    else
+        H{1} = initialize_assembled_figure_handles;
+        H{1} = initialize_assembled_figures(Z,H{1},f1,'Z');
+    end
     for h1=1:3
         %HbO
         try
@@ -42,7 +69,27 @@ try
             disp(['Problem with ' hb ' contrast']);
         end
     end
-    call_save_assembled_figures(Z,W,H,f1);
+    if Z.use_nCloop
+        nCl = 0;
+        for c1=1:nC
+            Z.c1eff = mod(c1,Z.nCloop);
+            if Z.c1eff == 0
+                Z.c1eff = Z.nCloop;
+            end
+            if Z.c1eff == Z.nCloop || c1 == nC
+                nCl = nCl + 1;
+                Z.scon = '';
+                for k0=c1:(c1+Z.nCloop-1)
+                    if k0 <= nC
+                        Z.scon = [Z.scon '_' xCon(k0).name];
+                    end
+                end
+                call_save_assembled_figures(Z,W,H{nCl},0);
+            end
+        end
+    else
+        call_save_assembled_figures(Z,W,H{1},f1);
+    end
 catch exception2
     disp(exception2.identifier);
     disp(exception2.stack(1));

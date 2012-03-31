@@ -184,20 +184,48 @@ for Idx=1:nl
                     TOPO.v{v1}.(fg).min_s = Z.min_s;
                     TOPO.v{v1}.(fg).s1 = W.s1;
                     TOPO.v{v1}.(fg).s2 = W.s2;
-                    
-                    %Handles for assembled figures
-                    H = initialize_assembled_figure_handles;
-                    H = initialize_assembled_figures(Z,H,0,'Group');
-                    %Loop over chromophores
-                    for h1=1:3 %including HbT
-                        for c1=1:nC %Loop over contrasts
+                    %maximal number of contrasts to group in assembled
+                    %figures
+                                      
+                    Z.nCloop = 4;
+                    for c1=1:nC %Loop over contrasts
+                        %effective c1 contrast number for the purpose of
+                        %assembling figures only
+                        Z.c1eff = mod(c1,Z.nCloop);
+                        if Z.c1eff == 0
+                            Z.c1eff = Z.nCloop;
+                        end
+                        if Z.c1eff == 1
+                            Z.scon = '';
+                            Z.sconFig = '';
+                            for k0=c1:(c1+Z.nCloop-1)
+                                if k0 <= nC
+                                    Z.scon = [Z.scon '_' xCon(k0).name];
+                                    %nrep = regexprep(xCon(k0).name, '_', ' ');
+                                    %Z.sconFig = [Z.sconFig ' ' nrep];       
+                                end
+                            end
+                            %Handles for assembled figures
+                            Z.spec_hemi = W.spec_hemi;
+                            CF.Z = Z; %horrible, but needed for nirs_copy_figure (near line 17)
+                            H = initialize_assembled_figure_handles;
+                            H = initialize_assembled_figures(Z,H,0,'Group');
+                        end
+                        
+                        %Loop over chromophores
+                        for h1=1:3 %including HbT                        
                             %Positive stats
                             [H,TOPO,big_TOPO] = fill_group(H,TOPO,big_TOPO,v1,c1,h1,Z,W,F,CF,xCon,ns,1);
                             %Negative stats
                             [H,TOPO,big_TOPO] = fill_group(H,TOPO,big_TOPO,v1,c1,h1,Z,W,F,CF,xCon,ns,0);
                         end
+                        %save after each group or when reaching the last
+                        %contrast
+                        if Z.c1eff == Z.nCloop || c1 == nC
+                            call_save_assembled_figures(Z,W,H,0);
+                        end
                     end
-                    call_save_assembled_figures(Z,W,H,0);
+                    
                 end %if view_estimated
             end %end for v1
             

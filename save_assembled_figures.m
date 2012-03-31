@@ -10,6 +10,11 @@ end
 if ~isempty(Inv)
     Inv = ['_' Inv];
 end
+if isfield(Z,'scon')
+    scon = [Z.scon '_'];
+else
+    scon = '';
+end
 if isfield(Z,'Idx')
     subj_str = ['_S' gen_num_str(Z.Idx,2)];
     try 
@@ -22,7 +27,7 @@ if isfield(Z,'Idx')
 else
     subj_str = ''; %group analysis
 end
-filestr = [subj_str str_grp str_cor '_' num2str(Z.p_value) '_' W.spec_hemi strf Inv];
+filestr = [subj_str str_grp str_cor '_' num2str(Z.p_value) '_' W.spec_hemi strf scon Inv];
 
 filen1 = fullfile(Z.dir1,[filestr '.fig']);
 if Z.gen_fig

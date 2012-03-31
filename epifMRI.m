@@ -167,8 +167,8 @@ Vlabel = {'','V'}; %No Volterra; Volterra
 Wlabel = {'','W'}; %Not normalized; Normalized
 Glabel = {'','G'}; %Canonical HRF (+derivs optional) or Gamma function(s)
 %Size of smoothing kernel, in mm
-skernel = 8;
-skernelz = 8;
+skernel = 6;
+skernelz = 6;
 %Code will not run if there are no spikes in one of the sessions -
 %By specifying a minimum number of spikes, sessions will be excluded
 %and the code will run for the remaining sessions.
