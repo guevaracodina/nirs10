@@ -70,7 +70,7 @@ for Idx=1:size(job.NIRSmat,1)
             [rendered_MNI run_contrast_OK NIRS] = nirs_load_TopoData(job,NIRS,run_contrast_OK);
             %load SPM - first GLM - might want to generalize
             [dir1 dummy] = fileparts(NIRS.SPM{1});
-            load(NIRS.SPM{1});
+            load(NIRS.SPM{end});
             if ~exist('SPM','var')
                 run_contrast_OK = 0;
                 disp('SPM not found');
