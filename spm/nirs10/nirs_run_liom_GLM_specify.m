@@ -680,12 +680,12 @@ for Idx=1:size(job.NIRSmat,1)
             spm_file = fullfile(spm_dir,'SPM.mat');
             save(spm_file,'SPM');
             %store path to SPM, after possible prior GLMs
-            try
-                l1 = length(NIRS.SPM);
-                NIRS.SPM{l1+1} = spm_file;
-            catch
+            %try
+            %    l1 = length(NIRS.SPM);
+            %    NIRS.SPM{l1+1} = spm_file;
+            %catch
                 NIRS.SPM{1} = spm_file;
-            end
+            %end
             
             %NIRS is now modified - it includes a link to the GLM
             if NIRSconfoundsOn

@@ -121,6 +121,7 @@ try
                 %3: main B
                 %4: effect of A at each level of B
                 %5: effect of B at each level of A
+                clear cbeta
                 for z1=1:5
                     %Handles for assembled figures
                     clear H
@@ -151,6 +152,7 @@ try
                     nS0 = length(Z.anova2_sessions);
                     Z.p_value = job.contrast_p_value; %reset because of redefinition of p_value later for post-hoc contrasts
                     %Loop over chromophores
+                    
                     for h1=1:3 %including HbT
                         hb = get_chromophore(h1);
                         %Fill cbeta with session by contrast information
