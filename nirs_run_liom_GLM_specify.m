@@ -248,9 +248,19 @@ for Idx=1:size(job.NIRSmat,1)
                                 tmpC = mean(d(logical(1-chHbO),:),1);
                             case 3 %HbO
                                 tmpC = mean(d(chHbO,:),1);
+                            case 4 %Hbo&HbR
+                                tempC_O = mean(d(chHbO,:),1);
+                                tempC_R = mean(d(logical(1-chHbO),:),1);
                         end
-                        C = [C tmpC'];
-                        Cname = [Cname {'V'}];
+                        
+                        switch select_chromophore
+                            case {1 2 3}
+                                C = [C tmpC'];
+                                Cname = [Cname {'V'}];
+                            case 4
+                                C = [C tempC_R' tempC_O'];
+                                Cname = [Cname {'V_R'} {'V_O'}];
+                        end
                     end
                     if ~isempty(job.subj.multi_reg)
                         %"Multiple regressors" file

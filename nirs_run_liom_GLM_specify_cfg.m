@@ -9,8 +9,8 @@ select_chromophore         = cfg_menu;
 select_chromophore.tag     = 'select_chromophore';
 select_chromophore.name    = 'Select chromophore';
 select_chromophore.help    = {'Select chromophore'};
-select_chromophore.labels = {'HbT' 'HbR' 'HbO'};
-select_chromophore.values  = {  1   2   3};
+select_chromophore.labels = {'HbT' 'HbR' 'HbO' 'HbO&HbR'};
+select_chromophore.values  = {  1   2   3   4};
 select_chromophore.val = {3};
 
 vasomotion_on         = cfg_branch;
