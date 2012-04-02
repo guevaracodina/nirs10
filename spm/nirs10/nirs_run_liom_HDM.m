@@ -19,9 +19,7 @@ removeWhitening = job.removeWhitening;
 
 save_figures = job.save_figures;
 generate_figures = job.generate_figures;
-%Algebraic relation for m = CMRO2, in arbitrary units
-%m = f * HbR /HbT; assuming gamma_R and gamma_T = 1; f: flow
-plot_algebraic_CMRO2 = 1; %Boolean
+
 
 %Modalities:
 %1: BOLD
@@ -33,25 +31,34 @@ plot_algebraic_CMRO2 = 1; %Boolean
 %Step 1: checking which modality to run
 if isfield(job.xSPM_Modalities,'xSPM_BOLD')
     modal = 1;
-    sBOLD = job.xSPM_Modalities.xSPM_BOLD;
+    %sBOLD = job.xSPM_Modalities.xSPM_BOLD;
 else
     if isfield(job.xSPM_Modalities,'xSPM_BOLD_ASL')
         modal = 2;
-        sBOLD = job.xSPM_Modalities.xSPM_BOLD_ASL;
+        %sBOLD = job.xSPM_Modalities.xSPM_BOLD_ASL;
         %currently not used
-        sASL = job.xSPM_Modalities.xSPM_BOLD_ASL;
-        subjectsASL = sASL.which_subjects_ASL;
+        %sASL = job.xSPM_Modalities.xSPM_BOLD_ASL;
+        %subjectsASL = sASL.which_subjects_ASL;
     else
         if isfield(job.xSPM_Modalities,'xSPM_ASL')
             modal = 3;
-            sASL = job.xSPM_Modalities.xSPM_ASL;
+            %sASL = job.xSPM_Modalities.xSPM_ASL;
         else
             if isfield(job.xSPM_Modalities,'xSPM_BOLD_ASL_V2')
                 modal = 5;
-                sBOLD = job.xSPM_Modalities.xSPM_BOLD_ASL_V2;
+                %sBOLD = job.xSPM_Modalities.xSPM_BOLD_ASL_V2;
             end
         end
     end
+end
+
+switch modal
+    case {2,4,5}
+        %Algebraic relation for m = CMRO2, in arbitrary units
+        %m = f * HbR /HbT; assuming gamma_R and gamma_T = 1; f: flow
+        plot_algebraic_CMRO2 = 1; %Boolean
+    case {1,3}
+        plot_algebraic_CMRO2 = 0;
 end
 
 if isfield(job,'priorFile')
@@ -93,6 +100,8 @@ if isfield(job.simuOn,'simuYes')
                 restscans = job.simuOn.simuYes.simuNoise.noiseYes.restscans; %Rest scans to add signal to
             case {2,5}
                 restscans_BOLD = job.simuOn.simuYes.simuNoise.noiseYes.restscans_BOLD;
+                restscans_ASL = job.simuOn.simuYes.simuNoise.noiseYes.restscans_ASL;
+            case 3
                 restscans_ASL = job.simuOn.simuYes.simuNoise.noiseYes.restscans_ASL;
         end
     else
@@ -156,10 +165,11 @@ try
                     
                     % CHECK THIS...??
                     if removeWhitening
-                        switch modal
-                            case 1
-                                SPM.xX.W = speye(size(SPM.xX.W,1));
-                            case 5
+                        %switch modal
+                        % This should apply to all modalities
+                        %    case 1
+                        %        SPM.xX.W = speye(size(SPM.xX.W,1));
+                        %    case 5
                                 %quick fix to use only one session
                                  nSess = size(SPM.Sess,2);
                                  SPM.xX.W = speye(size(SPM.xX.W,1)./nSess);
@@ -168,7 +178,7 @@ try
                                  SPM.xX.K.X0 = zeros(size(SPM.xX.K.X0));
                                  nScans = size(SPM.xY.VY,1)/nSess;
                                  SPM.xY.VY = SPM.xY.VY((1:nScans) + (nScans*(cs1-1)) );
-                        end
+                        %end
                         %save it as a temporary file
                         [dir0 fil0 ext0] = fileparts(fBOLD);
                         tmpdir = fullfile(dir0,'tmp_noWhitening');
@@ -179,13 +189,18 @@ try
                         end
                     end
                     switch modal
-                        case 2
-                            fASL = fullfile(subjectsASL{SubjIdx},'SPM.mat');
-                        case 5
+                        %case 2
+                        %    %fASL = fullfile(subjectsASL{SubjIdx},'SPM.mat');
+                        case {2,3,5}
                             % Very inelegant HARD-CODED FOR MDEIE-P2
-                            fASL = fBOLD;
-                            tmpidx = strfind(fBOLD,'UR3');
-                            fASL(tmpidx:tmpidx+2) = 'UR1';
+                            tmpidx3 = strfind(fBOLD,'UR3');
+                            tmpidx1 = strfind(fBOLD,'UR1');
+                            if ~isempty(tmpidx1)
+                                fASL = fBOLD;
+                            elseif isempty(tmpidx1) && ~isempty(tmpidx3)
+                                fASL = fBOLD;
+                                fASL(tmpidx3:tmpidx3+2) = 'UR1';
+                            end
                     end
                     
                     [Sess s] = get_session(SPM,cs1);
@@ -207,6 +222,20 @@ try
                                 fBOLD_old = fBOLD;
                                 fBOLD = fullfile(tmpdir,[fil00 ext00]);
                                 save(fBOLD,'SPM');
+                                
+                            case 3
+                                 if S.simuNoise
+                                    SPM.xY.P     = char(restscans_ASL{:});
+                                    SPM.xY.VY = spm_vol(SPM.xY.P);
+                                end
+                                %save SPM in a temporary location
+                                [dir00 fil00 ext00] = fileparts(fASL);
+                                tmpdir = fullfile(dir00,'tmp_simu_ASL');
+                                if ~exist(tmpdir,'dir'), mkdir(tmpdir); end
+                                %fASL_old = fBOLD;
+                                fASL = fullfile(tmpdir,[fil00 ext00]);
+                                save(fASL,'SPM');
+                                
                             case 5
                                 if S.simuNoise
                                     SPM.xY.P     = char(restscans_BOLD{:});
@@ -235,19 +264,32 @@ try
                         end
                     end
 
-                    %extract VOI for BOLD
-                    VOI = get_VOI(fBOLD,ROIs(r1),cs1);                 
-                    y1 = VOI.Y;                  
-                    y1 = y1((1+dp_start):end-dp_end);                   
-                    Y.y(:,1) = y1./mean(y1);
                     
+                    
+                    % Extract VOI data
                     switch modal
-                        case {2,3,5}
+                        case 1
+                            %extract VOI for BOLD
+                            VOI = get_VOI(fBOLD,ROIs(r1),cs1);                 
+                            y1 = VOI.Y;                  
+                            y1 = y1((1+dp_start):end-dp_end);                   
+                            Y.y(:,1) = y1./mean(y1);
+                        case {2,5}
+                            %extract VOI for BOLD
+                            VOI = get_VOI(fBOLD,ROIs(r1),cs1);                 
+                            y1 = VOI.Y;                  
+                            y1 = y1((1+dp_start):end-dp_end);                   
+                            Y.y(:,1) = y1./mean(y1);
                             %extract VOI for ASL
                             VOI_ASL = get_VOI(fASL,ROIs(r1),cs1);
                             y2    = VOI_ASL.Y((1+dp_start):end-dp_end); %y/100;
                             %yf2 = ButterHPF(1/SPM.xY.RT,1/128,3,y2);
                             Y.y(:,2) = y2/mean(y2);
+                        case 3
+                            VOI = get_VOI(fASL,ROIs(r1),cs1);
+                            y2    = VOI.Y((1+dp_start):end-dp_end); %y/100;
+                            %yf2 = ButterHPF(1/SPM.xY.RT,1/128,3,y2);
+                            Y.y(:,1) = y2/mean(y2);
                     end
                     
            
@@ -337,11 +379,15 @@ try
                             %ylim([-0.3 1.8])
                             xlim([0 200])
                             xlabel('Time (s)')
-                            ylabel('BOLD (%)')
-                            try
-                                hold on, plot(tt,Y.y(:,2)*100,'.-r')
-                                %ylim([-3 18])
-                                ylabel('ASL (%)')
+                            switch modal
+                                case 1
+                                    ylabel('BOLD (%)')
+                                case 3
+                                    ylabel('Flow (%)')
+                                case {2,5}
+                                    hold on, plot(tt,Y.y(:,2)*100,'.-r')
+                                    %ylim([-3 18])
+                                    ylabel('ASL (BOLD & flow) (%)')
                             end
                             try 
                                 title(['Upsampling: ' num2str(S.simuUpsample) ' ; Interpolation: ' num2str(S.simuInterp)])
@@ -594,6 +640,16 @@ function M = set_model(M)
             M.g     = 'nirs_gx_hdm';  %MODIFIER
             M.x     = [0 0 0 0 0 0 0 0]';      %MODIFIER
             M.n     = 8; %MODIFIER
+        case 3 % Buxton-Friston, part 1 (neural->flow, linear, eq. 1-2)
+            M.f     = 'nirs_fx_hdm_part1';
+            M.g     = 'nirs_gx_hdm';
+            M.x     = [0 0]';
+            M.n     = 2; % What is that?? number of state equations/variables??
+        case 4 % Buxton-Friston, part 2 (flow->bold, non-linear, eq. 3-4)
+            M.f     = 'spm_fx_hdm';%'spm_fx_hdm_part2';
+            M.g     = 'nirs_gx_hdm';%'nirs_gx_hdm_part2';
+            M.x     = [0 0 0 0]';
+            M.n     = 4; % What is that?? umber of state equations/variables??    
         otherwise %Buxton-Friston
             M.f     = 'spm_fx_hdm';
             M.g     = 'nirs_gx_hdm';
@@ -605,18 +661,20 @@ function M = set_model(M)
 
     switch M.modal
         case {1,3}
-            M.l = 1; %BOLD
+            M.l = 1; %BOLD or flow only
         case 2
-            M.l = 2;
-        case 4
+            M.l = 2; % BOLD & flow
+        case 4 % HbO, HbR
             switch Model_Choice
-                case {0,1} %Buxton, Zheng-Mayhew
+                case 3 % BF part 1 (flow)
+                    M.l = 1;
+                case {0,1,4} %Buxton, Zheng-Mayhew - HbO, HbR
                     M.l = 2;
-                case 2 %Huppert1
+                case 2 %Huppert1 - HbO, HbR, HbT??
                     M.l = 3;
             end
         case 5
-            M.l = 2; %BOLD, ASL
+            M.l = 2; %BOLD & flow
     end
 end
 
@@ -629,16 +687,10 @@ P(end-size(U.u,2)+S.simuS) = 0.1;
 ys = spm_int(P,M,U);                           
 % Upsample
 if S.simuUpsample > 1
-    switch modal 
-        case 1
-            Y.y = interp(Y.y,S.simuUpsample);
-
-        case {2,5}
-            for iX0=1:size(Y.y,2)
-                tmp0(:,iX0) = interp(Y.y(:,iX0),S.simuUpsample);
-            end
-            Y.y = tmp0; clear tmp0
+    for iX0=1:size(Y.y,2)
+        tmp0(:,iX0) = interp(Y.y(:,iX0),S.simuUpsample);
     end
+    Y.y = tmp0; clear tmp0
 
     for iX0=1:size(Y.X0,2)
         tmp0(:,iX0) = interp(Y.X0(:,iX0),S.simuUpsample);
@@ -720,6 +772,12 @@ function display_results(fullfigDir,Model_Choice,pE,Ep,Cp,U,m,M,H1,K1,K2,...
         case 2 %Huppert1
             P     = Ep(11:end);                 %MODIFIER
             C     = diag(Cp(11:end,11:end));    %MODIFIER
+        case 3 % BF part 1
+            P     = Ep(3:end);
+            C     = diag(Cp(3:end,3:end));
+        case 4 % BF part 2
+            P     = Ep(7:end);
+            C     = diag(Cp(7:end,7:end));
         otherwise
             P     = Ep(7:end);
             C     = diag(Cp(7:end,7:end));
@@ -730,7 +788,7 @@ function display_results(fullfigDir,Model_Choice,pE,Ep,Cp,U,m,M,H1,K1,K2,...
     axis square
     title({'stimulus efficacy'; 'with 90% confidence intervals'},'FontSize',10)
     switch Model_Choice
-        case {0,1} %Buxton-Friston
+        case {0,1,3,4} %Buxton-Friston
             set(gca,'Ytick',[1:m],'YTickLabel',U.name,'FontSize',8)
             str = {};
             for i = 1:m
@@ -762,7 +820,7 @@ function display_results(fullfigDir,Model_Choice,pE,Ep,Cp,U,m,M,H1,K1,K2,...
     %---------------------------------------------------------------------------
     subplot(2,2,3)
     switch Model_Choice
-        case 0 %Buxton-Friston
+        case {0,4} %Buxton-Friston
             P     = Ep(1:6);
             pE    = pE(1:6);
             C     = diag(Cp(1:6,1:6));
@@ -831,6 +889,18 @@ function display_results(fullfigDir,Model_Choice,pE,Ep,Cp,U,m,M,H1,K1,K2,...
                 sprintf('%0.2f',P(9)),'',...
                 'O2 Diffusion K',...
                 sprintf('%0.2f per sec',P(10)),'','FontSize',8)
+         case 3 %Buxton-Friston part 1
+            P     = Ep(1:2);
+            pE    = pE(1:2);
+            C     = diag(Cp(1:2,1:2));
+            spm_barh(P,C,pE)
+            title({ 'hemodynamic parameters'},'FontSize',10)
+            set(gca,'Ytick',[1:6]/3 + 1/2)
+            set(gca,'YTickLabel',{  'SIGNAL decay',...
+                sprintf('%0.2f per sec',P(1)),'',...
+                'FEEDBACK',...
+                sprintf('%0.2f per sec',P(2)),'',...
+                ''},'FontSize',8)
         otherwise
             P     = Ep(1:6);
             pE    = pE(1:6);
@@ -869,12 +939,14 @@ function display_results(fullfigDir,Model_Choice,pE,Ep,Cp,U,m,M,H1,K1,K2,...
             'state variables'},'FontSize',9)
         ylabel('normalized values')
         switch Model_Choice
-            case 0 %Buxton-Friston
+            case {0,4} %Buxton-Friston
                 legend('s','f','v','q','ma',0);
             case 1 %Zheng-Mayhew
                 legend('s','f','v','q','w','ma',0); %MODIFIER
             case 2 %Huppert1
                 legend('s','f','v','q','s2','m','Ct','Cv','ma',0)
+            case 3 %Buxton-Friston part 1
+                legend('s','f',0);
             otherwise
                 legend('s','f','v','q','ma',0);
         end
@@ -886,12 +958,14 @@ function display_results(fullfigDir,Model_Choice,pE,Ep,Cp,U,m,M,H1,K1,K2,...
             'state variables'},'FontSize',9)
         ylabel('normalized values')
         switch Model_Choice
-            case 0 %Buxton-Friston
+            case {0,4} %Buxton-Friston
                 legend('s','f','v','q',0);
             case 1 %Zheng-Mayhew
                 legend('s','f','v','q','w', 0); %MODIFIER
             case 2 %Huppert1
                 legend('s','f','v','q','s2','m','Ct','Cv',0)
+            case 3 %Buxton-Friston part 1
+                legend('s','f',0);
             otherwise
                 legend('s','f','v','q',0);
         end
@@ -912,7 +986,7 @@ function display_results(fullfigDir,Model_Choice,pE,Ep,Cp,U,m,M,H1,K1,K2,...
             title({ '1st order kernel';'output: flow'},'FontSize',9)
         case 4
             switch Model_Choice
-                case {0,1}
+                case {0,1,3,4}
                     title({ '1st order kernel';'output: HbT, HbR'},'FontSize',9)
                 case 2
                     title({ '1st order kernel';'output: HbT, HbR, HbO'},'FontSize',9)
@@ -935,7 +1009,7 @@ function display_results(fullfigDir,Model_Choice,pE,Ep,Cp,U,m,M,H1,K1,K2,...
             title({ '2nd order kernel';'output: BOLD'},'FontSize',9)
         case 3
             imagesc(t,t,K2(:,:,1,j,j))
-            title({ '2nd order kernel';'output: ASL'},'FontSize',9)
+            title({ '2nd order kernel';'output: flow'},'FontSize',9)
         case 4
             imagesc(t,t,K2(:,:,2,j,j))
             title({ '2nd order kernel';'output: HbR'},'FontSize',9)
