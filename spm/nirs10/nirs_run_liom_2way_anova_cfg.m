@@ -20,8 +20,8 @@ StatMethod.help = {'Choose statistical method to account '
 CorrectionMethod      = cfg_menu;
 CorrectionMethod.tag  = 'CorrectionMethod';
 CorrectionMethod.name = 'Degree of freedom adjustment method for nonsphericity';
-CorrectionMethod.labels = {'Huynh-Feldt','Greenhouse-Gasser'}; 
-CorrectionMethod.values = {1,0};
+CorrectionMethod.labels = {'Huynh-Feldt','Greenhouse-Gasser','none'}; 
+CorrectionMethod.values = {1,0,2};
 CorrectionMethod.val  = {1};
 CorrectionMethod.help = {'Choose the method for adjusting the number of degrees of freedom to correct'
     'for nonsphericity.'

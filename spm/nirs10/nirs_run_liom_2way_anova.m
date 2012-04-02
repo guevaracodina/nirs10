@@ -121,7 +121,7 @@ try
                 %3: main B
                 %4: effect of A at each level of B
                 %5: effect of B at each level of A
-                clear cbeta
+                clear cbeta Eps
                 for z1=1:5
                     %Handles for assembled figures
                     clear H
@@ -316,15 +316,36 @@ try
                                 X0 = [Xa Xb M Xs];
                                 X = [Xab X0];
                                 A = liom_group_2A(cbeta{h1},X,X0,W.s1,W.s2,Z); %careful, s1 (session counter) not same as W.s1 (size of image)!
-                                %A = calc_hfgg(cbeta{h1},A,ns0,W.s1,W.s2,B,2);
-                                [TOPO H] = call_figure_2anova(TOPO,H,Z,W,F,A,CF,v1,h1,hb,strA,z1,A.LKC);
+                                %Mauchly test
+                                    A.Mauchly = nirs_Mauchly(cbeta{h1},Z.p_value);
+                                %fill B:
+                                clear B
+                                B.WInFacs = zeros(sX,2);
+                                %1st factor: Sessions
+                                for i0=1:nS0
+                                    B.WInFacs((i0-1)*ns0*nC0+(1:ns0*nC0),1) = i0;
+                                end
+                                %2nd factor: Contrasts
+                                tmp0 = zeros(nC0*ns0,nS0);
+                                for i0=1:nC0
+                                    tmp0((i0-1)*ns0+(1:ns0),:) = i0;
+                                end                                
+                                B.WInFacs(:,2) = tmp0(:);
+                                B.S = [];
+                                B.BTFacs = [];
+                                A = calc_hfgg(cbeta{h1},A,ns0,B,2);
+                                %Store for cases 2 to 5
+                                Eps = A.Eps;
+                                %A is output only to get strA -- not clean
+                                [TOPO H A] = call_figure_2anova(TOPO,H,Z,W,F,A,CF,v1,h1,hb,strA,z1,A.LKC);
                             case 2
                                 %Main effect of A (Sessions)
                                 strA = 'mainA';
                                 X0 = [Xab Xb M Xs];
                                 X = [Xa X0];
                                 A = liom_group_2A(cbeta{h1},X,X0,W.s1,W.s2,Z); %careful, s1 (session counter) not same as W.s1 (size of image)!
-                                [TOPO H] = call_figure_2anova(TOPO,H,Z,W,F,A,CF,v1,h1,hb,strA,z1,A.LKC);
+                                A.Eps = Eps;
+                                [TOPO H A] = call_figure_2anova(TOPO,H,Z,W,F,A,CF,v1,h1,hb,strA,z1,A.LKC);
                                 
                             case 3
                                 %Main effect of B (Intensity -- task)
@@ -332,12 +353,13 @@ try
                                 X0 = [Xab Xa M Xs];
                                 X = [Xb X0];
                                 A = liom_group_2A(cbeta{h1},X,X0,W.s1,W.s2,Z); %careful, s1 (session counter) not same as W.s1 (size of image)!
-                                [TOPO H] = call_figure_2anova(TOPO,H,Z,W,F,A,CF,v1,h1,hb,strA,z1,A.LKC);
+                                A.Eps = Eps;
+                                [TOPO H A] = call_figure_2anova(TOPO,H,Z,W,F,A,CF,v1,h1,hb,strA,z1,A.LKC);
                             case 4
                                 %Effect of A within levels of B
                                 %loop over levels of B
                                 for y1=1:nC0
-                                    strA = ['effAonB' int2str(y1)];
+                                    strA = ['effAonB' int2str(y1)];                                    
                                     rs = 1+(y1-1)*(nS0-1);
                                     re = rs + nS0-2;
                                     ind = 1:size(XeA,2);
@@ -347,12 +369,13 @@ try
                                     %need to adjust p value:
                                     Z.p_value = p_value0/nC0;
                                     A = liom_group_2A(cbeta{h1},X,X0,W.s1,W.s2,Z); %careful, s1 (session counter) not same as W.s1 (size of image)!
-                                    A.includeSubjectEffects = Z.includeSubjectEffects;
-                                    B = [];
-                                    B.Xs = Xs;
-                                    B.Xbw = [Xa Xb]; %Xb; %?
+                                    %A.includeSubjectEffects = Z.includeSubjectEffects;
+                                    %B = [];
+                                    %B.Xs = Xs;
+                                    %B.Xbw = [Xa Xb]; %Xb; %?
                                     %A = calc_hfgg(cbeta{h1},A,ns0,B,2);
-                                    [TOPO H{y1}] = call_figure_2anova(TOPO,H{y1},Z,W,F,A,CF,v1,h1,hb,strA,z1,A.LKC);
+                                    A.Eps = Eps;
+                                    [TOPO H{y1} A] = call_figure_2anova(TOPO,H{y1},Z,W,F,A,CF,v1,h1,hb,strA,z1,A.LKC);
                                 end
                             case 5
                                 %Effect of B within levels of A
@@ -367,27 +390,28 @@ try
                                     %need to adjust p value:
                                     Z.p_value = p_value0/nS0;
                                     A = liom_group_2A(cbeta{h1},X,X0,W.s1,W.s2,Z); %careful, s1 (session counter) not same as W.s1 (size of image)!
-                                    A.includeSubjectEffects = Z.includeSubjectEffects;
-                                    B = [];
-                                    B.Xs = Xs;
-                                    B.Xbw = [Xa Xb]; %Xa; %?
+                                    %A.includeSubjectEffects = Z.includeSubjectEffects;
+                                    %B = [];
+                                    %B.Xs = Xs;
+                                    %B.Xbw = [Xa Xb]; %Xa; %?
                                     %A = calc_hfgg(cbeta{h1},A,ns0,B,2);
-                                    [TOPO H{y1}] = call_figure_2anova(TOPO,H{y1},Z,W,F,A,CF,v1,h1,hb,strA,z1,A.LKC);
+                                    A.Eps = Eps;
+                                    [TOPO H{y1} A] = call_figure_2anova(TOPO,H{y1},Z,W,F,A,CF,v1,h1,hb,strA,z1,A.LKC);
                                 end
                         end
                     end %hb
                     %save assembled figures
                     switch z1
                         case {1,2,3}
-                            Z.strA = strA;
+                            Z.strA = A.strA;
                             call_save_assembled_figures(Z,W,H,0);
                         case 4
-                            for y1 = 1: nC0
+                            for y1 = 1:nC0
                                 Z.strA = ['effAonB' int2str(y1)];
                                 call_save_assembled_figures(Z,W,H{y1},0);
                             end
                         case 5
-                            for y1 = 1: nS0
+                            for y1 = 1:nS0
                                 Z.strA = ['effBonA' int2str(y1)];
                                 call_save_assembled_figures(Z,W,H{y1},0);
                             end
