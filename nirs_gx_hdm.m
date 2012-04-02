@@ -17,70 +17,81 @@ function [y] = nirs_gx_hdm(x,u,P,M)
 % $Id: spm_gx_hdm.m 3812 2010-04-07 16:52:05Z karl $
 
 
-% biophysical constants for 1.5 T: 
-%==========================================================================
 
-% echo time (seconds)
-%--------------------------------------------------------------------------
-try
-    TE = M(1).TE;
-catch
-    TE = 0.03;
+% Exponentiation of hemodynamic state variables
+ %--------------------------------------------------------------------------
+ x     = exp(x); 
+
+
+switch M.modal
+    % Parameters for BOLD measurements (only for modalities that include BOLD)
+    case {1,2,5,6}
+
+    % biophysical constants for 1.5 T / 3T: 
+    %==========================================================================
+
+    % echo time (seconds)
+    %--------------------------------------------------------------------------
+    try
+        TE = M(1).TE;
+    catch
+        TE = 0.03;
+    end
+
+    % resting venous volume
+    %--------------------------------------------------------------------------
+    V0    = 0.04;                                
+
+    % slope r0 of intravascular relaxation rate R_iv as a function of oxygen 
+    % saturation Y:  R_iv = r0*[(1-Y)-(1-Y0)]  %Liu ou Li 1.5T cited in Obata
+    % 2004
+    %--------------------------------------------------------------------------
+    r0 = 100; %3T r0    = 25; %r0 = 100; %Huppert 2008 -- Mildner 2001
+
+    % frequency offset at the outer surface of magnetized vessels
+    %--------------------------------------------------------------------------
+    nu0 = 80.6;  %3T nu0   = 40.3; %nu0 = 80.6; %Huppert Mildner
+
+    % region-specific resting oxygen extraction fractions
+    %-------------------------------------------------------------------------- 
+    E0    = P(5); 
+
+    % region-specific ratios of intra- to extravascular components of
+    % the gradient echo signal (prior mean = 1, log-normally distributed 
+    % scaling factor)
+    %--------------------------------------------------------------------------
+    epsi  = exp(P(6));
+
+    % coefficients in BOLD signal model
+    %--------------------------------------------------------------------------
+    k1    = 4.3.*nu0.*E0.*TE;
+    k2    = epsi.*r0.*E0.*TE;
+    k3    = 1 - epsi;
+   
+    % variables for BOLD signal model
+    %--------------------------------------------------------------------------
+    v     = x(3);
+    q     = x(4);
+    
 end
 
-% resting venous volume
-%--------------------------------------------------------------------------
-V0    = 0.04;                                
 
-% slope r0 of intravascular relaxation rate R_iv as a function of oxygen 
-% saturation Y:  R_iv = r0*[(1-Y)-(1-Y0)]  %Liu ou Li 1.5T cited in Obata
-% 2004
-%--------------------------------------------------------------------------
-r0 = 100; %3T r0    = 25; %r0 = 100; %Huppert 2008 -- Mildner 2001
 
-% frequency offset at the outer surface of magnetized vessels
-%--------------------------------------------------------------------------
-nu0 = 80.6;  %3T nu0   = 40.3; %nu0 = 80.6; %Huppert Mildner
-
-% region-specific resting oxygen extraction fractions
-%-------------------------------------------------------------------------- 
-E0    = P(5); 
-
-% region-specific ratios of intra- to extravascular components of
-% the gradient echo signal (prior mean = 1, log-normally distributed 
-% scaling factor)
-%--------------------------------------------------------------------------
-epsi  = exp(P(6));
- 
-% coefficients in BOLD signal model
-%--------------------------------------------------------------------------
-k1    = 4.3.*nu0.*E0.*TE;
-k2    = epsi.*r0.*E0.*TE;
-k3    = 1 - epsi;
- 
-% exponentiation of hemodynamic state variables
-%--------------------------------------------------------------------------
-x     = exp(x); 
-
-% BOLD signal
-%--------------------------------------------------------------------------
-v     = x(3);
-q     = x(4);
- 
+% Signal model
 switch M.modal
-    case 1
+    case 1 % BOLD
         %y     = V0*(k1.*(1 - q) + k2.*(1 - (q./v)) + k3.*(1 - v));
         y     = V0*(k1.*(1 - q) + k2.*v.*(1 - (q./v)) + k3.*(1 - v));
-    case {2,5}
+    case {2,5} % BOLD and flow
         %cf = 100*0.45; %x(5);
         %y(2) = V0/P(3)*M.CBFcalibrFactor*x(2); %flow 
         y(2) = (x(2)-1);
         %y(2) = cf*(x(2)-1); %flow 
         y(1) = V0*(k1.*(1 - q) + k2.*(1 - (q./v)) + k3.*(1 - v)); 
-    case 3
+    case 3 % flow only
         cf = 1.;
         y = cf*(x(2)-1); %flow
-    case 4 %HbO+HbR
+    case 4 % HbO+HbR
         switch M.Model_Choice
             case {0,1} %Buxton, Zheng Mayhew
                 cf1 = 1.; cf2 = 1.;
