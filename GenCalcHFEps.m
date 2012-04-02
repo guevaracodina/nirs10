@@ -79,7 +79,7 @@ else
     BT.Facs=BTFacs;
     BT.nFacs=size(BTFacs,2);
     BT.GNums=cell(1,BT.nFacs);
-    BT.nTreats=repmat(0,1,BT.nFacs);
+    BT.nTreats=zeros(1,BT.nFacs);
     %BT.dfs=BT.nTreats;
     for iBF=1:BT.nFacs
         BT.GNums{iBF}=unique(BT.Facs(:,iBF));
@@ -97,7 +97,7 @@ else
     WIn.Facs=WInFacs;
     WIn.nFacs=size(WIn.Facs,2);
     WIn.GNums=cell(1,WIn.nFacs);
-    WIn.nTreats=repmat(0,1,WIn.nFacs);
+    WIn.nTreats=zeros(1,WIn.nFacs);
     %WIn.dfs=WIn.nTreats;
     WIn.FacMult=WIn.nTreats;
     for iBF=1:WIn.nFacs
@@ -121,14 +121,14 @@ else    N=length(unique(S))/prod(BT.nTreats);   %divide the num of unique subjec
 end
 
 %Now Calc Z (SSP) matrix using recursive loops
-Z=repmat(0,WIn.nCombs,WIn.nCombs);
-Z=BTRLoop(1, repmat(1,length(Y),1),Z, N,Y,BT,WIn,S );
+Z=zeros(WIn.nCombs,WIn.nCombs);
+Z=BTRLoop(1, ones(length(Y),1),Z, N,Y,BT,WIn,S );
 
 %Calc M matrices using other program
 [M EpsList]=GenOrthogComps(WIn.nTreats);
 
 %combine M and Z to calc epsilons
-EpsHF=repmat(0,1,length(M));
+EpsHF=zeros(1,length(M));
 EpsGG=EpsHF;
 
 %calc totN, used for HF calc below
@@ -173,7 +173,7 @@ for iT=1:BT.nTreats(curFac)
         nextSelInds=curSelInds & BT.Facs(:,curFac)==BT.GNums{curFac}(iT);
     end
     if curFac==BT.nFacs                     %for DevMat         for FacLevList
-        DevMat= WInRLoop(1, nextSelInds, repmat(0,WIn.nCombs,N),repmat(0,1,WIn.nFacs), N,Y,WIn,S );
+        DevMat= WInRLoop(1, nextSelInds, zeros(WIn.nCombs,N),zeros(1,WIn.nFacs), N,Y,WIn,S );
         Z=Z+DevMat*DevMat';
     else
         Z=BTRLoop(curFac+1, nextSelInds,Z ,N,Y,BT,WIn,S  );

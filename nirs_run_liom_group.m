@@ -27,6 +27,7 @@ Z.min_s = 2;
 Z.nS = size(job.NIRSmat,1);
 nS = Z.nS;
 number_dir_to_remove = job.number_dir_to_remove;
+disp('Wait... loading individual data for group analysis');
 %SPM contrasts or automatic contrasts
 if isfield(job.ContrastChoice,'user_contrasts')
     if isempty(job.ContrastChoice.user_contrasts.consess)
@@ -123,9 +124,11 @@ for Idx=1:nl
         if ~isfield(NIRS,'flags')
             NIRS.flags = [];
         end
+        %Could save time by making these checks before loading all the
+        %group data
         if (( (Z.FFX || nS==1) && ~isfield(NIRS.flags,'session_groupOK') || job.force_redo) || ...
                 (~(Z.FFX || nS==1) && ~isfield(NIRS.flags,'groupOK') || job.force_redo))
-            
+            disp('Starting group analysis');
             Z.dir1 = dir_group;
             %contrasts
             TOPO = nirs_get_contrasts_group(Z,TF,TOPO);
