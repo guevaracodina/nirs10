@@ -500,6 +500,12 @@ hpf_butter_Off.name    = 'HP filter off';
 hpf_butter_Off.val     = {};
 hpf_butter_Off.help    = {'High pass filter turned off.'};
 
+remove_linear         = cfg_branch;
+remove_linear.tag     = 'remove_linear';
+remove_linear.name    = 'Remove linear trend only';
+remove_linear.val     = {};
+remove_linear.help    = {'Remove linear trend only.'};
+
 NoNIRSconfounds         = cfg_branch;
 NoNIRSconfounds.tag     = 'NoNIRSconfounds';
 NoNIRSconfounds.name    = 'No NIRS channels as confounds';
@@ -588,7 +594,7 @@ hpf_butter      = cfg_choice;
 hpf_butter.tag  = 'hpf_butter';
 hpf_butter.name = 'Butterworth High Pass Filter';
 %hpf_butter.labels = {'Yes','No'};
-hpf_butter.values = {hpf_butter_On hpf_butter_Off};
+hpf_butter.values = {hpf_butter_On hpf_butter_Off remove_linear};
 hpf_butter.val = {hpf_butter_On};
 %hpf_butter.def = @(val)nirs_get_defaults('model_specify.wls_bglm_specify.hpf_butter', val{:});
 hpf_butter.help = {'Choose whether to include a Butterworth High Pass Filter.'

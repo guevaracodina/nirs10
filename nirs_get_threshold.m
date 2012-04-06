@@ -209,7 +209,7 @@ switch fign
                     end
                 end
             end
-            th_z = min(xth_z(xth_z>0));
+            th_z = min(xth_z(xth_z>3.9)); %exceed threshold of unc. F stat
             index_over2 = [];
         end        
     case 9

@@ -28,7 +28,7 @@ end
 switch nfac
     case 1
         Y = squeeze(cbeta(:,id0));
-        S = [];
+        S = [];        
         WInFacs = [];
         BTFacs = zeros(length(B),ns);
         for i1 =1:length(B)

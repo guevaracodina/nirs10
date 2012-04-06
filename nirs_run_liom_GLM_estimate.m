@@ -112,16 +112,22 @@ for Idx=1:size(job.NIRSmat,1)
                         %                     end
                         
                         %HPF
-                        if SPM.xX.HPFbutter
-                            cutoff=SPM.xX.hpf_butter_freq; %in Hz,
-                            FilterOrder=SPM.xX.hpf_butter_order; %Is this too weak?
-                            Y = ButterHPF(fs,cutoff,FilterOrder,Y);
-                            %need to filter the design matrix too,
-                            %otherwise, the estimates will be significantly
-                            %biased
-                            
-                            %This is done later
+                        switch SPM.xX.HPFbutter
+                            case 1
+                                cutoff=SPM.xX.hpf_butter_freq; %in Hz,
+                                FilterOrder=SPM.xX.hpf_butter_order; %Is this too weak?
+                                Y = ButterHPF(fs,cutoff,FilterOrder,Y);
+                                %need to filter the design matrix too,
+                                %otherwise, the estimates will be significantly
+                                %biased
+                            case 2
+                                nS = size(Y,1);
+                                mX = linspace(0,round(nS/fs),nS);
+                                mX = [mX' ones(nS,1)];
+                                pmX = pinv(mX);    
+                                Y = Y - mX * (pmX * Y);                                
                         end
+                        
                         
                         %Last step before the GLM, adding HbO to HbR to get
                         %HbT - perhaps this should be done after the
@@ -174,7 +180,8 @@ for Idx=1:size(job.NIRSmat,1)
                         %degrees of freedom
                         try
                             if SPM.filter_design_matrix
-                                if SPM.xX.HPFbutter
+                                switch SPM.xX.HPFbutter
+                                    case 1
                                     %filter the design matrix
                                     cutoff=SPM.xX.hpf_butter_freq; %Hz, or 100s
                                     FilterOrder=SPM.xX.hpf_butter_order; %Is this too weak?
@@ -182,6 +189,9 @@ for Idx=1:size(job.NIRSmat,1)
                                     tX=ButterHPF(fs,cutoff,FilterOrder,tSPM.xX.X(:,1:end-1));
                                     %add back the constant
                                     tSPM.xX.X = [tX tSPM.xX.X(:,end)];
+                                    case 2
+                                        %do nothing -- no linear trend in
+                                        %design matrix
                                 end
                                 %                             %LPF
                                 %                             if SPM.xX.LPFbutter

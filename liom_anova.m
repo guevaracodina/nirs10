@@ -169,7 +169,9 @@ try %leave ccov_beta dependency for testing purposes...
 tmp_mask = zeros(size(cbeta));
 tmp_mask(cbeta == 0) = 1;
 mask = sum(tmp_mask,1);
-index_group = find(mask == 0);
+fraction_subjects = 1/3; %up to how many subjects are allowed to be excluded from the 
+%index_group mask from which L2 is calculated
+index_group = find(mask < round(size(cbeta,1)*fraction_subjects));
 L2 = calc_LKC(index_group,[s1 s2], reshape(res,[nsubj s1 s2]), 'group');
 r = sqrt(L2./pi);
 L1 = pi * r;
@@ -203,25 +205,25 @@ A.LKC = [L0 L1 L2];
 %should be the same (i.e. t^2=F, when the samples have equal size)
 %SOUNDS WRONG: t^2=F... thus there should be some mistake in here
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 
-%     %if nl==2, try to do a 2 sample t-test
-%     %formula: t = (X1-X2)/s, with s^2 = s1^2/n1+s2^2/n2
-%     if nl == 2
-%         x1b = mean(cbeta(level_subj{1},:),1);
-%         x2b = mean(cbeta(level_subj{2},:),1);
-%         s1b = std(cbeta(level_subj{1},:),0,1);
-%         s2b = std(cbeta(level_subj{2},:),0,1);
-%         n1 = length(level_subj{1});
-%         n2 = length(level_subj{2});
-%         s = (s1b.^2/n1+s2b.^2/n2).^0.5;
-%         t = (x1b-x2b)./s;
-%         s0 = reshape(s,s1,s2);
-%         s1b0 = reshape(s1b,s1,s2);
-%         s2b0 = reshape(s2b,s1,s2);
-%         t0 = reshape(t,s1,s2);
-%         G.Tmap = t0; 
-%         A.F = t0.^2;
-%     end
+
+    %if nl==2, try to do a 2 sample t-test
+    %formula: t = (X1-X2)/s, with s^2 = s1^2/n1+s2^2/n2
+    if nl == 2
+        x1b = mean(cbeta(level_subj{1},:),1);
+        x2b = mean(cbeta(level_subj{2},:),1);
+        s1b = std(cbeta(level_subj{1},:),0,1);
+        s2b = std(cbeta(level_subj{2},:),0,1);
+        n1 = length(level_subj{1});
+        n2 = length(level_subj{2});
+        s = (s1b.^2/n1+s2b.^2/n2).^0.5;
+        t = (x1b-x2b)./s;
+        s0 = reshape(s,s1,s2);
+        s1b0 = reshape(s1b,s1,s2);
+        s2b0 = reshape(s2b,s1,s2);
+        t0 = reshape(t,s1,s2);
+        A.T2stt = t0; 
+        A.F2stt = t0.^2;
+    end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Calculation #4: 1-Anova, done on whole data -- no mask
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

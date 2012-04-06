@@ -88,9 +88,15 @@ if isfield(job.hpf_butter,'hpf_butter_On')
     hpf_butter_order = job.hpf_butter.hpf_butter_On.hpf_butter_order;
     HPFbutter = 1;
 else
-    HPFbutter = 0; %no high pass filter
-    hpf_butter_freq = 0;
-    hpf_butter_order = 3;
+    if isfield(job.hpf_butter,'remove_linear')
+        HPFbutter = 2;
+        hpf_butter_freq = 0; %not used
+        hpf_butter_order = 3; %not used
+    else
+        HPFbutter = 0; %no high pass filter
+        hpf_butter_freq = 0; %not used
+        hpf_butter_order = 3; %not used
+    end
 end
 
 %HPF - filter from NIRS_SPM - note that Butterworth HPF can be used with it
