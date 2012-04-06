@@ -1,7 +1,7 @@
 function [TOPO H A] = call_figure_2anova(TOPO,H,Z,W,F,A,CF,v1,h1,hb,Astr,z1,LKC)
 try
     %Greenhouse-Geisser and Hyunh-Feldt corrections
-    if isfield(A,'EpsGG')
+    if isfield(A,'Eps')
         %Recommendation: If epsilon is >0.75, use the Huynh-Feldt correction.
         %If epsilon is <0.75, or nothing is known about sphericity at all,
         %use the Greenhouse-Geisser correction
@@ -17,14 +17,14 @@ try
         switch Z.CorrectionMethod
             case 0
                 %use Greenhouse-Geisser
-                epscor = A.EpsGG(ze);
+                epscor = A.Eps.EpsGG(ze);
             case 1
-                if A.EpsGG(ze) >= 0.75
+                if A.Eps.EpsGG(ze) >= 0.75
                     %use Huynh-Feldt
-                    epscor = A.EpsHF(ze);
+                    epscor = A.Eps.EpsHF(ze);
                 else
                     %use Greenhouse-Geisser
-                    epscor = A.EpsGG(ze);
+                    epscor = A.Eps.EpsGG(ze);
                 end
             case 2 %none
                 epscor = 1;
@@ -50,24 +50,33 @@ try
     F.contrast_info_both = filestr; %same for Pos and Neg, used for combined figures
     F.contrast_info_both_for_fig = filestr_fig; %same for Pos and Neg, used for combined figures
     F.s_map = A.Tmap;
-    if z1 <= 3
-        TOPO.v{v1}.group.hb{h1}.c{2*z1-1} = A;
-    else
-        if z1 == 4
-            TOPO.v{v1}.group.hb{h1}.effAonB{2*y1-1} = A;
-        else
-            if z1 == 5
-                TOPO.v{v1}.group.hb{h1}.effBonA{2*y1-1} = A;
-            end
-        end
-    end
+    CF.contrast_info_for_fig = F.contrast_info_for_fig;
+    CF.contrast_info_both_for_fig = F.contrast_info_both_for_fig;
+    
     if Z.output_unc
         DF = nirs_draw_figure(7,F,W,Z,[]);
         H = nirs_copy_figure(H,DF,CF,1,hb,1,F.tstr,0,0);
     end
+    if ~isempty(DF)  
+        A.th_z_unc = DF.th_z;
+    end
     if Z.LKC
         DF = nirs_draw_figure(5,F,W,Z,LKC);
         H = nirs_copy_figure(H,DF,CF,1,hb,1,F.tstr,1,0);
+    end
+    if ~isempty(DF)
+        A.th_z_cor = DF.th_z;
+    end
+    if z1 <= 3
+        TOPO.v{v1}.group.hb{h1}.c{2*z1-1} = A;
+    else
+        if z1 == 4
+            TOPO.v{v1}.group.hb{h1}.effAonB{2*A.y1-1} = A;
+        else
+            if z1 == 5
+                TOPO.v{v1}.group.hb{h1}.effBonA{2*A.y1-1} = A;
+            end
+        end
     end
 catch exception2
     disp(exception2.identifier);

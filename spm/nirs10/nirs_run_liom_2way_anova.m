@@ -375,6 +375,7 @@ try
                                     %B.Xbw = [Xa Xb]; %Xb; %?
                                     %A = calc_hfgg(cbeta{h1},A,ns0,B,2);
                                     A.Eps = Eps;
+                                    A.y1 = y1;
                                     [TOPO H{y1} A] = call_figure_2anova(TOPO,H{y1},Z,W,F,A,CF,v1,h1,hb,strA,z1,A.LKC);
                                 end
                             case 5
@@ -396,6 +397,7 @@ try
                                     %B.Xbw = [Xa Xb]; %Xa; %?
                                     %A = calc_hfgg(cbeta{h1},A,ns0,B,2);
                                     A.Eps = Eps;
+                                    A.y1 = y1;
                                     [TOPO H{y1} A] = call_figure_2anova(TOPO,H{y1},Z,W,F,A,CF,v1,h1,hb,strA,z1,A.LKC);
                                 end
                         end

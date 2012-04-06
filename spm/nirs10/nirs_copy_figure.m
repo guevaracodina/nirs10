@@ -262,6 +262,7 @@ if ~isempty(DF) %&& DF.GroupColorbars %Separated colorbars too far from working 
         if ~exist('fh2','var') && strcmp(tstr,'F')
             %if GInv && Inv
             figure(fh0C); %actual increases or decreases, no sign reversals
+            
             switch hb
                 case 'HbO'
                     axNew=subplot(nC,3,3*(c1-1)+2);
@@ -345,6 +346,9 @@ if ~isempty(DF) %&& DF.GroupColorbars %Separated colorbars too far from working 
             %                 end
             %
             close(fh1); %For F contrasts, this will be the same as fh1
+        end
+        try
+        set(gcf,'name',CF.contrast_info_both_for_fig,'numbertitle','off')
         end
         %end
         if fwe
