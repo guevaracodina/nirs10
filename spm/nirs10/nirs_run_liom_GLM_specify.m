@@ -93,9 +93,15 @@ else
         hpf_butter_freq = 0; %not used
         hpf_butter_order = 3; %not used
     else
-        HPFbutter = 0; %no high pass filter
-        hpf_butter_freq = 0; %not used
-        hpf_butter_order = 3; %not used
+        if isfield(job.hpf_butter,'GLM_remove_linear')
+            HPFbutter = 3; %no high pass filter
+            hpf_butter_freq = 0; %not used
+            hpf_butter_order = 3; %not used
+        else           
+            HPFbutter = 0; %no high pass filter
+            hpf_butter_freq = 0; %not used
+            hpf_butter_order = 3; %not used
+        end
     end
 end
 

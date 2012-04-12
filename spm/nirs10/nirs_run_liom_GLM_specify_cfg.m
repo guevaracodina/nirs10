@@ -506,6 +506,14 @@ remove_linear.name    = 'Remove linear trend only';
 remove_linear.val     = {};
 remove_linear.help    = {'Remove linear trend only.'};
 
+
+GLM_remove_linear         = cfg_branch;
+GLM_remove_linear.tag     = 'GLM_remove_linear';
+GLM_remove_linear.name    = 'Remove linear trend using the GLM';
+GLM_remove_linear.val     = {};
+GLM_remove_linear.help    = {'Remove linear trend using the GLM.'
+    'That is, a regressor will be added to the GLM for the linear trend.'}';
+
 NoNIRSconfounds         = cfg_branch;
 NoNIRSconfounds.tag     = 'NoNIRSconfounds';
 NoNIRSconfounds.name    = 'No NIRS channels as confounds';
@@ -594,7 +602,7 @@ hpf_butter      = cfg_choice;
 hpf_butter.tag  = 'hpf_butter';
 hpf_butter.name = 'Butterworth High Pass Filter';
 %hpf_butter.labels = {'Yes','No'};
-hpf_butter.values = {hpf_butter_On hpf_butter_Off remove_linear};
+hpf_butter.values = {hpf_butter_On hpf_butter_Off remove_linear GLM_remove_linear};
 hpf_butter.val = {hpf_butter_On};
 %hpf_butter.def = @(val)nirs_get_defaults('model_specify.wls_bglm_specify.hpf_butter', val{:});
 hpf_butter.help = {'Choose whether to include a Butterworth High Pass Filter.'
