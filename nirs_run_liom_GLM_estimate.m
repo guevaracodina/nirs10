@@ -192,6 +192,12 @@ for Idx=1:size(job.NIRSmat,1)
                                     case 2
                                         %do nothing -- no linear trend in
                                         %design matrix
+                                    case 3
+                                        %add a linear trend to the design
+                                        %matrix
+                                        nS = size(tSPM.xX.X,1);
+                                        mX = linspace(0,round(nS/fs),nS)/(nS/fs);
+                                        tSPM.xX.X = [tSPM.xX.X(:,1:end-1) mX' tSPM.xX.X(:,end)];
                                 end
                                 %                             %LPF
                                 %                             if SPM.xX.LPFbutter
