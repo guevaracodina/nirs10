@@ -18,7 +18,7 @@ function out = nirs_run_liom_GLM_specify(job)
 %matlabbatch{MP}.spm.tools.nirs10.model_specify.('liom_GLM_specify')=matlabbatch{MP}.spm.tools.nirs10.model_specify.('wls_bglm_specify')
 %matlabbatch{MP}.spm.tools.nirs10.model_specify = rmfield(matlabbatch{MP}.spm.tools.nirs10.model_specify, 'wls_bglm_specify');
 %save('','matlabbatch')
-
+filter_vasomotion = 1;
 
 %physiological confounds
 if isfield(job.NIRSchannelsConfound,'NIRSconfounds')
@@ -255,22 +255,27 @@ for Idx=1:size(job.NIRSmat,1)
                         d = fopen_NIR(rDtp{iSess,1},NC);
                         switch select_chromophore
                             case 1 %HbT
-                                tmpC = 2*mean(d,1);
+                                tmpC = 2*mean(d,1)';
                             case 2 %HbR
-                                tmpC = mean(d(logical(1-chHbO),:),1);
+                                tmpC = mean(d(logical(1-chHbO),:),1)';
                             case 3 %HbO
-                                tmpC = mean(d(chHbO,:),1);
+                                tmpC = mean(d(chHbO,:),1)';
                             case 4 %Hbo&HbR
-                                tempC_O = mean(d(chHbO,:),1);
-                                tempC_R = mean(d(logical(1-chHbO),:),1);
+                                tmpC = [mean(d(chHbO,:),1)' mean(d(logical(1-chHbO),:),1)'];
                         end
-                        
+                        if filter_vasomotion
+                            cutoff=0.04; %in Hz,
+                            FilterOrder=3; %Is this too weak?
+                            tmpC = ButterHPF(fs,cutoff,FilterOrder,tmpC);
+                            cutoff=0.08;
+                            tmpC = ButterLPF(fs,cutoff,FilterOrder,tmpC);
+                        end        
                         switch select_chromophore
                             case {1 2 3}
-                                C = [C tmpC'];
+                                C = [C tmpC];
                                 Cname = [Cname {'V'}];
                             case 4
-                                C = [C tempC_R' tempC_O'];
+                                C = [C tmpC];
                                 Cname = [Cname {'V_R'} {'V_O'}];
                         end
                     end
