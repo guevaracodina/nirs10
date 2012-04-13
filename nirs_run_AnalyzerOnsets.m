@@ -219,6 +219,12 @@ for Idx=1:nsubj
                         lpi = linspace(0,dp_NIRS1/freq_NIRS1,dp_NIRS1); %*res_factor);
                         
                         dvR = diff(vR);
+                        
+                        [dvR,vR,Flag_Repair,TotalAdded_Repair] = HeartRate_Repair(dvR,vR,5,2.5);
+                        disp(['Flag_Repair = ' num2str(Flag_Repair) ' for session: ' num2str(i3)]);
+                        disp(['TotalAdded_Repair = ' num2str(TotalAdded_Repair) ' for session: ' num2str(i3)]);
+                        iR = iR + TotalAdded_Repair; 
+                        
                         vRi = interp1(vR(2:end),dvR,lpi,'spline');
                         %derivative of pulse rate - too noisy
                         %ddvR = diff(dvR);
@@ -237,11 +243,13 @@ for Idx=1:nsubj
                         %Ke Peng, 12/03/2012
                         %*****************************************************
                         
-                        [fR,Flag_Repair,TotalAdded_Repair] = HeartRate_Repair(fR,5,1.9);
-                        disp(['Flag_Repair = ' num2str(Flag_Repair)]);
-                        disp(['TotalAdded_Repair = ' num2str(TotalAdded_Repair)]);
+                        %[fR,Flag_Repair,TotalAdded_Repair] = HeartRate_Repair(fR,5,2.5);
+                        %disp(['Flag_Repair = ' num2str(Flag_Repair) ' for session: ' num2str(i3)]);
+                        %disp(['TotalAdded_Repair = ' num2str(TotalAdded_Repair) ' for session: ' num2str(i3)]);
+                        %iR = iR + TotalAdded_Repair; 
                         
                     catch
+                        disp('Analyze onsets error');
                     end
                 end
                 if NIRSok

@@ -1,8 +1,9 @@
-function [OutRate GapFlag TotalAdded] = HeartRate_Repair(InRate, Precision, Gap_def)
+function [OutRate OutRate_Ori GapFlag TotalAdded] = HeartRate_Repair(InRate, InRate_Ori, Precision, Gap_def)
 %**************************************************************************
 %Function: this function detects the gaps between heart rate records and 
 %          fill the gaps automatically.
-%          InRate: Original Heart Rate sets
+%          InRate: Heart Rate sets(differential)
+%          InRate_Ori: Original Heart Rate Sets (none-differential)
 %          Precision: Int value, wide-range average gap detection or 
 %                     narrow-range average gap detection
 %          Gap_def: Double value, indicates the definition of gaps. For one
@@ -10,16 +11,20 @@ function [OutRate GapFlag TotalAdded] = HeartRate_Repair(InRate, Precision, Gap_
 %                   could it be recognised as a gap value. However, the 
 %                   number of gaps to be divided will use the round()
 %                   calculation.
-%          OutRate: Repaired Heart Rate sets
+%          OutRate: Repaired Heart Rate sets (differential)
+%          OutRate_Ori: Repaired Heart Rate sets (none-differential)
 %          GapFlag: Int value, indicates whether there is a gap in the 
 %                   original sets (0-No, 1-Yes)
 %          TotalAdded: Int value, indicates how many values in total has
 %                      been added to the repaired heart rate sets
 %Editor: Ke Peng, Laboratoire d'Imagerie Optique et Moleculaire
-%Data: March 08, 2012
+%Date: March 08, 2012
+%      April 11, 2012   Added the none differential sets as a interpolation
+%                       is performed with the HeartRate sets
 %**************************************************************************
 
 InRate_order = InRate;
+InRate_Ori_order = InRate_Ori;
 
 check_queue = zeros(1,Precision);
 GapFlag = 0;             %Flag indicating whether there is a gap in between
@@ -47,13 +52,18 @@ if length(InRate) <= Precision
             Gapnum = round(InRate(i_check)/i_MeanRate);
             Rate_add = InRate(i_check) / Gapnum;
             InRate_order(i_generate) = Rate_add;
+            InRate_Ori_order(i_generate + 1) = InRate_Ori(i_check) + Rate_add;
             
             for i_add = 1 : Gapnum-1
-                InRate_order = [InRate_order(1:i_generate) Rate_add ...
-                    InRate_order(i_generate+1 : length(InRate_order))];
+                InRate_order = [InRate_order(1:(i_generate+i_add-1)) Rate_add ...
+                    InRate_order(i_generate+i_add : length(InRate_order))];
+                
+                InRate_Ori_order = [InRate_Ori_order(1:(i_generate+i_add)) ...
+                    InRate_Ori(i_check)+Rate_add*(i_add+1) ...
+                    InRate_Ori_order(i_generate+i_add+1 : length(InRate_Ori_order))];
+                
                 TotalAdded = TotalAdded + 1;
             end
-            
         end
     end
     
@@ -93,13 +103,20 @@ else
             continue;
         else
             GapFlag = 1;                                         %outputted
-            Gapnum = round(InRate(i_check) / MeanRate);
+            Gapnum = round(InRate(i_check) / MeanRate) - 1;
             Rate_add = InRate(i_check) / Gapnum;
 
             InRate_order(i_generate) = Rate_add;
+            InRate_Ori_order(i_generate + 1) = InRate_Ori(i_check) + Rate_add;
+            
             for i_add = 1 : Gapnum-1
-                InRate_order = [InRate_order(1:i_generate) Rate_add ...
-                    InRate_order(i_generate+1 : length(InRate_order))];
+                InRate_order = [InRate_order(1:i_generate+i_add-1) Rate_add ...
+                    InRate_order(i_generate+i_add : length(InRate_order))];
+                
+                InRate_Ori_order = [InRate_Ori_order(1:(i_generate+i_add)) ...
+                    InRate_Ori(i_check)+Rate_add*(i_add+1) ...
+                    InRate_Ori_order(i_generate+i_add+1 : length(InRate_Ori_order))];
+                
                 TotalAdded = TotalAdded+1;
             end
         end
@@ -107,4 +124,5 @@ else
 end
 
 OutRate = InRate_order;
+OutRate_Ori = InRate_Ori_order;
 
