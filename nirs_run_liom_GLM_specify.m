@@ -97,10 +97,16 @@ else
             HPFbutter = 3; %no high pass filter
             hpf_butter_freq = 0; %not used
             hpf_butter_order = 3; %not used
-        else           
+        else   
+            if isfield(job.hpf_butter,'SPM_cosine_filter')                
+                HPFbutter = 4; %no high pass filter
+                hpf_butter_freq = 1/240; %4 minute  
+                hpf_butter_order = 3; %not used
+            else
             HPFbutter = 0; %no high pass filter
             hpf_butter_freq = 0; %not used
             hpf_butter_order = 3; %not used
+            end
         end
     end
 end
@@ -264,10 +270,10 @@ for Idx=1:size(job.NIRSmat,1)
                                 tmpC = [mean(d(chHbO,:),1)' mean(d(logical(1-chHbO),:),1)'];
                         end
                         if filter_vasomotion
-                            cutoff=0.04; %in Hz,
+                            cutoff=0.04; %in Hz, 25 s
                             FilterOrder=3; %Is this too weak?
                             tmpC = ButterHPF(fs,cutoff,FilterOrder,tmpC);
-                            cutoff=0.08;
+                            cutoff=0.125; %PP 8 s
                             tmpC = ButterLPF(fs,cutoff,FilterOrder,tmpC);
                         end        
                         switch select_chromophore

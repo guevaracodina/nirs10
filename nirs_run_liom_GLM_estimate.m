@@ -198,6 +198,14 @@ for Idx=1:size(job.NIRSmat,1)
                                         nS = size(tSPM.xX.X,1);
                                         mX = linspace(0,round(nS/fs),nS)/(nS/fs);
                                         tSPM.xX.X = [tSPM.xX.X(:,1:end-1) mX' tSPM.xX.X(:,end)];
+                                    case 4 %add cosines like in SPM
+                                        % make high pass filter
+                                        %------------------------------------------------------------------
+                                        k       = size(tSPM.xX.X,1);
+                                        n       = fix(2*(k/fs)*SPM.xX.hpf_butter_freq + 1);
+                                        X0      = spm_dctmtx(k,n);
+                                        X0 = X0(:,2:end)./repmat(max(X0(:,2:end),[],1),[k 1]);
+                                        tSPM.xX.X = [tSPM.xX.X(:,1:end-1) X0 tSPM.xX.X(:,end)];                                        
                                 end
                                 %                             %LPF
                                 %                             if SPM.xX.LPFbutter
