@@ -161,36 +161,10 @@ try
                     clear SPM Y
                     fBOLD = fullfile(subjects{SubjIdx},'SPM.mat');
                     fBOLD_old = fBOLD;
-                    load(fBOLD);
                     
-                    % CHECK THIS...??
-                    if removeWhitening
-                        %switch modal
-                        % This should apply to all modalities
-                        %    case 1
-                        %        SPM.xX.W = speye(size(SPM.xX.W,1));
-                        %    case 5
-                                %quick fix to use only one session
-                                 nSess = size(SPM.Sess,2);
-                                 SPM.xX.W = speye(size(SPM.xX.W,1)./nSess);
-                                 SPM.xX.K = SPM.xX.K(cs1);
-                                 %Remove HPF entirely for now
-                                 SPM.xX.K.X0 = zeros(size(SPM.xX.K.X0));
-                                 nScans = size(SPM.xY.VY,1)/nSess;
-                                 SPM.xY.VY = SPM.xY.VY((1:nScans) + (nScans*(cs1-1)) );
-                        %end
-                        %save it as a temporary file
-                        [dir0 fil0 ext0] = fileparts(fBOLD);
-                        tmpdir = fullfile(dir0,'tmp_noWhitening');
-                        if ~exist(tmpdir,'dir')
-                            mkdir(tmpdir)
-                            fBOLD = fullfile(tmpdir,[fil0 ext0]);
-                            save(fBOLD,'SPM');
-                        end
-                    end
+                    % TO IMPLEMENT: REPLACE WITH A SEPARATE INPUT "FLOW SPM
+                    % FOLDERS"
                     switch modal
-                        %case 2
-                        %    %fASL = fullfile(subjectsASL{SubjIdx},'SPM.mat');
                         case {2,3,5}
                             % Very inelegant HARD-CODED FOR MDEIE-P2
                             tmpidx3 = strfind(fBOLD,'UR3');
@@ -200,7 +174,66 @@ try
                             elseif isempty(tmpidx1) && ~isempty(tmpidx3)
                                 fASL = fBOLD;
                                 fASL(tmpidx3:tmpidx3+2) = 'UR1';
+                            else
+                                tmpidxb = strfind(fBOLD,'bold');
+                                tmpidxf = strfind(fBOLD,'flow');
+                                if ~isempty(tmpidxf)
+                                    fASL = fBOLD;
+                                elseif isempty(tmpidxf) && ~isempty(tmpidxb)
+                                    fASL = fBOLD;
+                                    fASL(tmpidxb:tmpidxb+3) = 'flow';
+                                end
                             end
+                    end
+                    
+                    load(fBOLD);                   
+                    % CHECK THIS...??
+                    if removeWhitening
+                        switch modal
+                            case {1,2,3,5}
+                                %quick fix to use only one session
+                                 nSess = size(SPM.Sess,2);
+                                 SPM.xX.W = speye(size(SPM.xX.W,1)./nSess);
+                                 SPM.xX.K = SPM.xX.K(cs1);
+                                 %Remove HPF entirely for now
+                                 SPM.xX.K.X0 = zeros(size(SPM.xX.K.X0));
+                                 nScans = size(SPM.xY.VY,1)/nSess;
+                                 SPM.xY.VY = SPM.xY.VY((1:nScans) + (nScans*(cs1-1)) );
+                        end
+                        %save it as a temporary file
+                        [dir0 fil0 ext0] = fileparts(fBOLD);
+                        tmpdir = fullfile(dir0,'tmp_noWhitening');
+                        if ~exist(tmpdir,'dir')
+                            mkdir(tmpdir)
+                            fBOLD = fullfile(tmpdir,[fil0 ext0]);
+                            save(fBOLD,'SPM');
+                        end
+                        
+                        % And for flow...
+                        switch modal
+                            case {2,3,5}
+                                load(fASL)
+                                %quick fix to use only one session
+                                 nSess = size(SPM.Sess,2);
+                                 SPM.xX.W = speye(size(SPM.xX.W,1)./nSess);
+                                 SPM.xX.K = SPM.xX.K(cs1);
+                                 %Remove HPF entirely for now
+                                 SPM.xX.K.X0 = zeros(size(SPM.xX.K.X0));
+                                 nScans = size(SPM.xY.VY,1)/nSess;
+                                 SPM.xY.VY = SPM.xY.VY((1:nScans) + (nScans*(cs1-1)) );
+                                 
+                                 %save it as a temporary file
+                                [dir0 fil0 ext0] = fileparts(fASL);
+                                tmpdir = fullfile(dir0,'tmp_noWhitening');
+                                if ~exist(tmpdir,'dir')
+                                    mkdir(tmpdir)
+                                    fASL = fullfile(tmpdir,[fil0 ext0]);
+                                    save(fASL,'SPM');
+                                end
+                                clear SPM
+                                load(fBOLD);
+                        end
+                        
                     end
                     
                     [Sess s] = get_session(SPM,cs1);
