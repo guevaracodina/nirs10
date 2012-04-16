@@ -5,7 +5,7 @@ function out = nirs_run_liom_HDM(job)
 
 nameHDM = job.nameHDM;
 Model_Choice = job.Model_Choice;
-subjects = job.which_subjects; % path to SPM.mat files
+%subjects = job.which_subjects; % path to SPM.mat files
 
 TE = job.echo_time;    
 Stimuli = job.which_condition;
@@ -31,10 +31,13 @@ generate_figures = job.generate_figures;
 %Step 1: checking which modality to run
 if isfield(job.xSPM_Modalities,'xSPM_BOLD')
     modal = 1;
+    subjects_bold = job.xSPM_Modalities.xSPM_BOLD.which_subjects_bold;
     %sBOLD = job.xSPM_Modalities.xSPM_BOLD;
 else
     if isfield(job.xSPM_Modalities,'xSPM_BOLD_ASL')
         modal = 2;
+        subjects_bold = job.xSPM_Modalities.xSPM_BOLD_ASL.which_subjects_bold;                
+        subjects_flow = job.xSPM_Modalities.xSPM_BOLD_ASL.which_subjects_flow;
         %sBOLD = job.xSPM_Modalities.xSPM_BOLD_ASL;
         %currently not used
         %sASL = job.xSPM_Modalities.xSPM_BOLD_ASL;
@@ -42,14 +45,25 @@ else
     else
         if isfield(job.xSPM_Modalities,'xSPM_ASL')
             modal = 3;
+            subjects_flow = job.xSPM_Modalities.xSPM_ASL.which_subjects_flow;
             %sASL = job.xSPM_Modalities.xSPM_ASL;
         else
             if isfield(job.xSPM_Modalities,'xSPM_BOLD_ASL_V2')
                 modal = 5;
+                subjects_bold = job.xSPM_Modalities.xSPM_BOLD_ASL_V2.which_subjects_bold;
+                subjects_flow = job.xSPM_Modalities.xSPM_BOLD_ASL_V2.which_subjects_flow;
                 %sBOLD = job.xSPM_Modalities.xSPM_BOLD_ASL_V2;
             end
         end
     end
+end
+
+% Number of subjects
+switch modal
+    case {1,2,5}
+        nSubj = length(subjects_bold);
+    case 3
+        nSubj = length(subjects_flow);
 end
 
 switch modal
@@ -127,9 +141,14 @@ try
     
     % inputs
     %==========================================================================
-    spmmat = job.which_subjects{1};
-    tmp = strfind(spmmat,filesep);
-    rootDir = spmmat(1:tmp(end-2));
+    try 
+        spmpath_tmp = subjects_bold{1};
+    catch
+        spmpath_tmp = subjects_flow{1};
+    end
+        
+    tmp = strfind(spmpath_tmp,filesep);
+    rootDir = spmpath_tmp(1:tmp(end-2));
     
     if ~isempty(nameHDM)
         figDir = fullfile(rootDir,['HDM_' nameHDM]);
@@ -153,63 +172,50 @@ try
                 ROIs(r1).nameROI = int2str(r1);
             end
             %loop over each subject
-            for SubjIdx=1:length(subjects)
+            for SubjIdx = 1:nSubj
                 fullfigDir = fullfile(figDir,['S' int2str(cs1) '_' ROIs(r1).nameROI]);
 
                 try
-                    %load data
+                    
+                    % Data files
                     clear SPM Y
-                    fBOLD = fullfile(subjects{SubjIdx},'SPM.mat');
-                    fBOLD_old = fBOLD;
-                    
-                    % TO IMPLEMENT: REPLACE WITH A SEPARATE INPUT "FLOW SPM
-                    % FOLDERS"
-                    switch modal
-                        case {2,3,5}
-                            % Very inelegant HARD-CODED FOR MDEIE-P2
-                            tmpidx3 = strfind(fBOLD,'UR3');
-                            tmpidx1 = strfind(fBOLD,'UR1');
-                            if ~isempty(tmpidx1)
-                                fASL = fBOLD;
-                            elseif isempty(tmpidx1) && ~isempty(tmpidx3)
-                                fASL = fBOLD;
-                                fASL(tmpidx3:tmpidx3+2) = 'UR1';
-                            else
-                                tmpidxb = strfind(fBOLD,'bold');
-                                tmpidxf = strfind(fBOLD,'flow');
-                                if ~isempty(tmpidxf)
-                                    fASL = fBOLD;
-                                elseif isempty(tmpidxf) && ~isempty(tmpidxb)
-                                    fASL = fBOLD;
-                                    fASL(tmpidxb:tmpidxb+3) = 'flow';
-                                end
-                            end
+                    if exist('subjects_bold')
+                        fBOLD = fullfile(subjects_bold{SubjIdx},'SPM.mat');
+                        fBOLD_old = fBOLD;
                     end
+                    if exist('subjects_flow')
+                        fASL = fullfile(subjects_flow{SubjIdx},'SPM.mat');
+                    end
+%                     
+%                     % TO IMPLEMENT: REPLACE WITH A SEPARATE INPUT "FLOW SPM
+%                     % FOLDERS"
+%                     switch modal
+%                         case {2,3,5}
+%                             % Very inelegant HARD-CODED FOR MDEIE-P2
+%                             tmpidx3 = strfind(fBOLD,'UR3');
+%                             tmpidx1 = strfind(fBOLD,'UR1');
+%                             if ~isempty(tmpidx1)
+%                                 fASL = fBOLD;
+%                             elseif isempty(tmpidx1) && ~isempty(tmpidx3)
+%                                 fASL = fBOLD;
+%                                 fASL(tmpidx3:tmpidx3+2) = 'UR1';
+%                             else
+%                                 tmpidxb = strfind(fBOLD,'bold');
+%                                 tmpidxf = strfind(fBOLD,'flow');
+%                                 if ~isempty(tmpidxf)
+%                                     fASL = fBOLD;
+%                                 elseif isempty(tmpidxf) && ~isempty(tmpidxb)
+%                                     fASL = fBOLD;
+%                                     fASL(tmpidxb:tmpidxb+3) = 'flow';
+%                                 end
+%                             end
+%                     end
                     
-                    load(fBOLD);                   
+
+                    % And for BOLD    
                     % CHECK THIS...??
                     if removeWhitening
-                        switch modal
-                            case {1,2,3,5}
-                                %quick fix to use only one session
-                                 nSess = size(SPM.Sess,2);
-                                 SPM.xX.W = speye(size(SPM.xX.W,1)./nSess);
-                                 SPM.xX.K = SPM.xX.K(cs1);
-                                 %Remove HPF entirely for now
-                                 SPM.xX.K.X0 = zeros(size(SPM.xX.K.X0));
-                                 nScans = size(SPM.xY.VY,1)/nSess;
-                                 SPM.xY.VY = SPM.xY.VY((1:nScans) + (nScans*(cs1-1)) );
-                        end
-                        %save it as a temporary file
-                        [dir0 fil0 ext0] = fileparts(fBOLD);
-                        tmpdir = fullfile(dir0,'tmp_noWhitening');
-                        if ~exist(tmpdir,'dir')
-                            mkdir(tmpdir)
-                            fBOLD = fullfile(tmpdir,[fil0 ext0]);
-                            save(fBOLD,'SPM');
-                        end
-                        
-                        % And for flow...
+                        % For flow...
                         switch modal
                             case {2,3,5}
                                 load(fASL)
@@ -230,7 +236,34 @@ try
                                     fASL = fullfile(tmpdir,[fil0 ext0]);
                                     save(fASL,'SPM');
                                 end
-                                clear SPM
+                        end
+                        
+                        switch modal
+                            case {1,2,5}
+                                load(fBOLD);
+                                %quick fix to use only one session
+                                 nSess = size(SPM.Sess,2);
+                                 SPM.xX.W = speye(size(SPM.xX.W,1)./nSess);
+                                 SPM.xX.K = SPM.xX.K(cs1);
+                                 %Remove HPF entirely for now
+                                 SPM.xX.K.X0 = zeros(size(SPM.xX.K.X0));
+                                 nScans = size(SPM.xY.VY,1)/nSess;
+                                 SPM.xY.VY = SPM.xY.VY((1:nScans) + (nScans*(cs1-1)) );
+                        end
+                        %save it as a temporary file
+                        [dir0 fil0 ext0] = fileparts(fBOLD);
+                        tmpdir = fullfile(dir0,'tmp_noWhitening');
+                        if ~exist(tmpdir,'dir')
+                            mkdir(tmpdir)
+                            fBOLD = fullfile(tmpdir,[fil0 ext0]);
+                            save(fBOLD,'SPM');
+                        end
+                        
+                    else % if not removing filter
+                        switch modal
+                            case 3
+                                load(fASL);
+                            case {1,2,5}
                                 load(fBOLD);
                         end
                         

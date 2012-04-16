@@ -13,39 +13,58 @@ nameHDM.num     = [0 Inf];
 nameHDM.val     = {''};
 nameHDM.help    = {'Enter name for this HDM calculation.'}';
 
+% % % Data % % %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+which_subjects_bold         = cfg_files; %
+which_subjects_bold.name    = 'Select BOLD SPM folders for each subject'; 
+which_subjects_bold.tag     = 'which_subjects_bold';       
+which_subjects_bold.filter = 'dir';
+which_subjects_bold.ufilter = '.*';
+which_subjects_bold.num     = [1 Inf];    
+which_subjects_bold.help    = {'Select folders for each subject containing'
+    'first level GLM SPM analysis (SPM.mat) for BOLD data.'}';
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+which_subjects_flow         = cfg_files; %
+which_subjects_flow.name    = 'Select flow SPM folders for each subject'; 
+which_subjects_flow.tag     = 'which_subjects_flow';       
+which_subjects_flow.filter = 'dir';
+which_subjects_flow.ufilter = '.*';
+which_subjects_flow.num     = [1 Inf];    
+which_subjects_flow.help    = {'Select folders for each subject containing'
+    'first level GLM SPM analysis (SPM.mat) for flow data.'}';
+
 % % % Modality % % %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 xSPM_BOLD           = cfg_branch;
 xSPM_BOLD.name      = 'BOLD only';
 xSPM_BOLD.tag       = 'xSPM_BOLD';
-xSPM_BOLD.val       = {};
+xSPM_BOLD.val       = {which_subjects_bold};
 xSPM_BOLD.help      = {''};
 
 xSPM_ASL           = cfg_branch;
 xSPM_ASL.name      = 'Flow only';
 xSPM_ASL.tag       = 'xSPM_ASL';
-xSPM_ASL.val       = {};
+xSPM_ASL.val       = {which_subjects_flow};
 xSPM_ASL.help      = {''};
 
 xSPM_BOLD_ASL           = cfg_branch;
 xSPM_BOLD_ASL.name      = 'BOLD and flow from stat maps';
 xSPM_BOLD_ASL.tag       = 'xSPM_BOLD_ASL';
-xSPM_BOLD_ASL.val       = {}; 
+xSPM_BOLD_ASL.val       = {which_subjects_bold which_subjects_flow}; 
 xSPM_BOLD_ASL.help      = {'Not coded yet'};
 
 xSPM_BOLD_ASL_V2           = cfg_branch;
 xSPM_BOLD_ASL_V2.name      = 'BOLD and flow from ASL data';
 xSPM_BOLD_ASL_V2.tag       = 'xSPM_BOLD_ASL_V2';
-xSPM_BOLD_ASL_V2.val       = {};
-xSPM_BOLD_ASL_V2.help      = {'!!! Location and selection of flow and BOLD '
-    'functional data is hard-coded for Michele''s project !!!'}';
+xSPM_BOLD_ASL_V2.val       = {which_subjects_bold which_subjects_flow};
+xSPM_BOLD_ASL_V2.help      = {''}';
 
 xSPM_Modalities           = cfg_choice;
-xSPM_Modalities.name      = 'Modalities';
+xSPM_Modalities.name      = 'Data';
 xSPM_Modalities.tag       = 'xSPM_Modalities';
 xSPM_Modalities.values    = {xSPM_BOLD xSPM_BOLD_ASL xSPM_BOLD_ASL_V2 xSPM_ASL};
 xSPM_Modalities.val       = {xSPM_BOLD};
-xSPM_Modalities.help      = {'Choose data type: BOLD, BOLD + flow, flow only'};
+xSPM_Modalities.help      = {'Choose data type: BOLD, BOLD & flow, flow only'};
 
 
 Model_Choice           = cfg_menu;
@@ -63,17 +82,8 @@ Model_Choice.help      = {'Choose hemodynamic model: Buxton-Friston, '
 
 
 
-% % % Data % % % 
+% % % Data otions % % % 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-which_subjects         = cfg_files; %
-which_subjects.name    = 'Select SPM folders for each subject'; 
-which_subjects.tag     = 'which_subjects';       
-which_subjects.filter = 'dir';
-which_subjects.ufilter = '.*';
-which_subjects.num     = [1 Inf];    
-which_subjects.help    = {'Select folders for each subject containing'
-    'first level GLM SPM analysis (UR0 or UR3 folders).'}';
 
 which_session     = cfg_entry;
 which_session.name    = 'Which session(s)?';
@@ -491,7 +501,7 @@ EM_parameters.help    = {'Parameters of Expectation Maximization algorithm.'};
 liom_HDM      = cfg_exbranch;
 liom_HDM.name = 'LIOM Hemodynamic Modelling';
 liom_HDM.tag  = 'liom_HDM';
-liom_HDM.val  = {nameHDM xSPM_Modalities Model_Choice which_subjects ...
+liom_HDM.val  = {nameHDM xSPM_Modalities Model_Choice ...
      echo_time which_condition which_session  genericROI ...
     generate_figures save_figures  ...
     dp_start dp_end ...
