@@ -103,7 +103,7 @@ else
             continue;
         else
             GapFlag = 1;                                         %outputted
-            Gapnum = round(InRate(i_check) / MeanRate) - 1;
+            Gapnum = round(InRate(i_check) / MeanRate);
             Rate_add = InRate(i_check) / Gapnum;
 
             InRate_order(i_generate) = Rate_add;

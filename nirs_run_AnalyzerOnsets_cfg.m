@@ -34,11 +34,59 @@ dp_NIRS1.strtype = 'r';
 dp_NIRS1.num     = [0 Inf];
 dp_NIRS1.help    = {'Specify number of data time points in NIRS data for the GLM (optional).'};
 
+%**************************************************************************************************
+%Ke Peng, include the heart rate repair option
+%17/04/2012
+
+avg_number         = cfg_entry;
+avg_number.name    = 'Number of pulses to generate mean: ';
+avg_number.tag     = 'avg_number';
+avg_number.strtype = 'r';
+avg_number.val     = {5};
+avg_number.num     = [1 1];
+%avg_number.def     = @(val)nirs_get_defaults(...
+    %'model_specify.wls_bglm_specify.hpf_butter.hpf_butter_On.hpf_butter_freq', val{:});
+avg_number.help    = {'Enter the number of pulses to generate the mean value for verification'
+                      'This value has to be an integer.'}';
+
+gap_def         = cfg_entry;
+gap_def.name    = 'Times of mean value to define a gap: ';
+gap_def.tag     = 'gap_def';
+gap_def.strtype = 'r';
+gap_def.val     = {1.8};
+gap_def.num     = [1 1];
+%avg_number.def     = @(val)nirs_get_defaults(...
+    %'model_specify.wls_bglm_specify.hpf_butter.hpf_butter_On.hpf_butter_freq', val{:});
+gap_def.help    = {'Enter the times of mean value to define a single gap.'};
+
+cardiac_repair_on         = cfg_branch;
+cardiac_repair_on.tag     = 'cardiac_repair_on';
+cardiac_repair_on.name    = 'cardiac_repair_on';
+cardiac_repair_on.val     = {avg_number gap_def};
+cardiac_repair_on.help    = {'Please specify the parameters for gap filling.'};
+
+cardiac_repair_off         = cfg_branch;
+cardiac_repair_off.tag     = 'cardiac_repair_off';
+cardiac_repair_off.name    = 'Cardiac onset repair off';
+cardiac_repair_off.val     = {};
+cardiac_repair_off.help    = {'Cardiac onset gap filling has been turned off.'};
+
+cardiac_repair      = cfg_choice;
+cardiac_repair.tag  = 'cardiac_repair';
+cardiac_repair.name = 'Gap filling for Cadiac onsets (optional).';
+%cardiac_repair.labels = {'Yes','No'};
+cardiac_repair.values = {cardiac_repair_on cardiac_repair_off};
+cardiac_repair.val = {cardiac_repair_on};
+cardiac_repair.help = {'Choose whether to fill the gaps of the cardiac onsets is needed.'
+                       'This process compares each value in cardiac onsets with the mean of certain previous cardiac interval values'
+                       'interpolate values to fill the gaps between two cardiac pulses'}';
+
+%*****************************************************************************************************
 % Executable Branch
 AnalyzerOnsets      = cfg_exbranch;
 AnalyzerOnsets.name = 'Read NIRS onsets';
 AnalyzerOnsets.tag  = 'AnalyzerOnsets';
-AnalyzerOnsets.val  = {NIRSmat redo1 NIRSmatCopyChoice raw_onset_files freq_NIRS1 dp_NIRS1};
+AnalyzerOnsets.val  = {NIRSmat redo1 NIRSmatCopyChoice raw_onset_files freq_NIRS1 dp_NIRS1 cardiac_repair};
 AnalyzerOnsets.prog = @nirs_run_AnalyzerOnsets;
 AnalyzerOnsets.vout = @nirs_cfg_vout_AnalyzerOnsets;
 AnalyzerOnsets.help = {'Select NIRS structures (optional) and/or '
