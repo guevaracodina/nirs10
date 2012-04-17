@@ -60,6 +60,15 @@ if ~new_onset_files && ~NIRSok, return; end
 if nsubj > 1 && new_onset_files, return; end
 
 
+if isfield(job.cardiac_repair,'cardiac_repair_on')
+    cardiac_repair_on = 1;
+    avg_number = job.cardiac_repair.cardiac_repair_on.avg_number;
+    gap_def = job.cardiac_repair.cardiac_repair_on.gap_def;
+else
+    cardiac_repair_on = 0;
+end
+
+
 %list of NIRS.mat locations, one per subject
 for Idx=1:nsubj
     %Load NIRS.mat information
@@ -220,12 +229,19 @@ for Idx=1:nsubj
                         
                         dvR = diff(vR);
                         
-                        [dvR,vR,Flag_Repair,TotalAdded_Repair] = HeartRate_Repair(dvR,vR,5,2.5);
-                        disp(['Flag_Repair = ' num2str(Flag_Repair) ' for session: ' num2str(i3)]);
-                        disp(['TotalAdded_Repair = ' num2str(TotalAdded_Repair) ' for session: ' num2str(i3)]);
-                        iR = iR + TotalAdded_Repair; 
+                        if cardiac_repair_on
+                            try
+                                [dvR,vR,Flag_Repair,TotalAdded_Repair] = HeartRate_Repair(dvR,vR,avg_number,gap_def);
+                                disp(['Flag_Repair = ' num2str(Flag_Repair) ' for session: ' num2str(i3)]);
+                                disp(['TotalAdded_Repair = ' num2str(TotalAdded_Repair) ' for session: ' num2str(i3)]);
+                                iR = iR + TotalAdded_Repair;
+                            catch
+                                disp('Cardiac repair failed.');
+                            end
+                        end
                         
-                        vRi = interp1(vR(2:end),dvR,lpi,'spline');
+                        vRi = interp1(vR(2:end),dvR,lpi,'linear');
+
                         %derivative of pulse rate - too noisy
                         %ddvR = diff(dvR);
                         %vRi2 = interp1(vR(2:end-1),ddvR,lpi,'spline');
