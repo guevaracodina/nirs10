@@ -448,17 +448,23 @@ try
                             switch modal
                                 case 1
                                     ylabel('BOLD (%)')
+                                    ylim(100*[min(Y.y(:)) max(Y.y(:))]);
                                 case 3
                                     ylabel('Flow (%)')
+                                    ylim(100*[min(Y.y(:)) max(Y.y(:))]);
                                 case {2,5}
                                     hold on, plot(tt,Y.y(:,2)*100,'.-r')
                                     %ylim([-3 18])
                                     ylabel('ASL (BOLD & flow) (%)')
+                                    ylim(100*[min(Y.y(:)) max(Y.y(:))]);
                             end
                             try 
                                 title(['Upsampling: ' num2str(S.simuUpsample) ' ; Interpolation: ' num2str(S.simuInterp)])
                             end
                             
+                            if ~exist(fullfigDir1,'dir'), mkdir(fullfigDir1); end
+                            saveas(gcf,fullfile(fullfigDir1,['Yy_' gen_num_str(it1,3)]),'fig');
+                            print(gcf, '-dtiffn', fullfile(fullfigDir1,['Yy_' gen_num_str(it1,3)]));
                             close(gcf);
                                                     
                             if S.simuOn
