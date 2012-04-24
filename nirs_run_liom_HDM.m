@@ -220,13 +220,19 @@ try
                             case {2,3,5}
                                 load(fASL)
                                 %quick fix to use only one session
+                                % MICH: WHY??
                                  nSess = size(SPM.Sess,2);
-                                 SPM.xX.W = speye(size(SPM.xX.W,1)./nSess);
-                                 SPM.xX.K = SPM.xX.K(cs1);
-                                 %Remove HPF entirely for now
-                                 SPM.xX.K.X0 = zeros(size(SPM.xX.K.X0));
                                  nScans = size(SPM.xY.VY,1)/nSess;
-                                 SPM.xY.VY = SPM.xY.VY((1:nScans) + (nScans*(cs1-1)) );
+
+%                                  SPM.xX.W = speye(size(SPM.xX.W,1)./nSess);
+%                                  SPM.xX.K = SPM.xX.K(cs1);
+%                                  %Remove HPF entirely for now
+%                                  SPM.xX.K.X0 = zeros(size(SPM.xX.K.X0));
+%                                  SPM.xY.VY = SPM.xY.VY((1:nScans) + (nScans*(cs1-1)) );
+
+                                 SPM.xX.W = speye(size(SPM.xX.W));
+                                 %Remove HPF entirely for now
+                                 SPM.xX.K(cs1).X0 = zeros(size(SPM.xX.K(cs1).X0));
                                  
                                  %save it as a temporary file
                                 [dir0 fil0 ext0] = fileparts(fASL);
@@ -242,13 +248,19 @@ try
                             case {1,2,5}
                                 load(fBOLD);
                                 %quick fix to use only one session
+                                % MICH: WHY??
                                  nSess = size(SPM.Sess,2);
-                                 SPM.xX.W = speye(size(SPM.xX.W,1)./nSess);
-                                 SPM.xX.K = SPM.xX.K(cs1);
-                                 %Remove HPF entirely for now
-                                 SPM.xX.K.X0 = zeros(size(SPM.xX.K.X0));
                                  nScans = size(SPM.xY.VY,1)/nSess;
-                                 SPM.xY.VY = SPM.xY.VY((1:nScans) + (nScans*(cs1-1)) );
+%                                  SPM.xX.W = speye(size(SPM.xX.W,1)./nSess);
+%                                  SPM.xX.K = SPM.xX.K(cs1);
+%                                  %Remove HPF entirely for now
+%                                  SPM.xX.K.X0 = zeros(size(SPM.xX.K.X0));
+%                                  SPM.xY.VY = SPM.xY.VY((1:nScans) + (nScans*(cs1-1)) );
+
+                                SPM.xX.W = speye(size(SPM.xX.W));
+                                %Remove HPF entirely for now
+                                SPM.xX.K(cs1).X0 = zeros(size(SPM.xX.K(cs1).X0));
+
                         end
                         %save it as a temporary file
                         [dir0 fil0 ext0] = fileparts(fBOLD);
@@ -440,7 +452,7 @@ try
                             
                             % Plot data for debugging 
                             tt = (0:size(Y.y,1)-1)*(Y.dt);
-                            figure('Units','normalized','Position',[0.1, 0.35, 0.6, 0.5])
+                            hfigData = figure('Units','normalized','Position',[0.1, 0.35, 0.6, 0.5]);
                             plot(tt,Y.y(:,1)*100,'.-b')
                             %ylim([-0.3 1.8])
                             xlim([0 200])
@@ -462,10 +474,12 @@ try
                                 title(['Upsampling: ' num2str(S.simuUpsample) ' ; Interpolation: ' num2str(S.simuInterp)])
                             end
                             
-                            if ~exist(fullfigDir1,'dir'), mkdir(fullfigDir1); end
-                            saveas(gcf,fullfile(fullfigDir1,['Yy_' gen_num_str(it1,3)]),'fig');
-                            print(gcf, '-dtiffn', fullfile(fullfigDir1,['Yy_' gen_num_str(it1,3)]));
-                            close(gcf);
+                            if save_figures
+                                if ~exist(fullfigDir1,'dir'), mkdir(fullfigDir1); end
+                                saveas(hfigData,fullfile(fullfigDir1,['Yy_' gen_num_str(it1,3)]),'fig');
+                                print(hfigData, '-dtiffn', fullfile(fullfigDir1,['Yy_' gen_num_str(it1,3)]));
+                            end
+                            close(hfigData);
                                                     
                             if S.simuOn
                                 SubjIdx0 = SubjIdx; %should not be used
