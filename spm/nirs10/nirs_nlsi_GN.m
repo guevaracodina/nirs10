@@ -491,19 +491,21 @@ for k = 1:EM.Niterations % was 4*128 in SPM, max. number of iterations
             end
         end
         
-        if isreal(f)
+         if isreal(f)
             
             subplot(2,1,1)
-            plot(x,f(:,1),'-b'), hold on
+            plot(x,f(:,1)*100,'-b'), hold on
             %plot(x,y,':r'), hold on
             temp = f + spm_unvec(e,f);
-            plot(x,temp(:,1),'k','LineWidth',0.5), hold off
+            plot(x,temp(:,1)*100,'k','LineWidth',0.5), hold off
+            legend('Modelled BOLD(%)','Filtered BOLD response(%)')
             if size(f,2)==2
-                hold on, plot(x,f(:,2)/10,'-m')
-                plot(x,temp(:,1)/10,'r','LineWidth',0.5), hold off
+                hold on, plot(x,f(:,2)*10,'-m')
+                plot(x,temp(:,2)*10,'r','LineWidth',0.5), hold off
+                legend('Modelled BOLD(%)','Filtered BOLD response(%)','Modelled flow/10(%)','Filtered flow/10 response(%)')
             end
             xlabel(xLab)
-            title(sprintf('%s: %i','prediction (solid blue) and filtered response (dashed black): E-Step',k))
+            %title(sprintf('%s: %i','prediction (solid blue) and filtered response (dashed black): E-Step',k))
             grid on
             
         else
@@ -540,10 +542,10 @@ for k = 1:EM.Niterations % was 4*128 in SPM, max. number of iterations
             prevMSE_flow = MSE_flow;
             x0_flow = x0(:,2);
             MSE_flow = sum(x0_flow.^2)/length(x0_flow(:));
-            legend(['MSE: ' sprintf('%2.3f',MSE)], ['(MSE BOLD (k-b): ' sprintf('%2.3f',MSE_BOLD) ...
-                ', MSE flow (r-m): ' sprintf('%2.3f',MSE_flow) ')']);
+            title([sprintf('%s: %i','E-Step',k) ' - MSE total: ' sprintf('%2.3f',MSE) '; MSE BOLD (b-k): ' sprintf('%2.3f',MSE_BOLD) ...
+                ', MSE flow (m-r): ' sprintf('%2.3f',MSE_flow) ]);
         else
-            legend(['MSE: ' sprintf('%g',MSE)]);
+            title(['MSE: ' sprintf('%g',MSE)]);
         end
         
         % subplot parameters
@@ -737,6 +739,19 @@ close(hfigevolution2);
  
 % outputs
 %--------------------------------------------------------------------------
+% Save MSE in a text file because I can't seem to pass it as an output
+if exist('fullfigDir') && ~isempty(fullfigDir)
+    if ~exist(fullfigDir,'dir'), mkdir(fullfigDir); end
+    filenMSE = fullfile(fullfigDir,['MSE_' gen_num_str(SubjIdx,3) '.txt']);
+    save(filenMSE,'MSE','-ascii');
+    if size(x0,2)==2 % more than 1 modality
+        filenMSE_BOLD = fullfile(fullfigDir,['MSE_BOLD_' gen_num_str(SubjIdx,3) '.txt']);
+        filenMSE_flow = fullfile(fullfigDir,['MSE_flow_' gen_num_str(SubjIdx,3) '.txt']);
+        save(filenMSE_BOLD,'MSE_BOLD','-ascii');
+        save(filenMSE_flow,'MSE_flow','-ascii');
+    end
+end
+
 Ep     = spm_unvec(spm_vec(pE) + V*C.p(ip),pE);
 Cp     = V*C.Cp(ip,ip)*V';
 Eh     = C.h;
