@@ -100,7 +100,7 @@ else
         else   
             if isfield(job.hpf_butter,'SPM_cosine_filter')                
                 HPFbutter = 4; %no high pass filter
-                hpf_butter_freq = 1/240; %4 minute  
+                hpf_butter_freq = 1/300; %1/240; %4 minute  
                 hpf_butter_order = 3; %not used
             else
             HPFbutter = 0; %no high pass filter
