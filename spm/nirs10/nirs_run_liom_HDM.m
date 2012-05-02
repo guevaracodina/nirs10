@@ -327,6 +327,8 @@ try
                                 fBOLD = fullfile(tmpdir,[fil00 ext00]);
                                 save(fBOLD,'SPM');
                                 
+                                clear SPM
+                                load(fASL)
                                 if S.simuNoise
                                     SPM.xY.P     = char(restscans_ASL{:});
                                     SPM.xY.VY = spm_vol(SPM.xY.P);
