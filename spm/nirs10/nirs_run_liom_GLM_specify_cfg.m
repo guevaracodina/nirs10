@@ -476,8 +476,7 @@ hpf_butter_freq.name    = 'Cutoff frequency for HPF';
 hpf_butter_freq.tag     = 'hpf_butter_freq';
 hpf_butter_freq.strtype = 'r';
 hpf_butter_freq.num     = [1 1];
-hpf_butter_freq.def     = @(val)nirs_get_defaults(...
-    'model_specify.wls_bglm_specify.hpf_butter.hpf_butter_On.hpf_butter_freq', val{:});
+hpf_butter_freq.val     = {0.01};
 hpf_butter_freq.help    = {'Enter cutoff frequency in Hz for Butterworth HPF.'};
 
 hpf_butter_order         = cfg_entry;
@@ -485,8 +484,8 @@ hpf_butter_order.name    = 'Order of Butterworth HPF';
 hpf_butter_order.tag     = 'hpf_butter_order';
 hpf_butter_order.strtype = 'r';
 hpf_butter_order.num     = [1 1];
-hpf_butter_order.val     = {5};
-hpf_butter_order.help    = {'Enter order of Butterworth HPF (preferred value = 3).'};
+hpf_butter_order.val     = {2};
+hpf_butter_order.help    = {'Enter order of Butterworth HPF (preferred value = 2).'};
 
 hpf_butter_On         = cfg_branch;
 hpf_butter_On.tag     = 'hpf_butter_On';
@@ -606,13 +605,12 @@ filter_design_matrix.help = {'Currently under testing. Potential problem:'
 
 hpf_butter      = cfg_choice;
 hpf_butter.tag  = 'hpf_butter';
-hpf_butter.name = 'Butterworth High Pass Filter';
+hpf_butter.name = 'Additional High Pass Filter';
 %hpf_butter.labels = {'Yes','No'};
 hpf_butter.values = {hpf_butter_On hpf_butter_Off remove_linear GLM_remove_linear SPM_cosine_filter};
 hpf_butter.val = {hpf_butter_On};
 %hpf_butter.def = @(val)nirs_get_defaults('model_specify.wls_bglm_specify.hpf_butter', val{:});
-hpf_butter.help = {'Choose whether to include a Butterworth High Pass Filter.'
-    'Parameters are: order 3.'}';
+hpf_butter.help = {'Additional High Pass Filter'}';
 
 % Executable Branch
 wls_bglm_specify      = cfg_exbranch;
