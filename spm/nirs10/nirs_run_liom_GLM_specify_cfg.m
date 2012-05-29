@@ -439,20 +439,6 @@ GLM_include_cardiac.def    = @(val)nirs_get_defaults(...
     'model_specify.wls_bglm_specify.GLM_include_cardiac', val{:});
 GLM_include_cardiac.help   = {'Include cardiac regressor if available.'};
 
-%**************************************************************************************
-%Include the heart rate
-%02/03/2012 Ke Peng Laboratoire d'Imagerie Optique et Moculaire
-%**************************************************************************************
-%GLM_include_HeartRate    = cfg_menu;
-%GLM_include_HeartRate.name   = 'Include HeartRate regressor';
-%GLM_include_HeartRate.tag    = 'GLM_include_HeartRate';
-%GLM_include_HeartRate.labels = {'Yes','No'};
-%GLM_include_HeartRate.values = {1,0};
-%GLM_include_HeartRate.def    = @(val)nirs_get_defaults(...
-%    'model_specify.wls_bglm_specify.GLM_include_HeartRate', val{:});
-%GLM_include_HeartRate.help   = {'Include HeartRate regressor if available.'};
-%**************************************************************************************
-
 GLM_include_Mayer    = cfg_menu;
 GLM_include_Mayer.name   = 'Include Mayer wave regressor';
 GLM_include_Mayer.tag    = 'GLM_include_Mayer';

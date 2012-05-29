@@ -625,6 +625,20 @@ for Idx=1:size(job.NIRSmat,1)
             %Add model specification
             try SPM.xX.opt = Opt; catch; end
             
+            
+            
+            %**********************************************************
+            %Temporarily added by Ke Peng
+            %**********************************************************
+
+            if meth1 == 1
+                SPM.xX.K.HParam.type = 'none';
+                SPM.xX.K.LParam.type = 'none'; %Need to modify if using HPFs or LPFs
+            end
+            
+            %**********************************************************
+            
+            
             %%% updated for wavelet-MDL detrending 2009-03-19
             if meth1 == 3
                 str = 'Detrending?';
