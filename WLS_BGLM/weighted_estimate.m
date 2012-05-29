@@ -19,10 +19,17 @@
 %   varBetas           : Estimated  variance of beta 1 by nCond
 %   yDrift             : Signal of nuisance nTimePts by 1
 
+%**************************************************************************
+%Temporarily added by Ke Peng
+%**************************************************************************
 
-
-function [betas, varBetas, spectral_exponent, yDrift] = ...
+function [betas, varBetas, spectral_exponent, yDrift, residual, Wy_r, Wx_r] = ...
     weighted_estimate(response,y,L0,J0,J,N,correlated_drifts,f)
+
+%function [betas, varBetas, spectral_exponent, yDrift] = ...
+ %   weighted_estimate(response,y,L0,J0,J,N,correlated_drifts,f)
+ 
+%**************************************************************************
 
 
 %--Parameters
@@ -294,11 +301,16 @@ yDrift=yDrift';                                                             % nT
 
 % Calcul des variances
 residual = Wy - temp2' -Wx*betas';
-sigma2_WLS = Sigma2;                                                        % scalar
+sigma2_WLS = Sigma2;    
+%ResSS = (Wy' * Wy) - (Wy' * Wx) * Wx' * Wy; %channel by channel
+% scalar
 var_xi  = inv(B)*sigma2_WLS;                                                % B=A'*inverse_sigma_matrix*A;
 temp=diag(var_xi);
 varBetas(1,:)=temp(end-(nCond-1):end);
 clear temp
+
+Wy_r = Wy;
+Wx_r = Wx;
 
 
 

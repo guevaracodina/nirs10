@@ -59,6 +59,9 @@ if ~new_onset_files && ~NIRSok, return; end
 %Exit if more than one subject and new onset files were specified
 if nsubj > 1 && new_onset_files, return; end
 
+%**********************************************************************************************
+%Ke Peng, introduce heart rate repair process
+%17/04/2012
 
 if isfield(job.cardiac_repair,'cardiac_repair_on')
     cardiac_repair_on = 1;
@@ -67,7 +70,7 @@ if isfield(job.cardiac_repair,'cardiac_repair_on')
 else
     cardiac_repair_on = 0;
 end
-
+%***********************************************************************************************
 
 %list of NIRS.mat locations, one per subject
 for Idx=1:nsubj
@@ -229,16 +232,21 @@ for Idx=1:nsubj
                         
                         dvR = diff(vR);
                         
-                        if cardiac_repair_on
-                            try
-                                [dvR,vR,Flag_Repair,TotalAdded_Repair] = HeartRate_Repair(dvR,vR,avg_number,gap_def);
-                                disp(['Flag_Repair = ' num2str(Flag_Repair) ' for session: ' num2str(i3)]);
-                                disp(['TotalAdded_Repair = ' num2str(TotalAdded_Repair) ' for session: ' num2str(i3)]);
-                                iR = iR + TotalAdded_Repair;
-                            catch
-                                disp('Cardiac repair failed.');
-                            end
-                        end
+%**********************************************************************************************
+%Ke Peng, introduce heart rate repair process
+%17/04/2012
+                        
+						if cardiac_repair_on
+							try
+								[dvR,vR,Flag_Repair,TotalAdded_Repair] = HeartRate_Repair(dvR,vR,avg_number,gap_def);
+								disp(['Flag_Repair = ' num2str(Flag_Repair) ' for session: ' num2str(i3)]);
+								disp(['TotalAdded_Repair = ' num2str(TotalAdded_Repair) ' for session: ' num2str(i3)]);
+								iR = iR + TotalAdded_Repair;
+							catch
+								disp('Cardiac repair failed.');
+							end
+						end
+%**********************************************************************************************
                         
                         vRi = interp1(vR(2:end),dvR,lpi,'linear');
 

@@ -234,15 +234,94 @@ for Idx=1:size(job.NIRSmat,1)
                                 %glm(time,Y,tSPM.xX.X(:,1:end-1),tSPM.Sess.C.C); %exclude constant in X
                             case 'WLS'
                                 %remove constant regressor - assume it is the last entry
+                                %if size(tSPM.xX.X,2) > 1
+                                 %   tmpX = tSPM.xX.X(:,1:end-1);
+                                %else
+                                %    tmpX = tSPM.xX.X;
+                                %end
+
+                                %**********************************************************
+                                %Temporarily added by Ke Peng
+                                %**********************************************************                                
+                          
+                                %remove constant regressor - assume it is the last entry
                                 if size(tSPM.xX.X,2) > 1
                                     tmpX = tSPM.xX.X(:,1:end-1);
                                 else
                                     tmpX = tSPM.xX.X;
                                 end
-                                [Betas,spectralExponents,Modelisation,Design] = ...
-                                    wls(fs,Y,tmpX,tSPM.xX.opt.Design);
-                                tSPM.xX.beta = Betas;
                                 
+                                nScan = size(tSPM.xX.X,1);
+                                
+                                switch tSPM.xX.K.HParam.type
+                                    case 'Wavelet-MDL'
+                                        tmp_K = tSPM.xX.K;
+                                        tmp_K.HParam.type = '';
+                                        tSPM.xX.xKXs = spm_sp('Set', spm_filter_HPF_LPF_WMDL(tmp_K, tSPM.xX.X)); % KX
+                                        tSPM.xX.K.X = tSPM.xX.X;
+                                        clear tmp_K;
+                                    case 'DCT'
+                                        tSPM.xX.xKXs = spm_sp('Set', spm_filter_HPF_LPF_WMDL(tSPM.xX.K, tSPM.xX.X)); % KX
+                                    case 'none'
+                                        tSPM.xX.xKXs = spm_sp('Set', spm_filter_HPF_LPF_WMDL(tSPM.xX.K, tSPM.xX.X)); % KX ?
+                                end
+
+                                tSPM.xX.xKXs.X = full(tSPM.xX.xKXs.X);
+                                tSPM.xX.pKX = spm_sp('x-', tSPM.xX.xKXs);
+                                
+                                
+                                switch tSPM.xX.K.LParam.type
+                                case {'hrf', 'Gaussian'}
+                                    S = tSPM.xX.K.KL;
+                                case 'none'
+                                    S = speye(nScan);
+                                end
+
+                                switch tSPM.xX.K.HParam.type
+                                    case 'DCT'
+                                        S = S - tSPM.xX.K.X0 * (tSPM.xX.K.X0' * S);
+                                        %note NIRS_SPM has a catch if out of memory occurs (- deleted here)
+                                end
+                                if ~isfield(tSPM,'TrRVRVexact')
+                                    tSPM.TrRVRVexact = 0; %approximation
+                                end
+
+                                if tSPM.generate_trRV
+                                    [trRV trRVRV ] = approx_trRV(tSPM.xX.xKXs.X,tSPM.xX.pKX,S,[],tSPM.TrRVRVexact);
+                                else
+                                    trRV = 0;
+                                    trRVRV = 0;
+                                end
+                                tSPM.xX.trRV = trRV; % <R'*y'*y*R>
+                                tSPM.xX.trRVRV = trRVRV; %- Satterthwaite
+                                try 
+                                    tSPM.xX.erdf = trRV^2/trRVRV; 
+                                catch exception
+                                    disp(exception.identifier);
+                                    disp(exception.stack(1));
+                                    disp('Problem calculating degrees of freedom');    
+                                end
+                            
+                                tSPM.xX.Bcov = (tSPM.xX.pKX * S);
+                                tSPM.xX.Bcov = tSPM.xX.Bcov * tSPM.xX.Bcov';
+                                
+                                [Betas,spectralExponents,Modelisation,Design,Ress,ResSS] = ...
+                                    wls(fs,Y,tmpX,tSPM.xX.opt.Design,tSPM.xX.K);
+                                
+                                %[Betas,spectralExponents,Modelisation,Design] = ...
+                                %    wls(fs,Y,tmpX,tSPM.xX.opt.Design);
+                                
+                                tSPM.KY = Y;
+                                tSPM.xX.beta = Betas;
+                                res = Ress;
+                                tSPM.xX.ResSS = sum(res.^2);
+                                tSPM.xX.ResSSch = ResSS; % Residual sum of squares
+                                
+                                
+                                tSPM.xX.xKXs.X = tSPM.xX.xKXs.X(:,1:(end-1));
+
+                                %**********************************************************                                
+                                                                 
                             case 'NIRS_SPM'
                                 if precolor
                                     [tSPM res] = precoloring_batch(tSPM,Y);
@@ -284,10 +363,26 @@ for Idx=1:size(job.NIRSmat,1)
                             else
                                 V2r = 2;
                             end
+                            
+
+                            
                             %Need filtered Y (KY) and filtered X ()
                             %sigma = std(tSPM.KY- (tSPM.xX.X(:,1)*tSPM.xX.beta(1,:) + tSPM.xX.X(:,V2r)*tSPM.xX.beta(V2r,:)),0,1);
                             %sigma = std(tSPM.KY- (tSPM.xX.xKXs.X(:,1)*tSPM.xX.beta(1,:) + tSPM.xX.xKXs.X(:,V2r)*tSPM.xX.beta(V2r,:)),0,1);
+                            
+
                             sigma = std(tSPM.KY- (tSPM.xX.xKXs.X*tSPM.xX.beta),0,1);
+                            
+                            %**********************************************************
+                            %Temporarily added by Ke Peng
+                            %**********************************************************
+
+                            if strcmp(SPM.xX.opt.meth, 'WLS')
+                                V2r = size(tSPM.xX.xKXs.X,2);
+                                tSPM.xX.xKXs.X = [tSPM.xX.xKXs.X ones(length(tSPM.xX.xKXs.X), 1)];% to fill the blanc left for constant regressor
+                                tSPM.xX.beta = [tSPM.xX.beta' zeros(length(tSPM.xX.beta), 1)]';
+                            end % Very bad coding! Need to verify whether WLS removed the constant regressor. What if there are multiple kinds of spks?
+                            %**********************************************************
                             
                             tSPM.xX.sigma = sigma;
                             tSPM.xX.sigma_unf = sigma_unf;
@@ -338,6 +433,17 @@ for Idx=1:size(job.NIRSmat,1)
                             [tSPM.xX.S.RaVmin, tSPM.xX.S.RaCmin] = min(tSPM.xX.beta(1,CHbR)./ sigma(CHbR));
                             [tSPM.xX.S.RbVmax, tSPM.xX.S.RbCmax] = max(tSPM.xX.beta(V2r,CHbR)./ sigma(CHbR));
                             [tSPM.xX.S.RbVmin, tSPM.xX.S.RbCmin] = min(tSPM.xX.beta(V2r,CHbR)./ sigma(CHbR));
+
+                            [tSPM.xX.S.OtaVmax, tSPM.xX.S.OtaCmax] = max(tSPM.xX.t(1,CHbO));
+                            [tSPM.xX.S.OtaVmin, tSPM.xX.S.OtaCmin] = min(tSPM.xX.t(1,CHbO));
+                           % [tSPM.xX.S.OtbVmax, tSPM.xX.S.OtbCmax] = max(tSPM.xX.t(V2r,CHbO));
+                           % [tSPM.xX.S.OtbVmin, tSPM.xX.S.OtbCmin] = min(tSPM.xX.t(V2r,CHbO));
+                            [tSPM.xX.S.RtaVmax, tSPM.xX.S.RtaCmax] = max(tSPM.xX.t(1,CHbR));
+                            [tSPM.xX.S.RtaVmin, tSPM.xX.S.RtaCmin] = min(tSPM.xX.t(1,CHbR));
+                           % [tSPM.xX.S.RtbVmax, tSPM.xX.S.RtbCmax] = max(tSPM.xX.t(V2r,CHbR));
+                           % [tSPM.xX.S.RtbVmin, tSPM.xX.S.RtbCmin] = min(tSPM.xX.t(V2r,CHbR));
+
+                            
                         catch exception
                             disp(exception.identifier)
                             disp(exception.stack(1));

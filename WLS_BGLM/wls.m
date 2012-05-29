@@ -11,9 +11,15 @@
 % stimuli       nTimePtsStim by nCond
 % HRF
 
+%**************************************************************************
+%Temporarily added by Ke Peng
+%**************************************************************************
 
+%function [Betas,spectralExponents,Modelisation,Design] = wls(fs,conc,X,Opt)
 
-function [Betas,spectralExponents,Modelisation,Design] = wls(fs,conc,X,Opt)
+function [Betas,spectralExponents,Modelisation,Design,Ress, ResSS] = wls(fs,conc,X,Opt,K)
+
+%**************************************************************************
 
 
 
@@ -61,6 +67,29 @@ for Jdx=1:nCond
 end
 X = X_resized;
 %%%%%%%%%%%%
+
+
+
+%**************************************************************************
+%Temporarily added by Ke Peng
+%To consist the K.row to the interpolated X data
+%**************************************************************************
+
+i_inter = length(X) - size(conc,1);
+
+if i_inter >= 0 %if interpolated data number is greater than the original
+    i_ori = length(K.row);
+    K.row = [K.row zeros(1,i_inter)];
+
+    for j_inter = 1 : i_inter
+        K.row(1, i_ori+j_inter) = K.row(1, i_ori+j_inter-1) + 1;
+    end
+else%if the data set is shrinked
+    K.row = K.row(1,1:length(X));
+end
+    
+%**************************************************************************    
+
 
 %------For nuisance model
 J0=Opt.J0;
@@ -158,18 +187,39 @@ clear temp corr
 correlated_drifts=correlated_drifts(correlated_drifts <= n0);
 
 
-
+%**************************************************************************
+%Temporarily added by Ke Peng
+%**************************************************************************
+Ress = zeros(length(X), nPairs);
+Wy_Ress = zeros(length(X), nPairs);
+Wx_Ress = zeros(size(X,1), nPairs * size(X,2));
+%**************************************************************************
 
 
 
 %-----ANALYSIS
 %display (sprintf('\nAnalysis starts'))
 for iPairs=1:nPairs
-    %display(sprintf('Pair number %g',iPairs))
+    display(sprintf('Pair number %g',iPairs));
     
-    [betas,varBetas,sExp,yDrift]=weighted_estimate(X',conc_resized(:,iPairs)...
+%**************************************************************************
+%Temporarily added by Ke Peng
+%**************************************************************************
+    
+   % [betas,varBetas,sExp,yDrift]=weighted_estimate(X',conc_resized(:,iPairs)...
+                                               %     ,L0,J0,J,N,...
+                                               %     correlated_drifts,f);
+ 
+    [betas,varBetas,sExp,yDrift,Ress_SC, Wy_r, Wx_r]=weighted_estimate(X',conc_resized(:,iPairs)...
                                                     ,L0,J0,J,N,...
                                                     correlated_drifts,f);
+                                                
+    Ress(:,iPairs) = Ress_SC;
+    
+    Wy_Ress(:,iPairs) = Wy_r;
+    Wx_Ress(:,(iPairs*size(X,2)-(size(X,2)-1)) : iPairs*size(X,2)) = Wx_r; %occupy multiple columns if containing multiple regressors
+                                                
+%**************************************************************************
     for iReg=1:nReg
         yHrf(:,iReg)=betas(iReg).*X(:,iReg);
     end
@@ -189,6 +239,18 @@ for iPairs=1:nPairs
                                     Modelisation.yModel(:,iPairs);
     
 end
+
+%**************************************************************************
+%Temporarily added by Ke Peng
+%**************************************************************************
+Wx_X = spm_sp('Set', spm_filter_HPF_LPF_WMDL(K, Wx_Ress));
+
+Wx_px = spm_sp('x-', Wx_X);%peusdo-inverse of Wx
+
+ResSS = (Wy_Ress' * Wy_Ress) - (Wy_Ress' * Wx_Ress) * Wx_px * Wy_Ress;
+
+%**************************************************************************
+
 
 Modelisation.conc=conc_resized;
 
