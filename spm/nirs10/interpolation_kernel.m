@@ -12,9 +12,11 @@ try
             ch = W.ch_HbT;
     end
     nch = length(ch);
-    res = W.res(ch,:)';
-    corr_beta = W.corr_beta;
-    mtx_var = diag(W.var(ch)); %old NIRS_SPM version
+    if ~W.Avg
+        res = W.res(ch,:)';
+        corr_beta = W.corr_beta;
+        mtx_var = diag(W.var(ch)); %old NIRS_SPM version
+    end
     s1 = W.s1;
     s2 = W.s2;
     %When using LKC, B, Bx, By are defined differently, and B_volume is
@@ -28,7 +30,7 @@ try
         %identity over remaining channels
         mtx_eye = eye(nch);
         [x, y] = meshgrid(1:s2, 1:s1);
-        if LKC || UseCorrelRes
+        if LKC || UseCorrelRes || W.Avg
             B_volume = zeros(s1, s2, nch);
         else
             B = zeros(s1, s2, nch);
@@ -43,7 +45,7 @@ try
             %end
             if kk == 1
                 mask = 1 - isnan(grid_eye);
-                if LKC || UseCorrelRes
+                if LKC || UseCorrelRes || W.Avg
                     index_mask0 = find(mask == 1);
                     L2 = zeros(1,nch);
                 else
@@ -51,15 +53,17 @@ try
                     index_mask0 = find(mask == 0);
                 end
             end
-            if LKC || UseCorrelRes
+            if LKC || UseCorrelRes || W.Avg
                 B(kk, :) = grid_eye(index_mask0)';
                 grid_eye(mask == 0) = 0;
                 B_volume(:,:,kk) = grid_eye;
                 [Bx_ch By_ch] = gradient(grid_eye);
                 Bx(kk,:) = Bx_ch(index_mask0)';
                 By(kk,:) = By_ch(index_mask0)';
+                if ~W.Avg
                 if kk == nch && LKC
                     L2 = calc_LKC(B_volume, mask, res,'individual');
+                end
                 end
             else
                 grid_eye(index_mask0) = 0;
@@ -72,7 +76,7 @@ try
             end
         end
         Q.index_mask = index_mask0;
-        if LKC || UseCorrelRes
+        if LKC || UseCorrelRes || W.Avg
             Q.B_volume = B_volume;
         else
             Q.rmask = rmask;
@@ -110,10 +114,15 @@ try
             %         end
         else %for tube only, for kappa calculation
             %Calculate covariance by SVD
-            cov_beta = kron(mtx_var, corr_beta);
-            [U, S, V] = svd(cov_beta);
-            cov_beta_r = U*(S.^(0.5))*V';
-            Q.cov_beta_r =cov_beta_r;
+            if ~W.Avg
+                cov_beta = kron(mtx_var, corr_beta);
+                [U, S, V] = svd(cov_beta);
+                cov_beta_r = U*(S.^(0.5))*V';
+                Q.cov_beta_r =cov_beta_r;
+            else %for Avg
+                Q.ibeta = W.beta(:,ch) * B;               
+                Q.ivar =  W.covbeta(:,ch) * B; %Imaginary values are always very small
+            end
         end
     else %not enough channels for interpolation
         disp('not enough channels for interpolation');

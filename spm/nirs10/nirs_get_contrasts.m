@@ -67,7 +67,7 @@ try
                     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     %2- Generate automated contrasts if required
                     %number of regressors for one session
-                    nr = size(SPM.xXn{s1}.X,2);
+                        nr = size(SPM.xXn{s1}.X,2);
                     sC.contrastT = {}; sC.contrastF = {};
                     sC.contrastT_name = {}; sC.contrastF_name = {};
                     if Z.NonlinearEpilepsyOn

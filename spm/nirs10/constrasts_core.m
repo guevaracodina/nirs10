@@ -11,6 +11,15 @@ if f1 ==0
 else
     xCon = TOPO.SSxCon{f1};
 end
+if isfield(Z,'Avg')
+    W.Avg = Z.Avg;
+    Z.UseCorrelRes = 0;
+    Z.LKC = 0;
+    xX.erdf = 1;
+    Z.output_unc = 1;
+else
+    W.Avg = 0;
+end
 %Initialize figures
 %Handles for assembled figures
 try
@@ -49,13 +58,13 @@ try
             hb = get_chromophore(h1);
             %Note that var(ch_HbO) depends on HbO vs HbR
             Q = interpolation_kernel(h1,W,Z.LKC,Z.UseCorrelRes);
-            if Z.LKC || Z.UseCorrelRes
+            if Z.LKC || Z.UseCorrelRes || Z.Avg
                 C = loop_contrasts_new(h1,Q,W,xCon,Z,f1,TOPO.cSigma,xX);
             else
                 C = loop_contrasts(h1,Q,W,xCon,Z);
             end
             if Z.gen_fig || Z.gen_tiff
-                if Z.LKC || Z.UseCorrelRes
+                if Z.LKC || Z.UseCorrelRes || Z.Avg
                     H = interpolated_maps_new(Z,W,C,Q,xCon,f1,xX.erdf,hb,H);
                 else
                     H = interpolated_maps(Z,W,C,Q,xCon,f1,xX.erdf,hb,H);
@@ -83,10 +92,10 @@ try
                     if k0 <= nC
                         Z.scon = [Z.scon '_' xCon(k0).name];
                     end
-                end
-                call_save_assembled_figures(Z,W,H{nCl},0);
+                end              
             end
         end
+        call_save_assembled_figures(Z,W,H{nCl},f1);
     else
         call_save_assembled_figures(Z,W,H{1},f1);
     end
