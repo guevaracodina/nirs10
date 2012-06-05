@@ -357,7 +357,9 @@ for Idx=1:size(job.NIRSmat,1)
             elseif  job.units == 1
                 SPM.xBF.UNITS = 'secs';
             end
-            
+            SPM.xBF.name = 'hrf';
+            SPM.xBF = spm_get_bf(SPM.xBF);
+            bf      = SPM.xBF.bf;
             % separate specifications for non-replicated sessions
             %--------------------------------------------------------------------------
             rep     = 0;
@@ -378,11 +380,27 @@ for Idx=1:size(job.NIRSmat,1)
                     %------------------------------------------------------------------
                     U = spm_get_ons(SPM,s);
                     
-                    %Start with an empty design matrix; don't convolve with
-                    %basis functions
-                    X = []; %only used for regressing out confounds
-                    Xn{1} = [];
-                    Fc = [];
+                    %Will need this to generate contrasts using SPM later
+                    % Convolve stimulus functions with basis functions
+                    %------------------------------------------------------------------
+                    [X,Xn,Fc] = nirs_spm_Volterra(U,bf,1);
+                    
+                    % Resample regressors at acquisition times (32 bin offset)
+                    %-------------------------------------------------
+                    try
+                        X = X((0:(k - 1))*SPM.xBF.T + SPM.xBF.T0 + 32,:);
+                    end
+                    
+                    % and orthogonalise (within trial type)
+                    %--------------------------------------
+                    for i = 1:length(Fc)
+                        X(:,Fc(i).i) = spm_orth(X(:,Fc(i).i));
+                    end
+% %                     %Start with an empty design matrix; don't convolve with
+% %                     %basis functions
+% %                     X = []; %only used for regressing out confounds
+% %                     Xn{1} = [];
+% %                     Fc = [];
                     % get user specified regressors
                     %================================
                     try

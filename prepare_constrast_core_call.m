@@ -1,6 +1,7 @@
 function TOPO = prepare_constrast_core_call(Z,W,SPM,TOPO)
 xXn = SPM.xXn;
 NC = SPM.xY.Cf;
+Z.Avg = 0; %This sets whether we are looking at averaged rather than GLM data
 %Objective is to specify W.beta, W.res, W.var and W.corr_beta
 %then pass that to contrast_core
 try
@@ -25,8 +26,17 @@ try
             %pile-up all the betas from all the sessions and all channels
             for f2 = 1:length(xXn)
                 W.beta = [W.beta; xXn{f2}.beta];
-                tmp_res = fopen_NIR(xXn{f2}.res,NC);
-                W.res = [W.res tmp_res];
+                if isfield(xXn{f2},'res')
+                    tmp_res = fopen_NIR(xXn{f2}.res,NC);
+                    W.res = [W.res tmp_res];
+                else 
+                    Z.Avg = 1;
+                    if f2 == 1
+                        W.covbeta = xXn{f2}.covbeta;
+                    else
+                        W.covbeta = [W.covbeta;  xXn{f2}.covbeta];
+                    end
+                end
                 %How to calculate those? for now, just take the average
                 if f2 == 1
                     tmp_var = xXn{f2}.ResSS./xXn{f1}.trRV;
@@ -38,18 +48,27 @@ try
                     tmp_corr = blkdiag(tmp_corr, xXn{f2}.Bcov);
                 end
             end
+            if ~Z.Avg
             W.var = tmp_var/length(xXn);
             W.varch = tmp_varch/length(xXn);
             W.corr_beta = tmp_corr;
+            end
         else
             W.beta = xXn{f1}.beta;
-            W.res = fopen_NIR(xXn{f1}.res,NC);
+            if isfield(xXn{f1},'res')
+                W.res = fopen_NIR(xXn{f1}.res,NC);  
+            else
+                Z.Avg = 1;
+                W.covbeta = xXn{f1}.covbeta;
+            end
             try
+                if ~Z.Avg
                 %for NIRS_SPM method
                 W.var = xXn{f1}.ResSS./xXn{f1}.trRV;
                 W.varch = xXn{f1}.ResSSch./xXn{f1}.trRV; %channel by channel
                 %covariance of beta estimates
-                W.corr_beta = xXn{f1}.Bcov;
+                W.corr_beta = xXn{f1}.Bcov;                    
+                end
             catch exception
                 try
                     %for WLS and BGLM methods

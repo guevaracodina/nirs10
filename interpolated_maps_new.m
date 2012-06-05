@@ -29,13 +29,18 @@ filestr_fig = [num2str(p_value) ' ' spec_hemi ' ' hb strf_fig];
 CF.GInv = GInv;
 CF.split = split;
 CF.nC = nC;
-LKC = [Q.L0 Q.L1 Q.L2];
+if ~W.Avg
+    LKC = [Q.L0 Q.L1 Q.L2];
+else
+    Z.output_unc = 1;
+    LKC = [1 1 1];
+end
 %loop over contrasts
 try
     nCl = 0;
     for c1=1:nC
         if isfield(Z,'use_nCloop')
-            if Z.use_nCloop               
+            if Z.use_nCloop
                 Z.c1eff = mod(c1,Z.nCloop);
                 if Z.c1eff == 0
                     Z.c1eff = Z.nCloop;
@@ -47,7 +52,7 @@ try
         else
             nCl = 1;
         end
-                
+        
         s_map = zeros(s1, s2);
         tstr = xCon(c1).STAT;
         F.tstr = tstr;
@@ -68,8 +73,10 @@ try
                 %copy figure structure
                 if GFIS, H{nCl} = nirs_copy_figure(H{nCl},DF,CF,c1,hb,1,tstr,0,Z.write_neg_pos); end
             end
-            DF = nirs_draw_figure(3,F,W,Z,LKC);
-            if GFIS, H{nCl} = nirs_copy_figure(H{nCl},DF,CF,c1,hb,1,tstr,1,Z.write_neg_pos); end
+            if ~W.Avg
+                DF = nirs_draw_figure(3,F,W,Z,LKC);
+                if GFIS, H{nCl} = nirs_copy_figure(H{nCl},DF,CF,c1,hb,1,tstr,1,Z.write_neg_pos); end
+            end
         end
         if  tstr == 'T' %for F-stat, do not invert the map - always positive
             %repeat for negative contrasts
@@ -83,8 +90,10 @@ try
                 DF = nirs_draw_figure(2,F,W,Z,LKC);
                 if GFIS, H{nCl} = nirs_copy_figure(H{nCl},DF,CF,c1,hb,0,tstr,0,Z.write_neg_pos); end
             end
-            DF = nirs_draw_figure(3,F,W,Z,LKC);
-            if GFIS, H{nCl} = nirs_copy_figure(H{nCl},DF,CF,c1,hb,0,tstr,1,Z.write_neg_pos); end
+            if ~W.Avg
+                DF = nirs_draw_figure(3,F,W,Z,LKC);
+                if GFIS, H{nCl} = nirs_copy_figure(H{nCl},DF,CF,c1,hb,0,tstr,1,Z.write_neg_pos); end
+            end
         end
     end
 catch exception

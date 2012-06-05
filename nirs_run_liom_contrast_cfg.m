@@ -1,5 +1,5 @@
 function liom_contrast = nirs_run_liom_contrast_cfg
-[NIRSmat redo1 NIRSmatCopyChoice] = get_common_NIRSmat(1,'Con');
+[NIRSmat redo1 NIRSmatCopyChoice] = get_common_NIRSmat(1,'Cont');
 consess = nirs_spm_get_consess;
 display_options = liom_contrast_group_options;
 

@@ -60,41 +60,54 @@ try
     for u0=1:nst
         nons = length(U(u0).ons);
         %baseline: array before
-        tb{u0} = NaN(base_duration,nons,nch);
+        tb{u0} = zeros(base_duration,nons,nch);
         %data: array after
-        ta{u0} = NaN(ons_duration,nons,nch);
+        ta{u0} = zeros(ons_duration,nons,nch);
         %subtracted data
-        ts{u0} = NaN(ons_duration,nons,nch);
+        ts{u0} = zeros(ons_duration,nons,nch);
         %baseline before
-        db{u0} = NaN(nons,nch);
+        db{u0} = zeros(nons,nch);
         %data for onset after
-        da{u0} = NaN(nons,nch);
+        da{u0} = zeros(nons,nch);
         %subtracted data:
-        ds{u0} = NaN(nons,nch);
+        ds{u0} = zeros(nons,nch);
+        good_onsets = [];
+        bad_onsets = [];
         for k0=1:nons
             co =round(U(u0).ons(k0)*fs); %current onset
+            k0_OK = 1;
             try
                 tb{u0}(:,k0,:) = KY((co-base_offset-base_duration+1):(co-base_offset),:);
             catch
                 disp(['Could not include baseline ' int2str(k0) ' for stim type ' int2str(u0)]);
+                k0_OK = 0;
+                bad_onsets = [bad_onsets k0];
             end
             try
                 ta{u0}(:,k0,:) = KY((co+ons_delay+1):(co+ons_delay+ons_duration),:);
             catch
                 disp(['Could not include onset ' int2str(k0) ' for stim type ' int2str(u0)]);
+                k0_OK = 0;
+                bad_onsets = [bad_onsets k0];
             end
-            %temporal averaging for each onset
-            db{u0}(k0,:) = mean(tb{u0}(:,k0,:),1);
-            da{u0}(k0,:) = mean(ta{u0}(:,k0,:),1);
-            ds{u0}(k0,:) = da{u0}(k0,:) - db{u0}(k0,:);
-            ts{u0}(:,k0,:) = ta{u0}(:,k0,:) - permute(repmat(db{u0}(k0,:),[ons_duration 1]),[1 3 2]);
+            if k0_OK
+                good_onsets = [good_onsets k0];
+                %temporal averaging for each onset
+                db{u0}(k0,:) = mean(tb{u0}(:,k0,:),1);
+                da{u0}(k0,:) = mean(ta{u0}(:,k0,:),1);
+                ds{u0}(k0,:) = da{u0}(k0,:) - db{u0}(k0,:);
+                ts{u0}(:,k0,:) = ta{u0}(:,k0,:) - permute(repmat(db{u0}(k0,:),[ons_duration 1]),[1 3 2]);
+            end
         end
         %averaging over onsets
-        a(u0,:) = mean(ds{u0},1);
-        s(u0,:) = std(ds{u0},1);
+        a(u0,:) = mean(ds{u0}(good_onsets,:),1);
+        s(u0,:) = std(ds{u0}(good_onsets,:),1);
+        Avg.go{u0} = good_onsets;
+        Avg.bo{u0} = unique(bad_onsets);
     end
     SPM.xX.beta = a;
     SPM.xX.covbeta = s;
+    SPM.xX.t = a./s;
     %Fill Avg
     Avg.a = a;
     Avg.s = s;

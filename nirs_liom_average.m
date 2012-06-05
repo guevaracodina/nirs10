@@ -191,7 +191,7 @@ try
                     %                     res_outfile = fullfile(spm_dir,['res_Sess' int2str(iSPM) '.nir']);
                     %                     fwrite_NIR(res_outfile,res(:));
                     %                     SPM.xXn{iSPM}.res = res_outfile;
-                    Avg_outfile = fullfile(spm_dir,['Avg' int2str(iSPM) '.nir']);
+                    Avg_outfile = fullfile(spm_dir,['Avg' int2str(iSPM) '.mat']);
                     save(Avg_outfile,'Avg');
                     SPM.xY.Cf = size(temp,1); %number of filtered channels stored
                     NIRS.Dt.fir.pp(nlst+1).p{iSPM,1} = outfile;
