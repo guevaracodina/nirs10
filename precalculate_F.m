@@ -16,7 +16,7 @@ try
     KY = [];
 %     dir_done = 0;
     for s1=1:length(SPM.xXn)
-        if Z.sessions == 0 || any(s1 == Z.sessions)
+        if any(Z.sessions == 0) || any(s1 == Z.sessions)
             KYfile = SPM.xY.Pf{s1};
             KYtmp = fopen_NIR(KYfile,NC)';
 %             if ~dir_done

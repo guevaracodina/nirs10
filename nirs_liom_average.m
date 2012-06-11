@@ -11,7 +11,19 @@ try
     
     %loop over sessions
     nsess = length(SPM.xY.P);
-    for s=1:nsess
+    first_pass = 1;
+    %for the case of baseline_choice,'baseline_block_whole_session'
+    %need to obtain and store the data from this session before proceeding
+    if isfield(SPM.job.baseline_choice,'baseline_block_whole_session')
+        baseline_session = SPM.job.baseline_choice.baseline_block_whole_session.baseline_session;
+        srun = [baseline_session 1:nsess];
+        storeY = 1;
+    else
+        srun = 1:nsess;
+        storeY = 0;
+    end
+    
+    for s=srun
         d = fopen_NIR(SPM.xY.P{s},NC);
         %loop over subsessions, defined as period in between
         %movement intervals -- to do later
@@ -90,6 +102,7 @@ try
             end
             %carefully extract SPM info
             tSPM = [];
+            tSPM.Idx = SPM.Idx;
             tSPM.Sess = SPM.Sess(s);
             tSPM.xX = SPM.xX;
             tSPM.fs = fs;
@@ -163,7 +176,17 @@ try
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %Filtering and averaging
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            [tSPM Avg] = averaging_core(tSPM,Y,tU);
+            Avg = [];
+            if storeY
+                if s == baseline_session
+                    baselineY = Y;
+                else
+                    tSPM.baselineY = baselineY;
+                    [tSPM Avg] = averaging_core(tSPM,Y,tU);
+                end
+            else
+                [tSPM Avg] = averaging_core(tSPM,Y,tU);
+            end
             
             %Add piece of SPM to the whole SPM
             try
@@ -171,19 +194,42 @@ try
                     tSPM.xX.dur = (ei(iSubSess)-si(iSubSess))/fs;
                 end
             end
-            iSPM = iSPM + 1;
-            SPM.xXn{iSPM} = tSPM.xX;
+            
+            if first_pass
+                first_pass = 0;
+                if storeY
+                    
+                else
+                    iSPM = iSPM + 1;
+                    if (storeY == 0 || (storeY == 1 && ~(s == baseline_session)))
+                        SPM.xXn{iSPM} = tSPM.xX;
+                    end
+                end
+            else
+                iSPM = iSPM + 1;
+                if (storeY == 0 || (storeY == 1 && ~(s == baseline_session)))
+                    SPM.xXn{iSPM} = tSPM.xX;
+                end
+            end
+            if iSPM == 1
+                xX0 = tSPM.xX;
+            end
+           
             %save
             save_dataON = 1; %we need the residuals for statistics calculations and the
             %filtered data is often useful too
-            if save_dataON
+            if save_dataON && (storeY == 0 || (storeY == 1 && ~(s == baseline_session)))
                 try
                     spm_dir = NIRS.spm_dir;
-                    if iSPM == 1
+                    %if iSPM == 1
                         nlst = lst;
-                    end
+                    %end
                     temp  = tSPM.KY';
-                    outfile = fullfile(spm_dir,['Sess' int2str(iSPM) '.nir']);
+                    %if storeY
+                    %    outfile = fullfile(spm_dir,['Sess' int2str(iSPM-1) '.nir']);
+                    %else
+                        outfile = fullfile(spm_dir,['Sess' int2str(iSPM) '.nir']);
+                    %end
                     %Careful, this data may include HbT, therefore may
                     %have 50% more channels than the user expected...
                     fwrite_NIR(outfile,temp(:));
@@ -191,7 +237,11 @@ try
                     %                     res_outfile = fullfile(spm_dir,['res_Sess' int2str(iSPM) '.nir']);
                     %                     fwrite_NIR(res_outfile,res(:));
                     %                     SPM.xXn{iSPM}.res = res_outfile;
-                    Avg_outfile = fullfile(spm_dir,['Avg' int2str(iSPM) '.mat']);
+                    %if storeY
+                    %    Avg_outfile = fullfile(spm_dir,['Avg' int2str(iSPM-1) '.mat']);
+                    %else
+                        Avg_outfile = fullfile(spm_dir,['Avg' int2str(iSPM) '.mat']);
+                    %end
                     save(Avg_outfile,'Avg');
                     SPM.xY.Cf = size(temp,1); %number of filtered channels stored
                     NIRS.Dt.fir.pp(nlst+1).p{iSPM,1} = outfile;
@@ -210,6 +260,7 @@ try
     %     SPM.xX.K = K;
     % end
     
+    SPM.xX = xX0;
     try
         %add duration of subsessions, for convenience
         if markers_available

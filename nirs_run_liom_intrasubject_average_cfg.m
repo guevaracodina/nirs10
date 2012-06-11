@@ -33,10 +33,27 @@ baseline_block_averaging.val     = {baseline_offset baseline_duration};
 baseline_block_averaging.help    = {'Baseline block averaging.'
     'This works by averaging the data before each onset over the specified window'}';
 
+baseline_session         = cfg_entry;
+baseline_session.name    = 'Baseline session number';
+baseline_session.tag     = 'baseline_session';
+baseline_session.strtype = 'r';
+baseline_session.num     = [1 1];
+baseline_session.val     = {2};
+baseline_session.help    = {'Enter number of session to be used as baseline.'}';
+
+baseline_block_whole_session         = cfg_branch;
+baseline_block_whole_session.tag     = 'baseline_block_whole_session';
+baseline_block_whole_session.name    = 'Baseline block averaging using whole session';
+baseline_block_whole_session.val     = {baseline_session baseline_offset baseline_duration};
+baseline_block_whole_session.help    = {'In this variant, the specified session is used'
+    'to compute the baseline for all the other sessions.'
+    'Baseline block averaging.'
+    'This works by averaging the data before each onset over the specified window'}';
+
 baseline_choice        = cfg_choice;
 baseline_choice.name   = 'Choose baseline method';
 baseline_choice.tag    = 'baseline_choice';
-baseline_choice.values = {baseline_block_averaging};
+baseline_choice.values = {baseline_block_averaging baseline_block_whole_session};
 baseline_choice.val    = {baseline_block_averaging};
 baseline_choice.help   = {'Choose baseline method.'}';
 
