@@ -87,6 +87,7 @@ for Idx=1:size(job.NIRSmat,1)
     try
         %Objective is to fill SPM structure
         SPM = [];
+        SPM.Idx = Idx;
         %always store SPM analysis in some directory
         if ~isfield(job.NIRSmatCopyChoice,'NIRSmatCopy')
             job.NIRSmatCopyChoice.NIRSmatCopy.NewNIRSdir = 'Avg';
@@ -579,7 +580,7 @@ for Idx=1:size(job.NIRSmat,1)
                 matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg1.ForceReprocess = 0;
                 spm_jobman('run',matlabbatch);
             end
-            
+           
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % Filtering and removing confounds; averaging
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

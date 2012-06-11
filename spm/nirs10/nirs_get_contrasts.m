@@ -61,7 +61,7 @@ try
         %loop over selected sessions
         C_done = 0;
         for s1=1:length(SPM.xXn)
-            if Z.sessions == 0 || any(s1 == Z.sessions)
+            if any(Z.sessions == 0) || any(s1 == Z.sessions)
                 if Z.automated_contrasts
                     TF = TF0;
                     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
