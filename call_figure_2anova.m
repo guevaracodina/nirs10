@@ -56,17 +56,19 @@ try
     if Z.output_unc
         DF = nirs_draw_figure(7,F,W,Z,[]);
         H = nirs_copy_figure(H,DF,CF,1,hb,1,F.tstr,0,0);
+        if ~isempty(DF)
+            A.th_z_unc = DF.th_z;
+        end
     end
-    if ~isempty(DF)  
-        A.th_z_unc = DF.th_z;
-    end
+    
     if Z.LKC
         DF = nirs_draw_figure(5,F,W,Z,LKC);
         H = nirs_copy_figure(H,DF,CF,1,hb,1,F.tstr,1,0);
+        if ~isempty(DF)
+            A.th_z_cor = DF.th_z;
+        end
     end
-    if ~isempty(DF)
-        A.th_z_cor = DF.th_z;
-    end
+
     if z1 <= 3
         TOPO.v{v1}.group.hb{h1}.c{2*z1-1} = A;
     else
