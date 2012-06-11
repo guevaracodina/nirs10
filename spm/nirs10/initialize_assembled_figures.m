@@ -1,4 +1,7 @@
 function H = initialize_assembled_figures(Z,H,f1,label)
+if ~isfield(Z,'Avg')
+    Z.Avg = 0;
+end
 %All this does is save a previously constructed arrangement of figures
 if f1 > 0
     strf = ['_S' int2str(f1)];
