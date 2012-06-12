@@ -90,12 +90,12 @@ try
                 Z.scon = '';
                 for k0=c1:(c1+Z.nCloop-1)
                     if k0 <= nC
-                        Z.scon = [Z.scon '_' xCon(k0).name];
+                        Z.scon = [Z.scon xCon(k0).name];
                     end
-                end              
-            end
+                end 
+                call_save_assembled_figures(Z,W,H{nCl},f1);
+            end           
         end
-        call_save_assembled_figures(Z,W,H{nCl},f1);
     else
         call_save_assembled_figures(Z,W,H{1},f1);
     end

@@ -1,15 +1,23 @@
 function [threshold] = calc_EC(LKC, p_value, stat, df)
-% calculating a threshold for LKC-based expected Euler characteristics 
-% inputs: 
-% LKC: Lipschitz-Killing curvatures 
+% calculating a threshold for LKC-based expected Euler characteristics
+% inputs:
+% LKC: Lipschitz-Killing curvatures
 % p_value: specified p-value
-% stat: T or F field 
-% df: degrees of freedom 
-% output: 
-% threshold: calculated threshold according to T or F statistics 
+% stat: T or F field
+% df: degrees of freedom
+% output:
+% threshold: calculated threshold according to T or F statistics
 L0 = LKC(1);
 L1 = LKC(2);
 L2 = LKC(3);
+if isnan(L1) 
+    L1 = 0;
+    disp('Careful, L1 is NaN, setting it to zero')
+end
+if isnan(L2)
+    L2 = 0;
+    disp('Careful, L2 is NaN, setting it to zero')
+end
 pOK = 0;
 lc = 0;
 while ~pOK && lc < 2
@@ -56,8 +64,8 @@ while ~pOK && lc < 2
         pOK = 1;
     else
         if lc == 1
-        df(2) = 340; %quick fix to get out of infinite loop
-        disp('problem with calc_EC'); % sum(p)= ' sum(p(2:end))]);
+            df(2) = 340; %quick fix to get out of infinite loop -- but only for 1st level of GLM, not for 2nd level
+            disp('problem with calc_EC'); % sum(p)= ' sum(p(2:end))]);
         else
             disp('Still problem with calc_EC')
         end

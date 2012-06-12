@@ -23,12 +23,14 @@ try
         if xCon(c1).STAT == 'T'
             % covariance of interpolated beta
             if ~W.Avg
-            cxCor = c' * W.corr_beta * c;
-            stat = (c' * Q.ibeta)./sqrt(cxCor .* Q.ivar);
-            beta_tmp(Q.index_mask) = c' * Q.ibeta;
-            cov_tmp(Q.index_mask) = cxCor .* Q.ivar;
+                cxCor = c' * W.corr_beta * c;
+                stat = (c' * Q.ibeta)./sqrt(cxCor .* Q.ivar);
+                beta_tmp(Q.index_mask) = c' * Q.ibeta;
+                cov_tmp(Q.index_mask) = cxCor .* Q.ivar;
             else
                 c = c(1:end-1);
+                Q.ivar(isnan(Q.ivar)) = 0;
+                Q.ibeta(isnan(Q.ibeta)) = 0;
                 Q.ivar(Q.ivar < 0) = -Q.ivar(Q.ivar < 0);
                 stat = (c' * Q.ibeta)./sqrt(c' * Q.ivar);
                 beta_tmp(Q.index_mask) = c' * Q.ibeta;
