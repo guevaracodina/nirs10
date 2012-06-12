@@ -149,6 +149,9 @@ try
     SPM.xX.t = a./s;
     %Fill Avg
     Avg.a = a;
+%     if sum(isnan(a(:)))
+%         disp(['Problem: NaN values for subject with Idx=' int2str(SPM.Idx)]);
+%     end
     Avg.s = s;
     Avg.ds = ds;
     Avg.ts = ts;
