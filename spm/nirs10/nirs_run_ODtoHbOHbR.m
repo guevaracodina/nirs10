@@ -9,7 +9,7 @@ prefix = 'h'; % for "hemoglobin" concentrations
 %Ke Peng
 %**************************************************************************
 
-if isfield(job.nirs_filling_jumps, 'nirs_fill_jumps_on')
+if isfield(job, 'nirs_fill_jumps_on') && isfield(job.nirs_filling_jumps, 'nirs_fill_jumps_on')
     fill_jump_on = 1;
     num_standard_deviation = jobs.nirs_filling_jumps.nirs_fill_jumps_on.num_standard_deviation;
     num_points = jobs.nirs_filling_jumps.nirs_fill_jumps_on.num_points;
@@ -60,7 +60,7 @@ for Idx=1:size(job.NIRSmat,1)
                 PVF = simPVF.PVF; % 1 x NC
                 nLambda = length(wl);
                 PVF2 = zeros(nLambda,NC);
-                for iwl = 1:nLambda
+                for iwl = 1:nLambda % boucle inutile
                     for Ci = 1:NC
                         PVF2(Cwl(1,Ci),Ci) = PVF(1,Ci);
                     end
@@ -89,7 +89,7 @@ for Idx=1:size(job.NIRSmat,1)
                 DPF = sum(PDPF_Vi,1); % 1 x NC
                 nLambda = length(wl);
                 DPF2 = zeros(nLambda,NC);
-                for iwl = 1:nLambda
+                for iwl = 1:nLambda % boucle inutile - bis
                     for Ci = 1:NC
                         DPF2(Cwl(1,Ci),Ci) = DPF(1,Ci);
                     end
@@ -118,7 +118,7 @@ for Idx=1:size(job.NIRSmat,1)
                 %             EPF(1,Ci) = Cgp(Ci,1)*DPF(Cwl(1,Ci),1)./PVF(1,Cwl(1,Ci)); %PP??? why not ./???
             end
             
-            inv_exs = pinv(exs(:,1:2)); % size 2 x #wl
+            inv_exs = pinv(exs(:,1:2)); % inv_exs has size 2 x #wl
             inv_exs2 = kron(inv_exs,eye(NC/size(wl,2))); % size #pairs*2 x #pairs*#wl
             % (number of channels NC = number of pairs x number of wavelengths)
             
