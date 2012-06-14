@@ -251,6 +251,8 @@ for Idx=1:size(job.NIRSmat,1)
                 [dir1,fil1,ext1] = fileparts(rDtp{f});
                 
                 %    delete(rDtp{f,1});
+                outfile = fullfile(dir1,[prefix fil1 ext1]);
+
                 
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 % tant qu'on y met pas autre chose que d, a mon avis, pas grand
@@ -440,6 +442,9 @@ for Idx=1:size(job.NIRSmat,1)
                                         % moment de l'interpolation sur les holes
                                         if(debuts(1)==1)
                                             reg(1:fins(1))=reg(fins(1)+1);
+                                            % To prevent index "0" at line
+                                            % 451 (debuts(1)-1) :
+                                            debuts(1)=2;
                                         end
                                         for i=1:length(debuts)
                                             if fins(i)==size(reg,2)
