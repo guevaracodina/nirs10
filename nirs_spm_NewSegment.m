@@ -83,7 +83,10 @@ else
         
         spm_jobman('run',matlabbatch);
     
-    catch
+    catch exception
+        disp(exception.identifier)
+        disp(exception.stack(1))
+        
         disp(['In folder ' dir1 ', New Segment failed to run.']);
     
     end
