@@ -234,7 +234,9 @@ for Idx=1:nsubj
                 %what to do if we don't have a NIRS structure already?
             end
             
-        catch
+        catch exception
+            disp(exception.identifier)
+            disp(exception.stack(1))
             disp(['MC Segment failed to run for subject ' int2str(Idx)]);
         end
         
