@@ -11,7 +11,19 @@ if f1 ==0
 else
     xCon = TOPO.SSxCon{f1};
 end
-if isfield(Z,'Avg')
+
+%**************************************************************************
+%Ke Peng
+%Do not understand why here it is an "isfield" function. As the Z.Avg is
+%defined previously at Line 4 (prepare_constrast_core_call.m which is pre-executed than the current function),
+%isfield(Z,'Avg') will always be 1 so that the Z.LKC will be always set to
+%0. We are not able to perform an Euler Correction.
+%Try to change it to "if Z.Avg == 1"
+%18/06/2012
+%**************************************************************************
+if Z.Avg == 1
+%if isfield(Z,'Avg')
+%**************************************************************************
     W.Avg = Z.Avg;
     Z.UseCorrelRes = 0;
     Z.LKC = 0;
