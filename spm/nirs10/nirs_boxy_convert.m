@@ -1,4 +1,4 @@
-function SD = nirs_boxy_convert(SD,fName,fileOut,Idx_file)
+function SD = nirs_boxy_convert(SD,fName,fileOut,Idx_file,LPF_Gaussian_resample,FHWM_LPF_resample)
 %This function reads the BOXY txt file format and extracts the data
 if SD.save_bin1 %need to delete, as file will be appended
     if exist(fileOut,'file'), delete(fileOut); end
@@ -78,6 +78,36 @@ d_dc = []; %DC component
 
 if SD.resample >1
     %introduce other array, in case we are downsampling
+    
+    %**********************************************************************
+    %modified by Ke Peng
+    %To apply the Gaussian LPF for resampling
+    %14/06/2012
+    %**********************************************************************
+    if LPF_Gaussian_resample
+        
+        K.HParam.type = 'none';
+        K.LParam.type = 'Gaussian';
+        K.RT = 1/SD.freq;
+        K.LParam.FWHM = FHWM_LPF_resample;
+        K.row = 1:size(data,2);
+        
+        LPF_config = spm_filter_HPF_LPF_WMDL(K);
+        data_LPF = spm_filter_HPF_LPF_WMDL(LPF_config,data(3:end,:)');
+        data_LPF = data_LPF';
+        data_LPF = [data(1:2,:);data_LPF];
+       
+        %Linear amplification to compensate the amptitude loss from LP
+        %Filtering
+        for i_loop = 1 : size(data,1)
+            data_LPF(i_loop, :) = data_LPF(i_loop,:)*(mean(data(i_loop,:))/mean(data_LPF(i_loop,:)));
+        end
+        
+        data = data_LPF;
+        clear K LPF_config data_resampled;
+    end
+    
+    %**********************************************************************
     data1 = [];
     for i_ch=1:size(data,1);                
         if strfind(listdownsample,deblank(MeasMap(i_ch,:)))

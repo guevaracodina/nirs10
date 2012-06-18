@@ -242,6 +242,44 @@ resample.help    = {'Downsampling factor: use 1 to keep all data.'
     'Note that no filtering will be done at this stage;'
     'therefore beware of aliasing artefacts.'}';
 
+%**************************************************************************
+%Ke Peng
+%add an option for whether to apply a LPF for the resampling
+%**************************************************************************
+val_FWHM         = cfg_entry;
+val_FWHM.name    = 'FWHM: (in seconds)';
+val_FWHM.tag     = 'val_FWHM';
+val_FWHM.strtype = 'r';
+val_FWHM.val     = {0.625};
+val_FWHM.num     = [1 1];
+%avg_number.def     = @(val)nirs_get_defaults(...
+    %'model_specify.wls_bglm_specify.hpf_butter.hpf_butter_On.hpf_butter_freq', val{:});
+val_FWHM.help    = {'Enter the Full Width at Half Maximum in seconds'};
+
+Gaussian_LPF_on         = cfg_branch;
+Gaussian_LPF_on.tag     = 'Gaussian_LPF_on';
+Gaussian_LPF_on.name    = 'Gaussian_LPF_on';
+Gaussian_LPF_on.val     = {val_FWHM};
+Gaussian_LPF_on.help    = {'Please specify the parameters for Gaussian filter.'};
+
+sample_LPF_off         = cfg_branch;
+sample_LPF_off.tag     = 'sample_LPF_off';
+sample_LPF_off.name    = 'LPF for resampling off';
+sample_LPF_off.val     = {};
+sample_LPF_off.help    = {'Low Pass Filter for resampling has been turned off'};
+
+sample_LPF      = cfg_choice;
+sample_LPF.tag  = 'sample_LPF';
+sample_LPF.name = 'Low Pass Filter for resampling.';
+%cardiac_repair.labels = {'Yes','No'};
+sample_LPF.values = {sample_LPF_off Gaussian_LPF_on};
+sample_LPF.val = {sample_LPF_off};
+sample_LPF.help = {'Choose whether to apply a LPF for the data resampling'
+                    'This LPF is performed to meet the Nyquist–Shannon sampling theorem'}';
+
+
+%**************************************************************************
+
 save_bin1      = cfg_menu;
 save_bin1.tag  = 'save_bin1';
 save_bin1.name = 'Save binary files';
@@ -255,7 +293,7 @@ cf1         = cfg_branch;
 cf1.tag     = 'cf1';
 cf1.name    = 'Configuration options';
 cf1.val     = {Lambda input2 distmin distmax save_bin1 sizebloc ...
-    nb_Mux MaxSources nb_Det MaxElectrodes use10_10system resample};
+    nb_Mux MaxSources nb_Det MaxElectrodes use10_10system resample sample_LPF};
 cf1.help    = {'Configuration used for all subjects to be preprocessed.'};
 
 % Executable Branch

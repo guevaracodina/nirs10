@@ -318,7 +318,7 @@ for Idx=1:size(job.NIRSmat,1)
                                 tSPM.xX.ResSSch = ResSS; % Residual sum of squares
                                 
                                 
-                                tSPM.xX.xKXs.X = tSPM.xX.xKXs.X(:,1:(end-1));
+                                tSPM.xX.xKXs.X = tSPM.xX.xKXs.X(:,1:(end-1));% to remove the constant regressor
 
                                 %**********************************************************                                
                                                                  

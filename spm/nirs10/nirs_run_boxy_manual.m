@@ -16,6 +16,23 @@ function out = nirs_run_boxy_manual(job)
 %BUT WHAT IS THE 4th column of mat_Mtg?
 %mat_Chn: same as mat_Mtg, but for the channels
 
+
+%**************************************************************************
+%added by Ke Peng
+%Enable LPF for downsampling
+%14/06/2012
+%**************************************************************************
+
+if isfield(job.cf1.sample_LPF, 'Gaussian_LPF_on')
+    LPF_Gaussian_resample = 1;
+    FHWM_LPF_resample = job.cf1.sample_LPF.Gaussian_LPF_on.val_FWHM;
+else
+    LPF_Gaussian_resample = 0;
+    FHWM_LPF_resample = 0;
+end
+
+%**************************************************************************
+
 jobP = job.config_path2;
 N_subj = size(job.subj2,2);
 outNIRSmat = {};
@@ -32,6 +49,14 @@ for Idx_subj=1:N_subj
         NIRS = job.cf1;
         if NIRS.resample > 1
             NIRS.freq = NIRS.freq/NIRS.resample;
+            %**************************************************************
+            %added by Ke Peng
+            %To record the LPF information for resampling in NIRS structure
+            %14/06/2012
+            %**************************************************************
+            NIRS.LPF_resample = LPF_Gaussian_resample;
+            NIRS.LPF_resample_FHWM = FHWM_LPF_resample;
+            %**************************************************************
         end
         %Extract info from chosen files
         %Number of BOXY data files for this subject
@@ -115,7 +140,16 @@ for Idx_subj=1:N_subj
             fileOut_nir = [shortfileOutRoot '.nir'];
             fileOut_vmrk = [shortfileOutRoot '.vmrk'];
             
-            NIRS = nirs_boxy_convert(NIRS,fName,fileOut,Idx_file);
+            %**************************************************************
+            %modified by Ke Peng
+            %to apply the LPF for resampling
+            %**************************************************************
+            
+            NIRS = nirs_boxy_convert(NIRS,fName,fileOut,Idx_file,LPF_Gaussian_resample,FHWM_LPF_resample);
+            
+            %NIRS = nirs_boxy_convert(NIRS,fName,fileOut,Idx_file);
+            
+            %**************************************************************
             
             NIRS.NIRfile{Idx_file} = fileOut;
             %Header file
