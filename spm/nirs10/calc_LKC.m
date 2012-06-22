@@ -17,12 +17,12 @@ switch level
         % S = (Q(r+delta_x)-Q(r), Q(r+delta_y)-Q(r))
         % L2 = sum(det(S'*S).^1/2)
         L2 = 0;
-        for aa = 1:nvox
+        for aa = 1:nvox %can take very long?
             b = squeeze(B_volume(data_row(aa), data_col(aa), :));
             b_right = squeeze(B_volume(data_row(aa), data_col(aa)+1,:));
             b_down = squeeze(B_volume(data_row(aa)+1, data_col(aa), :));
             R = res * b;
-            R_right = res * b_right;
+            R_right = res * b_right; %can take very long?
             R_down = res * b_down;
             Q = R./norm(R);
             S = [(R_right./norm(R_right) - Q) (R_down./norm(R_down) - Q)];

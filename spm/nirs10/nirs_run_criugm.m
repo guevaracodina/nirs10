@@ -204,7 +204,7 @@ for is=1:sN
                 save(fullfile(study_p, 'NIRS4all.mat'),'NIRS');
                 matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.NIRSmat = {fullfile(study_p,'NIRS4all.mat')};
                 matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.NIRSmatCopyChoice.NIRSmatOverwrite = struct([]);
-                matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.anatT1 = NIRS.Dt.ana.T1;
+                matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.anatT1 = {NIRS.Dt.ana.T1}; %PP made this a cell_str
                 matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.segT1_4fit = {[fullfile(fileparts(which('spm')),'toolbox','nirs10','nirs10_templates','00044_segmented_T1.nii') ',1']};
                 matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.anatT1_template = {[fullfile(fileparts(which('spm')),'templates','T1.nii') ',1']};
                 matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg2.fid_in_subject_MNI = 0;

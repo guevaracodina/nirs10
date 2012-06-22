@@ -41,7 +41,11 @@ try
             %try
             %    grid_eye = TriScatteredInterp(X, Y, V);
             %catch
+            warning('off') %this is to turn off the 
+            %Warning: Duplicate x-y data points detected: using average values for duplicate points
+            %This is a problem that should be investigated, eventually...
             grid_eye = griddata(cchn, rchn, (mtx_eye(:,kk))', x, y, 'cubic');
+            warning('on')
             %end
             if kk == 1
                 mask = 1 - isnan(grid_eye);
