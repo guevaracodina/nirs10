@@ -69,7 +69,13 @@ for Idx=1:size(job.NIRSmat,1)
             NC = NIRS.Cf.H.C.N;
             [rendered_MNI run_contrast_OK NIRS] = nirs_load_TopoData(job,NIRS,run_contrast_OK);
             %load SPM - first GLM - might want to generalize
-            [dir1 dummy] = fileparts(NIRS.SPM{1});
+            try
+                [dir1 dummy] = fileparts(NIRS.SPM{1});
+            catch exception
+                disp(exception.identifier);
+                disp(exception.stack(1));
+                disp('Could not find SPM file as specified in NIRS.mat')
+            end
             load(NIRS.SPM{end});
             if ~exist('SPM','var')
                 run_contrast_OK = 0;
@@ -120,8 +126,10 @@ for Idx=1:size(job.NIRSmat,1)
                         end
                         
                         if isempty(W.index_ch)
-                            TOPO.v{side_hemi}.Warning = 'No channel found for this view';
-                            disp(['No channel for view ' int2str(v1) ': Probable coregistration problem. Skipping this view']);
+                            TOPO.v{W.side_hemi}.Warning = 'No channel found for this view';
+                            if v1 > 1 && v1 < 6
+                                disp(['No channel for view ' int2str(v1) ': Probable coregistration problem. Skipping this view']);
+                            end
                         else
                             %rendering surface
                             brain = rendered_MNI{W.side_hemi}.ren;
@@ -138,10 +146,11 @@ for Idx=1:size(job.NIRSmat,1)
                             %Generate the contrasts
                             TOPO = prepare_constrast_core_call(Z,W,SPM,TOPO);
                             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                            
+                            TOPO.v{W.side_hemi}.s1 = W.s1; %sizes of topographic projection
+                            TOPO.v{W.side_hemi}.s2 = W.s2;
+                            TOPO.v{W.side_hemi}.view = W.spec_hemi; %%% view of the brain
                         end
-                        TOPO.v{W.side_hemi}.s1 = W.s1; %sizes of topographic projection
-                        TOPO.v{W.side_hemi}.s2 = W.s2;
-                        TOPO.v{W.side_hemi}.view = W.spec_hemi; %%% view of the brain
                     catch exception
                         disp(exception.identifier);
                         disp(exception.stack(1));

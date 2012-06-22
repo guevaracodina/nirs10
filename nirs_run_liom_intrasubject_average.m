@@ -586,7 +586,7 @@ for Idx=1:size(job.NIRSmat,1)
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             SPM = nirs_liom_average(NIRS,SPM);
             save(spm_file,'SPM');
-               
+  
             NIRS.flags.Avg_OK = 1;
             save(newNIRSlocation,'NIRS');
         end

@@ -25,10 +25,12 @@ if Z.Avg == 1
 %if isfield(Z,'Avg')
 %**************************************************************************
     W.Avg = Z.Avg;
+if Z.Avg == 1
     Z.UseCorrelRes = 0;
     Z.LKC = 0;
     xX.erdf = 1;
     Z.output_unc = 1;
+end
 else
     W.Avg = 0;
 end

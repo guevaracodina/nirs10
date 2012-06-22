@@ -112,8 +112,9 @@ for Idx=1:size(job.NIRSmat,1)
         end
         
         %load SPM - first GLM - might want to generalize
-        dir1 = NIRS.SPM{1};
-        load(fullfile(dir1,'SPM.mat'));
+        fSPM = NIRS.SPM{1};
+        [dir1 fil1] = fileparts(fSPM);
+        load(fSPM);
         %Load TOPO
         try
             ftopo = NIRS.TOPO;
@@ -254,6 +255,9 @@ for Idx=1:size(job.NIRSmat,1)
                                                         m = TOPO.v{side_hemi}.group.hb{extract_auto_modality}.c{2*base_con-1}.Tmap;
                                                     end
                                                 case -1
+                                                    %specify session
+                                                    extract_session = 1;
+                                                    m = squeeze(TOPO.v{side_hemi}.s{extract_session}.hb{extract_auto_modality}.stat_map(base_con,:,:));
                                                 otherwise
                                             end
                                             M = get_min_max(m);
@@ -424,24 +428,30 @@ for Idx=1:size(job.NIRSmat,1)
                                                     ED.v{side_hemi}.s{f1}.hb{h1}.bnmax = ED.v{side_hemi}.s{f1}.hb{h1}.bmax/ED.v{side_hemi}.s{f1}.hb{h1}.Ymax_Sigma;
                                                 end
                                                 %for each contrast
-                                                c0 = TOPO.SSxCon(c1).c;
+                                                c0 = TOPO.SSxCon{f1}(c1).c;
                                                 ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bmin = c0'*ED.v{side_hemi}.s{f1}.hb{h1}.bmin;
                                                 ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bmax = c0'*ED.v{side_hemi}.s{f1}.hb{h1}.bmax;
                                                 ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bnmin = c0'*ED.v{side_hemi}.s{f1}.hb{h1}.bnmin;
                                                 ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bnmax = c0'*ED.v{side_hemi}.s{f1}.hb{h1}.bnmax;
                                                 %should be the same as:
-                                                ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bcmin = interp_series(squeeze(TOPO.v{side_hemi}.s{f1}.hb{h1}.c_interp_beta(c1,:,:)),lmin,[]);
+                                                try
+                                                ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bcmin = interp_series(squeeze(TOPO.v{side_hemi}.s{f1}.hb{h1}.beta_map(c1,:,:)),lmin,[]);
+                                                ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bcmax = interp_series(squeeze(TOPO.v{side_hemi}.s{f1}.hb{h1}.beta_map(c1,:,:)),lmax,[]);
+                                                catch %tube formula
+                                                    ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bcmin = interp_series(squeeze(TOPO.v{side_hemi}.s{f1}.hb{h1}.c_interp_beta(c1,:,:)),lmin,[]);
                                                 ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bcmax = interp_series(squeeze(TOPO.v{side_hemi}.s{f1}.hb{h1}.c_interp_beta(c1,:,:)),lmax,[]);
+                                                end
                                                 %normalized by standard deviation
                                                 ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bNmin = ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bcmin/ED.v{side_hemi}.s{f1}.hb{h1}.Ymin_Sigma;
                                                 ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bNmax = ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.bcmax/ED.v{side_hemi}.s{f1}.hb{h1}.Ymax_Sigma;
-                                                %interpolated covariance
+                                                try
+                                                    %interpolated covariance
                                                 ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.covmin = interp_series(squeeze(TOPO.v{side_hemi}.s{f1}.hb{h1}.c_cov_interp_beta(c1,:,:)),lmin,[])/ED.v{side_hemi}.s{f1}.hb{h1}.Ymin_Sigma^2;
                                                 ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.covmax = interp_series(squeeze(TOPO.v{side_hemi}.s{f1}.hb{h1}.c_cov_interp_beta(c1,:,:)),lmax,[])/ED.v{side_hemi}.s{f1}.hb{h1}.Ymin_Sigma^2;
                                                 %interpolated F
                                                 ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.Fmin = interp_series(squeeze(TOPO.v{side_hemi}.s{f1}.hb{h1}.c_interp_F(c1,:,:)),lmin,[]);
                                                 ED.v{side_hemi}.s{f1}.hb{h1}.c{c1}.Fmax = interp_series(squeeze(TOPO.v{side_hemi}.s{f1}.hb{h1}.c_interp_F(c1,:,:)),lmax,[]);
-                                                
+                                                end
                                             catch exception
                                                 disp(exception.identifier);
                                                 disp(exception.stack(1));
@@ -501,6 +511,8 @@ for Idx=1:size(job.NIRSmat,1)
                                                 %interpolated F
                                                 %ED.v{side_hemi}.group.hb{h1}.c{c1}.Fmin = interp_series(squeeze(TOPO.v{side_hemi}.group.hb{h1}.c_interp_F(c1,:,:)),lmin,[]);
                                                 %ED.v{side_hemi}.group.hb{h1}.c{c1}.Fmax = interp_series(squeeze(TOPO.v{side_hemi}.group.hb{h1}.c_interp_F(c1,:,:)),lmax,[]);
+                                            case -1
+                                            
                                             otherwise
                                         end
                                     end
