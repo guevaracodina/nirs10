@@ -415,14 +415,7 @@ for Idx=1:size(job.NIRSmat,1)
             
             SPM.nscan = nscan;
             SPM.xY.RT = 1/fs;
-            SPM.xBF.T = job.time_res;
-            SPM.xBF.T0 = 1;
-            SPM.xBF.dt = SPM.xY.RT/SPM.xBF.T;
-            if  job.units == 0
-                SPM.xBF.UNITS = 'scans';
-            elseif  job.units == 1
-                SPM.xBF.UNITS = 'secs';
-            end
+                 
             
             % separate specifications for non-replicated sessions
             %--------------------------------------------------------------------------
@@ -430,38 +423,11 @@ for Idx=1:size(job.NIRSmat,1)
             %use field job.bases only to see if gamma was selected, otherwise
             %use old job.derivs field
             
-            if strcmp(fieldnames(job.bases),'hrf')
-                if all(job.derivs == [0 0])
-                    SPM.xBF.name = 'hrf';
-                elseif all(job.derivs == [1 0])
-                    SPM.xBF.name = 'hrf (with time derivative)';
-                elseif all(job.derivs == [1 1])
-                    SPM.xBF.name = 'hrf (with time and dispersion derivatives)';
-                else
-                    disp('Unrecognized hrf derivative choices.')
-                end
-            else
-                nambase = fieldnames(job.bases);
-                if ischar(nambase)
-                    nam=nambase;
-                else
-                    nam=nambase{1};
-                end
-                switch nam,
-                    case 'fourier',
-                        SPM.xBF.name = 'Fourier set';
-                    case 'fourier_han',
-                        SPM.xBF.name = 'Fourier set (Hanning)';
-                    case 'gamma',
-                        SPM.xBF.name = 'Gamma functions';
-                    case 'fir',
-                        SPM.xBF.name = 'Finite Impulse Response';
-                    otherwise
-                        error('Unrecognized hrf derivative choices.')
-                end
-                SPM.xBF.length = job.bases.(nam).length;
-                SPM.xBF.order  = job.bases.(nam).order;
-            end
+            SPM.xBF = nirs_specify_bases(job);
+            SPM.xBF.T = job.time_res;
+            SPM.xBF.T0 = 1;
+            SPM.xBF.dt = SPM.xY.RT/SPM.xBF.T;
+       
             %the rest is very close to spm_fmri_design.m
             
             % get basis functions
@@ -469,7 +435,7 @@ for Idx=1:size(job.NIRSmat,1)
             try
                 bf      = SPM.xBF.bf;
             catch
-                SPM.xBF = spm_get_bf(SPM.xBF);
+                SPM.xBF = nirs_get_bf(SPM.xBF);
                 if size(SPM.xBF.bf,1) == 1 || size(SPM.xBF.bf,2) == 1
                     SPM.xBF.bf = SPM.xBF.bf/sum(SPM.xBF.bf); %normalize
                 end
