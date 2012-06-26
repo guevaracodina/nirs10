@@ -7,7 +7,7 @@ cchn = W.cchn;
 mtx_eye = eye(nch);
 %mesh of topographically projected brain size; note s1 and s2 inverted
 [x, y] = meshgrid(1:s2, 1:s1);
-
+warning('off')
 B = zeros(s1, s2, nch);
 for kk = 1:nch
     %a grid for channel positions?
@@ -22,6 +22,7 @@ for kk = 1:nch
     grid_eye(index_mask0) = 0;
     B(:,:, kk) = grid_eye;
 end
+warning('on')
 Q.B = B;
 Q.rmask = rmask;
 Q.cmask = cmask;

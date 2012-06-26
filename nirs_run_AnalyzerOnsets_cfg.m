@@ -81,12 +81,23 @@ cardiac_repair.help = {'Choose whether to fill the gaps of the cardiac onsets is
                        'This process compares each value in cardiac onsets with the mean of certain previous cardiac interval values'
                        'interpolate values to fill the gaps between two cardiac pulses'}';
 
+onset_to_keep         = cfg_entry;
+onset_to_keep.name    = 'Label for single onset type to keep';
+onset_to_keep.tag     = 'onset_to_keep';
+onset_to_keep.strtype = 's';
+onset_to_keep.val     = {''};
+onset_to_keep.num     = [1 Inf];
+onset_to_keep.help    = {'Enter empty string to process as usual (i.e. keep onsets)'
+    'Alternatively, enter the name of the onset type (e..g spkLT ) in order'
+    'to exclude other onsets and keep only this onset type.'}';
+
 %*****************************************************************************************************
 % Executable Branch
 AnalyzerOnsets      = cfg_exbranch;
 AnalyzerOnsets.name = 'Read NIRS onsets';
 AnalyzerOnsets.tag  = 'AnalyzerOnsets';
-AnalyzerOnsets.val  = {NIRSmat redo1 NIRSmatCopyChoice raw_onset_files freq_NIRS1 dp_NIRS1 cardiac_repair};
+AnalyzerOnsets.val  = {NIRSmat redo1 NIRSmatCopyChoice raw_onset_files ...
+    onset_to_keep freq_NIRS1 dp_NIRS1 cardiac_repair};
 AnalyzerOnsets.prog = @nirs_run_AnalyzerOnsets;
 AnalyzerOnsets.vout = @nirs_cfg_vout_AnalyzerOnsets;
 AnalyzerOnsets.help = {'Select NIRS structures (optional) and/or '

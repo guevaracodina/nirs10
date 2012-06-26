@@ -39,7 +39,11 @@ catch
     dp_NIRS1 = [];
     freq_NIRS1 = [];
 end
-
+if isfield(job,'onset_to_keep')
+    onset_to_keep = job.onset_to_keep;
+else
+    onset_to_keep = '';
+end
 %res_factor = 10; %factor to control precision of interpolation for confound regressors
 %Code allows up to 3 onset types to be removed. If want to keep all onsets,
 %make sure all rem_onsets are set to ''
@@ -190,12 +194,14 @@ for Idx=1:nsubj
                                 end
                             end
                             if not_found
-                                %new type of onset
-                                NTonset = NTonset + 1;
-                                k{NTonset} = 1;
-                                names{NTonset} = tag;
-                                onsets{NTonset}(k{NTonset}) = str2double(temp(indx(2):indx(3)))*dt-start_scan;
-                                durations{NTonset}(k{NTonset}) = dt*(str2double(temp(indx(3):indx(4)))-1); %subtract 1 so point onsets have zero duration
+                                if isempty(onset_to_keep) || strcmp(tag,onset_to_keep)
+                                    %new type of onset
+                                    NTonset = NTonset + 1;
+                                    k{NTonset} = 1;
+                                    names{NTonset} = tag;
+                                    onsets{NTonset}(k{NTonset}) = str2double(temp(indx(2):indx(3)))*dt-start_scan;
+                                    durations{NTonset}(k{NTonset}) = dt*(str2double(temp(indx(3):indx(4)))-1); %subtract 1 so point onsets have zero duration
+                                end
                             end
                         else
                             %Look for movement or pulse markers
@@ -232,24 +238,24 @@ for Idx=1:nsubj
                         
                         dvR = diff(vR);
                         
-%**********************************************************************************************
-%Ke Peng, introduce heart rate repair process
-%17/04/2012
+                        %**********************************************************************************************
+                        %Ke Peng, introduce heart rate repair process
+                        %17/04/2012
                         
-						if cardiac_repair_on
-							try
-								[dvR,vR,Flag_Repair,TotalAdded_Repair] = HeartRate_Repair(dvR,vR,avg_number,gap_def);
-								disp(['Flag_Repair = ' num2str(Flag_Repair) ' for session: ' num2str(i3)]);
-								disp(['TotalAdded_Repair = ' num2str(TotalAdded_Repair) ' for session: ' num2str(i3)]);
-								iR = iR + TotalAdded_Repair;
-							catch
-								disp('Cardiac repair failed.');
-							end
-						end
-%**********************************************************************************************
+                        if cardiac_repair_on
+                            try
+                                [dvR,vR,Flag_Repair,TotalAdded_Repair] = HeartRate_Repair(dvR,vR,avg_number,gap_def);
+                                disp(['Flag_Repair = ' num2str(Flag_Repair) ' for session: ' num2str(i3)]);
+                                disp(['TotalAdded_Repair = ' num2str(TotalAdded_Repair) ' for session: ' num2str(i3)]);
+                                iR = iR + TotalAdded_Repair;
+                            catch
+                                disp('Cardiac repair failed.');
+                            end
+                        end
+                        %**********************************************************************************************
                         
                         vRi = interp1(vR(2:end),dvR,lpi,'linear');
-
+                        
                         %derivative of pulse rate - too noisy
                         %ddvR = diff(dvR);
                         %vRi2 = interp1(vR(2:end-1),ddvR,lpi,'spline');
@@ -270,7 +276,7 @@ for Idx=1:nsubj
                         %[fR,Flag_Repair,TotalAdded_Repair] = HeartRate_Repair(fR,5,2.5);
                         %disp(['Flag_Repair = ' num2str(Flag_Repair) ' for session: ' num2str(i3)]);
                         %disp(['TotalAdded_Repair = ' num2str(TotalAdded_Repair) ' for session: ' num2str(i3)]);
-                        %iR = iR + TotalAdded_Repair; 
+                        %iR = iR + TotalAdded_Repair;
                         
                     catch
                         disp('Analyze onsets error');
