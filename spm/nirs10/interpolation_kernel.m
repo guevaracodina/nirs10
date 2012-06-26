@@ -21,6 +21,10 @@ try
     s2 = W.s2;
     %When using LKC, B, Bx, By are defined differently, and B_volume is
     %like the old B
+    
+    warning('off') %this is to turn off the
+    %Warning: Duplicate x-y data points detected: using average values for duplicate points
+    %This is a problem that should be investigated, eventually...
     if nch > 2
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %1- generate the interpolation kernels, B, Bx, By, B_volume
@@ -41,11 +45,8 @@ try
             %try
             %    grid_eye = TriScatteredInterp(X, Y, V);
             %catch
-            warning('off') %this is to turn off the 
-            %Warning: Duplicate x-y data points detected: using average values for duplicate points
-            %This is a problem that should be investigated, eventually...
             grid_eye = griddata(cchn, rchn, (mtx_eye(:,kk))', x, y, 'cubic');
-            warning('on')
+            
             %end
             if kk == 1
                 mask = 1 - isnan(grid_eye);
@@ -65,9 +66,9 @@ try
                 Bx(kk,:) = Bx_ch(index_mask0)';
                 By(kk,:) = By_ch(index_mask0)';
                 if ~W.Avg
-                if kk == nch && LKC
-                    L2 = calc_LKC(B_volume, mask, res,'individual');
-                end
+                    if kk == nch && LKC
+                        L2 = calc_LKC(B_volume, mask, res,'individual');
+                    end
                 end
             else
                 grid_eye(index_mask0) = 0;
@@ -124,13 +125,14 @@ try
                 cov_beta_r = U*(S.^(0.5))*V';
                 Q.cov_beta_r =cov_beta_r;
             else %for Avg
-                Q.ibeta = W.beta(:,ch) * B;               
+                Q.ibeta = W.beta(:,ch) * B;
                 Q.ivar =  W.covbeta(:,ch) * B; %Imaginary values are always very small
             end
         end
     else %not enough channels for interpolation
         disp('not enough channels for interpolation');
     end
+    warning('on')
     Q.B = B;
     Q.Bx = Bx;
     Q.By = By;
