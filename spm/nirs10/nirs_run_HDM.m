@@ -142,158 +142,161 @@ for Idx=1:size(job.NIRSmat,1)
                                 end
                                 disp(['HDM for session ' int2str(s1) ' completed']);
                                 
-                                
-                                
-                            
-                            % Set model
-                            %--------------------------------------------------------------------------
-                            M.modal = modal;
-                            M.Model_Choice = Model_Choice;
-                            M.N     = 64;
-                            M.dt    = 24/M.N; %24/M.N;
-                            M.TE    = TE;
-                            M.pE    = pE;
-                            M.pC    = pC;
-                            M.m     = m;
-                            M.EM    = EM;
-                            if generate_figures || save_figures
-                                M.nograph = 0;
-                            else
-                                M.nograph = 1;
-                            end
-                            
-                            M = set_model(M);
-                            
-                            if ~S.simuOn
-                                S.simuIt = 1;
-                            else
-                                Y0 = Y;
-                                if S.simuS == 0 % Stimuli type(s) to includes
-                                    S.simuS = 1:size(U.u,2);
-                                end
-                            end
-                            
-                            %--------------------------------------------------------------------------
-                            warning('off','MATLAB:nearlySingularMatrix');
-                            warning('off','MATLAB:singularMatrix');
-                            
-                            for it1=1:S.simuIt
-                                try
-                                    if S.simuOn
-                                        Y = Y0;
-                                        [Y,P] = simulate_data(pA,modal,M,U,Y,S,it1);
-                                    end
-                                    
-                                    
-                                    % INVERT MODEL %
-                                    % nonlinear system identification
-                                    %--------------------------------------------------------------------------
-                                    hfigevolution = []; hfigevolution2 = [];
-                                    if save_figures
-                                        fullfigDir1 = fullfigDir;
-                                    else
-                                        fullfigDir1 = '';
-                                    end
-                                    
-                                    % Plot data for debugging
-                                    tt = (0:size(Y.y,1)-1)*(Y.dt);
-                                    hfigData = figure('Units','normalized','Position',[0.1, 0.35, 0.6, 0.5]);
-                                    plot(tt,Y.y(:,1)*100,'.-b')
-                                    %ylim([-0.3 1.8])
-                                    xlim([0 200])
-                                    xlabel('Time (s)')
-                                    switch modal
-                                        case 1
-                                            ylabel('BOLD (%)')
-                                            ylim(100*[min(Y.y(:)) max(Y.y(:))]);
-                                        case 3
-                                            ylabel('Flow (%)')
-                                            ylim(100*[min(Y.y(:)) max(Y.y(:))]);
-                                        case {2,5}
-                                            hold on, plot(tt,Y.y(:,2)*100,'.-r')
-                                            %ylim([-3 18])
-                                            ylabel('ASL (BOLD & flow) (%)')
-                                            ylim(100*[min(Y.y(:)) max(Y.y(:))]);
-                                    end
-                                    try
-                                        title(['Upsampling: ' num2str(S.simuUpsample) ' ; Interpolation: ' num2str(S.simuInterp)])
-                                    end
-                                    
-                                    if save_figures
-                                        if ~exist(fullfigDir1,'dir'), mkdir(fullfigDir1); end
-                                        saveas(hfigData,fullfile(fullfigDir1,['Yy_' gen_num_str(it1,3)]),'fig');
-                                        print(hfigData, '-dtiffn', fullfile(fullfigDir1,['Yy_' gen_num_str(it1,3)]));
-                                    end
-                                    close(hfigData);
-                                    
-                                    if S.simuOn
-                                        SubjIdx0 = SubjIdx; %should not be used
-                                        SubjIdx = it1; %changed inside a for loop but it is restored later
-                                    end
-                                    %[Ep,Cp,Eh,K0,K1,K2,M0,M1,L1,L2,F,hfigevolution,hfigevolution2] = nirs_nlsi(M,U,Y);
-                                    [Ep,Cp,Eh,K0,K1,K2,M0,M1,L1,L2,F] = nirs_nlsi(M,U,Y,fullfigDir1,SubjIdx);
-                                    %for simulations: store results in place of subjects
-                                    
-                                    if S.simuOn
-                                        HDM{SubjIdx,r1}{s1}.EpS = P;
-                                    end
-                                    %Store results
-                                    if it1 == 1
-                                        %information independent of simulation iteration number
-                                        HDM{SubjIdx,r1}{s1}.M = M;
-                                        HDM{SubjIdx,r1}{s1}.pE = pE;
-                                        HDM{SubjIdx,r1}{s1}.job = job;
-                                    end
-                                    HDM{SubjIdx,r1}{s1}.Ep = Ep;
-                                    HDM{SubjIdx,r1}{s1}.Cp = Cp;
-                                    HDM{SubjIdx,r1}{s1}.F = F;
-                                    HDM{SubjIdx,r1}{s1}.name = ROIs(r1).nameROI;
-                                    HDM{SubjIdx,r1}{s1}.subj = fBOLD;
-                                    HDM{SubjIdx,r1}{s1}.session = cs1;
-                                    HDM{SubjIdx,r1}{s1}.Y = Y;
-                                    HDM{SubjIdx,r1}{s1}.U = U;
-                                    
-                                    % Volterra kernels of states
-                                    %--------------------------------------------------------------------------
-                                    [dummy,H1] = spm_kernels(M0,M1,M.N,M.dt);
-                                    HDM{SubjIdx,r1}{s1}.H1 = H1;
-                                    %save - overwriting previous
-                                    save(HDMfile,'HDM');
-                                    
-                                    %-display results
-                                    %==========================================================================
-                                    if generate_figures || save_figures
-                                        display_results(fullfigDir,Model_Choice,pE,Ep,Cp,U,m,M,H1,K1,K2,...
-                                            modal,plot_algebraic_CMRO2,save_figures,SubjIdx,hfigevolution,hfigevolution2);
-                                    end
-                                    
-                                    if S.simuOn
-                                        SubjIdx = SubjIdx0; % not used...
-                                    end
-                                    
-                                catch exception
-                                    disp(['Model estimation or Simu #' int2str(it1) ' failed']);
-                                    disp(exception.identifier);
-                                    disp(exception.stack(1));
-                                end
-                                
-                            end
-                            
-                            out = [];
-                            
-                        catch exception
-                            disp(exception.identifier);
-                            disp(exception.stack(1));
-                            out = [0];
-                        end
-                    end
-                end
-            end
-            
-            catch exception
-                disp(exception.identifier);
-                disp(exception.stack(1));
         end
     end
-    
+end
+% end
+%                                 
+%                             
+%                             % Set model
+%                             %--------------------------------------------------------------------------
+%                             M.modal = modal;
+%                             M.Model_Choice = Model_Choice;
+%                             M.N     = 64;
+%                             M.dt    = 24/M.N; %24/M.N;
+%                             M.TE    = TE;
+%                             M.pE    = pE;
+%                             M.pC    = pC;
+%                             M.m     = m;
+%                             M.EM    = EM;
+%                             if generate_figures || save_figures
+%                                 M.nograph = 0;
+%                             else
+%                                 M.nograph = 1;
+%                             end
+%                             
+%                             M = set_model(M);
+%                             
+%                             if ~S.simuOn
+%                                 S.simuIt = 1;
+%                             else
+%                                 Y0 = Y;
+%                                 if S.simuS == 0 % Stimuli type(s) to includes
+%                                     S.simuS = 1:size(U.u,2);
+%                                 end
+%                             end
+%                             
+%                             %--------------------------------------------------------------------------
+%                             warning('off','MATLAB:nearlySingularMatrix');
+%                             warning('off','MATLAB:singularMatrix');
+%                             
+%                             for it1=1:S.simuIt
+%                                 try
+%                                     if S.simuOn
+%                                         Y = Y0;
+%                                         [Y,P] = simulate_data(pA,modal,M,U,Y,S,it1);
+%                                     end
+%                                     
+%                                     
+%                                     % INVERT MODEL %
+%                                     % nonlinear system identification
+%                                     %--------------------------------------------------------------------------
+%                                     hfigevolution = []; hfigevolution2 = [];
+%                                     if save_figures
+%                                         fullfigDir1 = fullfigDir;
+%                                     else
+%                                         fullfigDir1 = '';
+%                                     end
+%                                     
+%                                     % Plot data for debugging
+%                                     tt = (0:size(Y.y,1)-1)*(Y.dt);
+%                                     hfigData = figure('Units','normalized','Position',[0.1, 0.35, 0.6, 0.5]);
+%                                     plot(tt,Y.y(:,1)*100,'.-b')
+%                                     %ylim([-0.3 1.8])
+%                                     xlim([0 200])
+%                                     xlabel('Time (s)')
+%                                     switch modal
+%                                         case 1
+%                                             ylabel('BOLD (%)')
+%                                             ylim(100*[min(Y.y(:)) max(Y.y(:))]);
+%                                         case 3
+%                                             ylabel('Flow (%)')
+%                                             ylim(100*[min(Y.y(:)) max(Y.y(:))]);
+%                                         case {2,5}
+%                                             hold on, plot(tt,Y.y(:,2)*100,'.-r')
+%                                             %ylim([-3 18])
+%                                             ylabel('ASL (BOLD & flow) (%)')
+%                                             ylim(100*[min(Y.y(:)) max(Y.y(:))]);
+%                                     end
+%                                     try
+%                                         title(['Upsampling: ' num2str(S.simuUpsample) ' ; Interpolation: ' num2str(S.simuInterp)])
+%                                     end
+%                                     
+%                                     if save_figures
+%                                         if ~exist(fullfigDir1,'dir'), mkdir(fullfigDir1); end
+%                                         saveas(hfigData,fullfile(fullfigDir1,['Yy_' gen_num_str(it1,3)]),'fig');
+%                                         print(hfigData, '-dtiffn', fullfile(fullfigDir1,['Yy_' gen_num_str(it1,3)]));
+%                                     end
+%                                     close(hfigData);
+%                                     
+%                                     if S.simuOn
+%                                         SubjIdx0 = SubjIdx; %should not be used
+%                                         SubjIdx = it1; %changed inside a for loop but it is restored later
+%                                     end
+%                                     %[Ep,Cp,Eh,K0,K1,K2,M0,M1,L1,L2,F,hfigevolution,hfigevolution2] = nirs_nlsi(M,U,Y);
+%                                     [Ep,Cp,Eh,K0,K1,K2,M0,M1,L1,L2,F] = nirs_nlsi(M,U,Y,fullfigDir1,SubjIdx);
+%                                     %for simulations: store results in place of subjects
+%                                     
+%                                     if S.simuOn
+%                                         HDM{SubjIdx,r1}{s1}.EpS = P;
+%                                     end
+%                                     %Store results
+%                                     if it1 == 1
+%                                         %information independent of simulation iteration number
+%                                         HDM{SubjIdx,r1}{s1}.M = M;
+%                                         HDM{SubjIdx,r1}{s1}.pE = pE;
+%                                         HDM{SubjIdx,r1}{s1}.job = job;
+%                                     end
+%                                     HDM{SubjIdx,r1}{s1}.Ep = Ep;
+%                                     HDM{SubjIdx,r1}{s1}.Cp = Cp;
+%                                     HDM{SubjIdx,r1}{s1}.F = F;
+%                                     HDM{SubjIdx,r1}{s1}.name = ROIs(r1).nameROI;
+%                                     HDM{SubjIdx,r1}{s1}.subj = fBOLD;
+%                                     HDM{SubjIdx,r1}{s1}.session = cs1;
+%                                     HDM{SubjIdx,r1}{s1}.Y = Y;
+%                                     HDM{SubjIdx,r1}{s1}.U = U;
+%                                     
+%                                     % Volterra kernels of states
+%                                     %--------------------------------------------------------------------------
+%                                     [dummy,H1] = spm_kernels(M0,M1,M.N,M.dt);
+%                                     HDM{SubjIdx,r1}{s1}.H1 = H1;
+%                                     %save - overwriting previous
+%                                     save(HDMfile,'HDM');
+%                                     
+%                                     %-display results
+%                                     %==========================================================================
+%                                     if generate_figures || save_figures
+%                                         display_results(fullfigDir,Model_Choice,pE,Ep,Cp,U,m,M,H1,K1,K2,...
+%                                             modal,plot_algebraic_CMRO2,save_figures,SubjIdx,hfigevolution,hfigevolution2);
+%                                     end
+%                                     
+%                                     if S.simuOn
+%                                         SubjIdx = SubjIdx0; % not used...
+%                                     end
+%                                     
+%                                 catch exception
+%                                     disp(['Model estimation or Simu #' int2str(it1) ' failed']);
+%                                     disp(exception.identifier);
+%                                     disp(exception.stack(1));
+%                                 end
+%                                 
+%                             end
+%                             
+%                             out = [];
+%                             
+%                         catch exception
+%                             disp(exception.identifier);
+%                             disp(exception.stack(1));
+%                             out = [0];
+%                         end
+%                     end
+%                 end
+%             end
+%             
+%             catch exception
+%                 disp(exception.identifier);
+%                 disp(exception.stack(1));
+%         end
+%     end
+%     
     
