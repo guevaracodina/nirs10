@@ -35,8 +35,11 @@ plot_algebraic_CMRO2.values = {1,0};
 plot_algebraic_CMRO2.val  = {1};
 plot_algebraic_CMRO2.help = {'Plot algebraic CMRO2.'}';
 
+[generate_figures save_figures] = nirs_dfg_generate_figures;
+
 hdm_display_options         = cfg_branch;
 hdm_display_options.tag     = 'hdm_display_options';
 hdm_display_options.name    = 'HDM display options';
-hdm_display_options.val     = {only_display show_normalized_parameters show_mse plot_algebraic_CMRO2}; 
+hdm_display_options.val     = {only_display generate_figures save_figures ...
+    show_normalized_parameters show_mse plot_algebraic_CMRO2}; 
 hdm_display_options.help    = {'Choose HDM display options.'};
