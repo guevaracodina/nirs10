@@ -81,6 +81,13 @@ model_estimate.values = {nirs_run_liom_GLM_estimate_cfg nirs_run_liom_contrast_c
     nirs_run_liom_2way_anova_cfg nirs_run_AnalyzeGLM_cfg nirs_run_ROCtest_cfg}; %liom_2way_anova
 model_estimate.help   = {'These modules estimate a GLM.'};
 
+%module 12
+HDM_options        = cfg_choice; %cfg_repeat;
+HDM_options.name   = 'HDM options';
+HDM_options.tag    = 'HDM_options';
+HDM_options.values = {nirs_run_HDM_cfg nirs_run_NIRS_HDM_cfg nirs_run_liom_HDM_cfg};
+HDM_options.help   = {'These modules perform hemodynamic modelling.'};
+
 %module 13
 CRIUGM        = cfg_choice; %cfg_repeat;
 CRIUGM.name   = 'CRIUGM';
@@ -110,4 +117,4 @@ nirs10.tag    = 'nirs10'; %Careful, this tag nirs10 must be the same as
 nirs10.values = {readNIRS readOnsets preprocessNIRS preprocANAT coregNIRS aMRI_utilities...
     nirs_run_configMC2_cfg nirs_run_runMC_cfg nirs_run_generate_sensitivity_matrix_cfg...
     nirs_run_calculatePVE_cfg model_reconstruct model_specify ...
-    model_estimate nirs_utilities nirs_run_NIRS_HDM_cfg nirs_run_liom_HDM_cfg CRIUGM};
+    model_estimate nirs_utilities HDM_options CRIUGM};

@@ -2,11 +2,10 @@ function out = nirs_run_liom_HDM(job)
 % User interface for hemodynamic model estimation
 % Based on SPM HDM
 
-
 nameHDM = job.nameHDM;
 Model_Choice = job.Model_Choice;
 %subjects = job.which_subjects; % path to SPM.mat files
-
+EM = nirs_get_EM(job);
 TE = job.echo_time;    
 Stimuli = job.which_condition;
 sessions = job.which_session;
@@ -16,7 +15,7 @@ dp_start = job.dp_start; %points to remove due to filter set-up
 dp_end = job.dp_end; %points to remove due to filter set-up
 
 removeWhitening = job.removeWhitening;
-
+S = nirs_get_simu(job);
 save_figures = job.save_figures;
 generate_figures = job.generate_figures;
 
@@ -80,60 +79,6 @@ if isfield(job,'priorFile')
 else
     priorFile = '';
 end
-
-if isfield(job.simuOn,'simuYes')
-    S.simuOn = 1;
-    S.simuS     = job.simuOn.simuYes.simuS; %Stimuli types to include
-    S.simuIt    = job.simuOn.simuYes.simuIt; %Number of random iterations
-    S.simuA     = job.simuOn.simuYes.simuA; %Signal amplitude, as % of BOLD signal
-    S.simuP     = job.simuOn.simuYes.simuP; %Parameters to vary
-    if isfield(job.simuOn.simuYes.simuParamDistr,'distr_uniform')
-        S.simuPriorDistr = 1;
-        S.simuPrior = job.simuOn.simuYes.simuParamDistr.distr_uniform.simuPrior; %Priors to use
-        S.simuR     = job.simuOn.simuYes.simuParamDistr.distr_uniform.simuR; %Range to sample
-    end
-    if isfield(job.simuOn.simuYes.simuParamDistr,'distr_bimodal')
-        S.simuPriorDistr = 2;
-        S.simuPrior1 = job.simuOn.simuYes.simuParamDistr.distr_bimodal.simuMean1; %Priors to use
-        S.simuR1     = job.simuOn.simuYes.simuParamDistr.distr_bimodal.simuR1; %Range to sample
-        S.simuDiffPrior = job.simuOn.simuYes.simuParamDistr.distr_bimodal.simuMean21; %Priors to use
-        S.simuR2     = job.simuOn.simuYes.simuParamDistr.distr_bimodal.simuR2; %Range to sample
-    end
-
-    S.simuUpsample = job.simuOn.simuYes.simuUpsample; %Upsampling factor on data
-    try % for back-compatibility
-        S.simuInterp = job.simuOn.simuYes.simuInterp; %Interpolation on simulated data (after decimating)
-    catch
-        S.simuInterp = 1;
-    end
-    simuNoise1 = job.simuOn.simuYes.simuNoise; %Yes to include background noise based on restscans
-    if isfield(simuNoise1,'noiseYes')
-        S.simuNoise = 1;
-        switch modal
-            case 1
-                restscans = job.simuOn.simuYes.simuNoise.noiseYes.restscans; %Rest scans to add signal to
-            case {2,5}
-                restscans_BOLD = job.simuOn.simuYes.simuNoise.noiseYes.restscans_BOLD;
-                restscans_ASL = job.simuOn.simuYes.simuNoise.noiseYes.restscans_ASL;
-            case 3
-                restscans_ASL = job.simuOn.simuYes.simuNoise.noiseYes.restscans_ASL;
-        end
-    else
-        S.simuNoise = 0;
-    end
-    
-else
-    S.simuOn = 0;
-    
-end
-
-%EM parameters
-EM.spm_integrator = job.EM_parameters.spm_integrator;
-EM.Niterations = job.EM_parameters.Niterations;
-EM.dFcriterion = job.EM_parameters.dFcriterion;
-EM.LogAscentRate = job.EM_parameters.LogAscentRate;
-EM.MaxLogAscentRate = job.EM_parameters.MaxLogAscentRate;
-EM.Mstep_iterations = job.EM_parameters.Mstep_iterations;
 
 %---------------------------------------------------------------------------
 try
@@ -399,7 +344,7 @@ try
                     
                     % Generate random parameter distributions
                     if S.simuOn
-                        pA = generate_random_param(S,pE);
+                        pA = nirs_generate_random_param(S,pE);
                     end
                     
                     % Set model
@@ -639,76 +584,6 @@ if isempty(pE) || isempty(pC)
             [pE,pC] = spm_hdm_priors(m,3);
     end
 end
-end
-
-function pA = generate_random_param(S,pE)
-                        
-    pA = repmat(pE',[S.simuIt 1]); %zeros(S.simuIt,length(pE));
-    ct = 0;
-    for pE1=1:length(pE)
-        if any(S.simuP == 0) || any(pE1 == S.simuP)
-            ct = ct+1;
-            % Initialize the stream
-            mtstream = RandStream('mt19937ar','Seed',pE1);
-            RandStream.setDefaultStream(mtstream);
-            % Generate the random numbers
-
-            switch S.simuPriorDistr                                 
-                case 1 % Uniform distribution
-                    for it1=1:S.simuIt % for each simulation
-                        % User-specified priors
-                        if ~isempty(S.simuPrior)
-                            pA(it1,pE1) = S.simuPrior(ct);
-                        end
-                        tpA = pA(it1,pE1);
-                        % User-specified range of simulated
-                        % values for parameters
-                        if length(S.simuR) == 1
-                            pA(it1,pE1) = unifrnd(tpA*(1-S.simuR/100),tpA*(1+S.simuR/100));
-                        else
-                            pA(it1,pE1) = unifrnd(tpA*(1-S.simuR(ct)/100),tpA*(1+S.simuR(ct)/100));
-                        end
-                    end
-
-                case 2 % 2 Gaussians
-                    for it1=1:round(S.simuIt/2) % for 1st half of simulations                                                                                      
-                        % User-specified priors
-                        if ~isempty(S.simuPrior1)
-                            pA(it1,pE1) = S.simuPrior1(ct);
-                        end
-                        tpA = pA(it1,pE1);
-                        % User-specified range of simulated
-                        % values for parameters
-                        if length(S.simuR1) == 1
-                            pA(it1,pE1) = unifrnd(tpA*(1-S.simuR1/100),tpA*(1+S.simuR1/100));
-                            %normrnd(tpA,S.simuR1/100);
-                        else
-                            pA(it1,pE1) = unifrnd(tpA*(1-S.simuR1(ct)/100),tpA*(1+S.simuR1(ct)/100));
-                            %pA(it1,pE1) = normrnd(tpA,S.simuR1(ct)/100);
-                        end
-                    end
-
-                    for it1=round(S.simuIt/2)+1:S.simuIt % for 2nd half of simulations                                                                                      
-                        % User-specified priors
-                        if ~isempty(S.simuDiffPrior)
-                            pA(it1,pE1) = pA(it1-round(S.simuIt/2),pE1)*(1+S.simuDiffPrior(ct)/100);
-                        end
-                        tpA = pA(it1,pE1);
-                        % User-specified range of simulated
-                        % values for parameters
-                        if length(S.simuR2) == 1
-                            pA(it1,pE1) = unifrnd(tpA*(1-S.simuR2/100),tpA*(1+S.simuR2/100));
-                            %pA(it1,pE1) = normrnd(tpA,S.simuR2);
-                        else
-                            pA(it1,pE1) = unifrnd(tpA*(1-S.simuR2(ct)/100),tpA*(1+S.simuR2(ct)/100));
-                            %pA(it1,pE1) = normrnd(tpA,S.simuR2(ct));
-                        end
-                    end
-
-            end                                    
-        end
-    end
-
 end
 
 function M = set_model(M)

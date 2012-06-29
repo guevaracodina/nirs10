@@ -147,15 +147,7 @@ Modalities.values    = {BOLD BOLD_ASL ASL HbO_HbR}; %{BOLDchoice spmmat_ASL}; %{
 Modalities.val       = {HbO_HbR}; %{BOLD_ASL}; %{spmmat_ASL};
 Modalities.help      = {'Choose data type: BOLD, BOLD + ASL, ASL only, HbO+HbR'}; %, HbO+HbR, HbO+HbR+speckle for hemodynamic parameters estimation'};
 
-Model_Choice           = cfg_menu;
-Model_Choice.name      = 'Choice of Model';
-Model_Choice.tag       = 'Model_Choice';
-Model_Choice.labels    = {'Buxton-Friston' 'Zheng-Mayhew' 'Boas-Huppert'};
-Model_Choice.values    = {0,1,2};
-Model_Choice.val       = {0};
-%Model_Choice.def  = @(val)nirs_get_defaults('readNIRS.boxy1.save_bin_dot', val{:});
-Model_Choice.help      = {'Choose hemodynamic model: Buxton-Friston, '
-    'Zheng-Mayhew, or 1-Compartment Boas-Huppert Model'}';
+Model_Choice = nirs_dfg_Model_Choice;
 
 Stimuli     = cfg_entry;
 Stimuli.name    = 'Stimuli identification numbers';
