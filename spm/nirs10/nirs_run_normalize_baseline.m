@@ -32,7 +32,7 @@ for Idx=1:size(job.NIRSmat,1)
             NC = NIRS.Cf.H.C.N; % Number of channels
             fs = NIRS.Cf.dev.fs; % Sampling frequency
             
-            % For each data file
+            % For each data file - loop over sessions
             for f=1:size(rDtp,1)
                 % Read raw data (intensity)
                 d = fopen_NIR(rDtp{f,1},NC);
@@ -97,6 +97,12 @@ for Idx=1:size(job.NIRSmat,1)
                                     div_factor = e(:,1);
                                 case 2 %mean
                                     div_factor = mean(e,2);
+                                case 3 %median - session 1
+                                    %do nothing
+                                    if f == 1
+                                        div_factor0 = median(e,2);
+                                    end
+                                    div_factor = div_factor0;
                                 otherwise %take median
                                     div_factor = median(e,2);
                             end
@@ -170,6 +176,12 @@ for Idx=1:size(job.NIRSmat,1)
                                         div_factor = d(:,win(end));
                                     case 2 %mean
                                         div_factor = mean(d(:,win),2);
+                                    case 3 %median - session 1
+                                        %do nothing
+                                        if f == 1
+                                            div_factor0 = median(e,2);
+                                        end
+                                        div_factor = div_factor0;
                                     otherwise %take median
                                         div_factor = median(d(:,win),2);
                                 end
@@ -202,6 +214,12 @@ for Idx=1:size(job.NIRSmat,1)
                                     div_factor = d(:,1);
                                 case 2 %mean
                                     div_factor = mean(d,2);
+                                case 3 %median - session 1
+                                    %do nothing
+                                    if f == 1
+                                        div_factor0 = median(e,2);
+                                    end
+                                    div_factor = div_factor0;
                                 otherwise %take median
                                     div_factor = median(d,2);
                             end
