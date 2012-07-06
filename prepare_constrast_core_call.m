@@ -27,28 +27,30 @@ try
                 %pile-up all the betas from all the sessions and all channels
                 for f2 = 1:length(xXn)
                     if any(Z.sessions == 0) || any(f2 == Z.sessions)
-                    W.beta = [W.beta; xXn{f2}.beta];
-                    if isfield(xXn{f2},'res')
-                        tmp_res = fopen_NIR(xXn{f2}.res,NC);
-                        W.res = [W.res tmp_res];
-                    else
-                        Z.Avg = 1;
-                        if f2 == 1
-                            W.covbeta = xXn{f2}.covbeta;
+                        W.beta = [W.beta; xXn{f2}.beta];
+                        if isfield(xXn{f2},'res')
+                            tmp_res = fopen_NIR(xXn{f2}.res,NC);
+                            W.res = [W.res tmp_res];
                         else
-                            W.covbeta = [W.covbeta;  xXn{f2}.covbeta];
+                            Z.Avg = 1;
+                            if f2 == 1
+                                W.covbeta = xXn{f2}.covbeta;
+                            else
+                                W.covbeta = [W.covbeta;  xXn{f2}.covbeta];
+                            end
                         end
-                    end
-                    %How to calculate those? for now, just take the average
-                    if f2 == 1
-                        tmp_var = xXn{f2}.ResSS./xXn{f1}.trRV;
-                        tmp_varch = xXn{f2}.ResSSch./xXn{f1}.trRV;
-                        tmp_corr = xXn{f2}.Bcov;
-                    else
-                        tmp_var = tmp_var + xXn{f2}.ResSS./xXn{f1}.trRV;
-                        tmp_varch = tmp_varch + xXn{f2}.ResSSch./xXn{f1}.trRV;
-                        tmp_corr = blkdiag(tmp_corr, xXn{f2}.Bcov);
-                    end
+                        %How to calculate those? for now, just take the average
+                        if ~Z.Avg
+                            if f2 == 1
+                                tmp_var = xXn{f2}.ResSS./xXn{f1}.trRV;
+                                tmp_varch = xXn{f2}.ResSSch./xXn{f1}.trRV;
+                                tmp_corr = xXn{f2}.Bcov;
+                            else
+                                tmp_var = tmp_var + xXn{f2}.ResSS./xXn{f1}.trRV;
+                                tmp_varch = tmp_varch + xXn{f2}.ResSSch./xXn{f1}.trRV;
+                                tmp_corr = blkdiag(tmp_corr, xXn{f2}.Bcov);
+                            end
+                        end
                     end
                 end
                 if ~Z.Avg
