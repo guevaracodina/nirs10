@@ -23,7 +23,7 @@ try
     end
     %filtering of the data
     KY = spm_filter_HPF_LPF_WMDL(SPM.xX.K, Y);
-    if nreg > 1
+    if nreg > length(U)+1
         %Further filtering of the confounds
         KY = KY - SPM.xX.xKXs.X * (SPM.xX.pKX * KY);
     end

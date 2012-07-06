@@ -19,22 +19,31 @@ try
         tmp1 = []; tmp2 = []; tmp3 = 0; tmp4 = 0; tmp5 = 0; tmp6 = 0; tmp7 = [];
         ct = 0;
         for s1=1:length(SPM.xXn)
-            if Z.sessions == 0 || any(s1 == Z.sessions)
+            if any(Z.sessions == 0) || any(s1 == Z.sessions)
                 ct = ct+1;
                 %filtered design matrix
                 tmp1 = blkdiag(tmp1,SPM.xXn{s1}.xKXs.X);
                 %design matrix
                 tmp2 = blkdiag(tmp2,SPM.xXn{s1}.X);
                 %residual sum of squares of full model
-                tmp3 = tmp3 + SPM.xXn{s1}.ResSS;
-                if ct == 1
-                    tmp8 = SPM.xXn{s1}.ResSSch;
+                if isfield(SPM.xXn{s1},'ResSS')
+                    tmp3 = tmp3 + SPM.xXn{s1}.ResSS;
+                    if ct == 1
+                        tmp8 = SPM.xXn{s1}.ResSSch;
+                    else
+                        tmp8 = tmp8 + SPM.xXn{s1}.ResSSch;
+                    end
+                    tmp5 = tmp5 + SPM.xXn{s1}.trRV;
+                    tmp6 = tmp6 + SPM.xXn{s1}.trRVRV;
+                    
+                    tmp7 = blkdiag(tmp7,SPM.xXn{s1}.Bcov);
                 else
-                    tmp8 = tmp8 + SPM.xXn{s1}.ResSSch;
+                    tmp3 = [];
+                    tmp8 = [];
+                    tmp5 = [];
+                    tmp6 = [];
+                    tmp7 = [];
                 end
-                tmp5 = tmp5 + SPM.xXn{s1}.trRV;
-                tmp6 = tmp6 + SPM.xXn{s1}.trRVRV;
-                tmp7 = blkdiag(tmp7,SPM.xXn{s1}.Bcov);
             end
         end
         SPM.xX.xKXs = tmp1;
@@ -46,10 +55,17 @@ try
         %for multiple sessions
         SPM.xX.trRV = tmp5;
         SPM.xX.trRVRV = tmp6;
-        SPM.xX.erdf = tmp5^2/tmp6;
-        SPM.xX.erdf_check = tmp4;
-        SPM.xX.corr_beta = tmp7;
-        SPM.xX.var = SPM.xX.ResSS/SPM.xX.trRV;
+        if ~isempty(tmp3)
+            SPM.xX.erdf = tmp5^2/tmp6;
+            SPM.xX.erdf_check = tmp4;
+            SPM.xX.corr_beta = tmp7;
+            SPM.xX.var = SPM.xX.ResSS/SPM.xX.trRV;
+        else
+            SPM.xX.erdf = [];
+            SPM.xX.erdf_check = [];
+            SPM.xX.corr_beta = [];
+            SPM.xX.var = [];
+        end
         SPM.xCon = [];
         %Generate the SPM-type contrasts over all sessions
         disp('Subject-level contrasts:');
@@ -67,7 +83,7 @@ try
                     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     %2- Generate automated contrasts if required
                     %number of regressors for one session
-                        nr = size(SPM.xXn{s1}.X,2);
+                    nr = size(SPM.xXn{s1}.X,2);
                     sC.contrastT = {}; sC.contrastF = {};
                     sC.contrastT_name = {}; sC.contrastF_name = {};
                     if Z.NonlinearEpilepsyOn
