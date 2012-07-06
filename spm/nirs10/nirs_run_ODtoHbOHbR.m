@@ -253,5 +253,3 @@ for Idx=1:size(job.NIRSmat,1)
     end
 end
 out.NIRSmat = job.NIRSmat;
-end
-
