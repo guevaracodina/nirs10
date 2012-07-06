@@ -66,6 +66,22 @@ baseline_offset_HbT.help = {'Enter baseline offset for HbT. Enter either a singl
     'to be applied to each selected session and ROI, or  '
     'enter an array of offsets, by selected session and by selected ROI.'}';
 
+baseline_HbR      = cfg_entry;
+baseline_HbR.tag  = 'baseline_HbR';
+baseline_HbR.name = 'Baseline HbR concentration in micro molar';
+baseline_HbR.strtype  = 'r';
+baseline_HbR.num = [1 1];
+baseline_HbR.val{1} = 40;
+baseline_HbR.help = {''}';
+
+baseline_HbO      = cfg_entry;
+baseline_HbO.tag  = 'baseline_HbO';
+baseline_HbO.name = 'Baseline HbO concentration in micro molar';
+baseline_HbO.strtype  = 'r';
+baseline_HbO.num = [1 1];
+baseline_HbO.val{1} = 60;
+baseline_HbO.help = {''}';
+
 baseline_offset_choice         = cfg_branch;
 baseline_offset_choice.tag     = 'baseline_offset_choice';
 baseline_offset_choice.name    = 'Baseline offset choice';
@@ -83,5 +99,5 @@ O         = cfg_branch;
 O.name     = 'Options';
 O.tag    = 'O';
 O.val     = {PhysioModel_Choice baseline_choice ...
-    use_onset_amplitudes}; 
+    use_onset_amplitudes baseline_HbR baseline_HbO}; 
 O.help    = {'Choose various options.'};

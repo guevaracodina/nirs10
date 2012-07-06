@@ -7,11 +7,8 @@ O.HPF = nirs_get_HPF(job);
 O.LPF = nirs_get_LPF(job);
 O.use_onset_amplitudes = job.O.use_onset_amplitudes;
 %Hemodynamic model choice
-O.PhysioModel_Choice = job.O.PhysioModel_Choice;
-%modalities to include
-O.includeHbR = job.IC.includeHbR;
-O.includeHbO = job.IC.includeHbO;
-O.includeHbT = job.IC.includeHbT;
+O.PhysioModel_Choice = job.O.Model_Choice; %eventually, Model_Choice should be
+%replaced by PhysioModel_Choice in all the code.
 %Baseline choice
 if isfield(job.O.baseline_choice,'baseline_percentile_choice')
     O.baseline_choice = 1;
@@ -27,3 +24,5 @@ else
         O.baseline_correction = [];
     end
 end
+O.baseline_HbR = job.O.baseline_HbR;
+O.baseline_HbO = job.O.baseline_HbO;
