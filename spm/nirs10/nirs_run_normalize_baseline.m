@@ -217,7 +217,7 @@ for Idx=1:size(job.NIRSmat,1)
                                 case 3 %median - session 1
                                     %do nothing
                                     if f == 1
-                                        div_factor0 = median(e,2);
+                                        div_factor0 = median(d,2);
                                     end
                                     div_factor = div_factor0;
                                 otherwise %take median
