@@ -183,9 +183,9 @@ normalizeOn = 0; %Integer: 0: off; 1: on; 2: both
 %by session
 reportContrastsBySession = 1; %Boolean: 0: off; 1: on
 %Generate stats with HRF peaking at different times with respect to onsets
-McGilldelaysOn = 0; %Boolean: 0: off; 1: on
+McGilldelaysOn = 1; %Boolean: 0: off; 1: on
 %Delays in seconds - to use with
-delay = [-4 -2]; % -2 -1 1 3 6]; % [-9 -6 -3 -2 -1 1 2 3 6 9]; %[-7 -8 -5 -4]; %[-9 -6 -3 3 6 9];
+delay = [-4 -2 2]; % -2 -1 1 3 6]; % [-9 -6 -3 -2 -1 1 2 3 6 9]; %[-7 -8 -5 -4]; %[-9 -6 -3 3 6 9];
 %remove negative onsets entirely - negative onsets may arise when using
 %a negative delay; it is best to remove such onsets
 McGill_remove_negative = 1; %Boolean: 0: off; 1: on
@@ -206,9 +206,9 @@ unwarp_threshold = 0.3; %Boolean: 0: off; 1: on
 %inc_derivs = 0;
 add_pulse_regressor = 0; %Boolean: 0: off; 1: on
 %Volterra - nonlinearities
-VolterraOn = 0; %Integer: 0: off; 1: on; 2: both
+VolterraOn = 1; %Integer: 0: off; 1: on; 2: both
 %Window size for Gamma function HRF
-GammaOn = 0; %Integer: 0: off; 1: on; 2: both
+GammaOn = 2; %Integer: 0: off; 1: on; 2: both
 gamma_window = 20; %in seconds
 gamma_order = 1; %number of gamma function bases
 default_analysis_dir = 1; %Boolean: 0: let user choose analysis dir; 1: automatic default
@@ -1657,7 +1657,7 @@ dt = str2double(temp(i1(2)+1:i2-1))/1000;
 %first Scan Start
 while ~feof(fp)
     temp = fgetl(fp);
-    indx = findstr('Scan Start',temp);
+    indx = findstr('Scan start',temp);
     if ~isempty(indx)
         indx = findstr(',',temp);
         start_scan = dt*str2double(temp(indx(2):indx(3)));
@@ -1686,7 +1686,7 @@ while ~feof(fp)
     temp = fgetl(fp);
     if ~TRdone
         %find next Scan Start
-        indx = findstr('Scan Start',temp);
+        indx = findstr('Scan start',temp);
         if ~isempty(indx)
             indx = findstr(',',temp);
             next_start_scan = dt*str2double(temp(indx(2):indx(3)));
