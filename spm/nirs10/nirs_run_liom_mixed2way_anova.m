@@ -208,7 +208,7 @@ try
                         end %end for s1
                         
                         if z1==1 && h1 == 1%no need to repeat calculation
-                            
+                            cbeta{h1} = squeeze(cbeta{h1}); % permute(cbeta{h1},[2 1 3 4]); %permute to put subjects as the first factor, keeping condition as the second factor
                             %Construct each part of design matrix separately
                             Xs = []; %subject effects
                             Xa = []; %main effect of A (Sessions)
@@ -223,23 +223,20 @@ try
                                     Xs= [Xs; eye(ns0)]; %intra-subject effects
                                 end
                             end
-                            %main effect of session
-                            for s1=1:nS0
-                                if s1 > 1
-                                    x2 = x; %previous x
-                                end
+                            %main effect of subject
+                            for s1=2:length(level_subj)
+%                                 if s1 > 1
+%                                     x2 = x; %previous x
+%                                 end
                                 x = zeros(sX,1);
                                 for c1=1:nC0
-                                    rs = (1+ (c1-1)*ns0+nC0*(s1-1)*ns0);
-                                    re = rs+ns0-1;
-                                    x(rs:re) = ones(ns0,1);
+                                    x(level_subj{s1}+((c1-1)*ns0)) = 1;
+                                    x(level_subj{s1-1}+((c1-1)*ns0)) = -1;
                                 end
-                                if s1 > 1
-                                    Xa = [Xa -x+x2];
-                                end
+                                    Xa = [Xa x];
                             end
                             
-                            %main effect of intensity (contrast)
+                            %main effect of condition
                             for c1=1:nC0
                                 if c1 > 1
                                     x2 = x; %previous x
@@ -256,57 +253,33 @@ try
                             end
                             
                             %interaction of session and intensity (contrast)
-                            for s1=2:nS0
+                            for s1=2:length(level_subj)
                                 for c1=2:nC0
                                     x = zeros(sX,1);
-                                    %1
-                                    rs = (1+ (c1-1)*ns0+nC0*(s1-1)*ns0);
-                                    re = rs+ns0-1;
-                                    x(rs:re) = ones(ns0,1);
-                                    %2 (c1-1)
-                                    rs = (1+ (c1-1-1)*ns0+nC0*(s1-1)*ns0);
-                                    re = rs+ns0-1;
-                                    x(rs:re) = -ones(ns0,1);
-                                    %3 (s1-1)
-                                    rs = (1+ (c1-1)*ns0+nC0*(s1-1-1)*ns0);
-                                    re = rs+ns0-1;
-                                    x(rs:re) = -ones(ns0,1);
-                                    %4 c1-1 and s1-1
-                                    rs = (1+ (c1-1-1)*ns0+nC0*(s1-1-1)*ns0);
-                                    re = rs+ns0-1;
-                                    x(rs:re) = ones(ns0,1);
+                                    x(level_subj{s1}+(c1-2)*ns0) = 1;
+                                    x(level_subj{s1-1}+(c1-1)*ns0) = 1; 
+                                    x(level_subj{s1}+(c1-1)*ns0) = -1;
+                                    x(level_subj{s1-1}+(c1-2)*ns0) = -1; 
                                     Xab = [Xab x];
                                 end
                             end
                             %effect of A at each level of B
                             XeA = [];
                             for c1=1:nC0 %B
-                                for s1=2:nS0 %B
+                                for s1=2:length(level_subj) %B
                                     x = zeros(sX,1);
-                                    %1
-                                    rs = (1+ (c1-1)*ns0+nC0*(s1-1)*ns0);
-                                    re = rs+ns0-1;
-                                    x(rs:re) = ones(ns0,1);
-                                    %3 (s1-1)
-                                    rs = (1+ (c1-1)*ns0+nC0*(s1-1-1)*ns0);
-                                    re = rs+ns0-1;
-                                    x(rs:re) = -ones(ns0,1);
+                                    x(level_subj{s1}+(c1-1)*ns0) = 1;
+                                    x(level_subj{s1-1}+(c1-1)*ns0) = -1; 
                                     XeA = [XeA x];
                                 end
                             end
                             %effect of B at each level of A
                             XeB = [];
-                            for s1=1:nS0 %A
+                            for s1=1:length(level_subj) %A
                                 for c1=2:nC0 %B
                                     x = zeros(sX,1);
-                                    %1
-                                    rs = (1+ (c1-1)*ns0+nC0*(s1-1)*ns0);
-                                    re = rs+ns0-1;
-                                    x(rs:re) = ones(ns0,1);
-                                    %2 (c1-1)
-                                    rs = (1+ (c1-1-1)*ns0+nC0*(s1-1)*ns0);
-                                    re = rs+ns0-1;
-                                    x(rs:re) = -ones(ns0,1);
+                                    x(level_subj{s1}+(c1-1)*ns0) = 1;
+                                    x(level_subj{s1}+(c1-2)*ns0) = -1; 
                                     XeB = [XeB x];
                                 end
                             end
@@ -323,22 +296,28 @@ try
                                 X = [Xab X0];
                                 A = liom_group_2A(cbeta{h1},X,X0,W.s1,W.s2,Z); %careful, s1 (session counter) not same as W.s1 (size of image)!
                                 %Mauchly test
-                                    A.Mauchly = nirs_Mauchly(cbeta{h1},Z.p_value);
+                                A.Mauchly = nirs_Mauchly(cbeta{h1},Z.p_value);
                                 %fill B:
                                 clear B
-                                B.WInFacs = zeros(sX,2);
-                                %1st factor: Sessions
-                                for i0=1:nS0
-                                    B.WInFacs((i0-1)*ns0*nC0+(1:ns0*nC0),1) = i0;
-                                end
+                                B.WInFacs = zeros(sX,1);
+%                                 %1st factor: Sessions
+%                                 for i0=1:nS0
+%                                     B.WInFacs((i0-1)*ns0*nC0+(1:ns0*nC0),1) = i0;
+%                                 end
                                 %2nd factor: Contrasts
                                 tmp0 = zeros(nC0*ns0,nS0);
                                 for i0=1:nC0
                                     tmp0((i0-1)*ns0+(1:ns0),:) = i0;
                                 end                                
-                                B.WInFacs(:,2) = tmp0(:);
+                                B.WInFacs(:,1) = tmp0(:);
                                 B.S = [];
-                                B.BTFacs = [];
+                                x = zeros(sX,1);
+                                for s1=1:length(level_subj)
+                                    for c1=1:nC0
+                                        x(level_subj{s1}+(c1-1)*ns0) = s1;
+                                    end
+                                end
+                                B.BTFacs = x;
                                 A = calc_hfgg(cbeta{h1},A,ns0,B,2);
                                 %Store for cases 2 to 5
                                 Eps = A.Eps;
@@ -352,7 +331,6 @@ try
                                 A = liom_group_2A(cbeta{h1},X,X0,W.s1,W.s2,Z); %careful, s1 (session counter) not same as W.s1 (size of image)!
                                 A.Eps = Eps;
                                 [TOPO H A] = call_figure_2anova(TOPO,H,Z,W,F,A,CF,v1,h1,hb,strA,z1,A.LKC);
-                                
                             case 3
                                 %Main effect of B (Intensity -- task)
                                 strA = 'mainB';
@@ -366,10 +344,10 @@ try
                                 %loop over levels of B
                                 for y1=1:nC0
                                     strA = ['effAonB' int2str(y1)];                                    
-                                    rs = 1+(y1-1)*(nS0-1);
-                                    re = rs + nS0-2;
+%                                     rs = 1+(y1-1)*(nS0-1);
+%                                     re = rs + nS0-2;
                                     ind = 1:size(XeA,2);
-                                    ind(rs:re) = [];
+                                    ind(y1) = [];
                                     X0 = [XeA(:,ind) Xb M Xs];
                                     X  = [XeA Xb M Xs];
                                     %need to adjust p value:
@@ -388,10 +366,10 @@ try
                                 %Effect of B within levels of A
                                 for y1=1:nS0
                                     strA = ['effBonA' int2str(y1)];
-                                    rs = 1+(y1-1)*(nC0-1);
-                                    re = rs + nC0-2;
+%                                     rs = 1+(y1-1)*(nC0-1);
+%                                     re = rs + nC0-2;
                                     ind = 1:size(XeB,2);
-                                    ind(rs:re) = [];
+                                    ind(y1) = [];
                                     X0 = [XeB(:,ind) Xa M Xs];
                                     X  = [XeB Xa M Xs];
                                     %need to adjust p value:
