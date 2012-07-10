@@ -139,7 +139,7 @@ liom_mixed2way_anova.val  = {NIRSmat redo1 NIRSmatCopyChoice ...
     group_session_to_average display_options}; % factorial_design};
 liom_mixed2way_anova.prog = @nirs_run_liom_mixed2way_anova;
 liom_mixed2way_anova.vout = @nirs_cfg_vout_liom_mixed2way_anova;
-liom_mixed2way_anova.help = {'Liom 1way anova estimation.'};
+liom_mixed2way_anova.help = {'Liom mixed 2 way anova estimation.'};
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
