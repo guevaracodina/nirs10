@@ -129,13 +129,21 @@ anova2_sessions.help    = {'Specify which sessions to include in the anova'
 
 anova2_contrasts = nirs_dfg_anova2_contrasts(2);
 
+includeSubjectEffects      = cfg_menu;
+includeSubjectEffects.tag  = 'includeSubjectEffects';
+includeSubjectEffects.name = 'Include Subject Effects';
+includeSubjectEffects.labels = {'Yes','No'};
+includeSubjectEffects.values = {1,0};
+includeSubjectEffects.val = {1};
+includeSubjectEffects.help = {'Include regressors to account for intrasubject effects.'}';
+
 % Executable Branch
 liom_mixed2way_anova      = cfg_exbranch;
 liom_mixed2way_anova.name = 'Liom mixed 2-way Anova Estimation';
 liom_mixed2way_anova.tag  = 'liom_mixed2way_anova';
 liom_mixed2way_anova.val  = {NIRSmat redo1 NIRSmatCopyChoice ...
     anova_dir_name number_dir_to_remove anova_level level_repeat anova2_sessions anova2_contrasts ...
-    StatMethod CorrectionMethod PosthocMethod contrast_p_value ...
+    StatMethod CorrectionMethod PosthocMethod contrast_p_value includeSubjectEffects ...
     group_session_to_average display_options}; % factorial_design};
 liom_mixed2way_anova.prog = @nirs_run_liom_mixed2way_anova;
 liom_mixed2way_anova.vout = @nirs_cfg_vout_liom_mixed2way_anova;
