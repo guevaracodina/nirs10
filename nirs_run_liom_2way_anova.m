@@ -217,7 +217,7 @@ try
                                     Xs= [Xs; eye(ns0)]; %intra-subject effects
                                 end
                             end
-                            %main effect of session
+                            %main effect of session (intensity)
                             for s1=1:nS0
                                 if s1 > 1
                                     x2 = x; %previous x
@@ -233,7 +233,7 @@ try
                                 end
                             end
                             
-                            %main effect of intensity (contrast)
+                            %main effect of condition (contrast)
                             for c1=1:nC0
                                 if c1 > 1
                                     x2 = x; %previous x
