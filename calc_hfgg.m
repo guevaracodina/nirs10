@@ -35,7 +35,7 @@ switch nfac
             BTFacs(i1,B{i1}) = 1;
         end
     case 2
-        [ns0 nS0 nC0 np] = size(cbeta);
+        %[ns0 nS0 nC0 np] = size(cbeta);
         Y = squeeze(cbeta(:,:,:,id0));
         Y = Y(:);
         %S = zeros(length(Y),1);

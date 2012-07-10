@@ -78,7 +78,8 @@ model_estimate.name   = 'GLM Estimation';
 model_estimate.tag    = 'model_estimate';
 model_estimate.values = {nirs_run_liom_GLM_estimate_cfg nirs_run_liom_contrast_cfg  ...
     nirs_run_liom_group_cfg nirs_run_extract_map_data_cfg nirs_run_liom_1way_anova_cfg ...
-    nirs_run_liom_2way_anova_cfg nirs_run_AnalyzeGLM_cfg nirs_run_ROCtest_cfg}; %liom_2way_anova
+    nirs_run_liom_2way_anova_cfg nirs_run_liom_mixed2way_anova_cfg ...
+    nirs_run_AnalyzeGLM_cfg nirs_run_ROCtest_cfg}; %liom_2way_anova
 model_estimate.help   = {'These modules estimate a GLM.'};
 
 %module 12
