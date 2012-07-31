@@ -159,7 +159,7 @@ for Idx=1:size(job.NIRSmat,1)
         end            
         [NIRS newNIRSlocation]= nirs_load(job.NIRSmat{Idx,1},job.NIRSmatCopyChoice,job.force_redo);
         job.NIRSmat{Idx,1} = newNIRSlocation;
-        if ~isempty(NIRS) && (~isfield(NIRS.flags,'GLMspec_OK') || job.force_redo)
+        if ~isempty(NIRS) && (~isfield(NIRS,'flags') || ~isfield(NIRS.flags,'GLMspec_OK') || job.force_redo)
             [spm_dir dummy] = fileparts(newNIRSlocation);
             %use last step of preprocessing
             lst = length(NIRS.Dt.fir.pp);
