@@ -38,7 +38,10 @@ generate_trRV = job.generate_trRV;
 %always filter_design_matrix = 0; -- This comment seems incorrect now --
 %filter_design_matrix = 1 is required now to eliminate the bias when using
 %the Butterworth high pass filter prior to the GLM
-filter_design_matrix = job.filter_design_matrix;
+% Michèle Aug 5, 2012 : completely eliminated this option 
+%filter_design_matrix = job.filter_design_matrix;
+filter_design_matrix = 1;
+
 if isfield(job.vasomotion_choice,'vasomotion_on')
     vasomotion_on = 1;
     select_chromophore = job.vasomotion_choice.vasomotion_on.select_chromophore;
