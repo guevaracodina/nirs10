@@ -16,7 +16,7 @@ for Idx=1:size(job.NIRSmat,1)
         clear NIRS HDM0
         [NIRS newNIRSlocation]= nirs_load(job.NIRSmat{Idx,1},job.NIRSmatCopyChoice,job.force_redo);
         job.NIRSmat{Idx,1} = newNIRSlocation;
-        if ~isempty(NIRS) && (~isfield(NIRS.flags,'HDM_OK') || job.force_redo)
+        if ~isempty(NIRS) && ((~isfield(NIRS,'flags') || ~isfield(NIRS.flags,'HDM_OK')) || job.force_redo)
             if DO.generate_figures || DO.save_figures
                 spm('Pointer','Watch')
                 spm('FigName','Estimation in progress');
