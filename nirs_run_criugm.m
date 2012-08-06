@@ -55,7 +55,7 @@ for is=1:sN
             if ~exist(firdir,'dir'), mkdir(firdir); end
             
             % BOLD mask
-            if ~isempty(job.subj(1,is).boldmask{:})
+            if ~isempty(job.subj(1,is).boldmask)
                 NIRS.Cm.bold = job.subj(1,is).boldmask{:};
             end
             
