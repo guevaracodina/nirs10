@@ -1,4 +1,4 @@
-ffunction wls_bglm_specify = nirs_run_liom_GLM_specify_cfg
+function wls_bglm_specify = nirs_run_liom_GLM_specify_cfg
 [NIRSmat redo1 NIRSmatCopyChoice] = get_common_NIRSmat(1,'Stat');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
