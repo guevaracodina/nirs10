@@ -85,7 +85,7 @@ for Idx=1:size(job.NIRSmat,1)
                 DPF = job.DPF.DPFval; % 1 x nLambda
                 DPF = repmat(DPF',[1 NC]); % nLambda x NC
             elseif isfield(job,'DPF') && isfield(job.DPF,'DPFsim') && ~isempty(job.DPF.DPFsim)
-                load(job.DPF.DPFsim{:}); % nTissues x NC
+                load(job.DPF.DPFsim{Idx}); % nTissues x NC
                 DPF = sum(PDPF_Vi,1); % 1 x NC
                 nLambda = length(wl);
                 DPF2 = zeros(nLambda,NC);

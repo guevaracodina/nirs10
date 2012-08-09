@@ -4,7 +4,7 @@ function nirs_criugm_paces_defaults
 %                    École Polytechnique de Montréal
 %______________________________________________________________________
 global nirs10
-nirs10.preprocessNIRS.criugm_paces1.remove_no_heartbeat = 1;
+nirs10.preprocessNIRS.criugm_paces1.remove_no_heartbeat = 0;
 %nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg = {heart_resting};
 %configuration for resting state
 nirs10.preprocessNIRS.criugm_paces1.heart_rate_cfg.heart_resting.STFT_param.win_type = 0;

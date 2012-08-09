@@ -24,7 +24,7 @@ GenerateInverted.name = 'Generate Inverted Responses';
 GenerateInverted.labels = {'Yes','No'};
 GenerateInverted.values = {1,0};
 GenerateInverted.val = {1};
-GenerateInverted.help = {'Generate contrasts for inverted responses.'};
+GenerateInverted.help = {'Generate contrasts for inverted responses. SHOULD ALWAYS BE LEFT AT "YES" OR CODE WILL BREAK (2012-08-06).'};
 
 SmallFigures      = cfg_menu;
 SmallFigures.tag  = 'SmallFigures';

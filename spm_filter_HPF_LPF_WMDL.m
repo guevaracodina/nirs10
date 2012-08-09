@@ -91,6 +91,8 @@ else
                 case 'DCT'
                     y = y - K(s).X0*(K(s).X0'*y);                    
             end         
+%             % TEMPORAIRE MICHÈLE août 2012
+%             figure,plot(Y(K(s).row,:)), hold on, plot(y,'r');
             % reset filtered data in Y
             Y(K(s).row,:) = y;
            end

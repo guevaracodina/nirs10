@@ -135,6 +135,7 @@ for is=1:sN
             % nirs files
             if ~isempty(job.subj(1,is).nirs_files{1,1})
                 
+                clear nirs_files;
                 for fi=1:size(job.subj(1,is).nirs_files,1)
                     [dummy1,namef,extf] = fileparts(job.subj(1,is).nirs_files{fi,:});
                     nirs_files{fi,:} = fullfile(sDtp,'fir',[namef extf]);
