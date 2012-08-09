@@ -31,6 +31,7 @@ for iSubj=1:size(job.NIRSmat,1)
                 segT1_4fit = NIRS.Dt.ana.T1seg;
             end
         catch
+            segT1_4fit = NIRS.Dt.ana.T1;
             disp(['Could not find a segmented image to display positions on for ' int2str(iSubj) 'th subject.']);
         end
     else

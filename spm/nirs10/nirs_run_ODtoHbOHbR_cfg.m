@@ -36,8 +36,9 @@ DPFsim.name    = 'DPF from file';
 DPFsim.tag     = 'DPFsim';
 DPFsim.filter  = 'mat';
 DPFsim.ufilter = '.mat';
-DPFsim.num     = [1 1];
-DPFsim.help    = {['Select the PDPF.mat file created by the nirs_calculatePVE module.']};
+DPFsim.num     = [1 Inf];
+DPFsim.help    = {['Select the PDPF.mat file(s) created by the nirs_calculatePVE module.',...
+    'Select one file or one for each subject in the order corresponding to that in the NIRS matrix.']};
 
 DPFval         = cfg_entry;
 DPFval.name    = 'Enter values';

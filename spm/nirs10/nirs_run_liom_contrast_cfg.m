@@ -122,7 +122,8 @@ GroupMultiSession.values    = {1,0};
 GroupMultiSession.val       = {0};
 GroupMultiSession.help      = {'Group Multi Session'
     'If selected, with option ProcessContrastBySession set to 0,'
-    'Contrasts defined as vectors over all sessions will be treated.'}';
+    'Contrasts defined as vectors over all sessions will be treated.'
+    'Set to YES, as NO seems to generate bugs (2012-08-09).'}';
 
 user_contrasts         = cfg_branch;
 user_contrasts.tag     = 'user_contrasts';
