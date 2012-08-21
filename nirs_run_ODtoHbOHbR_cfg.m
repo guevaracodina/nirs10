@@ -20,7 +20,8 @@ PVFval.strtype = 'r';
 PVFval.num     = [1 2];
 PVFval.def  = @(val)nirs_get_defaults('preprocessNIRS.ODtoHbOHbR.PVF', val{:});
 PVFval.help    = {'Enter the partial volume factor values for each wavelength ',...
-    'as a vector: [PVF(lambda_1) ... PVF(lambda_n)].'};
+    'as a vector: [PVF(lambda_1) ... PVF(lambda_n)].',...
+    'PVF = PPF/DPF (see Strangman 2003, NI 18).'};
 
 PVF           = cfg_choice;
 PVF.name      = 'Partial Volume Factors';
@@ -46,8 +47,10 @@ DPFval.tag     = 'DPFval';
 DPFval.strtype = 'r';
 DPFval.num     = [1 2];
 DPFval.def  = @(val)nirs_get_defaults('preprocessNIRS.ODtoHbOHbR.DPF', val{:});
-DPFval.help    = {'Enter the partial volume factor values for each wavelength ',...
-    'as a vector: [DPF(lambda_1) ... DPF(lambda_n)].'};
+DPFval.help    = {'Enter the differential pathlength factor values for each wavelength ',...
+    'as a vector: [DPF(lambda_1) ... DPF(lambda_n)].',...
+    'Default values are for 690 & 830 nm from Duncan 1995.',...
+    'PVF = PPF/DPF (see Strangman 2003, NI 18).'};
 
 DPFlit      = cfg_branch;
 DPFlit.name = 'Literature value';
