@@ -174,26 +174,10 @@ try
         end
         %Set colorbars limits and fontsize
         if cbar1
-            if hc1_min==hc1_max %quick fix
-                hc1_min=hc1_max-0.0001;
-            end
-            set(hc1, 'YLim', [hc1_min hc1_max]);
-            y_tick = linspace(hc1_min, hc1_max, tick_number)';
-            set(hc1, 'YTick', y_tick);
-            set(hc1, 'FontSize', fontsize_choice);
-            %Customize here number of decimals
-            set(hc1,'YTickLabel',sprintf('%.1f |',get(hc1,'YTick')'));
+            hc1 = nirs_set_colorbar(hc1,hc1_min,hc1_max,tick_number,fontsize_choice);
         end
         if cbar2
-            if hc2_min==hc2_max %quick fix
-                hc2_min=hc2_max-0.0001;
-            end
-            set(hc2, 'YLim', [hc2_min hc2_max]);
-            y_tick = linspace(hc2_min, hc2_max, tick_number)';
-            set(hc2, 'YTick', y_tick);
-            set(hc2, 'FontSize', fontsize_choice);
-            %Customize here number of decimals
-            set(hc2,'YTickLabel',sprintf('%.1f |',get(hc2,'YTick')'));
+            hc2 = nirs_set_colorbar(hc2,hc2_min,hc2_max,tick_number,fontsize_choice);
         end
         %cbfreeze(hc1);
         %Write figure
