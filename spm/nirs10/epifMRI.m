@@ -102,8 +102,9 @@ function epifMRI
 %The code will enforce grouping onsets if onset names are inconsistent
 %between sessions. If onsets have been grouped, the stats folder(s) will have
 %a "G" (for group) to help indicate that fact
-force_group_onsets = 0; %Boolean: 0: off; 1: on
-allow_unequal_onset_numbers = 1; %Boolean: 0: off; 1: on
+Rest_no_onsets = 1; %Boolean to allow preprocessing only, no stats, for rest fMRI data
+force_group_onsets = 1; %Boolean: 0: off; 1: on
+allow_unequal_onset_numbers = 0; %Boolean: 0: off; 1: on
 %onsets to remove
 %Code allows up to 3 onset types to be removed - this is useful if onset
 %files contains onsets that we want to exclude.
@@ -153,7 +154,7 @@ Analyze_sessions = [];
 SaveStatsBatch = 1; %Boolean: 0: off; 1: on
 SaveReportBatch = 1; %Boolean: 0: off; 1: on
 SkipUncorrected = 0; %Integer: 0: FWE & none: 1: FWE; 2: none
-SkipGroupOnsets = 1; %Boolean: 0: (do not skip): off; 1: on (skip)
+SkipGroupOnsets = 0; %Boolean: 0: (do not skip): off; 1: on (skip)
 SkipNegativeBOLD = 0; %Boolean: 0: (do not skip): off; 1: on (skip)
 
 %Prefixes for the various output files
@@ -167,8 +168,8 @@ Vlabel = {'','V'}; %No Volterra; Volterra
 Wlabel = {'','W'}; %Not normalized; Normalized
 Glabel = {'','G'}; %Canonical HRF (+derivs optional) or Gamma function(s)
 %Size of smoothing kernel, in mm
-skernel = 6;
-skernelz = 6;
+skernel = 8;
+skernelz = 8;
 %Code will not run if there are no spikes in one of the sessions -
 %By specifying a minimum number of spikes, sessions will be excluded
 %and the code will run for the remaining sessions.
@@ -181,16 +182,16 @@ DartelOn = 0; %Boolean: 0: off; 1: on
 normalizeOn = 0; %Integer: 0: off; 1: on; 2: both
 %During output of results to a Ghostscript file, results can be displayed
 %by session
-reportContrastsBySession = 1; %Boolean: 0: off; 1: on
+reportContrastsBySession = 0; %Boolean: 0: off; 1: on
 %Generate stats with HRF peaking at different times with respect to onsets
-McGilldelaysOn = 1; %Boolean: 0: off; 1: on
+McGilldelaysOn = 0; %Boolean: 0: off; 1: on
 %Delays in seconds - to use with
-delay = [-4 -2 2]; % -2 -1 1 3 6]; % [-9 -6 -3 -2 -1 1 2 3 6 9]; %[-7 -8 -5 -4]; %[-9 -6 -3 3 6 9];
+delay = [-4 -2]; % -2 -1 1 3 6]; % [-9 -6 -3 -2 -1 1 2 3 6 9]; %[-7 -8 -5 -4]; %[-9 -6 -3 3 6 9];
 %remove negative onsets entirely - negative onsets may arise when using
 %a negative delay; it is best to remove such onsets
 McGill_remove_negative = 1; %Boolean: 0: off; 1: on
 %Generate stats with square or first derivative of movement parameters
-MovementOn = 0; %1; %Boolean: 0: off; 1: on
+MovementOn = 1; %1; %Boolean: 0: off; 1: on
 %Adjust the onset to account that the middle slice starts TR/2 later
 STC_middle_slice_adjust_onsets = 1; %Boolean: 0: off; 1: on
 %Do slice timing correction centered on the middle slice
@@ -206,14 +207,14 @@ unwarp_threshold = 0.3; %Boolean: 0: off; 1: on
 %inc_derivs = 0;
 add_pulse_regressor = 0; %Boolean: 0: off; 1: on
 %Volterra - nonlinearities
-VolterraOn = 1; %Integer: 0: off; 1: on; 2: both
+VolterraOn = 0; %Integer: 0: off; 1: on; 2: both
 %Window size for Gamma function HRF
-GammaOn = 2; %Integer: 0: off; 1: on; 2: both
+GammaOn = 0; %Integer: 0: off; 1: on; 2: both
 gamma_window = 20; %in seconds
 gamma_order = 1; %number of gamma function bases
 default_analysis_dir = 1; %Boolean: 0: let user choose analysis dir; 1: automatic default
 AnovaOn = 0; %Boolean
-threshold = 0.05;
+threshold = [0.05 0.001]; %FWE, uncorrected thresholds
 mask_threshold = 0.05;
 extent = 1;
 %Tyvaert Analysis - using groups of 2 second windows
@@ -244,7 +245,9 @@ try
     %spm_check_installation;
     [t,sts] = spm_select([1,inf],'dir','Select folder(s) of data files to analyze (anatomical, functional and onsets)');
     if ~sts, return; end %fatal
-catch
+catch exception
+    disp(exception.identifier)
+    disp(exception.stack(1))
     disp(strvcat('SPM not found!',...
         'Solution: 1- Install SPM8 with latest update and',...
         '          2- Add spm8 to Matlab path'));
@@ -272,12 +275,16 @@ else
         if ~sts
             try
                 tA = spm_input('Enter analysis directory',1,'s',temp_dir);
-            catch
+            catch exception
+                disp(exception.identifier)
+                disp(exception.stack(1))
                 disp('Problem with directory selection -- Aborting');
                 return %fatal
             end
         end
-    catch
+    catch exception
+        disp(exception.identifier)
+        disp(exception.stack(1))
         disp('Problem with directory selection -- Aborting');
         return %fatal
     end
@@ -317,7 +324,9 @@ end
 %Open log file
 try
     flog = fopen(log_file,'wt');
-catch
+catch exception
+    disp(exception.identifier)
+    disp(exception.stack(1))
     disp('Could not open log file in current directory -- exiting');
     return; %fatal
 end
@@ -396,13 +405,18 @@ for i=1:nomNsubj
                         %functional images found -- add a session
                         nSess = nSess + 1;
                         f{aNsubj}.fEPI{nSess} = vols;
+                        if Rest_no_onsets
+                            f{i}.good_session = [f{i}.good_session nSess];
+                        end
                     else
                         %no good images
                         write_log(flog,'No good images. Code should not be coming here!');
                     end
                 end %end if nImg == 1
                 
-            catch
+            catch exception
+                disp(exception.identifier)
+                disp(exception.stack(1))
                 %not images - then check they are onsets
                 %two cases: raw files from Analyzer2 or .mat structure of
                 %names, onsets, durations
@@ -419,12 +433,14 @@ for i=1:nomNsubj
                             end
                         end
                     end
-                    if ~too_few_spikes  || ~isempty(tyv)
+                    if ~too_few_spikes  || ~isempty(tyv) 
                         f{i}.good_session = [f{i}.good_session nSess_onset];
                         f{aNsubj}.fOnset{nSess_onset} = filesRec{j,:};
                     end
                     
-                catch
+                catch exception
+                    disp(exception.identifier)
+                    disp(exception.stack(1))
                     try
                         %check there is not a .mat file already with the
                         %same name
@@ -455,7 +471,9 @@ for i=1:nomNsubj
                                     ' for subject ' int2str(i)]);
                             end
                         end
-                    catch %#ok<*CTCH>
+                    catch exception
+                        disp(exception.identifier)
+                        disp(exception.stack(1))%#ok<*CTCH>
                         write_log(flog,['Could not read onset file ' filesRec{j,:}]);
                     end
                 end
@@ -484,7 +502,9 @@ for i=1:nomNsubj
                     ') -- only preprocessing will be done for this subject (no GLM statistics)']));
             end %end if nSess_onset ~= nSess
         end
-    catch %try to find data for this subject
+    catch exception
+        disp(exception.identifier)
+        disp(exception.stack(1))%try to find data for this subject
         write_log(flog,strvcat([t(i,:) ' is not a directory'],...
             ['This subject (' int2str(i) ') will be skipped']));
     end
@@ -534,7 +554,9 @@ for i=1:aNsubj
                 write_log(flog,strvcat(['Session ' int2str(j) ': ' ...
                     int2str(size(f{i}.fEPI{j},1)) ' volumes in ' ...
                     f{i}.fEPI{j}(1).fname ' matched with ' f{i}.fOnset{j}]));
-            catch
+            catch exception
+                disp(exception.identifier)
+                disp(exception.stack(1))
                 write_log(flog,strvcat(['Session ' int2str(j) ': ' ...
                     int2str(size(f{i}.fEPI{j},1)) ' volumes in ' ...
                     f{i}.fEPI{j}(1).fname ' ; no onsets file']));
@@ -653,8 +675,13 @@ try
             nf = [];
             %T1
             nf.fT1.fname = fullfile(DirAnalysis, temp_file);
-            nf.fEPI{length(f{i}.good_session)} = [];
-            nf.fOnset{length(f{i}.good_session)} = [];
+            %try
+                nf.fEPI{length(f{i}.good_session)} = [];
+                nf.fOnset{length(f{i}.good_session)} = [];
+%             catch exception
+%                 disp(exception.identifier)
+%                 disp(exception.stack(1))
+%             end
             %Copy and rename EPI and onset files if required -- looping over sessions
             n_sess = 0;
             for j=1:size(f{i}.fEPI,2)
@@ -704,7 +731,9 @@ try
             f{i}.DirSubj = DirSubj;
         end
     end
-catch
+catch exception
+    disp(exception.identifier)
+    disp(exception.stack(1))
     write_log(flog,strvcat('Corrupted file structure in analysis directory',...
         ' -- Suggestion: remove content of analysis directory and start again'));
     return
@@ -754,7 +783,9 @@ for i=1:aNsubj
             matlabbatch{1}.spm.spatial.realign.estwrite.roptions.mask = 1;
             matlabbatch{1}.spm.spatial.realign.estwrite.roptions.prefix = pfx_realign;
             spm_jobman('run',matlabbatch);
-        catch
+        catch exception
+            disp(exception.identifier)
+            disp(exception.stack(1))
             write_log(flog,'Realign module failed');
         end
     end %end if spm_existfile(f{i}.fEPI{1}(1).fname)
@@ -777,17 +808,21 @@ for i=1:aNsubj
         if max(abs(p1temp(:))) > unwarp_threshold %set threshold to run unwarp and to include derivative of movement parameters
             f{i}.unwarp = 1;
         end
-        dp1 = [zeros(1,6); diff(p1,1,1)];
+        dp1a = [zeros(1,6); diff(p1,1,1)];
         %Combine derivatives of motion parameters with motion parameters themselves
-        dp1 = [p1 dp1];
-        
+        dp1 = [p1 dp1a];
         f{i}.fMVT2{j} = ['rpd' f{i}.fMVT1{j}(3:end)];
         save(f{i}.fMVT2{j},'dp1','-ascii');
         %squares of parameters
         f{i}.fMVT22{j} = ['rp2' f{i}.fMVT1{j}(3:end)];
-        p2 = p1 .* p1;
-        p2 = [p1 p2];
+        p2a = p1 .* p1;
+        p2 = [p1 p2a];
         save(f{i}.fMVT22{j},'p2','-ascii');
+        %Combine derivatives of motion parameters with motion parameters
+        %themselves and squares of parameters
+        f{i}.fMVT222{j} = ['rpd2' f{i}.fMVT1{j}(3:end)];
+        prd = [p1 dp1a p2a];
+        save(f{i}.fMVT222{j},'prd','-ascii');
     end
     
     %Run unwarp if required
@@ -832,7 +867,9 @@ for i=1:aNsubj
             else
                 write_log(flog,'Little movement on all sessions; no need to run unwrap');
             end
-        catch
+        catch exception
+            disp(exception.identifier)
+            disp(exception.stack(1))
             write_log(flog,'Unwarp module failed');
         end
     end
@@ -887,7 +924,9 @@ for i=1:aNsubj
                 matlabbatch{1}.spm.tools.preproc8.warp.samp = 3;
                 matlabbatch{1}.spm.tools.preproc8.warp.write = [1 1];
                 spm_jobman('run',matlabbatch);
-            catch
+            catch exception
+                disp(exception.identifier)
+                disp(exception.stack(1))
                 write_log(flog,'New Segment failed to run');
             end
         end
@@ -899,7 +938,9 @@ for i=1:aNsubj
         load('coreg_OK');
         %Coregistration already done
         write_log(flog,'Coregistration already done -- skipping');
-    catch
+    catch exception
+        disp(exception.identifier)
+        disp(exception.stack(1))
         %Coregistration
         %Select meanu or meanr image
         temp_fm = spm_select('List',pwd,'^meanu');
@@ -934,7 +975,9 @@ for i=1:aNsubj
                     data = [data; [DirAnalysis f{i}.DirSubj sep 'EPI' sep typ fil ext]];
                 end
             end
-        catch
+        catch exception
+            disp(exception.identifier)
+            disp(exception.stack(1))
             write_log(flog,'File specification error at Coregistration step');
         end
         
@@ -952,7 +995,9 @@ for i=1:aNsubj
             coreg_OK = 1;
             cd([DirAnalysis f{i}.DirSubj sep EPIlabel]);
             save('coreg_OK','coreg_OK');
-        catch
+        catch exception
+            disp(exception.identifier)
+            disp(exception.stack(1))
             write_log(flog,'Coregistration module failed to run');
         end
     end
@@ -975,14 +1020,18 @@ for i=1:aNsubj
                     end
                     data= [data; {data_sess}];
                 end
-            catch
+            catch exception
+                disp(exception.identifier)
+                disp(exception.stack(1))
                 write_log(flog,'File specification error at Slice Timing Correction step');
             end
             try
                 %load calculated TR
                 TR = load(f{i}.fOnset{1},'TR');
                 TR = TR.TR;
-            catch
+            catch exception
+                disp(exception.identifier)
+                disp(exception.stack(1))
                 write_log(flog,strvcat('No TR value found in first onsets file, or no onsets file found',...
                     'Using TR value of 3.013 for slice timing correction'));
                 TR = TR0;
@@ -1001,7 +1050,9 @@ for i=1:aNsubj
                 end
                 matlabbatch{1}.spm.temporal.st.prefix = pfx_temporal;
                 spm_jobman('run',matlabbatch);
-            catch
+            catch exception
+                disp(exception.identifier)
+                disp(exception.stack(1))
                 write_log(flog,'Slice Timing Correction module failed to run');
             end
         end
@@ -1035,7 +1086,9 @@ for i=1:aNsubj
                     end
                     %Normalize some of the anatomical images
                     data = {[data; f{i}.fT1.fname ',1']};
-                catch
+                catch exception
+                    disp(exception.identifier)
+                    disp(exception.stack(1))
                     write_log(flog,'File specification error for Dartel');
                 end
                 
@@ -1098,7 +1151,9 @@ for i=1:aNsubj
                     matlabbatch{2}.spm.tools.dartel.mni_norm.preserve = 0;
                     matlabbatch{2}.spm.tools.dartel.mni_norm.fwhm = [skernel skernel skernelz];
                     spm_jobman('run',matlabbatch);
-                catch
+                catch exception
+                    disp(exception.identifier)
+                    disp(exception.stack(1))
                     %Run Normalise instead
                     try
                         %Generate file names required
@@ -1110,7 +1165,9 @@ for i=1:aNsubj
                                 data = [data; [DirAnalysis f{i}.DirSubj sep EPIlabel sep Atyp fil ext]];
                             end
                         end
-                    catch
+                    catch exception
+                        disp(exception.identifier)
+                        disp(exception.stack(1))
                         write_log(flog,'File specification error for Normalise');
                     end
                     %Normalize some of the anatomical images
@@ -1135,7 +1192,9 @@ for i=1:aNsubj
                             data = [data; [DirAnalysis f{i}.DirSubj sep EPIlabel sep Atyp fil ext]];
                         end
                     end
-                catch
+                catch exception
+                    disp(exception.identifier)
+                    disp(exception.stack(1))
                     write_log(flog,'File specification error for Normalise');
                 end
                 data = {[data; f{i}.fT1.fname]};
@@ -1167,7 +1226,9 @@ for i=1:aNsubj
                     data = [data; [DirAnalysis f{i}.DirSubj sep EPIlabel sep Atyp fil ext]];
                 end
             end
-        catch
+        catch exception
+            disp(exception.identifier)
+            disp(exception.stack(1))
             write_log(flog,'File specification error at Smooth step');
         end
         
@@ -1179,7 +1240,9 @@ for i=1:aNsubj
             matlabbatch{1}.spm.spatial.smooth.im = 0;
             matlabbatch{1}.spm.spatial.smooth.prefix = pfx_smooth;
             spm_jobman('run',matlabbatch);
-        catch
+        catch exception
+            disp(exception.identifier)
+            disp(exception.stack(1))
             write_log(flog,'Smooth module on ar/au files failed to run');
         end
     end
@@ -1202,7 +1265,9 @@ for i=1:aNsubj
                         data = [data; [DirAnalysis f{i}.DirSubj sep EPIlabel sep Wtyp fil ext]];
                     end
                 end
-            catch
+            catch exception
+                disp(exception.identifier)
+                disp(exception.stack(1))
                 write_log(flog,'File specification error at Smooth step');
             end
             
@@ -1214,7 +1279,9 @@ for i=1:aNsubj
                 matlabbatch{1}.spm.spatial.smooth.im = 0;
                 matlabbatch{1}.spm.spatial.smooth.prefix = pfx_smooth;
                 spm_jobman('run',matlabbatch);
-            catch
+            catch exception
+                disp(exception.identifier)
+                disp(exception.stack(1))
                 write_log(flog,'Smooth failed to run');
             end
         end
@@ -1230,7 +1297,9 @@ for i=1:aNsubj
                 copyfile(temp_file(nf,:),fullfile(DirResultsAll,[f{i}.DirSubj '_PreProcess_' fil ext]));
             end
         end
-    catch
+    catch exception
+        disp(exception.identifier)
+        disp(exception.stack(1))
         write_log(flog,'Directory error: could not copy preprocessing .gs file');
     end
     
@@ -1246,7 +1315,9 @@ for i=1:aNsubj
                 M = size(names,2);
                 try
                     TR;
-                catch
+                catch exception
+                    disp(exception.identifier)
+                    disp(exception.stack(1))
                     TR = TR0;
                     write_log(flog,'TR was not found in onset file at onset adjust step');
                 end
@@ -1274,7 +1345,9 @@ for i=1:aNsubj
                 save(f{i}.fOnset{j},'names','onsets','durations','TR');
             end
         end
-    catch
+    catch exception
+        disp(exception.identifier)
+        disp(exception.stack(1))
         write_log(flog,'Could not adjust onsets for STC_middle_slide');
     end
     
@@ -1306,7 +1379,7 @@ for i=1:aNsubj
                 end
             else
                 write_log(flog,strvcat(['Subject ' int2str(i) ': Different number of onsets in session ' int2str(j)]));
-                if ~allow_unequal_onset_numbers
+                if ~allow_unequal_onset_numbers || force_group_onsets
                     write_log(flog,'Onsets will be grouped into the same type');
                     f{i}.GroupOnsets = 1;
                 else
@@ -1436,8 +1509,17 @@ for i=1:aNsubj
                 new_rp = fullfile(dir1,['c' fil1 ext1]);
                 save(new_rp,'p1','-ascii');
                 f{i}.fMVT2{j} = new_rp;
+                %add both derivative and square of movement parameters
+                p1 = load(f{i}.fMVT222{j});
+                p1 = [p1 vRi'];
+                [dir1 fil1 ext1] = fileparts(f{i}.fMVT222{j});
+                new_rp = fullfile(dir1,['c' fil1 ext1]);
+                save(new_rp,'p1','-ascii');
+                f{i}.fMVT222{j} = new_rp;
             end
-        catch
+        catch exception
+            disp(exception.identifier)
+            disp(exception.stack(1))
         end
     else
         Clabel = '';
@@ -1579,12 +1661,16 @@ for i=1:aNsubj
                         %Movement
                         try
                             if MovementOn
+                                %1st Derivative of movement parameters
                                 g = f{i};
                                 for j=1:size(f{i}.fMVT1,2)
                                     g.fMVT1{j} = f{i}.fMVT2{j};
                                 end
                                 GLM.Plabel = 'DerMVT';
                                 GLM.f = g;
+                                run_stats_and_results(GLM);
+                                
+                                %square of movement parameters
                                 g = f{i};
                                 for j=1:size(f{i}.fMVT1,2)
                                     g.fMVT1{j} = f{i}.fMVT22{j};
@@ -1592,8 +1678,20 @@ for i=1:aNsubj
                                 GLM.f = g;
                                 GLM.Plabel = 'sqrMVT';
                                 run_stats_and_results(GLM);
+                                
+                                %square of movement parameters and
+                                %1st Derivative of movement parameters
+                                g = f{i};
+                                for j=1:size(f{i}.fMVT1,2)
+                                    g.fMVT1{j} = f{i}.fMVT222{j};
+                                end
+                                GLM.f = g;
+                                GLM.Plabel = 'DersqrMVT';
+                                run_stats_and_results(GLM);
                             end
-                        catch
+                        catch exception
+                            disp(exception.identifier)
+                            disp(exception.stack(1))
                             write_log(flog,'Movement stats failed to run');
                         end
                         GLM.f = f{i};
@@ -1657,7 +1755,7 @@ dt = str2double(temp(i1(2)+1:i2-1))/1000;
 %first Scan Start
 while ~feof(fp)
     temp = fgetl(fp);
-    indx = findstr('Scan start',temp);
+    indx = findstr('Scan Start',temp);
     if ~isempty(indx)
         indx = findstr(',',temp);
         start_scan = dt*str2double(temp(indx(2):indx(3)));
@@ -1686,7 +1784,7 @@ while ~feof(fp)
     temp = fgetl(fp);
     if ~TRdone
         %find next Scan Start
-        indx = findstr('Scan start',temp);
+        indx = findstr('Scan Start',temp);
         if ~isempty(indx)
             indx = findstr(',',temp);
             next_start_scan = dt*str2double(temp(indx(2):indx(3)));
@@ -1847,7 +1945,9 @@ try
     %derivative of pulse rate - too noisy
     %ddvR = diff(dvR);
     %vRi2 = interp1(vR(2:end-1),ddvR,lpi,'spline');
-catch
+catch exception
+    disp(exception.identifier)
+    disp(exception.stack(1))
 end
 
 %Tyvaert
@@ -1892,7 +1992,9 @@ if ~isempty(tyv)
             onsets{i2} = max(OldOnsets-tyv.TyvBefore,0)+(i2-1)*tyv.TyvWindow;
             durations{i2} = tyv.TyvWindow;
         end
-    catch
+    catch exception
+        disp(exception.identifier)
+        disp(exception.stack(1))
         
     end
 end
@@ -1911,7 +2013,9 @@ if ~too_few_spikes
     if add_pulse_regressor
         try
             save(fOnset,'names','onsets','durations','TR','vRi')
-        catch
+        catch exception
+            disp(exception.identifier)
+            disp(exception.stack(1))
             save(fOnset,'names','onsets','durations','TR')
         end
     else
@@ -1928,7 +2032,8 @@ end
 function run_stats_and_results(GLM)
 tyv = GLM.tyv; %Tyvaert analysis
 DirAnalysis = GLM.DirAnalysis;
-DirOut = [GLM.Statslabel GLM.Vlabel GLM.Wlabel GLM.Clabel GLM.Glabel GLM.glabel GLM.Alabel GLM.Ulabel GLM.Dlabel GLM.Mlabel];
+DirOut = [GLM.Statslabel GLM.Vlabel GLM.Wlabel GLM.Clabel GLM.Glabel ...
+    GLM.glabel GLM.Alabel GLM.Ulabel GLM.Dlabel GLM.Mlabel GLM.Plabel];
 if ~isempty(tyv)
     DirOut = [DirOut '_' int2str(tyv.TyvPerGroup) 'perGroup'  int2str(tyv.TyvWindow) 'sPerWindow'];
 end
@@ -2002,7 +2107,9 @@ if dStats
                 %load calculated TR
                 TR = load(f.fOnset{1},'TR');
                 TR = TR.TR;
-            catch
+            catch exception
+                disp(exception.identifier)
+                disp(exception.stack(1))
                 write_log(flog,strvcat('No TR value found in first onsets file, or no onsets file found',...
                     'Using TR value of 3.013 for Stats'));
                 TR = TR0;
@@ -2024,7 +2131,9 @@ if dStats
                         [dummy,fil ext] = fileparts(f.fEPI{j}(k).fname);
                         data = [data; [DirAnalysis f.DirSubj sep 'EPI' sep typI fil ext]];
                     end
-                catch
+                catch exception
+                    disp(exception.identifier)
+                    disp(exception.stack(1))
                     write_log(flog,'File specification error at Stats step');
                 end
                 matlabbatch{1}.spm.stats.fmri_spec.sess(j).scans = data;
@@ -2311,7 +2420,9 @@ if dStats
                 for y1=1:length(x1)
                     try
                         write_log(flog,['T-Contrast ' int2str(y1) ': ' x1{y1}.tcon.name]);
-                    catch
+                    catch exception
+                        disp(exception.identifier)
+                        disp(exception.stack(1))
                         write_log(flog,['F-Contrast ' int2str(y1) ': ' x1{y1}.fcon.name]);
                     end
                 end
@@ -2325,13 +2436,17 @@ if dStats
                 for y1=1:length(x1)
                     try
                         write_log(flog,['T-Contrast ' int2str(y1) ': ' x1{y1}.tcon.name]);
-                    catch
+                    catch exception
+                        disp(exception.identifier)
+                        disp(exception.stack(1))
                         write_log(flog,['F-Contrast ' int2str(y1) ': ' x1{y1}.fcon.name]);
                     end
                 end
                 
             end
-        catch
+        catch exception
+            disp(exception.identifier)
+            disp(exception.stack(1))
             if isempty(GLM.tyv)
                 write_log(flog,'Standard Stats failed to run');
             else
@@ -2367,8 +2482,10 @@ if dStats
                 switch SkipUncorrected
                     case 1
                         RO.threshdesc = {'FWE'};
+                        threshold = threshold(1);
                     case 2
                         RO.threshdesc = {'none'};
+                        threshold = threshold(2);
                     case 0
                         RO.threshdesc = {'FWE' 'none'};
                 end
@@ -2489,7 +2606,7 @@ if dStats
                         end
                     end
                     if AnovaOn
-                        RO.thresh = threshold;
+                        RO.thresh = threshold(1);
                         RO.extent = extent;
                         RO.mask = [];
                         RO.F_str = [];
@@ -2517,6 +2634,7 @@ if dStats
                     %Tyvaert analysis
                     mid_str2 = {'Positive' 'Negative'};
                     RO.threshdesc = {'FWE'};% 'none'};
+                    threshold = threshold(1);
                     for r1=1:length(mid_str2)
                         RO.mid_str = {mid_str2{r1}};
                         for m=1:(M-tyv.TyvPerGroup+1)
@@ -2575,7 +2693,9 @@ if dStats
                     save('ReportBatch','matlabbatch');
                     try
                         x1 = matlabbatch{1}.spm.stats.results.conspec;
-                    catch
+                    catch exception
+                        disp(exception.identifier)
+                        disp(exception.stack(1))
                         disp('Found no contrast for reports -- there is a bug');
                     end
                     write_log(flog,'Generated Reports');
@@ -2586,7 +2706,9 @@ if dStats
                 %end specification of Results Report
                 spm_jobman('run',matlabbatch);
                 %pause(waittime);
-            catch
+            catch exception
+                disp(exception.identifier)
+                disp(exception.stack(1))
                 write_log(flog,'Results Report failed to run');
             end
             
@@ -2599,7 +2721,9 @@ if dStats
                         copyfile(temp_file(nf,:),fullfile(DirResultsAll,[f.DirSubj '_' DirOut '_' fil ext]));
                     end
                 end
-            catch
+            catch exception
+                disp(exception.identifier)
+                disp(exception.stack(1))
                 write_log(flog,['Could not copy ' DirOut ' Results Report']);
             end
         end %end if exist('SPM.mat','file')
@@ -2630,7 +2754,9 @@ try
     matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.wrap = [0 0 0];
     matlabbatch{1}.spm.spatial.normalise.estwrite.roptions.prefix = pfx_normalise;
     spm_jobman('run',matlabbatch);
-catch
+catch exception
+    disp(exception.identifier)
+    disp(exception.stack(1))
     write_log(flog,'Normalize module failed to run');
 end
 end
@@ -2684,7 +2810,7 @@ for p1=1:length(RO.mid_str)
                 end
                 matlabbatch{1}.spm.stats.results.conspec(mm).contrasts = fc;
                 matlabbatch{1}.spm.stats.results.conspec(mm).threshdesc = RO.threshdesc{d1};
-                matlabbatch{1}.spm.stats.results.conspec(mm).thresh = RO.thresh;
+                matlabbatch{1}.spm.stats.results.conspec(mm).thresh = RO.thresh(d1);
                 matlabbatch{1}.spm.stats.results.conspec(mm).extent = RO.extent;
                 if ~isempty(RO.mask)
                     matlabbatch{1}.spm.stats.results.conspec(mm).mask = RO.mask;
@@ -2695,7 +2821,9 @@ for p1=1:length(RO.mid_str)
                     matlabbatch{1}.spm.stats.results.conspec(mm).mask = struct('contrasts', {}, 'thresh', {}, 'mtype', {});
                 end
             end
-        catch
+        catch exception
+            disp(exception.identifier)
+            disp(exception.stack(1))
             mm = mm-1;
             disp(['Could not generate report batch for ' titlestr]);
         end
