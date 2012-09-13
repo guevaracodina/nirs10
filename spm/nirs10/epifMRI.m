@@ -433,7 +433,7 @@ for i=1:nomNsubj
                             end
                         end
                     end
-                    if ~too_few_spikes  || ~isempty(tyv) 
+                    if ~too_few_spikes  || ~isempty(tyv)
                         f{i}.good_session = [f{i}.good_session nSess_onset];
                         f{aNsubj}.fOnset{nSess_onset} = filesRec{j,:};
                     end
@@ -676,12 +676,12 @@ try
             %T1
             nf.fT1.fname = fullfile(DirAnalysis, temp_file);
             %try
-                nf.fEPI{length(f{i}.good_session)} = [];
-                nf.fOnset{length(f{i}.good_session)} = [];
-%             catch exception
-%                 disp(exception.identifier)
-%                 disp(exception.stack(1))
-%             end
+            nf.fEPI{length(f{i}.good_session)} = [];
+            nf.fOnset{length(f{i}.good_session)} = [];
+            %             catch exception
+            %                 disp(exception.identifier)
+            %                 disp(exception.stack(1))
+            %             end
             %Copy and rename EPI and onset files if required -- looping over sessions
             n_sess = 0;
             for j=1:size(f{i}.fEPI,2)
@@ -1306,412 +1306,412 @@ for i=1:aNsubj
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % SPM statistics: model specification, model estimation, contrats, results
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
-    %Adjust onsets
-    try
-        if STC_middle_slice_adjust_onsets && STC_middle_slice
-            for j=1:size(f{i}.fEPI,2)
-                load(f{i}.fOnset{j});
-                M = size(names,2);
-                try
-                    TR;
-                catch exception
-                    disp(exception.identifier)
-                    disp(exception.stack(1))
-                    TR = TR0;
-                    write_log(flog,'TR was not found in onset file at onset adjust step');
-                end
-                for m=1:M
-                    onsets{m} = onsets{m} - TR/2;
-                    if McGill_remove_negative
-                        p=0;
-                        clear temp_onsets temp_durations
-                        for k=1:size(onsets{m},2)
-                            if onsets{m}(k) >= 0 % keep only positive onsets
-                                p = p + 1;
-                                temp_onsets{m}(p) = onsets{m}(k);
-                                temp_durations{m}(p) = durations{m}(k);
+    if ~Rest_no_onsets
+        %Adjust onsets
+        try
+            if STC_middle_slice_adjust_onsets && STC_middle_slice
+                for j=1:size(f{i}.fEPI,2)
+                    load(f{i}.fOnset{j});
+                    M = size(names,2);
+                    try
+                        TR;
+                    catch exception
+                        disp(exception.identifier)
+                        disp(exception.stack(1))
+                        TR = TR0;
+                        write_log(flog,'TR was not found in onset file at onset adjust step');
+                    end
+                    for m=1:M
+                        onsets{m} = onsets{m} - TR/2;
+                        if McGill_remove_negative
+                            p=0;
+                            clear temp_onsets temp_durations
+                            for k=1:size(onsets{m},2)
+                                if onsets{m}(k) >= 0 % keep only positive onsets
+                                    p = p + 1;
+                                    temp_onsets{m}(p) = onsets{m}(k);
+                                    temp_durations{m}(p) = durations{m}(k);
+                                end
+                            end
+                            onsets{m} = temp_onsets{m};
+                            durations{m} = temp_durations{m};
+                        else
+                            for k=1:size(onsets{m},2)
+                                %catch potentially negative onsets
+                                if onsets{m}(k) < 0, onsets{m}(k) = 0; end
                             end
                         end
-                        onsets{m} = temp_onsets{m};
-                        durations{m} = temp_durations{m};
-                    else
-                        for k=1:size(onsets{m},2)
-                            %catch potentially negative onsets
-                            if onsets{m}(k) < 0, onsets{m}(k) = 0; end
-                        end
                     end
+                    save(f{i}.fOnset{j},'names','onsets','durations','TR');
                 end
-                save(f{i}.fOnset{j},'names','onsets','durations','TR');
-            end
-        end
-    catch exception
-        disp(exception.identifier)
-        disp(exception.stack(1))
-        write_log(flog,'Could not adjust onsets for STC_middle_slide');
-    end
-    
-    %Check if there are the same number and types of onsets in each onset file
-    try
-        permute_onsets = 0;
-        %cd([DirAnalysis DirSubj]);
-        DirOtherOnsets = fullfile(DirAnalysis, f{i}.DirSubj, EEGlabel,'OtherOnsets');
-        if ~exist(DirOtherOnsets,'dir'), mkdir(DirOtherOnsets); end
-        %Onset file, Movement
-        load(f{i}.fOnset{1});
-        names2 = names;
-        f{i}.GroupOnsets = 0;
-        for j=2:size(f{i}.fEPI,2)
-            load(f{i}.fOnset{j});
-            M = size(names,2);
-            if size(names2,2) == M;
-                for m=1:M
-                    if ~strcmpi(names2{m},names{m})
-                        %try
-                        %Try to permute the onsets
-                        permute_onsets = 1;
-                        %                     catch
-                        %                         write_log(flog,strvcat(['Subject ' int2str(i) ': Same number but different types of onsets in session ' int2str(j)],...
-                        %                             'Onsets will be grouped into one of the same type'));
-                        %                         f{i}.GroupOnsets = 1;
-                        %                     end
-                    end
-                end
-            else
-                write_log(flog,strvcat(['Subject ' int2str(i) ': Different number of onsets in session ' int2str(j)]));
-                if ~allow_unequal_onset_numbers || force_group_onsets
-                    write_log(flog,'Onsets will be grouped into the same type');
-                    f{i}.GroupOnsets = 1;
-                else
-                    write_log(flog,'Only session-level results will be generated');
-                    generate_patient_level = 0;
-                end
-                
-                %Don't bother trying to permute onsets if number of onsets
-                %doesn't match
-                permute_onsets = 0;
-            end
-        end
-        
-        if permute_onsets && ~f{i}.GroupOnsets
-            %Onset file, Movement
-            load(f{i}.fOnset{1});
-            names2 = names;
-            clear onsets durations
-            %generate all permutations
-            perm1 = perms(1:size(names2,2));
-            %loop over sessions
-            for j=2:size(f{i}.fEPI,2)
-                load(f{i}.fOnset{j});
-                %loop over permutations
-                for k=1:size(perm1,1)
-                    %start assuming this is the good permutation
-                    good_perm = 1;
-                    %loop over onset types
-                    for m=1:size(names2,2)
-                        %find the permutation for which all the onset names
-                        %match the ones of the first session
-                        if ~strcmpi(names{perm1(k,m)},names2{m})
-                            good_perm = 0; %not a good permutation
-                        end
-                    end
-                    if good_perm == 1, break; end
-                end
-                %If we get here, that's because for this value of k,
-                %there was no mismatch of names, so this is the correct
-                %permutation
-                names = names2;
-                for m=1:size(names2,2)
-                    temp_onsets{m} = onsets{perm1(k,m)};
-                    temp_durations{m} = durations{perm1(k,m)};
-                end
-                onsets = temp_onsets;
-                durations = temp_durations;
-                %save over the old onsets, don't bother to move them
-                save(f{i}.fOnset{j},'names','onsets','durations','TR');
-            end
-            
-        end
-        %force group onsets
-        if force_group_onsets, f{i}.GroupOnsets = 1; end
-        
-        %Create new onset files
-        if f{i}.GroupOnsets
-            for j=1:size(f{i}.fEPI,2)
-                load(f{i}.fOnset{j});
-                names = {'AllSpikes'};
-                if size(onsets,2) > 1
-                    c = onsets{1};
-                    d = durations{1};
-                    for m=2:size(onsets,2)
-                        [c ix] = sort([c onsets{m}]);
-                        d = [d durations{m}];
-                        d = d(ix); %permute the elements
-                    end
-                else
-                    c = onsets{1};
-                    d = durations{1};
-                end
-                clear onsets durations
-                onsets{1} = c;
-                durations{1} = d;
-                [dummy,fil ext] = fileparts(f{i}.fOnset{j});
-                save(fullfile(DirOtherOnsets,[fil '_grouped' ext]),'names','onsets','durations','TR');
-            end
-        end
-        
-        %Move onset files that will not be used
-        if f{i}.GroupOnsets
-            DirNotUsed = fullfile(DirAnalysis,f{i}.DirSubj,EEGlabel,'NotUsed');
-            if ~exist(DirNotUsed,'dir'), mkdir(DirNotUsed); end
-            for j=1:size(f{i}.fEPI,2)
-                [dummy,fil ext] = fileparts(f{i}.fOnset{j});
-                movefile(f{i}.fOnset{j},[DirNotUsed '\' fil ext]);
-                f{i}.fOnset{j} = fullfile(DirOtherOnsets,[fil '_grouped' ext]);
-            end
-        end
-    catch exception
-        disp(exception.identifier);
-        disp(exception.stack(1));
-        write_log(flog,'Could not group onset files');
-    end
-    
-    if f{i}.GroupOnsets
-        glabel = 'g';
-    else
-        glabel = '';
-    end
-    
-    %Add pulse regressor to rp_files
-    if add_pulse_regressor
-        Clabel = 'C';
-        try
-            for j=1:size(f{i}.fMVT1,2)
-                %add to movement parameters
-                p1 = load(f{i}.fMVT1{j});
-                load(f{i}.fOnset{j});
-                p1 = [p1 vRi'];
-                [dir1 fil1 ext1] = fileparts(f{i}.fMVT1{j});
-                new_rp = fullfile(dir1,['c' fil1 ext1]);
-                save(new_rp,'p1','-ascii');
-                f{i}.fMVT1{j} = new_rp;
-                %add to square of movement parameters
-                p1 = load(f{i}.fMVT22{j});
-                p1 = [p1 vRi'];
-                [dir1 fil1 ext1] = fileparts(f{i}.fMVT22{j});
-                new_rp = fullfile(dir1,['c' fil1 ext1]);
-                save(new_rp,'p1','-ascii');
-                f{i}.fMVT22{j} = new_rp;
-                %add to derivative of movement parameters
-                p1 = load(f{i}.fMVT2{j});
-                p1 = [p1 vRi'];
-                [dir1 fil1 ext1] = fileparts(f{i}.fMVT2{j});
-                new_rp = fullfile(dir1,['c' fil1 ext1]);
-                save(new_rp,'p1','-ascii');
-                f{i}.fMVT2{j} = new_rp;
-                %add both derivative and square of movement parameters
-                p1 = load(f{i}.fMVT222{j});
-                p1 = [p1 vRi'];
-                [dir1 fil1 ext1] = fileparts(f{i}.fMVT222{j});
-                new_rp = fullfile(dir1,['c' fil1 ext1]);
-                save(new_rp,'p1','-ascii');
-                f{i}.fMVT222{j} = new_rp;
             end
         catch exception
             disp(exception.identifier)
             disp(exception.stack(1))
+            write_log(flog,'Could not adjust onsets for STC_middle_slide');
         end
-    else
-        Clabel = '';
-    end
-    
-    GLM = [];
-    GLM.reportContrastsBySession = reportContrastsBySession;
-    GLM.flog = flog;
-    GLM.DirAnalysis = DirAnalysis;
-    GLM.DirResultsAll = DirResultsAll;
-    %GLM.waittime = waittime;
-    GLM.f = f{i};
-    GLM.dStats = dStats{i};
-    GLM.regenerate_reports = regenerate_reports;
-    GLM.TR0 = TR0;
-    GLM.Statslabel = Statslabel;
-    GLM.Atyp = Atyp;
-    GLM.Alabel = Alabel; %careful, not Atyp
-    GLM.Clabel = Clabel;
-    GLM.Dlabel = Dlabel{1};
-    GLM.Wlabel = Wlabel{1};
-    GLM.Ulabel = Ulabel;
-    GLM.Vlabel = Vlabel{1};
-    GLM.Mlabel = '';
-    GLM.Plabel = '';
-    GLM.glabel = glabel;
-    GLM.Glabel = Glabel{1};
-    GLM.Slabel = pfx_smooth;
-    GLM.AnovaOn = AnovaOn;
-    GLM.extent = extent;
-    GLM.threshold = threshold;
-    GLM.mask_threshold = mask_threshold;
-    GLM.gamma_window = gamma_window;
-    GLM.gamma_order = gamma_order;
-    %GLM.TyvOn = TyvOn;
-    GLM.tyv = tyv;
-    GLM.SaveStatsBatch = SaveStatsBatch;
-    GLM.SaveReportBatch = SaveReportBatch;
-    GLM.SkipUncorrected = SkipUncorrected;
-    GLM.SkipGroupOnsets = SkipGroupOnsets;
-    GLM.SkipNegativeBOLD = SkipNegativeBOLD;
-    GLM.generate_patient_level = generate_patient_level;
-    if ~generate_patient_level
-        GLM.reportContrastsBySession = 1; %otherwise there is nothing left to output!
-    end
-    switch noDerivs
-        case 0
-            DerivsRun = {2};
-        case 1
-            DerivsRun = {1};
-        case 2
-            DerivsRun = {1,2};
-    end
-    switch VolterraOn
-        case 0
-            VolterraRun = {1};
-        case 1
-            VolterraRun = {2};
-        case 2
-            VolterraRun = {1,2};
-    end
-    switch normalizeOn
-        case 0
-            normalizeRun = {1};
-        case 1
-            normalizeRun = {2};
-        case 2
-            normalizeRun = {1,2};
-    end
-    switch GammaOn
-        case 0
-            GammaRun = {1};
-        case 1
-            GammaRun = {2};
-        case 2
-            GammaRun = {1,2};
-    end
-    
-    if ~TyvOn
-        for i1=1:length(DerivsRun)
-            GLM.Dlabel = Dlabel{DerivsRun{i1}};
-            for i2=1:length(VolterraRun)
-                GLM.Vlabel = Vlabel{VolterraRun{i2}};
-                for i3=1:length(normalizeRun)
-                    GLM.Wlabel = Wlabel{normalizeRun{i3}};
-                    for i4=1:length(GammaRun)
-                        GLM.f = f{i};
-                        GLM.Glabel = Glabel{GammaRun{i4}};
-                        run_stats_and_results(GLM);
-                        
-                        try
-                            if McGilldelaysOn && i4 == 1
-                                %GLM.Glabel = Glabel{2};
-                                %delays
-                                for d=1:size(delay,2)
-                                    g = f{i};
-                                    for j=1:size(f{i}.fEPI,2)
-                                        load(f{i}.fOnset{j});
-                                        M = size(names,2);
-                                        for m=1:M
-                                            onsets{m} = onsets{m} + delay(d); %subtract delay
-                                            if McGill_remove_negative
-                                                p=0;
-                                                clear temp_onsets temp_durations
-                                                for k=1:size(onsets{m},2)
-                                                    if onsets{m}(k) >= 0 % keep only positive onsets
-                                                        p = p + 1;
-                                                        temp_onsets{m}(p) = onsets{m}(k);
-                                                        temp_durations{m}(p) = durations{m}(k);
+        
+        %Check if there are the same number and types of onsets in each onset file
+        try
+            permute_onsets = 0;
+            %cd([DirAnalysis DirSubj]);
+            DirOtherOnsets = fullfile(DirAnalysis, f{i}.DirSubj, EEGlabel,'OtherOnsets');
+            if ~exist(DirOtherOnsets,'dir'), mkdir(DirOtherOnsets); end
+            %Onset file, Movement
+            load(f{i}.fOnset{1});
+            names2 = names;
+            f{i}.GroupOnsets = 0;
+            for j=2:size(f{i}.fEPI,2)
+                load(f{i}.fOnset{j});
+                M = size(names,2);
+                if size(names2,2) == M;
+                    for m=1:M
+                        if ~strcmpi(names2{m},names{m})
+                            %try
+                            %Try to permute the onsets
+                            permute_onsets = 1;
+                            %                     catch
+                            %                         write_log(flog,strvcat(['Subject ' int2str(i) ': Same number but different types of onsets in session ' int2str(j)],...
+                            %                             'Onsets will be grouped into one of the same type'));
+                            %                         f{i}.GroupOnsets = 1;
+                            %                     end
+                        end
+                    end
+                else
+                    write_log(flog,strvcat(['Subject ' int2str(i) ': Different number of onsets in session ' int2str(j)]));
+                    if ~allow_unequal_onset_numbers || force_group_onsets
+                        write_log(flog,'Onsets will be grouped into the same type');
+                        f{i}.GroupOnsets = 1;
+                    else
+                        write_log(flog,'Only session-level results will be generated');
+                        generate_patient_level = 0;
+                    end
+                    
+                    %Don't bother trying to permute onsets if number of onsets
+                    %doesn't match
+                    permute_onsets = 0;
+                end
+            end
+            
+            if permute_onsets && ~f{i}.GroupOnsets
+                %Onset file, Movement
+                load(f{i}.fOnset{1});
+                names2 = names;
+                clear onsets durations
+                %generate all permutations
+                perm1 = perms(1:size(names2,2));
+                %loop over sessions
+                for j=2:size(f{i}.fEPI,2)
+                    load(f{i}.fOnset{j});
+                    %loop over permutations
+                    for k=1:size(perm1,1)
+                        %start assuming this is the good permutation
+                        good_perm = 1;
+                        %loop over onset types
+                        for m=1:size(names2,2)
+                            %find the permutation for which all the onset names
+                            %match the ones of the first session
+                            if ~strcmpi(names{perm1(k,m)},names2{m})
+                                good_perm = 0; %not a good permutation
+                            end
+                        end
+                        if good_perm == 1, break; end
+                    end
+                    %If we get here, that's because for this value of k,
+                    %there was no mismatch of names, so this is the correct
+                    %permutation
+                    names = names2;
+                    for m=1:size(names2,2)
+                        temp_onsets{m} = onsets{perm1(k,m)};
+                        temp_durations{m} = durations{perm1(k,m)};
+                    end
+                    onsets = temp_onsets;
+                    durations = temp_durations;
+                    %save over the old onsets, don't bother to move them
+                    save(f{i}.fOnset{j},'names','onsets','durations','TR');
+                end
+                
+            end
+            %force group onsets
+            if force_group_onsets, f{i}.GroupOnsets = 1; end
+            
+            %Create new onset files
+            if f{i}.GroupOnsets
+                for j=1:size(f{i}.fEPI,2)
+                    load(f{i}.fOnset{j});
+                    names = {'AllSpikes'};
+                    if size(onsets,2) > 1
+                        c = onsets{1};
+                        d = durations{1};
+                        for m=2:size(onsets,2)
+                            [c ix] = sort([c onsets{m}]);
+                            d = [d durations{m}];
+                            d = d(ix); %permute the elements
+                        end
+                    else
+                        c = onsets{1};
+                        d = durations{1};
+                    end
+                    clear onsets durations
+                    onsets{1} = c;
+                    durations{1} = d;
+                    [dummy,fil ext] = fileparts(f{i}.fOnset{j});
+                    save(fullfile(DirOtherOnsets,[fil '_grouped' ext]),'names','onsets','durations','TR');
+                end
+            end
+            
+            %Move onset files that will not be used
+            if f{i}.GroupOnsets
+                DirNotUsed = fullfile(DirAnalysis,f{i}.DirSubj,EEGlabel,'NotUsed');
+                if ~exist(DirNotUsed,'dir'), mkdir(DirNotUsed); end
+                for j=1:size(f{i}.fEPI,2)
+                    [dummy,fil ext] = fileparts(f{i}.fOnset{j});
+                    movefile(f{i}.fOnset{j},[DirNotUsed '\' fil ext]);
+                    f{i}.fOnset{j} = fullfile(DirOtherOnsets,[fil '_grouped' ext]);
+                end
+            end
+        catch exception
+            disp(exception.identifier);
+            disp(exception.stack(1));
+            write_log(flog,'Could not group onset files');
+        end
+        
+        if f{i}.GroupOnsets
+            glabel = 'g';
+        else
+            glabel = '';
+        end
+        
+        %Add pulse regressor to rp_files
+        if add_pulse_regressor
+            Clabel = 'C';
+            try
+                for j=1:size(f{i}.fMVT1,2)
+                    %add to movement parameters
+                    p1 = load(f{i}.fMVT1{j});
+                    load(f{i}.fOnset{j});
+                    p1 = [p1 vRi'];
+                    [dir1 fil1 ext1] = fileparts(f{i}.fMVT1{j});
+                    new_rp = fullfile(dir1,['c' fil1 ext1]);
+                    save(new_rp,'p1','-ascii');
+                    f{i}.fMVT1{j} = new_rp;
+                    %add to square of movement parameters
+                    p1 = load(f{i}.fMVT22{j});
+                    p1 = [p1 vRi'];
+                    [dir1 fil1 ext1] = fileparts(f{i}.fMVT22{j});
+                    new_rp = fullfile(dir1,['c' fil1 ext1]);
+                    save(new_rp,'p1','-ascii');
+                    f{i}.fMVT22{j} = new_rp;
+                    %add to derivative of movement parameters
+                    p1 = load(f{i}.fMVT2{j});
+                    p1 = [p1 vRi'];
+                    [dir1 fil1 ext1] = fileparts(f{i}.fMVT2{j});
+                    new_rp = fullfile(dir1,['c' fil1 ext1]);
+                    save(new_rp,'p1','-ascii');
+                    f{i}.fMVT2{j} = new_rp;
+                    %add both derivative and square of movement parameters
+                    p1 = load(f{i}.fMVT222{j});
+                    p1 = [p1 vRi'];
+                    [dir1 fil1 ext1] = fileparts(f{i}.fMVT222{j});
+                    new_rp = fullfile(dir1,['c' fil1 ext1]);
+                    save(new_rp,'p1','-ascii');
+                    f{i}.fMVT222{j} = new_rp;
+                end
+            catch exception
+                disp(exception.identifier)
+                disp(exception.stack(1))
+            end
+        else
+            Clabel = '';
+        end
+        
+        GLM = [];
+        GLM.reportContrastsBySession = reportContrastsBySession;
+        GLM.flog = flog;
+        GLM.DirAnalysis = DirAnalysis;
+        GLM.DirResultsAll = DirResultsAll;
+        %GLM.waittime = waittime;
+        GLM.f = f{i};
+        GLM.dStats = dStats{i};
+        GLM.regenerate_reports = regenerate_reports;
+        GLM.TR0 = TR0;
+        GLM.Statslabel = Statslabel;
+        GLM.Atyp = Atyp;
+        GLM.Alabel = Alabel; %careful, not Atyp
+        GLM.Clabel = Clabel;
+        GLM.Dlabel = Dlabel{1};
+        GLM.Wlabel = Wlabel{1};
+        GLM.Ulabel = Ulabel;
+        GLM.Vlabel = Vlabel{1};
+        GLM.Mlabel = '';
+        GLM.Plabel = '';
+        GLM.glabel = glabel;
+        GLM.Glabel = Glabel{1};
+        GLM.Slabel = pfx_smooth;
+        GLM.AnovaOn = AnovaOn;
+        GLM.extent = extent;
+        GLM.threshold = threshold;
+        GLM.mask_threshold = mask_threshold;
+        GLM.gamma_window = gamma_window;
+        GLM.gamma_order = gamma_order;
+        %GLM.TyvOn = TyvOn;
+        GLM.tyv = tyv;
+        GLM.SaveStatsBatch = SaveStatsBatch;
+        GLM.SaveReportBatch = SaveReportBatch;
+        GLM.SkipUncorrected = SkipUncorrected;
+        GLM.SkipGroupOnsets = SkipGroupOnsets;
+        GLM.SkipNegativeBOLD = SkipNegativeBOLD;
+        GLM.generate_patient_level = generate_patient_level;
+        if ~generate_patient_level
+            GLM.reportContrastsBySession = 1; %otherwise there is nothing left to output!
+        end
+        switch noDerivs
+            case 0
+                DerivsRun = {2};
+            case 1
+                DerivsRun = {1};
+            case 2
+                DerivsRun = {1,2};
+        end
+        switch VolterraOn
+            case 0
+                VolterraRun = {1};
+            case 1
+                VolterraRun = {2};
+            case 2
+                VolterraRun = {1,2};
+        end
+        switch normalizeOn
+            case 0
+                normalizeRun = {1};
+            case 1
+                normalizeRun = {2};
+            case 2
+                normalizeRun = {1,2};
+        end
+        switch GammaOn
+            case 0
+                GammaRun = {1};
+            case 1
+                GammaRun = {2};
+            case 2
+                GammaRun = {1,2};
+        end
+        
+        if ~TyvOn
+            for i1=1:length(DerivsRun)
+                GLM.Dlabel = Dlabel{DerivsRun{i1}};
+                for i2=1:length(VolterraRun)
+                    GLM.Vlabel = Vlabel{VolterraRun{i2}};
+                    for i3=1:length(normalizeRun)
+                        GLM.Wlabel = Wlabel{normalizeRun{i3}};
+                        for i4=1:length(GammaRun)
+                            GLM.f = f{i};
+                            GLM.Glabel = Glabel{GammaRun{i4}};
+                            run_stats_and_results(GLM);
+                            
+                            try
+                                if McGilldelaysOn && i4 == 1
+                                    %GLM.Glabel = Glabel{2};
+                                    %delays
+                                    for d=1:size(delay,2)
+                                        g = f{i};
+                                        for j=1:size(f{i}.fEPI,2)
+                                            load(f{i}.fOnset{j});
+                                            M = size(names,2);
+                                            for m=1:M
+                                                onsets{m} = onsets{m} + delay(d); %subtract delay
+                                                if McGill_remove_negative
+                                                    p=0;
+                                                    clear temp_onsets temp_durations
+                                                    for k=1:size(onsets{m},2)
+                                                        if onsets{m}(k) >= 0 % keep only positive onsets
+                                                            p = p + 1;
+                                                            temp_onsets{m}(p) = onsets{m}(k);
+                                                            temp_durations{m}(p) = durations{m}(k);
+                                                        end
+                                                    end
+                                                    onsets{m} = temp_onsets{m};
+                                                    durations{m} = temp_durations{m};
+                                                else
+                                                    for k=1:size(onsets{m},2)
+                                                        %catch potentially negative onsets
+                                                        if onsets{m}(k) < 0, onsets{m}(k) = 0; end
                                                     end
                                                 end
-                                                onsets{m} = temp_onsets{m};
-                                                durations{m} = temp_durations{m};
-                                            else
-                                                for k=1:size(onsets{m},2)
-                                                    %catch potentially negative onsets
-                                                    if onsets{m}(k) < 0, onsets{m}(k) = 0; end
-                                                end
                                             end
+                                            [dummy,fil ext] = fileparts(f{i}.fOnset{j});
+                                            g.fOnset{j} = fullfile(DirOtherOnsets,[ fil '_' int2str(delay(d)) 's' ext]);
+                                            save(g.fOnset{j},'names','onsets','durations','TR');
                                         end
-                                        [dummy,fil ext] = fileparts(f{i}.fOnset{j});
-                                        g.fOnset{j} = fullfile(DirOtherOnsets,[ fil '_' int2str(delay(d)) 's' ext]);
-                                        save(g.fOnset{j},'names','onsets','durations','TR');
+                                        GLM.f = g;
+                                        GLM.Mlabel = [int2str(delay(d)) 's delay'];
+                                        %Statistics with onset delays, to move peak of HRF
+                                        run_stats_and_results(GLM);
+                                        
+                                    end %end for d=1:size(delays,2)
+                                end
+                            catch exception
+                                disp(exception.identifier);
+                                disp(exception.stack(1));
+                                write_log(flog,'McGill delays stats failed to run');
+                            end
+                            GLM.Mlabel = '';
+                            
+                            %Movement
+                            try
+                                if MovementOn
+                                    %1st Derivative of movement parameters
+                                    g = f{i};
+                                    for j=1:size(f{i}.fMVT1,2)
+                                        g.fMVT1{j} = f{i}.fMVT2{j};
                                     end
+                                    GLM.Plabel = 'DerMVT';
                                     GLM.f = g;
-                                    GLM.Mlabel = [int2str(delay(d)) 's delay'];
-                                    %Statistics with onset delays, to move peak of HRF
                                     run_stats_and_results(GLM);
                                     
-                                end %end for d=1:size(delays,2)
+                                    %square of movement parameters
+                                    g = f{i};
+                                    for j=1:size(f{i}.fMVT1,2)
+                                        g.fMVT1{j} = f{i}.fMVT22{j};
+                                    end
+                                    GLM.f = g;
+                                    GLM.Plabel = 'sqrMVT';
+                                    run_stats_and_results(GLM);
+                                    
+                                    %square of movement parameters and
+                                    %1st Derivative of movement parameters
+                                    g = f{i};
+                                    for j=1:size(f{i}.fMVT1,2)
+                                        g.fMVT1{j} = f{i}.fMVT222{j};
+                                    end
+                                    GLM.f = g;
+                                    GLM.Plabel = 'DersqrMVT';
+                                    run_stats_and_results(GLM);
+                                end
+                            catch exception
+                                disp(exception.identifier)
+                                disp(exception.stack(1))
+                                write_log(flog,'Movement stats failed to run');
                             end
-                        catch exception
-                            disp(exception.identifier);
-                            disp(exception.stack(1));
-                            write_log(flog,'McGill delays stats failed to run');
+                            GLM.f = f{i};
+                            GLM.Plabel = '';
                         end
-                        GLM.Mlabel = '';
-                        
-                        %Movement
-                        try
-                            if MovementOn
-                                %1st Derivative of movement parameters
-                                g = f{i};
-                                for j=1:size(f{i}.fMVT1,2)
-                                    g.fMVT1{j} = f{i}.fMVT2{j};
-                                end
-                                GLM.Plabel = 'DerMVT';
-                                GLM.f = g;
-                                run_stats_and_results(GLM);
-                                
-                                %square of movement parameters
-                                g = f{i};
-                                for j=1:size(f{i}.fMVT1,2)
-                                    g.fMVT1{j} = f{i}.fMVT22{j};
-                                end
-                                GLM.f = g;
-                                GLM.Plabel = 'sqrMVT';
-                                run_stats_and_results(GLM);
-                                
-                                %square of movement parameters and
-                                %1st Derivative of movement parameters
-                                g = f{i};
-                                for j=1:size(f{i}.fMVT1,2)
-                                    g.fMVT1{j} = f{i}.fMVT222{j};
-                                end
-                                GLM.f = g;
-                                GLM.Plabel = 'DersqrMVT';
-                                run_stats_and_results(GLM);
-                            end
-                        catch exception
-                            disp(exception.identifier)
-                            disp(exception.stack(1))
-                            write_log(flog,'Movement stats failed to run');
-                        end
-                        GLM.f = f{i};
-                        GLM.Plabel = '';
                     end
                 end
             end
+            
+            
+            
+        else
+            %Tyvaert analysis
+            GLM.Glabel = Glabel{2}; %Gamma function
+            GLM.Dlabel = ''; %No derivatives
+            GLM.Vlabel = ''; %No Volterra
+            GLM.SkipGroupOnsets  = 1; %Do not group onsets
+            run_stats_and_results(GLM);
         end
-        
-        
-        
-    else
-        %Tyvaert analysis
-        GLM.Glabel = Glabel{2}; %Gamma function
-        GLM.Dlabel = ''; %No derivatives
-        GLM.Vlabel = ''; %No Volterra
-        GLM.SkipGroupOnsets  = 1; %Do not group onsets
-        run_stats_and_results(GLM);
     end
-    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Data processing: end big loop over subjects
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
