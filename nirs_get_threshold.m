@@ -195,7 +195,12 @@ switch fign
             xth = zeros(1,length(udf));
             for i1=2:length(udf) %exclude 0
                 if LKCflag %|| Z.UseCorrelRes
-                    xth(i1) = calc_EC(LKC,p_value,tstr,[eidf,udf(i1)]);
+                    min_udf = 2;
+                    if udf(i1) > min_udf
+                        xth(i1) = calc_EC(LKC,p_value,tstr,[eidf,udf(i1)]);
+                    else
+                        xth(i1) =  spm_invFcdf(1-p_value, eidf, udf(i1));
+                    end
                 else
                     xth(i1) = spm_invFcdf(1-p_value, eidf, udf(i1));
                 end
@@ -209,7 +214,7 @@ switch fign
                     end
                 end
             end
-            th_z = min(xth_z(xth_z>3.9)); %exceed threshold of unc. F stat
+            th_z = min(xth_z(xth_z> spm_invFcdf(1-p_value, eidf, udf(i1)))); %exceed threshold of unc. F stat
             index_over2 = [];
         end        
     case 9

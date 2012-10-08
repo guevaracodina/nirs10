@@ -22,6 +22,9 @@ for iSubj=1:size(job.NIRSmat,1)
     % Load NIRS.mat
     try
         [NIRS newNIRSlocation]= nirs_load(job.NIRSmat{iSubj,1},job.NIRSmatCopyChoice,job.force_redo);
+        if ~isfield(NIRS,'flags')
+            NIRS.flags = [];
+        end
         job.NIRSmat{iSubj,1} = newNIRSlocation;
         % SPATIAL NORMALIZATION OF ANATOMICAL IMAGE %
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -19,7 +19,7 @@ Z.GFIS = 1;
 Z.anova_dir_name = job.anova_dir_name;
 number_dir_to_remove = job.number_dir_to_remove;
 %Structure for passing more generic data
-min_s = 2;
+min_s = 1;
 Z.StatStr = 'EC';
 Z.LKC = job.StatMethod;
 Z.CorrectionMethod = job.CorrectionMethod;
