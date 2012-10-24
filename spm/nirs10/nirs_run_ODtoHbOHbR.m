@@ -37,6 +37,9 @@ for Idx=1:size(job.NIRSmat,1)
         clear PVF PVF2 DPF EPF
         [NIRS newNIRSlocation]= nirs_load(job.NIRSmat{Idx,1},job.NIRSmatCopyChoice,job.force_redo);
         job.NIRSmat{Idx,1} = newNIRSlocation;
+        if ~isfield(NIRS,'flags')
+            NIRS.flags = [];
+        end
         if ~isempty(NIRS) && (~isfield(NIRS.flags,'concOK') || job.force_redo)
             
             %bl_m = job.Normalize_OD;% method to calculate baseline
