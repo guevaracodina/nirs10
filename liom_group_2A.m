@@ -2,6 +2,10 @@ function G = liom_group_2A(cbeta,X,X0,s1,s2,Z)
 try
     %reshape cbeta
     [ns0 nS0 nC0 np] = size(cbeta);
+    fix_permute_error = 1;
+    if fix_permute_error
+        cbeta = permute(cbeta,[1 3 2 4]);
+    end
     %cbeta = reshape(cbeta,[ns0 nS0 nC0 s1 s2]);
     sX = ns0*nS0*nC0;
     cbeta = reshape(cbeta,[sX,np]);
