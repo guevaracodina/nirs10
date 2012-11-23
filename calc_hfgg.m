@@ -36,7 +36,14 @@ switch nfac
         end
     case 2
         %[ns0 nS0 nC0 np] = size(cbeta);
-        Y = squeeze(cbeta(:,:,:,id0));
+        if length(size(cbeta)) == 4
+            Y = squeeze(cbeta(:,:,:,id0));
+        else
+            if length(size(cbeta)) == 3 %for mixed 2-anova; in this case, [ns0 nB np],
+                %where nB is nS0 or nC0, depending on user choice and protocol
+                Y = squeeze(cbeta(:,:,id0));
+            end
+        end
         Y = Y(:);
         %S = zeros(length(Y),1);
         %determine subjects -- same as WInFacs?
@@ -60,6 +67,31 @@ end
 
 %Calculate Huynh-Feldt and Greenhouse-Gasser corrections
 %Where: at the site of maximal activation?
+if ~isempty(BTFacs)
+    %make sure there is the same number of subjects at each level
+    GNums=unique(BTFacs(:));
+    nTreats =length(GNums);
+    min_subj = length(BTFacs);
+    for i0=1:nTreats
+        subj{i0} = BTFacs == i0;
+        subjN{i0} = unique(S(subj{i0}));
+        min_subj = min(min_subj,length(subjN{i0}));
+    end
+    for i0=1:nTreats
+        subj_to_keep{i0} = subjN{i0}(1:min_subj);
+    end
+    selector = zeros(size(BTFacs));
+    for i0=1:nTreats
+        for j0=1:length(subj_to_keep{i0})
+            selector = selector + (subj_to_keep{i0}(j0) == S);
+        end
+    end
+    selector = logical(selector);
+    BTFacs = BTFacs(selector);
+    WInFacs = WInFacs(selector);
+    S = S(selector);
+    Y = Y(selector);
+end
 
 [EpsHF EpsList EpsGG] = GenCalcHFEps(Y,BTFacs,WInFacs,S);
 A.Eps.EpsHF = EpsHF;

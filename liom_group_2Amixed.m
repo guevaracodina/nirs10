@@ -1,9 +1,9 @@
 function G = liom_group_2Amixed(cbeta,X,X0,s1,s2,Z)
 try
     %reshape cbeta
-    [ns0 nS0 nC0 np] = size(cbeta);
+    [ns0 nB np] = size(cbeta);
     %cbeta = reshape(cbeta,[ns0 nS0 nC0 s1 s2]);
-    sX = ns0*nS0*nC0;
+    sX = ns0*nB;
     cbeta = reshape(cbeta,[sX,np]);
     pX = pinv(X);
     b = pX*cbeta;

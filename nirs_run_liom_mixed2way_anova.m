@@ -119,7 +119,7 @@ try
                     xCon = big_TOPO{1}.xCon;
                 end
                 %Contrasts - assume same contrasts for all subjects
-                nC = length(xCon);
+                nC = length(xCon{1});
                 
                 %Add loop over effects to look at:
                 %1: interaction A*B,
@@ -131,17 +131,39 @@ try
                 for z1=1:5
                     %Handles for assembled figures
                     clear H
+                    nC0 = length(Z.anova2_contrasts);
+                    nS0 = length(Z.anova2_sessions);
+                    if nC0 > 1
+                        if nS0 >1 
+                            disp(['Problem, there are too many sessions or ' ...
+                                'too many conditions: either there should be only ' ...
+                                'one session, or only one condition, with '...
+                                'the other being the 2nd anova factor']);
+                        else
+                            Beffect = 'Conditions';
+                            nB = nC0;
+                        end
+                    else
+                        if nS0 > 1
+                            Beffect = 'Sessions';
+                            nB = nS0;
+                        else
+                            disp(['Only one session and one condition: ' ...
+                                'cannot do a mixed-2-anova, missing the second factor!']);
+                        end
+                    end
+                    
                     switch z1
                         case {1,2,3}
                             H = initialize_assembled_figure_handles;
                             H = initialize_assembled_figures(Z,H,0,'Group');
                         case 4
-                            for y1 = 1:nC0
+                            for y1 = 1:Z.anova_level
                                 H{y1} = initialize_assembled_figure_handles;
                                 H{y1} = initialize_assembled_figures(Z,H{y1},0,'Group');
                             end
                         case 5
-                            for y1 = 1:nS0
+                            for y1 = 1:nB
                                 H{y1} = initialize_assembled_figure_handles;
                                 H{y1} = initialize_assembled_figures(Z,H{y1},0,'Group');
                             end
@@ -154,8 +176,7 @@ try
                     CF.GInv = Z.GInv;
                     CF.split = split;
                     CF.nC = nC;
-                    nC0 = length(Z.anova2_contrasts);
-                    nS0 = length(Z.anova2_sessions);
+                    
                     Z.p_value = job.contrast_p_value; %reset because of redefinition of p_value later for post-hoc contrasts
                     %Loop over chromophores
                     
@@ -208,11 +229,11 @@ try
                         end %end for s1
                         
                         if z1==1 && h1 == 1%no need to repeat calculation
-                            cbeta{h1} = squeeze(cbeta{h1}); % permute(cbeta{h1},[2 1 3 4]); %permute to put subjects as the first factor, keeping condition as the second factor
+                            cbeta{h1} = squeeze(cbeta{h1}); %squeeze not needed 
                             %Construct each part of design matrix separately
                             Xs = []; %subject effects
-                            Xa = []; %main effect of A (Sessions)
-                            Xb = []; %main effect of B (Intensity -- contrast)
+                            Xa = []; %main effect of A (Subjects)
+                            Xb = []; %main effect of B (could be condition or session, depending on the protocol)
                             Xab = []; %main effect of A*B interaction
                             ns0 = size(cbeta{h1},1);
                             
@@ -225,9 +246,6 @@ try
                             end
                             %main effect of subject
                             for s1=2:length(level_subj)
-%                                 if s1 > 1
-%                                     x2 = x; %previous x
-%                                 end
                                 x = zeros(sX,1);
                                 for c1=1:nC0
                                     x(level_subj{s1}+((c1-1)*ns0)) = 1;
@@ -300,17 +318,32 @@ try
                                 %fill B:
                                 clear B
                                 B.WInFacs = zeros(sX,1);
-%                                 %1st factor: Sessions
+%                                 %1st factor: Subjects
 %                                 for i0=1:nS0
 %                                     B.WInFacs((i0-1)*ns0*nC0+(1:ns0*nC0),1) = i0;
 %                                 end
-                                %2nd factor: Contrasts
+                                %2nd factor: Contrasts or sessions
                                 tmp0 = zeros(nC0*ns0,nS0);
                                 for i0=1:nC0
                                     tmp0((i0-1)*ns0+(1:ns0),:) = i0;
                                 end                                
                                 B.WInFacs(:,1) = tmp0(:);
-                                B.S = [];
+                                B.S = zeros(ns0*nB,1);
+                                for is0 = 1:ns0
+                                    for nB0 = 1:nB
+                                        B.S(is0+ns0*(nB0-1)) = is0;
+                                    end
+                                end
+%                                 for is0 = 1:ns0
+%                                     for l1=1:Z.anova_level
+%                                         if any(is0 == level_subj{l1})
+%                                             for nB0 = 1:nB
+%                                                 B.S(is0+ns0*(nB0-1)) = l1;
+%                                             end
+%                                         end
+%                                     end
+%                                 end
+%                                    
                                 x = zeros(sX,1);
                                 for s1=1:length(level_subj)
                                     for c1=1:nC0
@@ -318,23 +351,26 @@ try
                                     end
                                 end
                                 B.BTFacs = x;
+                                %The number of subjects at each level of
+                                %the between-factor must be equal!
                                 A = calc_hfgg(cbeta{h1},A,ns0,B,2);
+                                                               
                                 %Store for cases 2 to 5
                                 Eps = A.Eps;
                                 %A is output only to get strA -- not clean
                                 [TOPO H A] = call_figure_2anova(TOPO,H,Z,W,F,A,CF,v1,h1,hb,strA,z1,A.LKC);
                             case 2
-                                %Main effect of A (Sessions)
+                                %Main effect of A (Subjects)
                                 strA = 'mainA';
-                                X0 = [Xab Xb M Xs];
+                                X0 = [Xb M]; %remove subject effects
                                 X = [Xa X0];
                                 A = liom_group_2A(cbeta{h1},X,X0,W.s1,W.s2,Z); %careful, s1 (session counter) not same as W.s1 (size of image)!
                                 A.Eps = Eps;
                                 [TOPO H A] = call_figure_2anova(TOPO,H,Z,W,F,A,CF,v1,h1,hb,strA,z1,A.LKC);
                             case 3
-                                %Main effect of B (Intensity -- task)
+                                %Main effect of B (Conditions or perhaps Sessions)
                                 strA = 'mainB';
-                                X0 = [Xab Xa M Xs];
+                                X0 = [Xa M Xs];
                                 X = [Xb X0];
                                 A = liom_group_2A(cbeta{h1},X,X0,W.s1,W.s2,Z); %careful, s1 (session counter) not same as W.s1 (size of image)!
                                 A.Eps = Eps;
@@ -342,44 +378,30 @@ try
                             case 4
                                 %Effect of A within levels of B
                                 %loop over levels of B
-                                for y1=1:nC0
+                                for y1=1:Z.anova_level
                                     strA = ['effAonB' int2str(y1)];                                    
-%                                     rs = 1+(y1-1)*(nS0-1);
-%                                     re = rs + nS0-2;
                                     ind = 1:size(XeA,2);
                                     ind(y1) = [];
-                                    X0 = [XeA(:,ind) Xb M Xs];
-                                    X  = [XeA Xb M Xs];
+                                    X0 = [XeA(:,ind) Xb M]; %remove subject effects
+                                    X  = [XeA Xb M];
                                     %need to adjust p value:
-                                    Z.p_value = p_value0/nC0;
+                                    Z.p_value = p_value0/Z.anova_level;
                                     A = liom_group_2A(cbeta{h1},X,X0,W.s1,W.s2,Z); %careful, s1 (session counter) not same as W.s1 (size of image)!
-                                    %A.includeSubjectEffects = Z.includeSubjectEffects;
-                                    %B = [];
-                                    %B.Xs = Xs;
-                                    %B.Xbw = [Xa Xb]; %Xb; %?
-                                    %A = calc_hfgg(cbeta{h1},A,ns0,B,2);
                                     A.Eps = Eps;
                                     A.y1 = y1;
                                     [TOPO H{y1} A] = call_figure_2anova(TOPO,H{y1},Z,W,F,A,CF,v1,h1,hb,strA,z1,A.LKC);
                                 end
                             case 5
                                 %Effect of B within levels of A
-                                for y1=1:nS0
+                                for y1=1:nB
                                     strA = ['effBonA' int2str(y1)];
-%                                     rs = 1+(y1-1)*(nC0-1);
-%                                     re = rs + nC0-2;
                                     ind = 1:size(XeB,2);
                                     ind(y1) = [];
                                     X0 = [XeB(:,ind) Xa M Xs];
                                     X  = [XeB Xa M Xs];
                                     %need to adjust p value:
-                                    Z.p_value = p_value0/nS0;
+                                    Z.p_value = p_value0/nB;
                                     A = liom_group_2A(cbeta{h1},X,X0,W.s1,W.s2,Z); %careful, s1 (session counter) not same as W.s1 (size of image)!
-                                    %A.includeSubjectEffects = Z.includeSubjectEffects;
-                                    %B = [];
-                                    %B.Xs = Xs;
-                                    %B.Xbw = [Xa Xb]; %Xa; %?
-                                    %A = calc_hfgg(cbeta{h1},A,ns0,B,2);
                                     A.Eps = Eps;
                                     A.y1 = y1;
                                     [TOPO H{y1} A] = call_figure_2anova(TOPO,H{y1},Z,W,F,A,CF,v1,h1,hb,strA,z1,A.LKC);

@@ -5,14 +5,19 @@ try
         %Recommendation: If epsilon is >0.75, use the Huynh-Feldt correction.
         %If epsilon is <0.75, or nothing is known about sphericity at all,
         %use the Greenhouse-Geisser correction
-        switch z1
-            %find effective position in list of epsilons
-            case 1 %'intAB'
-                ze = 3;
-            case {2,4} %'mainA'
-                ze = 1;
-            case {3,5} %'mainB'
-                ze = 2;
+        l_list = length(A.Eps.EpsList);
+        if l_list > 1
+            switch z1
+                %find effective position in list of epsilons
+                case 1 %'intAB'
+                    ze = 3;
+                case {2,4} %'mainA'
+                    ze = 1;
+                case {3,5} %'mainB'
+                    ze = 2;
+            end
+        else
+            ze = 1;
         end
         switch Z.CorrectionMethod
             case 0
