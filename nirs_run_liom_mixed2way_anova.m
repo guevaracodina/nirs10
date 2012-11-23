@@ -310,7 +310,7 @@ try
                             case 1
                                 %Interaction A*B
                                 strA = 'intAB';
-                                X0 = [Xa Xb M Xs];
+                                X0 = [Xa Xb M Xs]; %should we remove Xs???
                                 X = [Xab X0];
                                 A = liom_group_2A(cbeta{h1},X,X0,W.s1,W.s2,Z); %careful, s1 (session counter) not same as W.s1 (size of image)!
                                 %Mauchly test
