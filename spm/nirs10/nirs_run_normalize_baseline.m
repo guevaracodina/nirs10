@@ -36,7 +36,14 @@ for Idx=1:size(job.NIRSmat,1)
             for f=1:size(rDtp,1)
                 % Read raw data (intensity)
                 d = fopen_NIR(rDtp{f,1},NC);
-                
+%                 test_clear_protocol = 1;
+%                 if test_clear_protocol
+%                      %protocole 
+%                      d_max = max(d,[],2);
+%                      lp1 = [linspace(60*25,120*25-1,60*25) linspace(300*25,360*25-1,60*25)];
+%                      d(29:56,lp1) = d(29:56,lp1) - repmat(d_max(29:56)/4,1,120*25);
+%                      d(1:28,lp1) = d(1:28,lp1) + repmat(d_max(1:28)/4,1,120*25);
+%                 end
                 % Option to remove negative values (to improve!)
                 if legacy_option_to_remove_negative_values
                     threshold = 0.1;

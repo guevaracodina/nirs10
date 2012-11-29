@@ -6,7 +6,7 @@ function out = nirs_run_criugm(job)
 outNIRSmat ={};
 % Study configuration
 study_p = job.study_cfg.study_path{:};
-
+if ~exist(study_p,'dir'), mkdir(study_p); end
 % Loop over all subjects
 sN = size(job.subj,2);
 for is=1:sN

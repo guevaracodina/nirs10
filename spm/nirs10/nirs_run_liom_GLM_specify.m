@@ -1,25 +1,6 @@
 function out = nirs_run_liom_GLM_specify(job)
-
-%TOO ANNOYING: was changed back to wls_bglm_specify -- just kept below as a
-%reminder:
-%Specify a GLM for each subject, each session and each chromophore
-%Note: if a previously saved batch from a version of nirs10 prior to
-%April 22 2011 fails to run, this maybe due to a renaming of the field
-%wls_bglm_specify to liom_GLM_specify in job. If one needs to use such
-%a batch, one could replace the wls_bglm_specify field by liom_GLM_specify
-%using
-%job.('liom_GLM_specify')=job.('wls_bglm_specify')
-%job = rmfield(job, 'wls_bglm_specify');
-%ModulePosition=1;
-%where job is the whole matlabbatch{ModulePosition}.spm.tools.nirs10.model_specify
-%and saving the modified batch job
-
-%MP=1;
-%matlabbatch{MP}.spm.tools.nirs10.model_specify.('liom_GLM_specify')=matlabbatch{MP}.spm.tools.nirs10.model_specify.('wls_bglm_specify')
-%matlabbatch{MP}.spm.tools.nirs10.model_specify = rmfield(matlabbatch{MP}.spm.tools.nirs10.model_specify, 'wls_bglm_specify');
-%save('','matlabbatch')
 filter_vasomotion = 1;
-
+filter_design_matrix = 1; % Michèle Aug 5, 2012 : completely eliminated this option 
 %physiological confounds
 if isfield(job.NIRSchannelsConfound,'NIRSconfounds')
     NIRSconfounds = job.NIRSchannelsConfound.NIRSconfounds;
@@ -34,13 +15,6 @@ end
 flag_window = job.flag_window;
 %Option to skip generation of trRV. TrRV is required for statistics
 generate_trRV = job.generate_trRV;
-%Option only used to search for a bug; correct option to use is
-%always filter_design_matrix = 0; -- This comment seems incorrect now --
-%filter_design_matrix = 1 is required now to eliminate the bias when using
-%the Butterworth high pass filter prior to the GLM
-% Michèle Aug 5, 2012 : completely eliminated this option 
-%filter_design_matrix = job.filter_design_matrix;
-filter_design_matrix = 1;
 
 if isfield(job.vasomotion_choice,'vasomotion_on')
     vasomotion_on = 1;
@@ -248,16 +222,18 @@ for Idx=1:size(job.NIRSmat,1)
                         C = [C NIRS.Dt.fir.Sess(iSess).mR{1}];
                         Cname = [Cname {'M'}];
                     end
-                    wl = NIRS.Cf.dev.wl;
-                    HbO_like = [];
-                    for i=1:length(wl)
-                        if wl(i) > 750 %in nanometer
-                            %found a wavelength that is HbO-like
-                            HbO_like = [HbO_like i];
-                        end
-                    end
+                    %wl = NIRS.Cf.dev.wl;
+%                     HbO_like = [];
+%                     for i=1:length(wl)
+%                         if wl(i) > 750 %in nanometer
+%                             %found a wavelength that is HbO-like
+%                             HbO_like = [HbO_like i];
+%                         end
+%                     end
+                     
                     %HbO channels
-                    chHbO = NIRS.Cf.H.C.wl== HbO_like;
+                    %chHbO = NIRS.Cf.H.C.wl== HbO_like;
+                    chHbO = 1:NC/2;
                     fullHbO = NIRS.Cf.H.C.gp(chHbO);
                     if vasomotion_on
                         %get data for that session
@@ -316,15 +292,16 @@ for Idx=1:size(job.NIRSmat,1)
                     end
                     if NIRSconfoundsOn
                         wl = NIRS.Cf.dev.wl;
-                        HbO_like = [];
-                        for i=1:length(wl)
-                            if wl(i) > 750 %in nanometer
-                                %found a wavelength that is HbO-like
-                                HbO_like = [HbO_like i];
-                            end
-                        end
+%                         HbO_like = [];
+%                         for i=1:length(wl)
+%                             if wl(i) > 750 %in nanometer
+%                                 %found a wavelength that is HbO-like
+%                                 HbO_like = [HbO_like i];
+%                             end
+%                         end
                         %HbO channels
-                        chHbO = NIRS.Cf.H.C.wl== HbO_like;
+                        %chHbO = NIRS.Cf.H.C.wl== HbO_like;
+                        chHbO = 1:NC/2;
                         fullHbO = NIRS.Cf.H.C.gp(chHbO);
                         
                         [B_HbO IX] = sort(fullHbO); %sort in ascending order
@@ -363,11 +340,11 @@ for Idx=1:size(job.NIRSmat,1)
                         ch_keep = 1:NC;
                         kept_ch = ones(1,NC);
                         kept_ch(HbOIX4) = 0;
-                        if HbO_like == 1
+                        %if HbO_like == 1
                             kept_ch(HbOIX4+NC/2) = 0;
-                        else
-                            kept_ch(HbOIX4-NC/2) = 0;
-                        end
+                        %else
+                        %    kept_ch(HbOIX4-NC/2) = 0;
+                        %end
                         ch_keep = ch_keep(logical(kept_ch));
                         [dir3, fil3, ext3] = fileparts(rDtp{iSess,1});
                         new_name = fullfile(spm_dir,[fil3 ext3]);
