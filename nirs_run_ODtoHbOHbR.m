@@ -49,10 +49,10 @@ for Idx=1:size(job.NIRSmat,1)
             % that has been performed
             lst = length(NIRS.Dt.fir.pp);
             rDtp = NIRS.Dt.fir.pp(lst).p; % path for files to be processed
-            Cgp = NIRS.Cf.H.C.gp; % source-detector distances
+            Cgp = NIRS.Cf.H.C.gp; % source-detector distances -- for Criugm, these maybe nominal rather than actual distances
             Cwl = NIRS.Cf.H.C.wl; % channels wavelength indexes (e.g. wl #1 or #2)
             NC = NIRS.Cf.H.C.N; % number of channels
-            wl = NIRS.Cf.dev.wl; % device wavenlengths
+            wl = NIRS.Cf.dev.wl; % device wavelengths
             
             % Partial volume correction factor
             if isfield(job.PVF,'PVFval') && ~isempty(job.PVF.PVFval)
