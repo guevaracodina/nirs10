@@ -408,46 +408,11 @@ for Idx=1:size(job.NIRSmat,1)
                                     tSPM.xX.a2 = (tSPM.xX.beta(1,:) ./ sigma);
                                 end %norm_bf = 4.7506 = 1/max(X(:,1)) for a protocol with only one spike
                             end
-                            
-                            tSPM.xX.b  = tSPM.xX.beta(V2r,:) ./ tSPM.xX.beta(1,:);
-                            tSPM.xX.b2  = tSPM.xX.beta(V2r,:) ./ sigma;
-                            %tSPM.xX.a2 and b2 give the sigma-normalized
-                            %amplitudes, for each channel
-                            %Careful, HARD-CODED, this might not be correct
-                            %order of HbO and HbR channels
-                            CHbO = 1:(NC/2);
-                            CHbR = (1+(NC/2)):NC;
-                            [tSPM.xX.S.OtaVmax, tSPM.xX.S.OtaCmax] = max(tSPM.xX.t(1,CHbO));
-                            [tSPM.xX.S.OtaVmin, tSPM.xX.S.OtaCmin] = min(tSPM.xX.t(1,CHbO));
-                            [tSPM.xX.S.OtbVmax, tSPM.xX.S.OtbCmax] = max(tSPM.xX.t(V2r,CHbO));
-                            [tSPM.xX.S.OtbVmin, tSPM.xX.S.OtbCmin] = min(tSPM.xX.t(V2r,CHbO));
-                            [tSPM.xX.S.RtaVmax, tSPM.xX.S.RtaCmax] = max(tSPM.xX.t(1,CHbR));
-                            [tSPM.xX.S.RtaVmin, tSPM.xX.S.RtaCmin] = min(tSPM.xX.t(1,CHbR));
-                            [tSPM.xX.S.RtbVmax, tSPM.xX.S.RtbCmax] = max(tSPM.xX.t(V2r,CHbR));
-                            [tSPM.xX.S.RtbVmin, tSPM.xX.S.RtbCmin] = min(tSPM.xX.t(V2r,CHbR));
-                            [tSPM.xX.S.OaVmax, tSPM.xX.S.OaCmax] = max(tSPM.xX.beta(1,CHbO)./ sigma(CHbO));
-                            [tSPM.xX.S.OaVmin, tSPM.xX.S.OaCmin] = min(tSPM.xX.beta(1,CHbO)./ sigma(CHbO));
-                            [tSPM.xX.S.ObVmax, tSPM.xX.S.ObCmax] = max(tSPM.xX.beta(V2r,CHbO)./ sigma(CHbO));
-                            [tSPM.xX.S.ObVmin, tSPM.xX.S.ObCmin] = min(tSPM.xX.beta(V2r,CHbO)./ sigma(CHbO));
-                            [tSPM.xX.S.RaVmax, tSPM.xX.S.RaCmax] = max(tSPM.xX.beta(1,CHbR)./ sigma(CHbR));
-                            [tSPM.xX.S.RaVmin, tSPM.xX.S.RaCmin] = min(tSPM.xX.beta(1,CHbR)./ sigma(CHbR));
-                            [tSPM.xX.S.RbVmax, tSPM.xX.S.RbCmax] = max(tSPM.xX.beta(V2r,CHbR)./ sigma(CHbR));
-                            [tSPM.xX.S.RbVmin, tSPM.xX.S.RbCmin] = min(tSPM.xX.beta(V2r,CHbR)./ sigma(CHbR));
-
-                            [tSPM.xX.S.OtaVmax, tSPM.xX.S.OtaCmax] = max(tSPM.xX.t(1,CHbO));
-                            [tSPM.xX.S.OtaVmin, tSPM.xX.S.OtaCmin] = min(tSPM.xX.t(1,CHbO));
-                           % [tSPM.xX.S.OtbVmax, tSPM.xX.S.OtbCmax] = max(tSPM.xX.t(V2r,CHbO));
-                           % [tSPM.xX.S.OtbVmin, tSPM.xX.S.OtbCmin] = min(tSPM.xX.t(V2r,CHbO));
-                            [tSPM.xX.S.RtaVmax, tSPM.xX.S.RtaCmax] = max(tSPM.xX.t(1,CHbR));
-                            [tSPM.xX.S.RtaVmin, tSPM.xX.S.RtaCmin] = min(tSPM.xX.t(1,CHbR));
-                           % [tSPM.xX.S.RtbVmax, tSPM.xX.S.RtbCmax] = max(tSPM.xX.t(V2r,CHbR));
-                           % [tSPM.xX.S.RtbVmin, tSPM.xX.S.RtbCmin] = min(tSPM.xX.t(V2r,CHbR));
-
-                            
+                                 
                         catch exception
                             disp(exception.identifier)
                             disp(exception.stack(1));
-                            disp('Problem generating OtaVmax, etc.');
+                            disp('Problem generating ... etc.');
                         end
                         %Add piece of SPM to the whole SPM
                         try
@@ -484,51 +449,7 @@ for Idx=1:size(job.NIRSmat,1)
                         end
                     end %end for 1:nSubSess
                 end
-                %group weighted and unweighted amplitudes
-                try
-                    tmpa2 = zeros(size(SPM.xXn{1}.a2));
-                    tmpb2 = zeros(size(SPM.xXn{1}.b2));
-                    for n1=1:iSPM
-                        %unweighted
-                        tmpa2 = tmpa2 + SPM.xXn{n1}.a2;
-                        tmpb2 = tmpb2 + SPM.xXn{n1}.b2;
-                    end
-                    tmpa2 = tmpa2/iSPM;
-                    tmpb2 = tmpb2/iSPM;
-                    %weighted
-                    SPM.Gr.a2_uw = tmpa2;
-                    SPM.Gr.b2_uw = tmpb2;
-                    
-                    %only do calculation if trRV, trRVRV and erdf are available
-                    if ~isnan(SPM.xXn{1}.trRV) && ~(SPM.xXn{1}.trRV == 0)
-                        nch = length(SPM.xXn{1}.ResSS);
-                        cova = zeros(iSPM,nch);
-                        covb = zeros(iSPM,nch);
-                        betaa = zeros(1,nch);
-                        betab = zeros(1,nch);
-                        %fill data
-                        for n1=1:iSPM
-                            cova(n1,:) = SPM.xXn{n1}.ResSS./SPM.xXn{n1}.trRV*SPM.xXn{n1}.Bcov(1,1);
-                            covb(n1,:) = SPM.xXn{n1}.ResSS./SPM.xXn{n1}.trRV*SPM.xXn{n1}.Bcov(V2r,V2r);
-                            betaa(n1,:) = SPM.xXn{n1}.beta(1,:);
-                            betab(n1,:) = SPM.xXn{n1}.beta(V2r,:);
-                        end
-                        %group - 1st Volterra
-                        numera = betaa./cova;
-                        SPM.Gr.betaa = sum(numera);
-                        denuma = sqrt(sum(1./cova));
-                        SPM.Gr.ta = SPM.Gr.betaa./denuma;
-                        %2nd Volterra
-                        numerb = betab./covb;
-                        SPM.Gr.betab = sum(numerb);
-                        denumb = sqrt(sum(1./covb));
-                        SPM.Gr.tb = SPM.Gr.betab./denumb;
-                    end
-                catch exception
-                    disp(exception.identifier)
-                    disp(exception.stack(1));
-                    disp('Problem generating betaa, etc.');
-                end
+                
                 try
                     K = SPM.xX.K;
                     K = rmfield(K, 'X');

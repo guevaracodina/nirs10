@@ -122,7 +122,7 @@ anova2_sessions.name    = 'Sessions to include';
 anova2_sessions.tag     = 'anova2_sessions';
 anova2_sessions.strtype = 'r';
 anova2_sessions.num     = [1 Inf];
-anova2_sessions.val     = {[1 1]};
+anova2_sessions.val     = {[1]};
 anova2_sessions.help    = {'Specify which sessions to include in the anova'
     'Currently, this option is not functional. Only the first session will be used,'
     'and will not be included in the mixed 2-anova'}';
