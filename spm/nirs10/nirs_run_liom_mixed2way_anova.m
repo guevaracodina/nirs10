@@ -11,9 +11,9 @@ for l1=1:Z.anova_level
     level_name{l1} = job.level(l1).level_name;
     level_subj{l1} = job.level(l1).level_subj;
 end
-Z.anova2_sessions = job.anova2_sessions; %might be needed for Sarah
+Z.anova2_sessions = unique(job.anova2_sessions); %might be needed for Sarah
 Z.level_subj = level_subj;
-Z.anova2_contrasts = job.anova2_contrasts;
+Z.anova2_contrasts = unique(job.anova2_contrasts);
 Z.LKC = job.StatMethod;
 Z.StatStr = 'EC';
 Z.CorrectionMethod = job.CorrectionMethod;
@@ -54,7 +54,7 @@ end
 TOPO = [];
 
 %Load NIRS.mat information
-try    
+try
     [dir0,dummy,dummy2] = fileparts(job.NIRSmat{1});
     %extract previous directory
     tmp = strfind(dir0,filesep);
@@ -134,7 +134,7 @@ try
                     nC0 = length(Z.anova2_contrasts);
                     nS0 = length(Z.anova2_sessions);
                     if nC0 > 1
-                        if nS0 >1 
+                        if nS0 >1
                             disp(['Problem, there are too many sessions or ' ...
                                 'too many conditions: either there should be only ' ...
                                 'one session, or only one condition, with '...
@@ -229,7 +229,7 @@ try
                         end %end for s1
                         
                         if z1==1 && h1 == 1%no need to repeat calculation
-                            cbeta{h1} = squeeze(cbeta{h1}); %squeeze not needed 
+                            cbeta{h1} = squeeze(cbeta{h1}); %squeeze not needed
                             %Construct each part of design matrix separately
                             Xs = []; %subject effects
                             Xa = []; %main effect of A (Subjects)
@@ -239,9 +239,11 @@ try
                             
                             sX = ns0*nS0*nC0;
                             %subject effects
-                            for s1=1:nS0
-                                for c1=1:nC0
-                                    Xs= [Xs; eye(ns0)]; %intra-subject effects
+                            if Z.includeSubjectEffects
+                                for s1=1:nS0
+                                    for c1=1:nC0
+                                        Xs= [Xs; eye(ns0)]; %intra-subject effects
+                                    end
                                 end
                             end
                             %main effect of subject
@@ -251,7 +253,7 @@ try
                                     x(level_subj{s1}+((c1-1)*ns0)) = 1;
                                     x(level_subj{s1-1}+((c1-1)*ns0)) = -1;
                                 end
-                                    Xa = [Xa x];
+                                Xa = [Xa x];
                             end
                             
                             %main effect of condition
@@ -275,9 +277,9 @@ try
                                 for c1=2:nC0
                                     x = zeros(sX,1);
                                     x(level_subj{s1}+(c1-2)*ns0) = 1;
-                                    x(level_subj{s1-1}+(c1-1)*ns0) = 1; 
+                                    x(level_subj{s1-1}+(c1-1)*ns0) = 1;
                                     x(level_subj{s1}+(c1-1)*ns0) = -1;
-                                    x(level_subj{s1-1}+(c1-2)*ns0) = -1; 
+                                    x(level_subj{s1-1}+(c1-2)*ns0) = -1;
                                     Xab = [Xab x];
                                 end
                             end
@@ -287,7 +289,7 @@ try
                                 for s1=2:length(level_subj) %B
                                     x = zeros(sX,1);
                                     x(level_subj{s1}+(c1-1)*ns0) = 1;
-                                    x(level_subj{s1-1}+(c1-1)*ns0) = -1; 
+                                    x(level_subj{s1-1}+(c1-1)*ns0) = -1;
                                     XeA = [XeA x];
                                 end
                             end
@@ -297,7 +299,7 @@ try
                                 for c1=2:nC0 %B
                                     x = zeros(sX,1);
                                     x(level_subj{s1}+(c1-1)*ns0) = 1;
-                                    x(level_subj{s1}+(c1-2)*ns0) = -1; 
+                                    x(level_subj{s1}+(c1-2)*ns0) = -1;
                                     XeB = [XeB x];
                                 end
                             end
@@ -314,19 +316,19 @@ try
                                 X = [Xab X0];
                                 A = liom_group_2A(cbeta{h1},X,X0,W.s1,W.s2,Z); %careful, s1 (session counter) not same as W.s1 (size of image)!
                                 %Mauchly test
-                                A.Mauchly = nirs_Mauchly(cbeta{h1},Z.p_value);
+                                %A.Mauchly = nirs_Mauchly(cbeta{h1},Z.p_value);
                                 %fill B:
                                 clear B
                                 B.WInFacs = zeros(sX,1);
-%                                 %1st factor: Subjects
-%                                 for i0=1:nS0
-%                                     B.WInFacs((i0-1)*ns0*nC0+(1:ns0*nC0),1) = i0;
-%                                 end
+                                %                                 %1st factor: Subjects
+                                %                                 for i0=1:nS0
+                                %                                     B.WInFacs((i0-1)*ns0*nC0+(1:ns0*nC0),1) = i0;
+                                %                                 end
                                 %2nd factor: Contrasts or sessions
                                 tmp0 = zeros(nC0*ns0,nS0);
                                 for i0=1:nC0
                                     tmp0((i0-1)*ns0+(1:ns0),:) = i0;
-                                end                                
+                                end
                                 B.WInFacs(:,1) = tmp0(:);
                                 B.S = zeros(ns0*nB,1);
                                 for is0 = 1:ns0
@@ -334,16 +336,16 @@ try
                                         B.S(is0+ns0*(nB0-1)) = is0;
                                     end
                                 end
-%                                 for is0 = 1:ns0
-%                                     for l1=1:Z.anova_level
-%                                         if any(is0 == level_subj{l1})
-%                                             for nB0 = 1:nB
-%                                                 B.S(is0+ns0*(nB0-1)) = l1;
-%                                             end
-%                                         end
-%                                     end
-%                                 end
-%                                    
+                                %                                 for is0 = 1:ns0
+                                %                                     for l1=1:Z.anova_level
+                                %                                         if any(is0 == level_subj{l1})
+                                %                                             for nB0 = 1:nB
+                                %                                                 B.S(is0+ns0*(nB0-1)) = l1;
+                                %                                             end
+                                %                                         end
+                                %                                     end
+                                %                                 end
+                                %
                                 x = zeros(sX,1);
                                 for s1=1:length(level_subj)
                                     for c1=1:nC0
@@ -354,7 +356,7 @@ try
                                 %The number of subjects at each level of
                                 %the between-factor must be equal!
                                 A = calc_hfgg(cbeta{h1},A,ns0,B,2);
-                                                               
+                                
                                 %Store for cases 2 to 5
                                 Eps = A.Eps;
                                 %A is output only to get strA -- not clean
@@ -379,7 +381,7 @@ try
                                 %Effect of A within levels of B
                                 %loop over levels of B
                                 for y1=1:Z.anova_level
-                                    strA = ['effAonB' int2str(y1)];                                    
+                                    strA = ['effAonB' int2str(y1)];
                                     ind = 1:size(XeA,2);
                                     ind(y1) = [];
                                     X0 = [XeA(:,ind) Xb M]; %remove subject effects
@@ -419,7 +421,7 @@ try
                                 call_save_assembled_figures(Z,W,H{y1},0);
                             end
                         case 5
-                            for y1 = 1:nS0
+                            for y1 = 1:nB
                                 Z.strA = ['effBonA' int2str(y1)];
                                 call_save_assembled_figures(Z,W,H{y1},0);
                             end
@@ -429,7 +431,7 @@ try
         end %end for v1
         save(ftopo,'TOPO');
         save(fullfile(dir_group,'big_TOPO.mat'),'big_TOPO','-v7.3');
-        NIRS.flags.anovamixed2_OK = 1;       
+        NIRS.flags.anovamixed2_OK = 1;
         save(newNIRSlocation,'NIRS');
     end
 catch exception

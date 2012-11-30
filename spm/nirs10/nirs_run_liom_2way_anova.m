@@ -212,9 +212,11 @@ try
                             
                             sX = ns0*nS0*nC0;
                             %subject effects
-                            for s1=1:nS0
-                                for c1=1:nC0
-                                    Xs= [Xs; eye(ns0)]; %intra-subject effects
+                            if Z.includeSubjectEffects
+                                for s1=1:nS0
+                                    for c1=1:nC0
+                                        Xs= [Xs; eye(ns0)]; %intra-subject effects
+                                    end
                                 end
                             end
                             %main effect of session (intensity)
@@ -317,7 +319,7 @@ try
                                 X = [Xab X0];
                                 A = liom_group_2A(cbeta{h1},X,X0,W.s1,W.s2,Z); %careful, s1 (session counter) not same as W.s1 (size of image)!
                                 %Mauchly test
-                                    A.Mauchly = nirs_Mauchly(cbeta{h1},Z.p_value);
+                                A.Mauchly = nirs_Mauchly(cbeta{h1},Z.p_value);
                                 %fill B:
                                 clear B
                                 B.WInFacs = zeros(sX,2);
@@ -329,7 +331,7 @@ try
                                 tmp0 = zeros(nC0*ns0,nS0);
                                 for i0=1:nC0
                                     tmp0((i0-1)*ns0+(1:ns0),:) = i0;
-                                end                                
+                                end
                                 B.WInFacs(:,2) = tmp0(:);
                                 B.S = [];
                                 B.BTFacs = [];
@@ -359,7 +361,7 @@ try
                                 %Effect of A within levels of B
                                 %loop over levels of B
                                 for y1=1:nC0
-                                    strA = ['effAonB' int2str(y1)];                                    
+                                    strA = ['effAonB' int2str(y1)];
                                     rs = 1+(y1-1)*(nS0-1);
                                     re = rs + nS0-2;
                                     ind = 1:size(XeA,2);
@@ -423,7 +425,7 @@ try
         end %end for v1
         save(ftopo,'TOPO');
         save(fullfile(dir_group,'big_TOPO.mat'),'big_TOPO','-v7.3');
-        NIRS.flags.anova2_OK = 1;       
+        NIRS.flags.anova2_OK = 1;
         save(newNIRSlocation,'NIRS');
     end
 catch exception

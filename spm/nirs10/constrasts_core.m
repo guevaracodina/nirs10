@@ -21,16 +21,16 @@ end
 %Try to change it to "if Z.Avg == 1"
 %18/06/2012
 %**************************************************************************
-if Z.Avg == 1
-%if isfield(Z,'Avg')
-%**************************************************************************
+if Z.Avg == 1 %This boolean is used to operate in the averaging mode instead of the GLM mode
+    %if isfield(Z,'Avg')
+    %**************************************************************************
     W.Avg = Z.Avg;
-if Z.Avg == 1
-    Z.UseCorrelRes = 0;
-    Z.LKC = 0;
-    xX.erdf = 1;
-    Z.output_unc = 1;
-end
+    if Z.Avg == 1
+        Z.UseCorrelRes = 0;
+        Z.LKC = 0;
+        xX.erdf = 1;
+        Z.output_unc = 1;
+    end
 else
     W.Avg = 0;
 end
@@ -106,9 +106,9 @@ try
                     if k0 <= nC
                         Z.scon = [Z.scon xCon(k0).name];
                     end
-                end 
+                end
                 call_save_assembled_figures(Z,W,H{nCl},f1);
-            end           
+            end
         end
     else
         call_save_assembled_figures(Z,W,H{1},f1);

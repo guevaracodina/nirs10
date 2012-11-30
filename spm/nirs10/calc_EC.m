@@ -29,7 +29,7 @@ while ~pOK && lc < 2
     a = 1/(2*pi);
     switch stat
         case 'T'
-            t = 0:0.001:7;
+            t = 0:0.001:11; %Could perhaps increase max value? initially: 7
             p = zeros(1,length(t));
             for i=1:length(t)
                 ti = t(i);
@@ -48,7 +48,7 @@ while ~pOK && lc < 2
             k2 = 1/2*(k-2);
             kv = -1/2*(v+k-2);
             kdv = k/v;
-            t = 0:0.01:70;
+            t = 0:0.01:150; %initially: 70; %Could perhaps increase max value?
             p = zeros(1,length(t));
             for i=1:length(t)
                 ti = t(i);
