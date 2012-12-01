@@ -9,8 +9,10 @@ function normalize_baseline = nirs_run_normalize_baseline_cfg
 Normalize_OD = cfg_menu;
 Normalize_OD.tag  = 'Normalize_OD';
 Normalize_OD.name = 'Normalization method';
-Normalize_OD.labels = {'Median','Initial Value','Mean','Median- use on session 1 for all'};
-Normalize_OD.values = {0,1,2,3};
+Normalize_OD.labels = {'Median','Last Value','Mean',...
+    'Median- use on session 1 for all','Mean of first 60 seconds only',...
+    'Mean of first 10 seconds only','Mean of first 60 seconds only from the first session only (used for all other sessions)'};
+Normalize_OD.values = {0,1,2,3,4,5,6};
 Normalize_OD.def  = @(val)nirs_get_defaults('preprocessNIRS.normalize_baseline.Normalize_OD', val{:});
 Normalize_OD.help = {'Choose normalization of Optical Densities'
     'Median (preferred), Initial value, or Mean.'
