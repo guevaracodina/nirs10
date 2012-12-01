@@ -15,12 +15,12 @@ try
             end
             div_factor = div_factor0;
         case 4 %mean of first 60 seconds
-            div_factor = mean(d(:,win(1:(fs*60))),2);
+            div_factor = mean(d(:,win(1:(round(fs*60)))),2);
         case 5 %mean of first 10 seconds
-            div_factor = mean(d(:,win(1:(fs*10))),2);
+            div_factor = mean(d(:,win(1:(round(fs*10)))),2);
         case 6 %mean of first 60 seconds of first session only
             if f == 1
-                div_factor0 = mean(d(:,win(1:(fs*60))),2);
+                div_factor0 = mean(d(:,win(1:(round(fs*60)))),2);
             end
             div_factor = div_factor0;
         otherwise %take median
