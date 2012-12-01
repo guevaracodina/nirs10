@@ -1,12 +1,9 @@
 function out = nirs_run_normalize_baseline(job)
-
 % Filename prefix for normalized files
 prefix = 'b'; % for "baseline"
-
 % Option to remove negative values - such channels are probably too noisy to be
 % useful anyway - but a better method should be found
 legacy_option_to_remove_negative_values = 1;
-
 % User-specified options %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 bl_m = job.Normalize_OD; % {0='Median',1='Initial Value',2='Mean'};
@@ -17,7 +14,7 @@ normalization_type = job.normalization_type; % {1='Global', 2='By bad point segm
 %Vision Analyzer 2
 scaling_factor = job.Analyzer_sf; %job.scaling_factor; % Scaling factor applied to the amplitude of all channels
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+div_factor0 = 1;
 % Loop over subjects
 for Idx=1:size(job.NIRSmat,1)
     % Load NIRS.mat information
@@ -94,28 +91,9 @@ for Idx=1:size(job.NIRSmat,1)
                         catch
                             e = [];
                         end
-                        
-                        try
-                            % Normalization factor
-                            switch bl_m
-                                case 0 %0: Median;
-                                    div_factor = median(e,2);
-                                case 1 %1: Initial value of that interval
-                                    div_factor = e(:,1);
-                                case 2 %mean
-                                    div_factor = mean(e,2);
-                                case 3 %median - session 1
-                                    %do nothing
-                                    if f == 1
-                                        div_factor0 = median(e,2);
-                                    end
-                                    div_factor = div_factor0;
-                                otherwise %take median
-                                    div_factor = median(e,2);
-                            end
-                        catch
-                            div_factor = 1;
-                        end
+                        win = 1:size(e,2);
+                        [div_factor div_factor0] = get_div_factor(e,fs,bl_m,f,win,div_factor0);                           
+                                                
                         % Perform normalization
                         try
                             if ~isempty(e)
@@ -174,27 +152,9 @@ for Idx=1:size(job.NIRSmat,1)
                                 wins = 1;
                             end
                             win = wins:wine;
-                            try
-                                % Normalization factor
-                                switch bl_m
-                                    case 0 %0: Median;
-                                        div_factor = median(d(:,win),2);
-                                    case 1 %1: Initial value - not too sensible - better last value
-                                        div_factor = d(:,win(end));
-                                    case 2 %mean
-                                        div_factor = mean(d(:,win),2);
-                                    case 3 %median - session 1
-                                        %do nothing
-                                        if f == 1
-                                            div_factor0 = median(e,2);
-                                        end
-                                        div_factor = div_factor0;
-                                    otherwise %take median
-                                        div_factor = median(d(:,win),2);
-                                end
-                            catch
-                                div_factor = 1;
-                            end
+                            
+                            [div_factor div_factor0] = get_div_factor(d,fs,bl_m,f,win,div_factor0);                           
+                         
                             % Normalize to the next stimulus only
                             if i1 < length(onsets)
                                 wine2 = round(onsets(i1+1)*fs)-1;
@@ -211,28 +171,9 @@ for Idx=1:size(job.NIRSmat,1)
                         %no markers available - then normalize whole series
                         bpi = [];
                         bpd = [];
-                        
-                        try
-                            % Normalization factor
-                            switch bl_m
-                                case 0 %0: Median;
-                                    div_factor = median(d,2);
-                                case 1 %1: Initial value
-                                    div_factor = d(:,1);
-                                case 2 %mean
-                                    div_factor = mean(d,2);
-                                case 3 %median - session 1
-                                    %do nothing
-                                    if f == 1
-                                        div_factor0 = median(d,2);
-                                    end
-                                    div_factor = div_factor0;
-                                otherwise %take median
-                                    div_factor = median(d,2);
-                            end
-                        catch
-                            div_factor = 1;
-                        end
+                        win = 1:size(d,2);
+                        [div_factor div_factor0] = get_div_factor(d,fs,bl_m,f,win,div_factor0);                           
+                                               
                         div_factor = div_factor * ones(1,size(d,2));
                         
                         % Perform normalization
