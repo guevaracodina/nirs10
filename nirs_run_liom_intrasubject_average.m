@@ -34,15 +34,15 @@ else
             HPFbutter = 3; %no high pass filter
             hpf_butter_freq = 0; %not used
             hpf_butter_order = 3; %not used
-        else   
-            if isfield(job.hpf_butter,'SPM_cosine_filter')                
+        else
+            if isfield(job.hpf_butter,'SPM_cosine_filter')
                 HPFbutter = 4; %no high pass filter
-                hpf_butter_freq = 1/300; %1/240; %4 minute  
+                hpf_butter_freq = 1/300; %1/240; %4 minute
                 hpf_butter_order = 3; %not used
             else
-            HPFbutter = 0; %no high pass filter
-            hpf_butter_freq = 0; %not used
-            hpf_butter_order = 3; %not used
+                HPFbutter = 0; %no high pass filter
+                hpf_butter_freq = 0; %not used
+                hpf_butter_order = 3; %not used
             end
         end
     end
@@ -91,7 +91,7 @@ for Idx=1:size(job.NIRSmat,1)
         %always store SPM analysis in some directory
         if ~isfield(job.NIRSmatCopyChoice,'NIRSmatCopy')
             job.NIRSmatCopyChoice.NIRSmatCopy.NewNIRSdir = 'Avg';
-        end            
+        end
         [NIRS newNIRSlocation]= nirs_load(job.NIRSmat{Idx,1},job.NIRSmatCopyChoice,job.force_redo);
         job.NIRSmat{Idx,1} = newNIRSlocation;
         if ~isempty(NIRS) && (~isfield(NIRS.flags,'Avg_OK') || job.force_redo)
@@ -163,7 +163,7 @@ for Idx=1:size(job.NIRSmat,1)
                 end
             end
             
-            %Adding confound regressors            
+            %Adding confound regressors
             for f=1:nsess
                 iSess = idx_sess(f);
                 C = [];
@@ -180,16 +180,17 @@ for Idx=1:size(job.NIRSmat,1)
                         C = [C NIRS.Dt.fir.Sess(iSess).mR{1}];
                         Cname = [Cname {'M'}];
                     end
-                    wl = NIRS.Cf.dev.wl;
-                    HbO_like = [];
-                    for i=1:length(wl)
-                        if wl(i) > 750 %in nanometer
-                            %found a wavelength that is HbO-like
-                            HbO_like = [HbO_like i];
-                        end
-                    end
+                    %wl = NIRS.Cf.dev.wl;
+                    %HbO_like = [];
+                    %for i=1:length(wl)
+                    %    if wl(i) > 750 %in nanometer
+                    %       %found a wavelength that is HbO-like
+                    %       HbO_like = [HbO_like i];
+                    %   end
+                    %end
                     %HbO channels
-                    chHbO = NIRS.Cf.H.C.wl== HbO_like;
+                    %chHbO = NIRS.Cf.H.C.wl== HbO_like;
+                    chHbO = 1:NC/2;
                     fullHbO = NIRS.Cf.H.C.gp(chHbO);
                     if vasomotion_on
                         %get data for that session
@@ -210,7 +211,7 @@ for Idx=1:size(job.NIRSmat,1)
                             tmpC = ButterHPF(fs,cutoff,FilterOrder,tmpC);
                             cutoff=0.125; %PP 8 s
                             tmpC = ButterLPF(fs,cutoff,FilterOrder,tmpC);
-                        end        
+                        end
                         switch select_chromophore
                             case {1 2 3}
                                 C = [C tmpC];
@@ -248,15 +249,16 @@ for Idx=1:size(job.NIRSmat,1)
                     end
                     if NIRSconfoundsOn
                         wl = NIRS.Cf.dev.wl;
-                        HbO_like = [];
-                        for i=1:length(wl)
-                            if wl(i) > 750 %in nanometer
-                                %found a wavelength that is HbO-like
-                                HbO_like = [HbO_like i];
-                            end
-                        end
+                        %HbO_like = [];
+                        %for i=1:length(wl)
+                        %    if wl(i) > 750 %in nanometer
+                        %        %found a wavelength that is HbO-like
+                        %        HbO_like = [HbO_like i];
+                        %   end
+                        %end
                         %HbO channels
-                        chHbO = NIRS.Cf.H.C.wl== HbO_like;
+                        %chHbO = NIRS.Cf.H.C.wl== HbO_like;
+                        chHbO = 1:NC/2;
                         fullHbO = NIRS.Cf.H.C.gp(chHbO);
                         
                         [B_HbO IX] = sort(fullHbO); %sort in ascending order
@@ -295,11 +297,11 @@ for Idx=1:size(job.NIRSmat,1)
                         ch_keep = 1:NC;
                         kept_ch = ones(1,NC);
                         kept_ch(HbOIX4) = 0;
-                        if HbO_like == 1
-                            kept_ch(HbOIX4+NC/2) = 0;
-                        else
-                            kept_ch(HbOIX4-NC/2) = 0;
-                        end
+                        %if HbO_like == 1
+                        kept_ch(HbOIX4+NC/2) = 0;
+                        %else
+                        %    kept_ch(HbOIX4-NC/2) = 0;
+                        %end
                         ch_keep = ch_keep(logical(kept_ch));
                         [dir3, fil3, ext3] = fileparts(rDtp{iSess,1});
                         new_name = fullfile(spm_dir,[fil3 ext3]);
@@ -397,11 +399,11 @@ for Idx=1:size(job.NIRSmat,1)
                     for i = 1:length(Fc)
                         X(:,Fc(i).i) = spm_orth(X(:,Fc(i).i));
                     end
-% %                     %Start with an empty design matrix; don't convolve with
-% %                     %basis functions
-% %                     X = []; %only used for regressing out confounds
-% %                     Xn{1} = [];
-% %                     Fc = [];
+                    % %                     %Start with an empty design matrix; don't convolve with
+                    % %                     %basis functions
+                    % %                     X = []; %only used for regressing out confounds
+                    % %                     Xn{1} = [];
+                    % %                     Fc = [];
                     % get user specified regressors
                     %================================
                     try
@@ -504,40 +506,40 @@ for Idx=1:size(job.NIRSmat,1)
             try SPM.xX.opt = Opt; catch; end
             
             %%% updated for wavelet-MDL detrending 2009-03-19
-
-                str = 'Detrending?';
-                if isempty(strfind(HPF, 'wavelet')) == 0 % wavelet-MDL
-                    index_NT = find(HPF == ',');
-                    if isempty(index_NT) == 1
-                        NT = 4;
-                    else
-                        NT = str2num(HPF(index_NT+1:end));
-                    end
-                    SPM.xX.K.HParam.type = 'Wavelet-MDL';
-                    SPM.xX.K.HParam.M = NT;
-                elseif isempty(strfind(HPF, 'DCT')) == 0 % DCT
-                    index_cutoff = find(HPF == ',');
-                    if isempty(index_cutoff) == 1
-                        cutoff = 128;
-                    else
-                        cutoff = str2num(HPF(index_cutoff+1:end));
-                    end
-                    SPM.xX.K.HParam.type = 'DCT';
-                    SPM.xX.K.HParam.M = cutoff;
-                elseif isempty(strfind(HPF, 'none')) == 0 %no filter
-                    SPM.xX.K.HParam.type = 'none';
-                end
-                
-                if isempty(strfind(LPF, 'hrf')) == 0 % hrf smoothing
-                    SPM.xX.K.LParam.type = 'hrf';
-                elseif isempty(strfind(LPF, 'gaussian')) == 0 % Gaussian smoothing
-                    SPM.xX.K.LParam.FWHM = FWHM;
-                    SPM.xX.K.LParam.type = 'Gaussian';
-                else
-                    SPM.xX.K.LParam.type = 'none';
-                end
             
-         
+            str = 'Detrending?';
+            if isempty(strfind(HPF, 'wavelet')) == 0 % wavelet-MDL
+                index_NT = find(HPF == ',');
+                if isempty(index_NT) == 1
+                    NT = 4;
+                else
+                    NT = str2num(HPF(index_NT+1:end));
+                end
+                SPM.xX.K.HParam.type = 'Wavelet-MDL';
+                SPM.xX.K.HParam.M = NT;
+            elseif isempty(strfind(HPF, 'DCT')) == 0 % DCT
+                index_cutoff = find(HPF == ',');
+                if isempty(index_cutoff) == 1
+                    cutoff = 128;
+                else
+                    cutoff = str2num(HPF(index_cutoff+1:end));
+                end
+                SPM.xX.K.HParam.type = 'DCT';
+                SPM.xX.K.HParam.M = cutoff;
+            elseif isempty(strfind(HPF, 'none')) == 0 %no filter
+                SPM.xX.K.HParam.type = 'none';
+            end
+            
+            if isempty(strfind(LPF, 'hrf')) == 0 % hrf smoothing
+                SPM.xX.K.LParam.type = 'hrf';
+            elseif isempty(strfind(LPF, 'gaussian')) == 0 % Gaussian smoothing
+                SPM.xX.K.LParam.FWHM = FWHM;
+                SPM.xX.K.LParam.type = 'Gaussian';
+            else
+                SPM.xX.K.LParam.type = 'none';
+            end
+            
+            
             %location of the HbO and HbR (combined) files - note that
             %for the purpose of Averaging, we do not care if a channel
             %is HbO or HbR, so we can loop over all the channels
@@ -559,13 +561,14 @@ for Idx=1:size(job.NIRSmat,1)
                 try NIRS.Cf.H.C.wl = NIRS.Cf.H.C.wl(ch_keep); end
                 try NIRS.Cf.H.C.gp = NIRS.Cf.H.C.gp(ch_keep); end
                 try NIRS.Cf.H.C.ok = NIRS.Cf.H.C.ok(ch_keep); end
-            end
-            
-            %May need to generate a new topodata
-            if NIRSconfoundsOn
+                save(newNIRSlocation,'NIRS'); %This is essential
+                
+                %May need to generate a new topodata
                 clear matlabbatch
                 matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg1.NIRSmat = {newNIRSlocation};
+                matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg1.force_redo = 1;                
                 matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg1.NIRSmatCopyChoice.NIRSmatOverwrite = struct([]);
+                matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg1.template_mode = 0;
                 matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg1.anatT1 = {''};
                 matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg1.segT1_4fit = {''};
                 matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg1.anatT1_template = {'W:\spm8\templates\T1.nii'};
@@ -579,14 +582,17 @@ for Idx=1:size(job.NIRSmat,1)
                 matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg1.Save6Projections = 1;
                 matlabbatch{1}.spm.tools.nirs10.coregNIRS.coreg1.ForceReprocess = 0;
                 spm_jobman('run',matlabbatch);
+                [dir0 fil0] = fileparts(newNIRSlocation);
+                NIRS.Dt.ana.rend = fullfile(dir0,'TopoData.mat');
             end
-           
+            
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % Filtering and removing confounds; averaging
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             SPM = nirs_liom_average(NIRS,SPM);
+            SPM.FlagAvg = 1; %Flag to indicate that we are in averaging mode
             save(spm_file,'SPM');
-  
+            
             NIRS.flags.Avg_OK = 1;
             save(newNIRSlocation,'NIRS');
         end
@@ -594,6 +600,6 @@ for Idx=1:size(job.NIRSmat,1)
         disp(exception.identifier);
         disp(exception.stack(1));
         disp(['Could not do averaging for subject' int2str(Idx) ' for ' job.NIRSmat{Idx,1}]);
-    end    
+    end
 end
 out.NIRSmat = job.NIRSmat;

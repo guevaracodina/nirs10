@@ -1,4 +1,4 @@
-function H = interpolated_maps(Z,W,C,Q,xCon,f1,erdf,hb,H)
+function [H thz] = interpolated_maps(Z,W,C,Q,xCon,f1,erdf,hb,H)
 %This still requires clean-up; Relabel T_map for stat_map; get rid of
 %c_interp_T, F, ess, ess0
 sum_kappa = C.sum_kappa;
@@ -39,9 +39,10 @@ CF.nC = nC;
 %loop over contrasts
 try
     nCl = 0;
+    thz = cell(1,nC);
     for c1=1:nC
         if isfield(Z,'use_nCloop')
-            if Z.use_nCloop               
+            if Z.use_nCloop
                 Z.c1eff = mod(c1,Z.nCloop);
                 if Z.c1eff == 0
                     Z.c1eff = Z.nCloop;
@@ -131,7 +132,7 @@ try
         end
         if Z.LKC || Z.UseCorrelRes
             LKC = [Q.L0 Q.L1 Q.L2];
-        else 
+        else
             LKC = [];
         end
         CF.Z = Z; %horrible, but needed for nirs_copy_figure (near line 17)
@@ -146,6 +147,9 @@ try
             %if tstr == 'T' %only for Tstats for now
             DF = nirs_draw_figure(3,F,W,Z,LKC);
             if GFIS, H{nCl} = nirs_copy_figure(H{nCl},DF,CF,c1,hb,1,tstr,1,Z.write_neg_pos); end
+            if isfield(DF, 'th_z')
+                thz{c1}.positive_thz = DF.th_z;
+            end
             %end
         end
         if  tstr == 'T' %for F-stat, do not invert the map - always positive
@@ -170,7 +174,11 @@ try
             end
             DF = nirs_draw_figure(3,F,W,Z,LKC);
             if GFIS, H{nCl} = nirs_copy_figure(H{nCl},DF,CF,c1,hb,0,tstr,1,Z.write_neg_pos); end
+            if isfield(DF, 'th_z')
+                thz{c1}.negative_thz = DF.th_z;
+            end
         end
+        
     end
 catch exception
     disp(exception.identifier);

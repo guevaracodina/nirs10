@@ -17,6 +17,16 @@ try
         corr_beta = W.corr_beta;
         mtx_var = diag(W.var(ch)); %old NIRS_SPM version
     end
+    
+    %**********************************************************************
+    %To have the pseudo-residuals in case of using the Avg method
+    %Ke Peng, 2012-07-18
+    %**********************************************************************
+    if LKC
+        res = W.res(ch,:)';
+    end
+    %**********************************************************************
+    
     s1 = W.s1;
     s2 = W.s2;
     %When using LKC, B, Bx, By are defined differently, and B_volume is
@@ -45,7 +55,9 @@ try
             %try
             %    grid_eye = TriScatteredInterp(X, Y, V);
             %catch
+            %warning('off')
             grid_eye = griddata(cchn, rchn, (mtx_eye(:,kk))', x, y, 'cubic');
+            %warning('on')
             
             %end
             if kk == 1
@@ -65,7 +77,13 @@ try
                 [Bx_ch By_ch] = gradient(grid_eye);
                 Bx(kk,:) = Bx_ch(index_mask0)';
                 By(kk,:) = By_ch(index_mask0)';
-                if ~W.Avg
+                %**********************************************************
+                %try to calculate LKC while using avg method
+                %Ke Peng, 2012-07-18
+                %**********************************************************
+                if ~W.Avg || LKC
+                    
+                    %if ~W.Avg
                     if kk == nch && LKC
                         L2 = calc_LKC(B_volume, mask, res,'individual');
                     end
@@ -101,7 +119,15 @@ try
         %2- generate the interpolated beta and
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %Calculation of interp_beta and interp_var
-        if LKC || UseCorrelRes
+        
+        %******************************************************************
+        %Strict the condition
+        %Ke Peng, 2012-07-18
+        %******************************************************************
+        %if LKC || UseCorrelRes
+        if (LKC || UseCorrelRes) && ~W.Avg
+            %******************************************************************
+            %    if LKC || UseCorrelRes
             Q.ibeta = W.beta(:,ch) * B;
             mtx_var = W.varch(ch, ch);
             %ensure mtx_var is symmetrical -- at machine-precision,

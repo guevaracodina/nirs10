@@ -1,7 +1,11 @@
 function TOPO = prepare_constrast_core_call(Z,W,SPM,TOPO)
 xXn = SPM.xXn;
 NC = SPM.xY.Cf;
-Z.Avg = 0; %This sets whether we are looking at averaged rather than GLM data
+if isfield(SPM,'FlagAvg')
+    Z.Avg = SPM.FlagAvg;
+else
+    Z.Avg = 0; %This sets whether we are looking at averaged rather than GLM data
+end
 %Objective is to specify W.beta, W.res, W.var and W.corr_beta
 %then pass that to contrast_core
 try
@@ -32,7 +36,7 @@ try
                             tmp_res = fopen_NIR(xXn{f2}.res,NC);
                             W.res = [W.res tmp_res];
                         else
-                            Z.Avg = 1;
+                            %Z.Avg = 1;
                             if f2 == 1
                                 W.covbeta = xXn{f2}.covbeta;
                             else
@@ -60,10 +64,21 @@ try
                 end
             else
                 W.beta = xXn{f1}.beta;
+    %**********************************************************
+                %do not rely on 'res' field to distinguish Avg method
+                %Ke Peng, 2012-07-18
+                %**********************************************************
+                
+               % if isfield(SPM,'Avg')
+                    %Z.Avg = 1;
+                    W.covbeta = xXn{f1}.covbeta;
+                %end
+                  %**********************************************************
+
                 if isfield(xXn{f1},'res')
                     W.res = fopen_NIR(xXn{f1}.res,NC);
                 else
-                    Z.Avg = 1;
+                    %Z.Avg = 1;
                     W.covbeta = xXn{f1}.covbeta;
                 end
                 try

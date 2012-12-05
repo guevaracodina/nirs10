@@ -1,4 +1,4 @@
-function H = interpolated_maps_new(Z,W,C,Q,xCon,f1,erdf,hb,H)
+function [H thz] = interpolated_maps_new(Z,W,C,Q,xCon,f1,erdf,hb,H)
 stat_map = C.stat_map;
 index_mask = Q.index_mask;
 s1 = W.s1;
@@ -38,6 +38,7 @@ end
 %loop over contrasts
 try
     nCl = 0;
+    thz = cell(1,nC);
     for c1=1:nC
         if isfield(Z,'use_nCloop')
             if Z.use_nCloop
@@ -67,15 +68,26 @@ try
         F.contrast_info_both_for_fig = [filestr_fig xCon(c1).name]; %same for Pos and Neg, used for combined figures
         CF.Z = Z; %horrible, but needed for nirs_copy_figure (near line 17)
         %uncorrected - if we generate inverted responses, or HbO or HbT
+        %**************************************************************
+        %Add DF to output to save the threshold value
+        %Ke Peng, 2012-11-15
+        %**************************************************************
         if GInv || strcmp(hb,'HbO') || strcmp(hb,'HbT')
             if Z.output_unc
                 DF = nirs_draw_figure(2,F,W,Z,LKC); %DF: draw figure structure: handles to figure, axes and colorbar
                 %copy figure structure
-                if GFIS, H{nCl} = nirs_copy_figure(H{nCl},DF,CF,c1,hb,1,tstr,0,Z.write_neg_pos); end
+                if GFIS
+                    H{nCl} = nirs_copy_figure(H{nCl},DF,CF,c1,hb,1,tstr,0,Z.write_neg_pos);
+                end
             end
             if ~W.Avg
                 DF = nirs_draw_figure(3,F,W,Z,LKC);
-                if GFIS, H{nCl} = nirs_copy_figure(H{nCl},DF,CF,c1,hb,1,tstr,1,Z.write_neg_pos); end
+                if GFIS
+                    H{nCl} = nirs_copy_figure(H{nCl},DF,CF,c1,hb,1,tstr,1,Z.write_neg_pos);
+                end
+                if isfield(DF, 'th_z')
+                    thz{c1}.positive_thz = DF.th_z;
+                end
             end
         end
         if  tstr == 'T' %for F-stat, do not invert the map - always positive
@@ -93,6 +105,9 @@ try
             if ~W.Avg
                 DF = nirs_draw_figure(3,F,W,Z,LKC);
                 if GFIS, H{nCl} = nirs_copy_figure(H{nCl},DF,CF,c1,hb,0,tstr,1,Z.write_neg_pos); end
+                if isfield(DF, 'th_z')
+                    thz{c1}.negative_thz = DF.th_z;
+                end
             end
         end
     end
