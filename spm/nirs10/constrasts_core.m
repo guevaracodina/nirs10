@@ -20,6 +20,10 @@ end
 %0. We are not able to perform an Euler Correction.
 %Try to change it to "if Z.Avg == 1"
 %18/06/2012
+%try to launch EC for avg method as now we have pseudo-residuals, thus
+%comment "Z.LKC = 0;"
+%2012-07-18
+
 %**************************************************************************
 if Z.Avg == 1 %This boolean is used to operate in the averaging mode instead of the GLM mode
     %if isfield(Z,'Avg')
@@ -27,7 +31,7 @@ if Z.Avg == 1 %This boolean is used to operate in the averaging mode instead of 
     W.Avg = Z.Avg;
     if Z.Avg == 1
         Z.UseCorrelRes = 0;
-        Z.LKC = 0;
+        %Z.LKC = 0;
         xX.erdf = 1;
         Z.output_unc = 1;
     end
@@ -79,13 +83,13 @@ try
             end
             if Z.gen_fig || Z.gen_tiff
                 if Z.LKC || Z.UseCorrelRes || Z.Avg
-                    H = interpolated_maps_new(Z,W,C,Q,xCon,f1,xX.erdf,hb,H);
+                    [H thz] = interpolated_maps_new(Z,W,C,Q,xCon,f1,xX.erdf,hb,H);
                 else
-                    H = interpolated_maps(Z,W,C,Q,xCon,f1,xX.erdf,hb,H);
+                    [H thz] = interpolated_maps(Z,W,C,Q,xCon,f1,xX.erdf,hb,H);
                 end
             end
             %fill TOPO
-            TOPO = fill_TOPO(TOPO,C,W.side_hemi,f1,hb);
+            TOPO = fill_TOPO(TOPO,C,W.side_hemi,f1,hb,thz);
         catch exception
             disp(exception.identifier);
             disp(exception.stack(1));

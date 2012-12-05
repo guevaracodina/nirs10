@@ -48,13 +48,34 @@ baseline_block_whole_session.val     = {baseline_session baseline_offset baselin
 baseline_block_whole_session.help    = {'In this variant, the specified session is used'
     'to compute the baseline for all the other sessions.'
     'Baseline block averaging.'
-    'This works by averaging the data before each onset over the specified window'}';
+    'This works by averaging the data before each onset over the specified window'
+    'Note that the average will NOT be performed for the session on which the baseline was chosen, contrary to the next option.'}';
+
+baseline_start         = cfg_entry;
+baseline_start.name    = 'Baseline start time in seconds';
+baseline_start.tag     = 'baseline_start';
+baseline_start.strtype = 'r';
+baseline_start.num     = [1 1];
+baseline_start.val     = {10};
+baseline_start.help    = {'Enter start time of baseline.'
+    'This will typically be the start of the recording. '
+    'However it may be best to remove the first few seconds of the recording '
+    'due to edge effects from the high pass filter.'}';
+
+unique_baseline         = cfg_branch;
+unique_baseline.tag     = 'unique_baseline';
+unique_baseline.name    = 'Unique baseline from chosen session';
+unique_baseline.val     = {baseline_session baseline_start baseline_duration};
+unique_baseline.help    = {'In this variant, the specified session is used'
+    'to compute the baseline for all the other sessions.'
+    'This works by subtracting from all onsets the same baseline, typically computed at the beginning of the session.'
+    'Note that the average will be performed for the session on which the baseline was chosen, contrary to the previous option.'}';
 
 baseline_choice        = cfg_choice;
 baseline_choice.name   = 'Choose baseline method';
 baseline_choice.tag    = 'baseline_choice';
-baseline_choice.values = {baseline_block_averaging baseline_block_whole_session};
-baseline_choice.val    = {baseline_block_averaging};
+baseline_choice.values = {baseline_block_averaging baseline_block_whole_session unique_baseline};
+baseline_choice.val    = {unique_baseline};
 baseline_choice.help   = {'Choose baseline method.'}';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -104,7 +125,7 @@ select_chromophore.name    = 'Select chromophore';
 select_chromophore.help    = {'Select chromophore'};
 select_chromophore.labels = {'HbT' 'HbR' 'HbO' 'HbO&HbR'};
 select_chromophore.values  = {  1   2   3   4};
-select_chromophore.val = {3};
+select_chromophore.val = {1};
 
 vasomotion_on         = cfg_branch;
 vasomotion_on.tag     = 'vasomotion_on';
@@ -153,7 +174,6 @@ units.values  = {
     1
     };
 units.val = {1};
-%units.def = @(val)nirs_get_defaults('model_specify.units', val{:});
 
 time_res      = cfg_entry;
 time_res.tag  = 'time_res';
@@ -161,7 +181,6 @@ time_res.name = 'Time resolution (for downsampling)';
 time_res.val = {1};
 time_res.strtype = 'r';
 time_res.num     = [1 1];
-%time_res.def = @(val)nirs_get_defaults('model_specify.time_res', val{:});
 time_res.help    = {'Time resolution for onsets will be given by NIRS'
     'sampling rate divided by this factor  - value is 10 in NIRS_SPM.'}';
 

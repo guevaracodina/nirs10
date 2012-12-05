@@ -15,14 +15,22 @@ try
     %for the case of baseline_choice,'baseline_block_whole_session'
     %need to obtain and store the data from this session before proceeding
     if isfield(SPM.job.baseline_choice,'baseline_block_whole_session')
+        base_choice = 2;
         baseline_session = SPM.job.baseline_choice.baseline_block_whole_session.baseline_session;
         srun = [baseline_session 1:nsess];
         storeY = 1;
     else
-        srun = 1:nsess;
-        storeY = 0;
+        if isfield(SPM.job.baseline_choice,'unique_baseline')
+            base_choice = 3;
+            baseline_session = SPM.job.baseline_choice.unique_baseline.baseline_session;
+            srun = [baseline_session 1:nsess];
+            storeY = 1;
+        else
+            base_choice = 1;
+            srun = 1:nsess;
+            storeY = 0;
+        end
     end
-    
     for s=srun
         d = fopen_NIR(SPM.xY.P{s},NC);
         %loop over subsessions, defined as period in between
@@ -178,7 +186,7 @@ try
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             Avg = [];
             if storeY
-                if s == baseline_session
+                if (s == baseline_session) && first_pass
                     baselineY = Y;
                 else
                     tSPM.baselineY = baselineY;
@@ -198,37 +206,38 @@ try
             if first_pass
                 first_pass = 0;
                 if storeY
-                    
+                    %storeY = 0;
                 else
                     iSPM = iSPM + 1;
-                    if (storeY == 0 || (storeY == 1 && ~(s == baseline_session)))
+                    if (storeY == 0 || (storeY == 1 && ((~(s == baseline_session) && base_choice == 2) || base_choice == 3)))
                         SPM.xXn{iSPM} = tSPM.xX;
                     end
                 end
             else
                 iSPM = iSPM + 1;
-                if (storeY == 0 || (storeY == 1 && ~(s == baseline_session)))
+                if (storeY == 0 || (storeY == 1 && ((~(s == baseline_session) && base_choice == 2) || base_choice == 3)))
                     SPM.xXn{iSPM} = tSPM.xX;
                 end
             end
             if iSPM == 1
                 xX0 = tSPM.xX;
             end
-           
+            
             %save
             save_dataON = 1; %we need the residuals for statistics calculations and the
             %filtered data is often useful too
-            if save_dataON && (storeY == 0 || (storeY == 1 && ~(s == baseline_session)))
+            if save_dataON && ~isempty(Avg) && (storeY == 0 || (storeY == 1 && ((~(s == baseline_session) && base_choice == 2) || base_choice == 3)))
                 try
                     spm_dir = NIRS.spm_dir;
                     %if iSPM == 1
-                        nlst = lst;
+                    nlst = lst;
                     %end
-                    temp  = tSPM.KY';
+                    temp  = Avg.KY';
+                    Avg = rmfield(Avg,'KY');
                     %if storeY
                     %    outfile = fullfile(spm_dir,['Sess' int2str(iSPM-1) '.nir']);
                     %else
-                        outfile = fullfile(spm_dir,['Sess' int2str(iSPM) '.nir']);
+                    outfile = fullfile(spm_dir,['Sess' int2str(iSPM) '.nir']);
                     %end
                     %Careful, this data may include HbT, therefore may
                     %have 50% more channels than the user expected...
@@ -240,11 +249,20 @@ try
                     %if storeY
                     %    Avg_outfile = fullfile(spm_dir,['Avg' int2str(iSPM-1) '.mat']);
                     %else
-                        Avg_outfile = fullfile(spm_dir,['Avg' int2str(iSPM) '.mat']);
+                    Avg_outfile = fullfile(spm_dir,['Avg' int2str(iSPM) '.mat']);
                     %end
                     save(Avg_outfile,'Avg');
                     SPM.xY.Cf = size(temp,1); %number of filtered channels stored
                     NIRS.Dt.fir.pp(nlst+1).p{iSPM,1} = outfile;
+                    %******************************************************
+                    %To save the pseudo-residuals to file
+                    %Ke Peng, 2012-07-17
+                    %******************************************************
+                    res_outfile = fullfile(spm_dir,['res_Sess' int2str(iSPM) '.nir']);
+                    fwrite_NIR(res_outfile,Avg.res(:));
+                    SPM.xXn{iSPM}.res = res_outfile;
+                    SPM.xXn{iSPM}.AvgFile = Avg_outfile;
+                    %******************************************************                    
                 catch exception
                     disp(exception.identifier);
                     disp(exception.stack(1));
