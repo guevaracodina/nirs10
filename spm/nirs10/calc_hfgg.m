@@ -17,14 +17,14 @@ if nfac == 2
     A.F = A.Tmap(:);
 end
 
-%Find bounds on F map
-[min0 imin0] = min(A.F);
+%Find bounds on F map -- an F-stat will always be positive!
+%[min0 imin0] = min(A.F);
 [max0 imax0] = max(A.F);
-if abs(min0) > abs(max0)
-    id0 = imin0;
-else
+% if abs(min0) > abs(max0)
+%     id0 = imin0;
+% else
     id0 = imax0;
-end
+% end
 switch nfac
     case 1
         Y = squeeze(cbeta(:,id0));

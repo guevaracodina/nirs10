@@ -71,7 +71,7 @@ try
                 
                % if isfield(SPM,'Avg')
                     %Z.Avg = 1;
-                    W.covbeta = xXn{f1}.covbeta;
+                %    W.covbeta = xXn{f1}.covbeta;
                 %end
                   %**********************************************************
 
