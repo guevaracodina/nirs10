@@ -1,9 +1,6 @@
 function out = nirs_run_normalize_baseline(job)
 % Filename prefix for normalized files
 prefix = 'b'; % for "baseline"
-% Option to remove negative values - such channels are probably too noisy to be
-% useful anyway - but a better method should be found
-legacy_option_to_remove_negative_values = 1;
 % User-specified options %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 bl_m = job.Normalize_OD; % {0='Median',1='Initial Value',2='Mean'};
@@ -28,7 +25,13 @@ for Idx=1:size(job.NIRSmat,1)
             rDtp = NIRS.Dt.fir.pp(lst).p; % path for files to be processed
             NC = NIRS.Cf.H.C.N; % Number of channels
             fs = NIRS.Cf.dev.fs; % Sampling frequency
-            
+            % Option to remove negative values - such channels are probably too noisy to be
+            % useful anyway - but a better method should be found
+            if strcmp(NIRS.Cf.dev.n,'ISS Imagent')
+                legacy_option_to_remove_negative_values = 1;
+            else
+                legacy_option_to_remove_negative_values = 0;
+            end
             % For each data file - loop over sessions
             for f=1:size(rDtp,1)
                 % Read raw data (intensity)
