@@ -169,28 +169,11 @@ for Idx=1:size(job.NIRSmat,1)
                                 study_type = -1; %Single subject, single session
                             end
                         end
+                        %first wavelength is "HbO-like"
+                        W.ch_HbO = W.index_ch;
+                        W.ch_HbR = NC/2 + W.index_ch;
+                        W.ch_HbT = NC+W.index_ch;
                         
-                        %split into HbO and HbR interpolations
-                        wl = NIRS.Cf.dev.wl;
-                        %for NIRS acquisition with 2 wavelengths only
-                        
-                        % MD: it seems to me that the channels corresponding to
-                        % HbO/HbR should be fixed after the module
-                        % nirs_run_ODtoHbOHbR ? Not sure this gives the right
-                        % order....?!?
-                        
-                        if wl(1) > 750
-                            %first wavelength is "HbO-like"
-                            W.ch_HbO = W.index_ch;
-                            W.ch_HbR = NC/2 + W.index_ch;
-                        else
-                            W.ch_HbR = W.index_ch;
-                            W.ch_HbO = NC/2 + W.index_ch;
-                        end
-                        try
-                            W.ch_HbT = NC+W.index_ch;
-                        end
-                        %nch = length(index_ch);
                         W.rchn = rchn(W.index_ch);
                         W.cchn = cchn(W.index_ch);
                         W.spec_hemi = spec_hemi;
