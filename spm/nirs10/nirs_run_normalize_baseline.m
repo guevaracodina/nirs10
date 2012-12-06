@@ -63,6 +63,11 @@ for Idx=1:size(job.NIRSmat,1)
                     % Subtract twice this minimum value for regularization - in
                     % anticipation of taking the log later
                     d = d + mind * ones(1,size(d,2));
+                else
+                    %reset negative values to the minimal positive value
+                    dMin = min(d(d>0));
+                    nL0 = sum(d(:)<0);
+                    d(d<=0) = dMin;
                 end
                 
                 % Read markers for movement if available
