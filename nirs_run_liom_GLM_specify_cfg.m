@@ -432,7 +432,6 @@ remove_linear.name    = 'Remove linear trend only';
 remove_linear.val     = {};
 remove_linear.help    = {'Remove linear trend only.'};
 
-
 GLM_remove_linear         = cfg_branch;
 GLM_remove_linear.tag     = 'GLM_remove_linear';
 GLM_remove_linear.name    = 'Remove linear trend using the GLM';
