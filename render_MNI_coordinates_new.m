@@ -1,21 +1,26 @@
-function [rend, rendered_MNI] = render_MNI_coordinates(vx_wMNI,vx_MNI,...
-    wT1_info,VF,render_subj_info,fSeg,dir_coreg)
+function rendered_MNI = render_MNI_coordinates_new(vx_wMNI,vx_MNI,...
+    wT1_info,VF,render_template,fSeg,dir_coreg,skinOn)
 Nmark = size(vx_wMNI, 2);
-if isfield(render_subj_info,'render_template')
+if skinOn
+    skin_suffix = 'skin';
+else
+    skin_suffix = 'c1';
+end
+if render_template %would need to have a skin template...
     %use SPM template
     load([spm('dir') filesep 'rend' filesep 'render_single_subj.mat']);
     rnc = -1;
 else
-    if isfield(render_subj_info,'render_subject')
-        try
-            rf = render_subj_info.render_subject.render_file{1};
-            rnc = render_subj_info.render_subject.render_normalize_choice;
-            occipital_shift = render_subj_info.render_subject.occipital_shift;
-            [dir0,fil0,ext0] = fileparts(rf);
-            useSeg = 1;
-            if useSeg && ~isempty(fSeg) && spm_existfile(fSeg)
+    rnc = 0;
+    owd = pwd;
+    cd(dir_coreg);
+    file0 = fullfile(dir_coreg,['render_' skin_suffix 'Extracted.mat']);
+    if ~spm_existfile(file0)
+        file0 = fullfile(dir_coreg,['render_' skin_suffix '.mat']);
+        if ~spm_existfile(file0)
+            if ~isempty(fSeg) && spm_existfile(fSeg)
                 try
-                    [useSeg XYZ_mm_f] = nirs_cleanup_c1(fSeg);
+                    [useSeg XYZ_mm_f] = nirs_cleanup_c1(fSeg,skinOn);
                     V = spm_vol(fSeg);
                     [Y XYZ] = spm_read_vols(V);
                     % Turn location list to binary 3D volume
@@ -26,16 +31,13 @@ else
                     indx      = sub2ind(dim,L(1,:)',L(2,:)',L(3,:)');
                     vol(indx) = 1;
                     V2 = V;
-                    V2.fname = fullfile(dir_coreg,'c1Extracted.nii');
+                    V2.fname = fullfile(dir_coreg,[skin_suffix 'Extracted.nii']);
                     spm_write_vol(V2,vol);
-                    
-                    owd = pwd;
-                    cd(dir_coreg);
                     %generate rendered image
                     spm_surf(V2.fname,1);
-                    file0 = fullfile(dir_coreg,['render_c1Extracted.mat']);
-                    load(file0);
+                    file0 = fullfile(dir_coreg,['render_' skin_suffix 'Extracted.mat']);
                     %reorder the views, and save them
+                    load(file0);
                     rend0 = rend;
                     rend{3} = rend0{4};
                     rend{4} = rend0{3};
@@ -49,41 +51,35 @@ else
                 end
             end
             if ~useSeg
-                try
-                    %could be a rendered .mat file
-                    load(rf);
-                catch
-                    %should be an image
-                    owd = pwd;
-                    cd(dir_coreg);
-                    V0 = spm_vol(rf);
-                    %generate rendered image
-                    spm_surf(rf,1);
-                    file0 = fullfile(dir_coreg,['render_' fil0 '.mat']);
-                    load(file0);
-                    %reorder the views, and save them
-                    rend0 = rend;
-                    rend{3} = rend0{4};
-                    rend{4} = rend0{3};
-                    %                 rend{2} = rend0{5};
-                    %                 rend{5} = rend0{2};
-                    rend{1} = rend0{2};
-                    rend{2} = rend0{1};
-                    save(file0,'rend');
-                    cd(owd);
-                end
+                %should be an image
+                rf = 'c1'; %to complete -- select c1 image
+                V0 = spm_vol(rf);
+                %generate rendered image
+                spm_surf(rf,1);
+                file0 = fullfile(dir_coreg,['render_' skin_suffix '.mat']);
+                %reorder the views, and save them
+                load(file0);
+                rend0 = rend;
+                rend{3} = rend0{4};
+                rend{4} = rend0{3};
+                rend{1} = rend0{2};
+                rend{2} = rend0{1};
+                save(file0,'rend');
+                cd(owd);
             end
-        catch exception
-            disp(exception.identifier);
-            disp(exception.stack(1));
-            disp('Problem with render_subject');
         end
     end
+    try
+        load(file0);
+    catch
+        disp('Could not find nor create a render file -- coregistration will fail')
+    end
+    
 end
 %values: -1: standard treatment (normalization to template);
-%1: normalization of subject; 0: no normalization
+%0: unnormalized
 switch rnc
-    case {-1,1}
+    case -1
         dat.mat = wT1_info.mat;
         dat.dim = wT1_info.dim;
         dat.XYZ = zeros(3,Nmark);
@@ -168,7 +164,7 @@ for i=1:length(rend),
     dep = spm_slice_vol(rend{i}.dep,spm_matrix([0 0 1])*inv(M2),d2,1);
     %         z1  = dep(round(xyz(1,:))+round(xyz(2,:)-1)*size(dep,1));
     switch rnc
-        case {-1,1}
+        case -1
             switch i
                 case 1
                     msk = find(mm_MNI(3,:) < -24 | mm_MNI(3,:) == -24); % ventral view
@@ -184,13 +180,8 @@ for i=1:length(rend),
                     msk = find(mm_MNI(2,:) < -44 | mm_MNI(2,:) == -44); % occipital view
             end
         case 0
-            %this will depend on ...
-            %                 vd = wT1_info.mat\ [0 0 24 1]';
-            %                 vd = vd(1);
-            %                 fo = wT1_info.mat\ [0 44 0 0];
-            %                 fo = fo(1);
             vd = 24;
-            fo = 44-occipital_shift; %44;
+            fo = 44; %-occipital_shift; %44;
             switch i
                 case 1
                     msk = find(mm_MNI(3,:) < -vd | mm_MNI(3,:) == -vd); % ventral view
@@ -337,7 +328,6 @@ for i=1:length(rend),
     % no need to change code elsewhere
     rendered_MNI{i}.view_mask_2d=view_mask_2d;
 end;
-%end;
 
 rend{1}.mxmx = max(mx);
 rend{1}.mnmn = min(mn);
@@ -360,7 +350,7 @@ for kk = 1:length(rend)
         [drows, dcols, dvals] = find(rend{kk}.ddata{1} == i*10);
         if isempty(rows) == 1 || isempty(cols) == 1
             %%% -Mahnoush-
-            if  ~isempty(find(Rdxyz{kk}.ind == i)) && ~(isempty(drows) == 1 || isempty(dcols) == 1)
+            if  ~isempty(find(Rdxyz{kk}.ind == i, 1)) && ~(isempty(drows) == 1 || isempty(dcols) == 1)
                 rendered_MNI{kk}.rchn(i,1) = round(mean(drows));
                 rendered_MNI{kk}.cchn(i,1) = round(mean(dcols));
                 %                 dupCn = Rdxyz{kk}.data(:,find(Rdxyz{kk}.ind == i));

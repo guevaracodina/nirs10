@@ -1,0 +1,22 @@
+function nirs_batch_segment(NIRSmat)
+matlabbatch{1}.spm.tools.nirs10.preprocANAT.MCsegment1.NIRSmat = {NIRSmat};
+matlabbatch{1}.spm.tools.nirs10.preprocANAT.MCsegment1.force_redo = 0;
+matlabbatch{1}.spm.tools.nirs10.preprocANAT.MCsegment1.NIRSmatCopyChoice.NIRSmatOverwrite = struct([]);
+matlabbatch{1}.spm.tools.nirs10.preprocANAT.MCsegment1.force_reprocess = 0;
+matlabbatch{1}.spm.tools.nirs10.preprocANAT.MCsegment1.image_in = {''};
+matlabbatch{1}.spm.tools.nirs10.preprocANAT.MCsegment1.output_autonaming = 0;
+matlabbatch{1}.spm.tools.nirs10.preprocANAT.MCsegment1.output_prefix = 'Only edit if you chose ''No'' to ''Automatic output naming''';
+matlabbatch{1}.spm.tools.nirs10.preprocANAT.MCsegment1.skn.sorting_method = 1;
+matlabbatch{1}.spm.tools.nirs10.preprocANAT.MCsegment1.skl.sorting_method = 2;
+matlabbatch{1}.spm.tools.nirs10.preprocANAT.MCsegment1.csf.sorting_method = 0;
+matlabbatch{1}.spm.tools.nirs10.preprocANAT.MCsegment1.grm.sorting_method = 0;
+matlabbatch{1}.spm.tools.nirs10.preprocANAT.MCsegment1.wtm.sorting_method = 0;
+matlabbatch{1}.spm.tools.nirs10.preprocANAT.MCsegment1.vbm_seg = 0;
+matlabbatch{1}.spm.tools.nirs10.preprocANAT.MCsegment1.thresh_as = 0.6;
+matlabbatch{1}.spm.tools.nirs10.preprocANAT.MCsegment1.head_shadow.thresh_hs = 0.6;
+matlabbatch{1}.spm.tools.nirs10.preprocANAT.MCsegment1.head_shadow.se_size_hs = 2;
+matlabbatch{1}.spm.tools.nirs10.preprocANAT.MCsegment1.rebel_surrounding = 3;
+matlabbatch{1}.spm.tools.nirs10.preprocANAT.MCsegment1.rebel_thresh_hs = 0.3;
+matlabbatch{1}.spm.tools.nirs10.preprocANAT.MCsegment1.process_image.se_size_pi = 2;
+matlabbatch{1}.spm.tools.nirs10.preprocANAT.MCsegment1.process_image.gaussfilt_size = 7;
+matlabbatch{1}.spm.tools.nirs10.preprocANAT.MCsegment1.process_image.gaussfilt_sdev = 4;
