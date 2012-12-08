@@ -36,7 +36,7 @@ switch job.lby
             Pfp_rmv_i = V.mat\[Pfp_rmm(:,Pi);1];
             Pfp_rmv_i = round(Pfp_rmv_i(1:3));
             Pfp_rmv_i = min(max(Pfp_rmv_i,min_size),max_size);
-            
+            %This could be an infinite loop!
             while Y(Pfp_rmv_i(1),Pfp_rmv_i(2),Pfp_rmv_i(3))>0
                 Pfp_rmm(:,Pi) = Pfp_rmm(:,Pi) - prec*Pd_rmm(:,Pi);
                 
