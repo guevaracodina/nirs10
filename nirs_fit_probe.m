@@ -116,31 +116,6 @@ switch job.lby
             %3)s
             Pfp_rmm(:,Pi) = Pfp_rmiv(1:3,Pi);
         end
-        % % % % % % % % % % % % % % % % %         Pfp_rmiv = round(job.Pfp_ancienne_rmiv);
-        % % % % % % % % % % % % % % % % %
-        % % % % % % % % % % % % % % % % %         for Pi = 1:NP
-        % % % % % % % % % % % % % % % % %             Pfp_rmiv_i = Pfp_rmiv(:,Pi);
-        % % % % % % % % % % % % % % % % %             Pfp_rmm_i =  V.mat*[Pfp_rmiv_i;1];
-        % % % % % % % % % % % % % % % % %             test_Pfp_rmm_i =  V.mat*[Pfp_rmiv_i;1];
-        % % % % % % % % % % % % % % % % %             count_Pi=0;
-        % % % % % % % % % % % % % % % % %
-        % % % % % % % % % % % % % % % % %             while Y(Pfp_rmiv_i(1),Pfp_rmiv_i(2),Pfp_rmiv_i(3))~=0
-        % % % % % % % % % % % % % % % % %
-        % % % % % % % % % % % % % % % % %                 count_Pi =count_Pi+1;
-        % % % % % % % % % % % % % % % % % %                 if size(Pfp_rmiv_i,1)==3
-        % % % % % % % % % % % % % % % % % %                     Pfp_rmm_i =  V.mat*[Pfp_rmiv_i;1];
-        % % % % % % % % % % % % % % % % % %                 else
-        % % % % % % % % % % % % % % % % % %                     Pfp_rmm_i =  V.mat*Pfp_rmiv_i;
-        % % % % % % % % % % % % % % % % % %                 end
-        % % % % % % % % % % % % % % % % %                 Pfp_rmm_i = Pfp_rmm_i - prec*[Pd_rmm(:,Pi);0];
-        % % % % % % % % % % % % % % % % %                 Pfp_rmiv_i = round(V.mat\Pfp_rmm_i);
-        % % % % % % % % % % % % % % % % %             end
-        % % % % % % % % % % % % % % % % %             %%%% MODIFICATION 29 07 2011 %%%% %%%% %%%% %%%% %%%% %%%% %%%% %%%
-        % % % % % % % % % % % % % % % % % %             Pfp_rmm(:,Pi) = Pfp_rmiv_i(1:3,:);
-        % % % % % % % % % % % % % % % % %             Pfp_rmm(:,Pi) = test_Pfp_rmm_i - count_Pi*prec*[Pd_rmm(:,Pi);0];
-        % % % % % % % % % % % % % % % % %             %%%% MODIFICATION 29 07 2011 %%%% %%%% %%%% %%%% %%%% %%%% %%%% %%%
-        % % % % % % % % % % % % % % % % %         end
-        
     case 'configMC_tMC'% after resizing, some S might be inside the volume
         Pfp_rmiv = round(job.Pfp_ancienne_rmiv);
         
@@ -162,26 +137,3 @@ switch job.lby
 end
 
 out{1} = Pfp_rmm;
-end
-%previous version
-%     while sum(Y(test_vx(1,1),test_vx(2,1),test_vx(3,1)))>0%==0
-%         Pfp_rmm(:,Pi) = Pfp_rmm(:,Pi) - prec*Pd_rmm(:,Pi);
-%         %     while sum(Y(test_vx(1,1),test_vx(2,1),test_vx(3,1)))>0%==0
-%         %         Pfp_rmm(:,Pi) = Pp_c1_rmm(:,Pi) + count*prec*Pd_rmm(:,Pi);
-%
-%         test_MNI = Pfp_rmm(:,Pi);
-%         test_vx = V.mat\[test_MNI;1];
-%         test_vx = round(test_vx(1:3));
-%         test_vx = min(max(test_vx,min_size),max_size);
-%     end
-%     Pfp_rmm(:,Pi) = Pfp_rmm(:,Pi) + 20*prec*Pd_rmm(:,Pi);
-
-%     %%% pour respecter les differentes orientations on a besoin de
-%     %%% travailler sur les voxels et non les mm
-%     while sum(Y(test_vx(1,1),test_vx(2,1),test_vx(3,1)))>0%==0
-%         test_rem = test_vx;
-%         test_vx = test_vx - 10*prec*Pd_rmv(:,Pi);
-%          test_vx = round(test_vx(1:3));
-%         test_vx = min(max(test_vx,min_size),max_size);
-%     end
-%     Pfp2_rmv(:,Pi) =  test_rem;
