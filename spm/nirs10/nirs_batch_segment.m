@@ -20,3 +20,4 @@ matlabbatch{1}.spm.tools.nirs10.preprocANAT.MCsegment1.rebel_thresh_hs = 0.3;
 matlabbatch{1}.spm.tools.nirs10.preprocANAT.MCsegment1.process_image.se_size_pi = 2;
 matlabbatch{1}.spm.tools.nirs10.preprocANAT.MCsegment1.process_image.gaussfilt_size = 7;
 matlabbatch{1}.spm.tools.nirs10.preprocANAT.MCsegment1.process_image.gaussfilt_sdev = 4;
+spm_jobman('run',matlabbatch);

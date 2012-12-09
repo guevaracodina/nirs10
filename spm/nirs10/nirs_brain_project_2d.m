@@ -1,4 +1,4 @@
-function nirs_brain_project_2d(NIRS,dir_coreg,rendered_MNI,rendered_MNI2,color1,color2,suffix)
+function nirs_brain_project_2d(NIRS,dir_coreg,rendered_MNI,rendered_MNI2,color1,color2,suffix,Pvoid)
 N1 = size(rendered_MNI{1}.rchn,1);
 if isempty(rendered_MNI2)
     sdmode = 0;
@@ -20,11 +20,13 @@ for kk=1:6
     rchn = rendered_MNI{kk}.rchn;
     cchn = rendered_MNI{kk}.cchn;
     for jj = 1:N1
-        if rchn(jj) ~= -1 && cchn(jj) ~= -1
-            if rchn(jj) < 6 || cchn(jj) < 6
-                sbrain(rchn(jj), cchn(jj)) = 0.9; % 0.67
-            else
-                sbrain(rchn(jj)-5:rchn(jj)+5, cchn(jj)-5:cchn(jj)+5) = 0.9;
+        if isempty(Pvoid) || ~Pvoid(jj)
+            if rchn(jj) ~= -1 && cchn(jj) ~= -1
+                if rchn(jj) < 6 || cchn(jj) < 6
+                    sbrain(rchn(jj), cchn(jj)) = 0.9; % 0.67
+                else
+                    sbrain(rchn(jj)-5:rchn(jj)+5, cchn(jj)-5:cchn(jj)+5) = 0.9;
+                end
             end
         end
     end
@@ -33,11 +35,13 @@ for kk=1:6
         rchn2 = rendered_MNI2{kk}.rchn;
         cchn2 = rendered_MNI2{kk}.cchn;
         for jj = 1:N2
-            if rchn2(jj) ~= -1 && cchn2(jj) ~= -1 %% updated 2009-02-25
-                if rchn2(jj) < 6 || cchn2(jj) < 6
-                    sbrain(rchn2(jj), cchn2(jj)) = 0.9; % 0.67
-                else
-                    sbrain(rchn2(jj)-5:rchn2(jj)+5, cchn2(jj)-5:cchn2(jj)+5) = 0.9;
+            if isempty(Pvoid) || ~Pvoid(jj+N1)
+                if rchn2(jj) ~= -1 && cchn2(jj) ~= -1 %% updated 2009-02-25
+                    if rchn2(jj) < 6 || cchn2(jj) < 6
+                        sbrain(rchn2(jj), cchn2(jj)) = 0.9; % 0.67
+                    else
+                        sbrain(rchn2(jj)-5:rchn2(jj)+5, cchn2(jj)-5:cchn2(jj)+5) = 0.9;
+                    end
                 end
             end
         end
@@ -47,14 +51,18 @@ for kk=1:6
     axis image;
     axis off;
     for jj = 1:N1
-        if rchn(jj) ~= -1 && cchn(jj) ~= -1
-            text(cchn(jj)-5, rchn(jj), num2str(jj), 'color', color1);
+        if isempty(Pvoid) || ~Pvoid(jj)
+            if rchn(jj) ~= -1 && cchn(jj) ~= -1
+                text(cchn(jj)-5, rchn(jj), num2str(jj), 'color', color1);
+            end
         end
     end
     if sdmode
         for jj = 1:N2
-            if rchn2(jj) ~= -1 && cchn2(jj) ~= -1 
-                text(cchn2(jj)-5, rchn2(jj), num2str(jj), 'color', color2);
+            if isempty(Pvoid) || ~Pvoid(jj+N1)
+                if rchn2(jj) ~= -1 && cchn2(jj) ~= -1
+                    text(cchn2(jj)-5, rchn2(jj), num2str(jj), 'color', color2);
+                end
             end
         end
     end

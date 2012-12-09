@@ -4,7 +4,7 @@ tmp_file = fullfile(dirT1,['m' fil ext]);
 if exist(tmp_file,'file')
     src_file = tmp_file;
 else
-    src_file = NIRS.Dt.ana.T1;
+    src_file = anatT1;
 end
 template = fullfile(spm('dir'),'templates','T1.nii');
 %fwT1 = fullfile(dirT1,['w' fil ext(1:4)]);

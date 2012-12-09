@@ -18,7 +18,7 @@ else
     if ~spm_existfile(file0)
         file0 = fullfile(dir_coreg,['render_' skin_suffix '.mat']);
         if ~spm_existfile(file0)
-            if ~isempty(fSeg) && spm_existfile(fSeg)
+            if ~isempty(fSeg)
                 try
                     [useSeg XYZ_mm_f] = nirs_cleanup_c1(fSeg,skinOn);
                     V = spm_vol(fSeg);
