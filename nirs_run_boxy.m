@@ -184,8 +184,9 @@ for Idx_subj=1:N_subj
         NIRS.Cf.dev.fs = job.cf1.freq/job.cf1.resample;
         NIRS.Dt.s.p = oldNIRS.subj_path;
         %Try adding the anatomical image
-        try NIRS.Dt.ana.T1 = job.subj(1,Idx_subj).anatT1{1}; end
-        
+        if ~isempty(job.subj(1,Idx_subj).anatT1)
+            NIRS.Dt.ana.T1 = job.subj(1,Idx_subj).anatT1{1};
+        end
         NIRS.Dt.s.age = job.subj(1,Idx_subj).age1;
         %Data
         NIRS.Dt.fir.pp(1).p = oldNIRS.NIRfile'; %?

@@ -31,7 +31,6 @@ for iSubj=1:size(job.NIRSmat,1)
         job.NIRSmat{iSubj,1} = newNIRSlocation;
         if ~isempty(NIRS) && (~isfield(NIRS.flags,'coregOK') || job.force_redo)
             [dir_coreg,dummy] = fileparts(newNIRSlocation);
-            fSeg = [];
             %Normalization of anatomical image
             anatT1 = NIRS.Dt.ana.T1;
             [dirT1, fil, ext] = fileparts(anatT1);
@@ -40,8 +39,16 @@ for iSubj=1:size(job.NIRSmat,1)
             %check if segmentation is required
             if ~(spm_existfile(fc1) && ~ForceReprocessSegmentation)
                 nirs_batch_segment(newNIRSlocation);
+                NIRS.Dt.ana.T1seg = fullfile(dirT1,['00021_segmented_' fil ext]); %This name needs to be
+                %generalized or simplified -- as such, it will lead to a
+                %bug when people select options in Clément's segmentation 
             end
-            
+            try 
+                fSeg = NIRS.Dt.ana.T1seg;
+            catch
+                NIRS.Dt.ana.T1seg = fullfile(dirT1,['00021_segmented_' fil ext]);
+            end
+                            
             if ~(spm_existfile(fwT1) && ~ForceReprocessNormalization)
                 nirs_batch_normalize(anatT1,dir_coreg);
             end
@@ -128,7 +135,7 @@ for iSubj=1:size(job.NIRSmat,1)
             for Pi = 1:NP
                 % check for Void sources (no data)
                 if Pp_rom(1,Pi) == 0 && Pp_rom(2,Pi) == 0 && Pp_rom(3,Pi) == 0
-                    Pvoid(1,Pi) = 1;
+                    Pvoid(Pi) = 1;
                 else
                     Pp_rmm(:,Pi) = s*R*Pp_rom(:,Pi) + t;
                 end
@@ -169,7 +176,7 @@ for iSubj=1:size(job.NIRSmat,1)
                     Pvoid,p_cutoff,fc1,fSeg,1,dir_coreg);
                 Pch_c1_wmm = Q*Pch_c1_rmm;
                 for Pi = 1:NP
-                    if ~Pvoid(1,Pi)
+                    if ~Pvoid(Pi)
                         %inversion: unnormalized -> normalized
                         Pp_c1_wmm(:,Pi) = Q*Pp_c1_rmm(:,Pi);
                     end
@@ -189,7 +196,7 @@ for iSubj=1:size(job.NIRSmat,1)
                 end
                 Pp_c1_rmm = zeros(4,NP);
                 for Pi = 1:NP
-                    if ~Pvoid(1,Pi)
+                    if ~Pvoid(Pi)
                         %inversion: normalized -> unnormalized
                         Pp_c1_rmm(:,Pi) = Q\Pp_c1_wmm(:,Pi);
                     end
@@ -334,11 +341,11 @@ for iSubj=1:size(job.NIRSmat,1)
             NIRS.Dt.ana.rend = rend_file;
             dir_extra_coreg = fullfile(dir_coreg,'extra_coreg');
             if ~exist(dir_extra_coreg,'dir'), mkdir(dir_extra_coreg); end
-            nirs_brain_project_2d(NIRS,dir_coreg,rendered_MNI,[],'r','','');
-            nirs_brain_project_2d(NIRS,dir_extra_coreg,rendered_MNI,[],'r','',''); %just copy the files
-            nirs_brain_project_2d(NIRS,dir_extra_coreg,rendered_MNI_skin,[],'r','','skin');
-            nirs_brain_project_2d(NIRS,dir_extra_coreg,rendered_MNI_src,rendered_MNI_det,'b','g','SD');
-            nirs_brain_project_2d(NIRS,dir_extra_coreg,rendered_MNI_src_skin,rendered_MNI_det_skin,'b','g','SD_skin');           
+            nirs_brain_project_2d(NIRS,dir_coreg,rendered_MNI,[],'r','','',[]);
+            nirs_brain_project_2d(NIRS,dir_extra_coreg,rendered_MNI,[],'r','','',[]); %just copy the files
+            nirs_brain_project_2d(NIRS,dir_extra_coreg,rendered_MNI_skin,[],'r','','skin',[]);
+            nirs_brain_project_2d(NIRS,dir_extra_coreg,rendered_MNI_src,rendered_MNI_det,'b','g','SD',Pvoid);
+            nirs_brain_project_2d(NIRS,dir_extra_coreg,rendered_MNI_src_skin,rendered_MNI_det_skin,'b','g','SD_skin',Pvoid);           
             NIRS.flags.coregOK = 1;
         end
         save(newNIRSlocation,'NIRS');
