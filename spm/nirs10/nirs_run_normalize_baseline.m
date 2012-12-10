@@ -1,5 +1,5 @@
 function out = nirs_run_normalize_baseline(job)
-% Filename prefix for normalized files
+%Filename prefix for normalized files
 prefix = 'b'; % for "baseline"
 % User-specified options %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -25,51 +25,19 @@ for Idx=1:size(job.NIRSmat,1)
             rDtp = NIRS.Dt.fir.pp(lst).p; % path for files to be processed
             NC = NIRS.Cf.H.C.N; % Number of channels
             fs = NIRS.Cf.dev.fs; % Sampling frequency
-            % Option to remove negative values - such channels are probably too noisy to be
-            % useful anyway - but a better method should be found
-            if strcmp(NIRS.Cf.dev.n,'ISS Imagent')
-                legacy_option_to_remove_negative_values = 1;
-            else
-                legacy_option_to_remove_negative_values = 0;
-            end
             % For each data file - loop over sessions
             for f=1:size(rDtp,1)
                 % Read raw data (intensity)
                 d = fopen_NIR(rDtp{f,1},NC);
-%                 test_clear_protocol = 1;
-%                 if test_clear_protocol
-%                      %protocole 
-%                      d_max = max(d,[],2);
-%                      lp1 = [linspace(60*25,120*25-1,60*25) linspace(300*25,360*25-1,60*25)];
-%                      d(29:56,lp1) = d(29:56,lp1) - repmat(d_max(29:56)/4,1,120*25);
-%                      d(1:28,lp1) = d(1:28,lp1) + repmat(d_max(1:28)/4,1,120*25);
-%                 end
-                % Option to remove negative values (to improve!)
-                if legacy_option_to_remove_negative_values
-                    threshold = 0.1;
-                    % Some values of the optical intensity d may be negative
-                    % Compute the minimum of d for each channel
-                    mind = min(d,[],2);
-                    for i1=1:size(mind,1)
-                        if mind(i1) > threshold
-                            mind(i1) = 0;
-                        else
-                            NIRS.CAUTION = 'legacy_option_to_remove_negative_values';
-                            if mind(i1) < threshold
-                                mind(i1) = -mind(i1)+threshold;
-                            end
-                        end
-                    end
-                    % Subtract twice this minimum value for regularization - in
-                    % anticipation of taking the log later
-                    d = d + mind * ones(1,size(d,2));
-                else
                     %reset negative values to the minimal positive value
-                    dMin = min(d(d>0));
-                    nL0 = sum(d(:)<0);
-                    d(d<=0) = dMin;
-                end
-                
+                    %treat each channel separately
+                    for c0=1:size(d,1)
+                        td = d(c0,:);                        
+                        dMin = min(td(td>0));
+                        %nL0 = sum(d(:)<0);                        
+                        td(td<=0) = dMin;
+                        d(c0,:) = td;
+                    end
                 % Read markers for movement if available
                 try
                     bpi = NIRS.Dt.fir.pp(lst).bpi{f,1}; %bad point indices
