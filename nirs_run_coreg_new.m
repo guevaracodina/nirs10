@@ -41,14 +41,14 @@ for iSubj=1:size(job.NIRSmat,1)
                 nirs_batch_segment(newNIRSlocation);
                 NIRS.Dt.ana.T1seg = fullfile(dirT1,['00021_segmented_' fil ext]); %This name needs to be
                 %generalized or simplified -- as such, it will lead to a
-                %bug when people select options in Clément's segmentation 
+                %bug when people select options in Clément's segmentation
             end
-            try 
+            try
                 fSeg = NIRS.Dt.ana.T1seg;
             catch
                 NIRS.Dt.ana.T1seg = fullfile(dirT1,['00021_segmented_' fil ext]);
             end
-                            
+            
             if ~(spm_existfile(fwT1) && ~ForceReprocessNormalization)
                 nirs_batch_normalize(anatT1,dir_coreg);
             end
@@ -146,62 +146,62 @@ for iSubj=1:size(job.NIRSmat,1)
             
             % unnormalized -> normalized, for optodes
             Pp_wmm = Q * [Pp_rmm;ones(1,NP)];          %% unit : mm
-            
+            Ns = NIRS.Cf.H.S.N;
             % PROJECT OPTODE POSITIONS ON CORTEX SURFACE %
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            if ~render_template
-                %render to subject
-                if isfield(NIRS.Dt.ana,'T1seg') && use_fSeg
-                    fSeg = NIRS.Dt.ana.T1seg;
-                else
-                    fSeg = [];
-                end
-                p_cutoff = 0.8;
-                %project sources and detectors onto cortex
-                Pp_c1_rmm = nirs_coreg_optodes_unnormalized(Pp_rmm,...
-                    Pvoid,p_cutoff,fc1,fSeg,0,dir_coreg);
-                Pp_c1_wmm = zeros(4,NP);
-                
-                Nch0 = size(NIRS.Cf.H.C.id,2)/2;
-                Ns = NIRS.Cf.H.S.N;
-                Pch_rmm = zeros(3,Nch0);
-                for i=1:Nch0
-                    %indices of source and detector
-                    Si = NIRS.Cf.H.C.id(2,i);
-                    Di = NIRS.Cf.H.C.id(3,i)+Ns;
-                    Pch_rmm(:,i) = (Pp_rmm(:,Si)+Pp_rmm(:,Di))/2;
-                end
-                %project channels onto cortex
-                Pch_c1_rmm = nirs_coreg_optodes_unnormalized(Pch_rmm,...
-                    Pvoid,p_cutoff,fc1,fSeg,1,dir_coreg);
-                Pch_c1_wmm = Q*Pch_c1_rmm;
-                for Pi = 1:NP
-                    if ~Pvoid(Pi)
-                        %inversion: unnormalized -> normalized
-                        Pp_c1_wmm(:,Pi) = Q*Pp_c1_rmm(:,Pi);
-                    end
-                end;
+            
+            %render to subject
+            if isfield(NIRS.Dt.ana,'T1seg') && use_fSeg
+                fSeg = NIRS.Dt.ana.T1seg;
             else
-                if useKoreanCortexProjection
-                    Pp_c1_wmm = projection_CS(Pp_wmm);%Using Korean template
-                else
-                    %This will no longer work because field
-                    %job.coreg_choice.coreg_c1 doesn't exist anymore
-                    Pp_c1_wmm = nirs_coreg_optodes(Pp_wmm,...
-                        Pvoid,job.coreg_choice.coreg_c1,NIRS.Dt.ana.T1);
-                    if isempty(Pp_c1_wmm)
-                        disp('Coregistration of optodes onto wc1 failed. Now try to coregister onto template using projection_CS');
-                        Pp_c1_wmm = projection_CS(Pp_wmm);
-                    end
-                end
-                Pp_c1_rmm = zeros(4,NP);
-                for Pi = 1:NP
-                    if ~Pvoid(Pi)
-                        %inversion: normalized -> unnormalized
-                        Pp_c1_rmm(:,Pi) = Q\Pp_c1_wmm(:,Pi);
-                    end
-                end;
+                fSeg = [];
             end
+            p_cutoff = 0.8;
+            %project sources and detectors onto cortex
+            Pp_c1_rmm = nirs_coreg_optodes_unnormalized(Pp_rmm,...
+                Pvoid,p_cutoff,fc1,fSeg,0,dir_coreg);
+            Pp_c1_wmm = zeros(4,NP);
+            
+            Nch0 = size(NIRS.Cf.H.C.id,2)/2;
+            
+            Pch_rmm = zeros(3,Nch0);
+            for i=1:Nch0
+                %indices of source and detector
+                Si = NIRS.Cf.H.C.id(2,i);
+                Di = NIRS.Cf.H.C.id(3,i)+Ns;
+                Pch_rmm(:,i) = (Pp_rmm(:,Si)+Pp_rmm(:,Di))/2;
+            end
+            %project channels onto cortex
+            Pch_c1_rmm = nirs_coreg_optodes_unnormalized(Pch_rmm,...
+                Pvoid,p_cutoff,fc1,fSeg,1,dir_coreg);
+            Pch_c1_wmm = Q*Pch_c1_rmm;
+            for Pi = 1:NP
+                if ~Pvoid(Pi)
+                    %inversion: unnormalized -> normalized
+                    Pp_c1_wmm(:,Pi) = Q*Pp_c1_rmm(:,Pi);
+                end
+            end;
+            %             else
+            %                 if useKoreanCortexProjection
+            %                     Pp_c1_wmm = projection_CS(Pp_wmm);%Using Korean template
+            %                 else
+            %                     %This will no longer work because field
+            %                     %job.coreg_choice.coreg_c1 doesn't exist anymore
+            %                     Pp_c1_wmm = nirs_coreg_optodes(Pp_wmm,...
+            %                         Pvoid,job.coreg_choice.coreg_c1,NIRS.Dt.ana.T1);
+            %                     if isempty(Pp_c1_wmm)
+            %                         disp('Coregistration of optodes onto wc1 failed. Now try to coregister onto template using projection_CS');
+            %                         Pp_c1_wmm = projection_CS(Pp_wmm);
+            %                     end
+            %                 end
+            %                 Pp_c1_rmm = zeros(4,NP);
+            %                 for Pi = 1:NP
+            %                     if ~Pvoid(Pi)
+            %                         %inversion: normalized -> unnormalized
+            %                         Pp_c1_rmm(:,Pi) = Q\Pp_c1_wmm(:,Pi);
+            %                     end
+            %                 end;
+            %             end
             Pp_c1_rmm = Pp_c1_rmm(1:3,:);
             
             % Save Normalized coordinates of optodes
@@ -211,7 +211,7 @@ for iSubj=1:size(job.NIRSmat,1)
             NIRS.Cf.H.P.r.m.mm.c1.p = Pp_c1_rmm;
             NIRS.Cf.H.P.void = Pvoid;
             
-            % OPTODE POSITIONS ON SKIN SURFACE % 
+            % OPTODE POSITIONS ON SKIN SURFACE %
             %PP: very long, just skip -- looks like an infinite loop!
             oldClement_fitSkin = 0;
             if oldClement_fitSkin
@@ -273,15 +273,15 @@ for iSubj=1:size(job.NIRSmat,1)
                 Di = NIRS.Cf.H.C.id(3,i)+Ns;
                 posmm = [(Pp_c1_rmm(:,Si)+Pp_c1_rmm(:,Di))/2;1];
                 pos = NIRS.Dt.ana.wT1.VF.mat\posmm;
-                ch_MNI_vx(:,i) = pos;                
+                ch_MNI_vx(:,i) = pos;
                 posw = V.mat\(Q*posmm);
-                ch_MNIw_vx(:,i) = posw; 
+                ch_MNIw_vx(:,i) = posw;
                 %For the skin:
                 posmm_skin = [(Pp_rmm(:,Si)+Pp_rmm(:,Di))/2;1];
                 pos_skin = NIRS.Dt.ana.wT1.VF.mat\posmm_skin;
                 ch_MNI_vx_skin(:,i) = pos_skin;
                 posw_skin = V.mat\(Q*posmm_skin);
-                ch_MNIw_vx_skin(:,i) = posw_skin; 
+                ch_MNIw_vx_skin(:,i) = posw_skin;
             end
             
             if coreg_projected_channels_on_cortex_rather_than_midpoint
@@ -313,7 +313,7 @@ for iSubj=1:size(job.NIRSmat,1)
                 det_MNI_vx_skin(:,i) = Vfc1.mat\[Pp_rmm(:,i+Ns);1];
                 det_MNIw_vx_skin(:,i) = V.mat\Pp_wmm(:,i+Ns);
             end
-                           
+            
             %PP: the function render_MNI_coordinates has not been checked
             rendered_MNI = render_MNI_coordinates_new(ch_MNIw_vx,...
                 ch_MNI_vx,wT1_info, NIRS.Dt.ana.wT1.VF,render_template,fSeg,dir_coreg,0);
@@ -345,7 +345,7 @@ for iSubj=1:size(job.NIRSmat,1)
             nirs_brain_project_2d(NIRS,dir_extra_coreg,rendered_MNI,[],'r','','',[]); %just copy the files
             nirs_brain_project_2d(NIRS,dir_extra_coreg,rendered_MNI_skin,[],'r','','skin',[]);
             nirs_brain_project_2d(NIRS,dir_extra_coreg,rendered_MNI_src,rendered_MNI_det,'b','g','SD',Pvoid);
-            nirs_brain_project_2d(NIRS,dir_extra_coreg,rendered_MNI_src_skin,rendered_MNI_det_skin,'b','g','SD_skin',Pvoid);           
+            nirs_brain_project_2d(NIRS,dir_extra_coreg,rendered_MNI_src_skin,rendered_MNI_det_skin,'b','g','SD_skin',Pvoid);
             NIRS.flags.coregOK = 1;
         end
         save(newNIRSlocation,'NIRS');

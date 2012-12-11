@@ -235,24 +235,27 @@ for i=1:length(rend),
                 %boundary of the rendered image
                 %Ke Peng 2012-9-25
                 %**************************************************************
-                for l_0 = 1:size(xyz,2)
-                    if xyz(1,l_0)<0
-                        disp('optode position exceeds render image. Please check xyz(1,:) and make sure they are all positive values.');
-                    end
-                    if xyz(2,l_0)<0
-                        disp('optode position exceeds render image. Please check xyz(2,:) and make sure they are all positive values.');
-                    end
-                    
-                    if round(xyz(1,l_0)) == 0
-                        xyz(1,l_0) = xyz(1,l_0) + 1; %Bad coding. 0 -> 1
-                    end
-                    
-                    if round(xyz(2,l_0)) == 0
-                        xyz(2,l_0) = xyz(2,l_0) + 1;
-                    end
-                end
-                clear l_0;
+%                 for l_0 = 1:size(xyz,2)
+%                     if xyz(1,l_0)<0
+%                         disp('optode position exceeds render image. Please check xyz(1,:) and make sure they are all positive values.');
+%                     end
+%                     if xyz(2,l_0)<0
+%                         disp('optode position exceeds render image. Please check xyz(2,:) and make sure they are all positive values.');
+%                     end
+%                     
+%                     if round(xyz(1,l_0)) == 0
+%                         xyz(1,l_0) = xyz(1,l_0) + 1; %Bad coding. 0 -> 1
+%                     end
+%                     
+%                     if round(xyz(2,l_0)) == 0
+%                         xyz(2,l_0) = xyz(2,l_0) + 1;
+%                     end
+%                 end
+%                 clear l_0;
                 %**************************************************************
+                %enforce to be in the volume 
+                xyz(1,:) = min(max(xyz(1,:),1), d2(1));
+                xyz(2,:) = min(max(xyz(2,:),1), d2(2));
                 
                 dupX0  = full(sparse(round(xyz(1,:)), round(xyz(2,:)), dupt0, d2(1), d2(2)));
                 hld = 1; if ~isfinite(brt), hld = 0; end;
@@ -278,7 +281,9 @@ for i=1:length(rend),
         clear dxyz rxyz srxyz ind_rxyz Pdbl Idbl
         
         %%% updated 2009-02-05
-        
+        %enforce to be in the volume
+        xyz(1,:) = min(max(xyz(1,:),1), d2(1));
+        xyz(2,:) = min(max(xyz(2,:),1), d2(2));
         %msk = find(xyz(1,:) > 0  & xyz(2,:) > 0 & xyz(3,:) > 0);
         %xyz = xyz(:,msk);
         %t0  = t0(:,msk);
