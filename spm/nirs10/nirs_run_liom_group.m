@@ -27,7 +27,6 @@ Z.min_s = 2;
 Z.nS = size(job.NIRSmat,1);
 nS = Z.nS;
 number_dir_to_remove = job.number_dir_to_remove;
-disp('Wait... loading individual data for group analysis');
 %SPM contrasts or automatic contrasts
 if isfield(job.ContrastChoice,'user_contrasts')
     if isempty(job.ContrastChoice.user_contrasts.consess)
@@ -46,40 +45,9 @@ if Z.FFX || nS==1
     %fixed effects: loop over subjects first, as they are treated
     %separately
     nl = nS; %to loop over subjects
-    big_TOPO = []; %not used
 else
     %RFX - loop over subjects done later
     nl = 1;
-    big_TOPO{nS} =[];
-    for Idx=1:nS
-        %Load NIRS.mat information
-        NIRS = [];
-        load(job.NIRSmat{Idx,1});
-        dir1 = NIRS.SPM{1};
-        %load topographic information (formerly known as preproc_info)
-        fname_ch = NIRS.Dt.ana.rend;
-        %quick fix for Claudine's study:
-        %fname_ch = 'W:\Claudine\SPMDataNT\S003\TopoData.mat';
-        
-        load(fname_ch);
-        if Idx == 1
-            rendered_MNI0 = rendered_MNI;
-        end
-        try
-            ftopo = NIRS.TOPO;
-        catch
-            ftopo = fullfile(dir1,'TOPO.mat');
-            disp('TOPO not found in NIRS.TOPO');
-        end
-        TOPO = [];
-        load(ftopo);
-        %large structure
-        big_TOPO{Idx} = TOPO;
-        big_TOPO{Idx}.rendered_MNI = rendered_MNI;
-    end
-    %create a new TOPO at the group level
-    TOPO = [];
-    TOPO.xCon = big_TOPO{1}.xCon;
 end
 
 %Loop over all subjects for FFX but go through only once for RFX
@@ -128,7 +96,42 @@ for Idx=1:nl
         %group data
         if (( (Z.FFX || nS==1) && ~isfield(NIRS.flags,'session_groupOK') || job.force_redo) || ...
                 (~(Z.FFX || nS==1) && ~isfield(NIRS.flags,'groupOK') || job.force_redo))
-            disp('Starting group analysis');
+            %disp('Starting group analysis');
+            if Z.FFX || nS==1
+                big_TOPO = [];
+            else
+                big_TOPO{nS} = [];
+                disp('Wait... loading individual data for group analysis');
+                for Idx2=1:nS
+                    %Load NIRS.mat information
+                    NIRS = [];
+                    load(job.NIRSmat{Idx2,1});
+                    dir1 = NIRS.SPM{1};
+                    %load topographic information (formerly known as preproc_info)
+                    fname_ch = NIRS.Dt.ana.rend;
+                    %quick fix for Claudine's study:
+                    %fname_ch = 'W:\Claudine\SPMDataNT\S003\TopoData.mat';
+                    
+                    load(fname_ch);
+                    if Idx == 1
+                        rendered_MNI0 = rendered_MNI;
+                    end
+                    try
+                        ftopo = NIRS.TOPO;
+                    catch
+                        ftopo = fullfile(dir1,'TOPO.mat');
+                        disp('TOPO not found in NIRS.TOPO');
+                    end
+                    TOPO = [];
+                    load(ftopo);
+                    %large structure
+                    big_TOPO{Idx2} = TOPO;
+                    big_TOPO{Idx2}.rendered_MNI = rendered_MNI;
+                end
+                %create a new TOPO at the group level
+                TOPO = [];
+                TOPO.xCon = big_TOPO{1}.xCon;
+            end
             Z.dir1 = dir_group;
             %contrasts
             TOPO = nirs_get_contrasts_group(Z,TF,TOPO);
@@ -153,8 +156,12 @@ for Idx=1:nl
                 view_estimated = 0;
                 try
                     if isfield(TOPOsrc.v{v1},'s1')
-                        ns = length(TOPOsrc.v{v1}.s); %number of sessions
-                        view_estimated = 1;
+                        ns = length(TOPOsrc.v{v1}.s); %number of sessions 
+                        if (Z.FFX || nS==1) && ns == 1
+                            view_estimated = 0; %force not running the group if only one subject and only one session
+                        else
+                            view_estimated = 1;
+                        end
                     end
                 end
                 try
@@ -163,7 +170,7 @@ for Idx=1:nl
                         view_estimated = 1;
                     end
                 end
-                
+                     
                 if view_estimated
                     %Structure for passing GLM and interpolation data
                     W = [];

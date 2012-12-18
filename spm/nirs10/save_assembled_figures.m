@@ -35,8 +35,10 @@ if Z.gen_fig
     saveas(fh0,filen1,'fig'); %save as .fig
 end
 if Z.gen_tiff %label 'A' conventiently brings figures at beginning of folder list
-    filen2 = fullfile(Z.dir1,['A_' filestr '.tiff']); %save as .tiff
-    print(fh0, '-dtiffn', filen2);
+%     filen2 = fullfile(Z.dir1,['A_' filestr '.tiff']); %save as .tiff
+%     print(fh0, '-dtiffn', filen2);
+    filen2 = fullfile(Z.dir1,['A_' filestr '.png']); %save as .tiff
+    print(fh0,'-dpng', filen2,'-r300');
 end
 if strcmp(Z.cbar.visible, 'off')
     nirs_close_figure(fh0);

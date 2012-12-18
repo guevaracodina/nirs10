@@ -3,12 +3,12 @@ function display_options = liom_contrast_group_options
 contrast_figures      = cfg_menu;
 contrast_figures.tag  = 'contrast_figures';
 contrast_figures.name = 'Generate figures';
-contrast_figures.labels = {'No','Both .fig and .tiff','Only .fig','Only .tiff'};
+contrast_figures.labels = {'No','Both .fig and .png','Only .fig','Only .png'};
 contrast_figures.values = {0,1,2,3};
 contrast_figures.val = {3};
 contrast_figures.help = {'Generate contrast figures. '
     'Note .fig colorbar is incorrect - it is not saved properly by Matlab.'
-    'Use .tiff to view colorbar for t-stat.'}';
+    'Use .png to view colorbar for t-stat.'}';
 
 figures_visible      = cfg_menu;
 figures_visible.tag  = 'figures_visible';
@@ -16,7 +16,8 @@ figures_visible.name = 'Make figures visible';
 figures_visible.labels = {'Yes','No'};
 figures_visible.values = {1,0};
 figures_visible.val = {0};
-figures_visible.help = {'Make figures visible during processing, and staying open at the end.'}';
+figures_visible.help = {'Make figures visible during processing, and staying open at the end.'
+    'No longer used -- always put No'}';
 
 GenerateInverted      = cfg_menu;
 GenerateInverted.tag  = 'GenerateInverted';
@@ -24,7 +25,8 @@ GenerateInverted.name = 'Generate Inverted Responses';
 GenerateInverted.labels = {'Yes','No'};
 GenerateInverted.values = {1,0};
 GenerateInverted.val = {1};
-GenerateInverted.help = {'Generate contrasts for inverted responses. SHOULD ALWAYS BE LEFT AT "YES" OR CODE WILL BREAK (2012-08-06).'};
+GenerateInverted.help = {'Generate contrasts for inverted responses.'
+    'SHOULD ALWAYS BE LEFT AT "YES" OR CODE WILL BREAK (2012-08-06).'}';
 
 SmallFigures      = cfg_menu;
 SmallFigures.tag  = 'SmallFigures';
@@ -32,7 +34,8 @@ SmallFigures.name = 'Large or small figures';
 SmallFigures.labels = {'Large','Small'};
 SmallFigures.values = {0,1};
 SmallFigures.val = {1};
-SmallFigures.help = {'Write to disk large or small (compressed) figures.'}';
+SmallFigures.help = {'Write to disk large or small (compressed) figures.'
+    'Option no longer in use'}';
 
 GroupFiguresIntoSubplots      = cfg_menu;
 GroupFiguresIntoSubplots.tag  = 'GroupFiguresIntoSubplots';
@@ -58,7 +61,8 @@ write_neg_pos.values = {1,0};
 write_neg_pos.val    = {0};
 write_neg_pos.help = {'If generating negative contrasts, whether to output '
     'separate maps for negative and positive contrasts and for both, '
-    'or only the maps with both contrasts' }';
+    'or only the maps with both contrasts'
+    'OPTION NO LONGER USED -- ALWAYS PUT NO'}';
 
 save_nifti_contrasts      = cfg_menu;
 save_nifti_contrasts.tag  = 'save_nifti_contrasts';
@@ -68,7 +72,7 @@ save_nifti_contrasts.values = {1,0};
 save_nifti_contrasts.val    = {0};
 save_nifti_contrasts.help = {'This option is useful for 2nd level studies: '
     'It creates nifti images, one for each contrast, which can then be input'
-    'Into an SPM 2nd level analysis.' }';
+    'Into an SPM 2nd level analysis.'}';
 
 [override_colorbar GroupColorbars] = nirs_dfg_colorbars;
 

@@ -189,12 +189,8 @@ try
                 saveas(fh1,filen1,'fig');
             end
             if gen_tiff
-                filen2 = fullfile(pathn,[tstr '_' str_cor '_' contrast_info '.tiff']);
-                if Z.SmallFigures
-                    print(fh1, '-dtiff', filen2);
-                else
-                    print(fh1, '-dtiffn', filen2);
-                end
+                filen2 = fullfile(pathn,[tstr '_' str_cor '_' contrast_info '.png']);
+                    print(fh1, '-dpng', filen2,'-r300');
             end
         end
         %Fill Y

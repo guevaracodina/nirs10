@@ -378,8 +378,8 @@ for Idx=1:size(job.NIRSmat,1)
                                 imagesc(whpR);title(['Heart pace: ' namef],'Interpreter', 'none');
                                 if save_heart_rate_figure
                                     
-                                    filen2 = fullfile(dir1,[namef '_HeartRate.tiff']); %save as .tiff
-                                    print(hfig, '-dtiffn', filen2);
+                                    filen2 = fullfile(dir1,[namef '_HeartRate.png']); %save as .png
+                                    print(hfig, '-dpng', filen2,'-r300');
                                 end
                                 if ~display_heart_rate_figure
                                     close(hfig);
