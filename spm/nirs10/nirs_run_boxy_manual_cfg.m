@@ -45,17 +45,13 @@ raw_onset_files2.help    = {'Select raw onset files. '
     'Must specify one file for each data file, in same order.'}'; % help text displayed
 
 anatT1         = cfg_files; %Select T1 for this subject
-anatT1.name    = 'Raw anatomical image (optional)'; % The displayed name
+anatT1.name    = 'Raw anatomical image'; % The displayed name
 anatT1.tag     = 'anatT1';       %file names
 anatT1.filter  = 'image';
 anatT1.ufilter = '.*';
 anatT1.val{1}  = {''};
-anatT1.num     = [0 Inf];     % Number of inputs required
-anatT1.help    = {'Optional, can be specified in MC Segment, or earlier '
-    'and be available in NIRS.mat structure.'
-    'Select raw anatomical image(s) for the subject(s). '
-    'If several subjects, the images '
-    'must be in the same order as the NIRS.mat structures.'}';
+anatT1.num     = [0 1];     % Number of inputs required
+anatT1.help    = {'Anatomical image'}';
 
 prjFile        = cfg_files;
 prjFile.name    = 'Montage file'; % The displayed name
@@ -80,24 +76,6 @@ generic2.help    = {'For this module, more flexibility in location of files'
     'is allowed, compared to the previous Read BOXY module'}';
 generic2.values  = {subj2};
 generic2.num     = [1 Inf];
-
-% %path structure
-% T1_path         = cfg_entry; %path
-% T1_path.name    = 'path for anatomical files';
-% T1_path.tag     = 'T1_path';
-% T1_path.strtype = 's';
-% T1_path.num     = [1 Inf];
-% T1_path.def     = @(val)nirs_get_defaults('readNIRS.boxy1.config_path.T1_path', val{:});
-% T1_path.help    = {'Path for T1 file: should be something like ..\T1\ (omit backslashes)'};
-%
-% %path structure
-% output_path         = cfg_entry; %path
-% output_path.name    = 'path for .nir output files';
-% output_path.tag     = 'output_path';
-% output_path.strtype = 's';
-% output_path.num     = [1 Inf];
-% output_path.def     = @(val)nirs_get_defaults('readNIRS.boxy1.config_path.output_path', val{:});
-% output_path.help    = {'Path for .nir output files: should be something like ..\dataSPM\ (omit backslashes)'};
 
 %path structure
 T1_path         = cfg_entry; %path
@@ -132,21 +110,6 @@ Lambda.num     = [1 Inf];
 Lambda.def     = @(val)nirs_get_defaults('readNIRS.boxy1.cf1.Lambda', val{:});
 Lambda.help    = {'Near Infrared laser wavelengths. Note order is critical and'
     'must correspond to recording order in raw data files.'}';
-
-%wavelengths sensitive to HbO - NOT USED - calculated in the code based on
-%info stored in NIRS.Cf.dev.wl
-% LambdaHbO         = cfg_entry; %Lambda
-% LambdaHbO.name    = 'Wavelengths most sensitive to HbO';
-% LambdaHbO.tag     = 'LambdaHbO';
-% LambdaHbO.strtype = 'r';
-% LambdaHbO.num     = [1 Inf];
-% LambdaHbO.def     = @(val)nirs_get_defaults('readNIRS.boxy1.cf1.LambdaHbO', val{:});
-% LambdaHbO.help    = {'Enter a vector, with one entry for each wavelength,'
-%             'Indicating with a 1 if the wavelength is most sensitive to HbO'
-%             'and with a 0 if it is less sensitive. With more than 2 wavelengths,'
-%             'several wavelengths could be sensitive to HbO. This vector of '
-%             'Booleans will be used for detection of heart rate and Mayer waves,'
-%             'and for the configuration of Monte Carlo files.'}';
 
 %Input frequency
 input2 = cfg_entry;
@@ -252,8 +215,6 @@ val_FWHM.tag     = 'val_FWHM';
 val_FWHM.strtype = 'r';
 val_FWHM.val     = {0.625};
 val_FWHM.num     = [1 1];
-%avg_number.def     = @(val)nirs_get_defaults(...
-    %'model_specify.wls_bglm_specify.hpf_butter.hpf_butter_On.hpf_butter_freq', val{:});
 val_FWHM.help    = {'Enter the Full Width at Half Maximum in seconds'};
 
 Gaussian_LPF_on         = cfg_branch;
@@ -271,12 +232,10 @@ sample_LPF_off.help    = {'Low Pass Filter for resampling has been turned off'};
 sample_LPF      = cfg_choice;
 sample_LPF.tag  = 'sample_LPF';
 sample_LPF.name = 'Low Pass Filter for resampling.';
-%cardiac_repair.labels = {'Yes','No'};
 sample_LPF.values = {sample_LPF_off Gaussian_LPF_on};
 sample_LPF.val = {sample_LPF_off};
 sample_LPF.help = {'Choose whether to apply a LPF for the data resampling'
                     'This LPF is performed to meet the Nyquist–Shannon sampling theorem'}';
-
 
 %**************************************************************************
 
@@ -311,5 +270,3 @@ vout = cfg_dep;
 vout.sname      = 'NIRS.mat';
 vout.src_output = substruct('.','NIRSmat');
 vout.tgt_spec   = cfg_findspec({{'filter','mat','strtype','e'}});
-
-
