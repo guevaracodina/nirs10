@@ -15,14 +15,6 @@ function out = nirs_run_boxy_manual(job)
 %the rows, each source first, then the detectors, then the electrodes
 %BUT WHAT IS THE 4th column of mat_Mtg?
 %mat_Chn: same as mat_Mtg, but for the channels
-
-
-%**************************************************************************
-%added by Ke Peng
-%Enable LPF for downsampling
-%14/06/2012
-%**************************************************************************
-
 if isfield(job.cf1.sample_LPF, 'Gaussian_LPF_on')
     LPF_Gaussian_resample = 1;
     FHWM_LPF_resample = job.cf1.sample_LPF.Gaussian_LPF_on.val_FWHM;
@@ -38,7 +30,7 @@ N_subj = size(job.subj2,2);
 outNIRSmat = {};
 %Big loop over all subjects
 for Idx_subj=1:N_subj    
-    tmpNIRS = [job.subj2.Apath{1} jobP.output_path filesep 'NIRS.mat'];
+    tmpNIRS = fullfile(job.subj2.Apath{1}, jobP.output_path, 'NIRS.mat');
     if spm_existfile(tmpNIRS) && ~job.force_redo
         load(tmpNIRS);
     else
@@ -49,11 +41,6 @@ for Idx_subj=1:N_subj
         NIRS = job.cf1;
         if NIRS.resample > 1
             NIRS.freq = NIRS.freq/NIRS.resample;
-            %**************************************************************
-            %added by Ke Peng
-            %To record the LPF information for resampling in NIRS structure
-            %14/06/2012
-            %**************************************************************
             NIRS.LPF_resample = LPF_Gaussian_resample;
             NIRS.LPF_resample_FHWM = FHWM_LPF_resample;
             %**************************************************************
@@ -73,14 +60,15 @@ for Idx_subj=1:N_subj
         NIRS.prjname = job.subj2.prjFile{1};
         %path for raw data
         NIRS.pathboxy = subj_BOXY_path;
+        if ~exist(NIRS.subj_path,'dir'), mkdir(NIRS.subj_path); end
         %path for output of NIRS.mat and of .nir data files
-        NIRS.pathoutput = [NIRS.subj_path jobP.output_path filesep];
+        NIRS.pathoutput = fullfile(NIRS.subj_path, jobP.output_path);
         %create this output directory if it doesn't already exist
-        if ~isdir(NIRS.pathoutput), mkdir(NIRS.pathoutput); end
+        if ~exist(NIRS.pathoutput,'dir'), mkdir(NIRS.pathoutput); end
         %Path for T1
-        NIRS.pathoutput_T1 = [NIRS.subj_path jobP.T1_path filesep];
+        NIRS.pathoutput_T1 = fullfile(NIRS.subj_path, jobP.T1_path);
         %create T1 output directory if needed
-        if ~isdir(NIRS.pathoutput_T1), mkdir(NIRS.pathoutput_T1); end
+        if ~exist(NIRS.pathoutput_T1,'dir'), mkdir(NIRS.pathoutput_T1); end
         
         %load project montage
         try
@@ -123,7 +111,7 @@ for Idx_subj=1:N_subj
         
         %add useful info to NIRS.mat: frequency, sampling interval
         %NIRS.SamplingFrequency = NIRS.freq; %in Hertz
-        NIRS.SamplingInterval =floor(1000000/NIRS.freq); %in microseconds
+        NIRS.SamplingInterval = floor(1000000/NIRS.freq); %in microseconds
         
         %Big Loop over each of the BOXY data files
         for Idx_file = 1:NIRS.N_dfiles
@@ -133,8 +121,8 @@ for Idx_subj=1:N_subj
             [path1 expname1 ext1] = fileparts(fName); %#ok<ASGLU>
             ext1 = ext1(2:end); %skip the initial dot "."
             shortfileOutRoot = [expname1 '_' ext1];
-            fileOutRoot = [NIRS.pathoutput shortfileOutRoot];
-            fileOut=[fileOutRoot '.nir'];
+            fileOutRoot = fullfile(NIRS.pathoutput, shortfileOutRoot);
+            fileOut = [fileOutRoot '.nir'];
             fileOutRoot_vhdr = [fileOutRoot '.vhdr'];
             fileOutRoot_vmrk = [fileOutRoot '.vmrk'];
             fileOut_nir = [shortfileOutRoot '.nir'];
@@ -143,13 +131,8 @@ for Idx_subj=1:N_subj
             %**************************************************************
             %modified by Ke Peng
             %to apply the LPF for resampling
-            %**************************************************************
-            
+            %**************************************************************            
             NIRS = nirs_boxy_convert(NIRS,fName,fileOut,Idx_file,LPF_Gaussian_resample,FHWM_LPF_resample);
-            
-            %NIRS = nirs_boxy_convert(NIRS,fName,fileOut,Idx_file);
-            
-            %**************************************************************
             
             NIRS.NIRfile{Idx_file} = fileOut;
             %Header file
@@ -179,7 +162,7 @@ for Idx_subj=1:N_subj
         %NIRS: write in T1 folder text file of fiducial, source and detector
         %positions, putting number of fiducials, and sum of number of sources and
         %of detectors in the name of the text file as they are required inputs in NIRS_SPM
-        fid = fopen([NIRS.pathoutput_T1 'FidSrcDet_' int2str(NIRS.n_Fid) '_' int2str(NIRS.n_Opt) '.txt'],'wt');
+        fid = fopen(fullfile(NIRS.pathoutput_T1,['FidSrcDet_' int2str(NIRS.n_Fid) '_' int2str(NIRS.n_Opt) '.txt']),'wt');
         for Idx=1:NIRS.n_Fid
             fprintf(fid,'%s%s%s%s%s\n',num2str(mat_Fid(Idx,1)),' ',...
                 num2str(mat_Fid(Idx,2)),' ',num2str(mat_Fid(Idx,3)));
@@ -196,7 +179,7 @@ for Idx_subj=1:N_subj
         
         %also for NIRS_SPM and coregistration, create text file of channel pairings
         %between sources and detectors
-        fid = fopen([NIRS.pathoutput_T1 'Source Detector Pairs.txt'], 'wt');
+        fid = fopen(fullfile(NIRS.pathoutput_T1, 'Source Detector Pairs.txt'), 'wt');
         fprintf(fid,'%s\n','HSJ');
         fprintf(fid,'%s%s%s%s%s%s\n',int2str(NIRS.n_Src),'x',int2str(NIRS.n_Det),'_',int2str(NIRS.n_Chn),'ch');
         fprintf(fid,'%s\n\n','1set');
@@ -204,8 +187,6 @@ for Idx_subj=1:N_subj
             fprintf(fid,'%s%s%s\n',int2str(NIRS.ml(Idx,1)),'  ',int2str(NIRS.ml(Idx,2)+NIRS.n_Src));
         end
         fclose(fid);
-        
-        
         oldNIRS = NIRS;
         
         %Fill out standardized NIRS structure
@@ -259,8 +240,8 @@ for Idx_subj=1:N_subj
             disp('Problem with onset files');
         end
         %write out NIRS in .mat file
-        save([oldNIRS.pathoutput 'NIRS'],'NIRS');
-        save([oldNIRS.pathoutput 'oldNIRS'],'oldNIRS');
+        save(fullfile(oldNIRS.pathoutput,'NIRS'),'NIRS');
+        save(fullfile(oldNIRS.pathoutput,'oldNIRS'),'oldNIRS');
         outNIRSmat = [outNIRSmat; fullfile(oldNIRS.pathoutput,'NIRS.mat')];
     else
         outNIRSmat = [outNIRSmat; tmpNIRS ];

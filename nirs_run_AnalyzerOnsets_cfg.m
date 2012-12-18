@@ -3,9 +3,6 @@ function AnalyzerOnsets = nirs_run_AnalyzerOnsets_cfg
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Configuration  Read NIRS onsets to generate input to General Linear Model
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Configuration  Read NIRS onsets for epilepsy from Analyzer 2
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -44,8 +41,6 @@ avg_number.tag     = 'avg_number';
 avg_number.strtype = 'r';
 avg_number.val     = {5};
 avg_number.num     = [1 1];
-%avg_number.def     = @(val)nirs_get_defaults(...
-    %'model_specify.wls_bglm_specify.hpf_butter.hpf_butter_On.hpf_butter_freq', val{:});
 avg_number.help    = {'Enter the number of pulses to generate the mean value for verification'
                       'This value has to be an integer.'}';
 
@@ -55,8 +50,6 @@ gap_def.tag     = 'gap_def';
 gap_def.strtype = 'r';
 gap_def.val     = {1.8};
 gap_def.num     = [1 1];
-%avg_number.def     = @(val)nirs_get_defaults(...
-    %'model_specify.wls_bglm_specify.hpf_butter.hpf_butter_On.hpf_butter_freq', val{:});
 gap_def.help    = {'Enter the times of mean value to define a single gap.'};
 
 cardiac_repair_on         = cfg_branch;
@@ -74,7 +67,6 @@ cardiac_repair_off.help    = {'Cardiac onset gap filling has been turned off.'};
 cardiac_repair      = cfg_choice;
 cardiac_repair.tag  = 'cardiac_repair';
 cardiac_repair.name = 'Gap filling for Cadiac onsets (optional).';
-%cardiac_repair.labels = {'Yes','No'};
 cardiac_repair.values = {cardiac_repair_on cardiac_repair_off};
 cardiac_repair.val = {cardiac_repair_on};
 cardiac_repair.help = {'Choose whether to fill the gaps of the cardiac onsets is needed.'
@@ -86,7 +78,7 @@ onset_to_keep.name    = 'Label for single onset type to keep';
 onset_to_keep.tag     = 'onset_to_keep';
 onset_to_keep.strtype = 's';
 onset_to_keep.val     = {''};
-onset_to_keep.num     = [1 Inf];
+onset_to_keep.num     = [0 Inf];
 onset_to_keep.help    = {'Enter empty string to process as usual (i.e. keep onsets)'
     'Alternatively, enter the name of the onset type (e..g spkLT ) in order'
     'to exclude other onsets and keep only this onset type.'}';

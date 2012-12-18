@@ -65,6 +65,12 @@ size_gap.num     = [1 1];
 size_gap.help    = {'Enter the times of peroid as a definion of a gap.'
                     'Real value must be entered'}';
 
+nirs_new_fill_jumps         = cfg_branch;
+nirs_new_fill_jumps.tag     = 'nirs_new_fill_jumps';
+nirs_new_fill_jumps.name    = 'NIRS filling jumps on - new version';
+nirs_new_fill_jumps.val     = {};
+nirs_new_fill_jumps.help    = {''};
+
 nirs_fill_jumps_on         = cfg_branch;
 nirs_fill_jumps_on.tag     = 'nirs_fill_jumps_on';
 nirs_fill_jumps_on.name    = 'NIRS filling jumps on';
@@ -81,7 +87,7 @@ nirs_filling_jumps      = cfg_choice;
 nirs_filling_jumps.tag  = 'nirs_filling_jumps';
 nirs_filling_jumps.name = 'Filling jumps for NIRS data (optional).';
 %cardiac_repair.labels = {'Yes','No'};
-nirs_filling_jumps.values = {nirs_fill_jumps_on nirs_fill_jumps_off};
+nirs_filling_jumps.values = {nirs_new_fill_jumps nirs_fill_jumps_on nirs_fill_jumps_off};
 nirs_filling_jumps.val = {nirs_fill_jumps_off};
 nirs_filling_jumps.help = {'Choose whether to fill the jumps in nirs data.'
                        'Detect jumps and interpolate values to fill them in nirs data'}';
