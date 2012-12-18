@@ -100,7 +100,7 @@ for iSubj=1:size(job.NIRSmat,1)
             x = NIRS.Cf.H.F.r.o.mm.p;
             
             % Compute optimal rigid transformation to match fiducial
-            % positions to those of the normalized atlas
+            % positions from one coordinate system to the other
             [s R t] = abs_orientation(x,y); % y = s*R(x) + t
             estY = zeros(size(y));
             for Fi = 1:3 %assume 3 fiducials
@@ -143,6 +143,7 @@ for iSubj=1:size(job.NIRSmat,1)
             
             % Save MNI coordinates of optodes -- coregistration is now done
             NIRS.Cf.H.P.r.m.mm.p = Pp_rmm;
+            NIRS.Cf.H.P.r.m.mm.fp = Pp_rmm; %fitted on skin
             
             % unnormalized -> normalized, for optodes
             Pp_wmm = Q * [Pp_rmm;ones(1,NP)];          %% unit : mm
