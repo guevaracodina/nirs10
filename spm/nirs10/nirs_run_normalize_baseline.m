@@ -12,6 +12,31 @@ normalization_type = job.normalization_type; % {1='Global', 2='By bad point segm
 scaling_factor = job.Analyzer_sf; %job.scaling_factor; % Scaling factor applied to the amplitude of all channels
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 div_factor0 = 1;
+%**************************************************************************
+%Introduce nirs data jump filling process
+%Ke Peng
+%**************************************************************************
+%Should be done before normalization of data
+if isfield(job, 'nirs_filling_jumps') && isfield(job.nirs_filling_jumps, 'nirs_fill_jumps_on')
+    fill_jump_on = 1;
+    num_standard_deviation = job.nirs_filling_jumps.nirs_fill_jumps_on.num_standard_deviation;
+    num_points = job.nirs_filling_jumps.nirs_fill_jumps_on.num_points;
+    size_gap = job.nirs_filling_jumps.nirs_fill_jumps_on.size_gap;
+    
+    if isfield(job.nirs_filling_jumps.nirs_fill_jumps_on.HPF_enable, 'HPF_enable_on')
+        HPF_enable_on = 1;
+        hpf_butter_order = job.nirs_filling_jumps.nirs_fill_jumps_on.HPF_enable.HPF_enable_on.hpf_butter_order;
+        hpf_butter_freq = job.nirs_filling_jumps.nirs_fill_jumps_on.HPF_enable.HPF_enable_on.hpf_butter_freq;
+    else
+        HPF_enable_on = 0;
+    end
+else
+    fill_jump_on = 0;
+end
+
+%**************************************************************************
+
+
 % Loop over subjects
 for Idx=1:size(job.NIRSmat,1)
     % Load NIRS.mat information
@@ -29,15 +54,47 @@ for Idx=1:size(job.NIRSmat,1)
             for f=1:size(rDtp,1)
                 % Read raw data (intensity)
                 d = fopen_NIR(rDtp{f,1},NC);
-                    %reset negative values to the minimal positive value
-                    %treat each channel separately
-                    for c0=1:size(d,1)
-                        td = d(c0,:);                        
-                        dMin = min(td(td>0));
-                        %nL0 = sum(d(:)<0);                        
-                        td(td<=0) = dMin;
-                        d(c0,:) = td;
+                %reset negative values to the minimal positive value
+                %treat each channel separately
+                for c0=1:size(d,1)
+                    td = d(c0,:);
+                    dMin = min(td(td>0));
+                    %nL0 = sum(d(:)<0);
+                    td(td<=0) = dMin;
+                    d(c0,:) = td;
+                end
+                
+                %**************************************************************************
+                %Filling jumps in nirs data
+                %Ke Peng
+                %**************************************************************************
+                
+                if fill_jump_on
+                    %[ dData, minmax, stats ] = AnalyzeEdges( data, scales, thresholds, timestep, startTime, endTime, tranRad );
+                    for i0 = 1:size(d,1)
+                        [dData{i0},minmax{i0},stats{i0}] = AnalyzeEdges(d(i0,:));
                     end
+                    OP.Sb = num_standard_deviation;
+                    OP.Nr = num_points;
+                    OP.Mp = size_gap;
+                    OP.sf = fs;
+                    %                         if HPF_enable_on
+                    %                             OP.ubf = 1;
+                    %                             OP.fs = NIRS.Cf.dev.fs;
+                    %                             OP.bf = hpf_butter_freq;
+                    %                             OP.bo = hpf_butter_order;
+                    %                         else
+                    OP.ubf = 0;
+                    %                         end
+                    for i0 = 1:size(d,1)
+                        d(i0,:) = nirs_remove_jumps_new(d(i0,:),OP);
+                    end
+                end
+                
+                
+                %**************************************************************************
+                
+                
                 % Read markers for movement if available
                 try
                     bpi = NIRS.Dt.fir.pp(lst).bpi{f,1}; %bad point indices
@@ -68,8 +125,8 @@ for Idx=1:size(job.NIRSmat,1)
                             e = [];
                         end
                         win = 1:size(e,2);
-                        [div_factor div_factor0] = get_div_factor(e,fs,bl_m,f,win,div_factor0);                           
-                                                
+                        [div_factor div_factor0] = get_div_factor(e,fs,bl_m,f,win,div_factor0);
+                        
                         % Perform normalization
                         try
                             if ~isempty(e)
@@ -129,8 +186,8 @@ for Idx=1:size(job.NIRSmat,1)
                             end
                             win = wins:wine;
                             
-                            [div_factor div_factor0] = get_div_factor(d,fs,bl_m,f,win,div_factor0);                           
-                         
+                            [div_factor div_factor0] = get_div_factor(d,fs,bl_m,f,win,div_factor0);
+                            
                             % Normalize to the next stimulus only
                             if i1 < length(onsets)
                                 wine2 = round(onsets(i1+1)*fs)-1;
@@ -148,8 +205,8 @@ for Idx=1:size(job.NIRSmat,1)
                         bpi = [];
                         bpd = [];
                         win = 1:size(d,2);
-                        [div_factor div_factor0] = get_div_factor(d,fs,bl_m,f,win,div_factor0);                           
-                                               
+                        [div_factor div_factor0] = get_div_factor(d,fs,bl_m,f,win,div_factor0);
+                        
                         div_factor = div_factor * ones(1,size(d,2));
                         
                         % Perform normalization
@@ -182,7 +239,7 @@ for Idx=1:size(job.NIRSmat,1)
                 
                 [dir1,fil1,ext1] = fileparts(rDtp{f});
                 outfile = fullfile(dir1,[prefix fil1 ext1]);
-               
+                
                 fwrite_NIR(outfile,d);
                 % add outfile name to NIRS
                 if f == 1

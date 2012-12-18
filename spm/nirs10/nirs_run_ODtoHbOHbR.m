@@ -8,23 +8,23 @@ prefix = 'h'; % for "hemoglobin" concentrations
 %Introduce nirs data jump filling process
 %Ke Peng
 %**************************************************************************
-
-if isfield(job, 'nirs_fill_jumps_on') && isfield(job.nirs_filling_jumps, 'nirs_fill_jumps_on')
-    fill_jump_on = 1;
-    num_standard_deviation = jobs.nirs_filling_jumps.nirs_fill_jumps_on.num_standard_deviation;
-    num_points = jobs.nirs_filling_jumps.nirs_fill_jumps_on.num_points;
-    size_gap = jobs.nirs_filling_jumps.nirs_fill_jumps_on.size_gap;
-    
-    if isfield(job.nirs_filling_jumps.nirs_fill_jumps_on.HPF_enable, 'HPF_enable_on')
-        HPF_enable_on = 1;
-        hpf_butter_order = job.nirs_filling_jumps.nirs_fill_jumps_on.HPF_enable.HPF_enable_on.hpf_butter_order;
-        hpf_butter_freq = job.nirs_filling_jumps.nirs_fill_jumps_on.HPF_enable.HPF_enable_on.hpf_butter_freq;
-    else
-        HPF_enable_on = 0;
-    end
-else
-    fill_jump_on = 0;
-end
+%Should be done before normalization of data
+% if isfield(job, 'nirs_filling_jumps') && isfield(job.nirs_filling_jumps, 'nirs_fill_jumps_on')
+%     fill_jump_on = 1;
+%     num_standard_deviation = job.nirs_filling_jumps.nirs_fill_jumps_on.num_standard_deviation;
+%     num_points = job.nirs_filling_jumps.nirs_fill_jumps_on.num_points;
+%     size_gap = job.nirs_filling_jumps.nirs_fill_jumps_on.size_gap;
+%     
+%     if isfield(job.nirs_filling_jumps.nirs_fill_jumps_on.HPF_enable, 'HPF_enable_on')
+%         HPF_enable_on = 1;
+%         hpf_butter_order = job.nirs_filling_jumps.nirs_fill_jumps_on.HPF_enable.HPF_enable_on.hpf_butter_order;
+%         hpf_butter_freq = job.nirs_filling_jumps.nirs_fill_jumps_on.HPF_enable.HPF_enable_on.hpf_butter_freq;
+%     else
+%         HPF_enable_on = 0;
+%     end
+% else
+%     fill_jump_on = 0;
+% end
 
 %**************************************************************************
 
@@ -140,23 +140,23 @@ for Idx=1:size(job.NIRSmat,1)
 %Ke Peng
 %**************************************************************************
                 
-                if fill_jump_on
-                    
-                    OP.Sb = num_standard_deviation;
-                    OP.Nr = num_points;
-                    OP.Mp = size_gap;
-                    
-                    if HPF_enable_on
-                        OP.ubf = 1;
-                        OP.fs = NIRS.Cf.dev.fs;
-                        OP.bf = hpf_butter_freq;
-                        OP.bo = hpf_butter_order;
-                    else
-                        OP.ubf = 0;
-                    end
-                    
-                    d = nirs_remove_jumps(d,OP);
-                end
+%                 if fill_jump_on
+%                     
+%                     OP.Sb = num_standard_deviation;
+%                     OP.Nr = num_points;
+%                     OP.Mp = size_gap;
+%                     
+%                     if HPF_enable_on
+%                         OP.ubf = 1;
+%                         OP.fs = NIRS.Cf.dev.fs;
+%                         OP.bf = hpf_butter_freq;
+%                         OP.bo = hpf_butter_order;
+%                     else
+%                         OP.ubf = 0;
+%                     end
+%                     
+%                     d = nirs_remove_jumps(d,OP);
+%                 end
 
 
 %**************************************************************************
