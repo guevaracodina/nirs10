@@ -548,8 +548,8 @@ if isfield(M,'HDM_str')
     end
     
     filen2 = fullfile(M.dir1,['HDM' HDM_str 'fit_large.fig']);
-    filen4 = fullfile(M.dir1,['HDM' HDM_str 'fit_large.tiff']);
+    filen4 = fullfile(M.dir1,['HDM' HDM_str 'fit_large.png']);
     saveas(Ffit,filen2,'fig');
-    print(Ffit, '-dtiffn', filen4);
+    print(Ffit, '-dpng', filen4,'-r300');
     close(Ffit)
 end

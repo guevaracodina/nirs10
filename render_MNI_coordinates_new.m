@@ -332,6 +332,7 @@ for i=1:length(rend),
     % Adding to rendered_MNI since this is what is saved later in TopoData,
     % no need to change code elsewhere
     rendered_MNI{i}.view_mask_2d=view_mask_2d;
+    rendered_MNI{i}.M = M;
 end;
 
 rend{1}.mxmx = max(mx);
@@ -348,6 +349,7 @@ for i=1:length(rend)
     rend{i}.data{1} = temp_data(size(temp_data,1):-1:1,:);
     rend{i}.ddata{1} = temp_ddata(size(temp_ddata,1):-1:1,:); %Mahnoush
     rendered_MNI{i}.view_mask_2d=temp_viewmask_2d(size(temp_data,1):-1:1,:);
+    rendered_MNI{i}.dep = rend{i}.dep;
 end
 for kk = 1:length(rend)
     for i = 1:Nmark
@@ -373,4 +375,5 @@ for kk = 1:length(rend)
         end
     end
     rendered_MNI{kk}.ren = rend{kk}.ren;
+    rendered_MNI{kk}.render_template = render_template;
 end

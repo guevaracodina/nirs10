@@ -101,7 +101,7 @@ CRIUGM.help   = {'Data analysis for CRIUGM projects'};
 nirs_utilities        = cfg_choice;
 nirs_utilities.name   = 'NIRS utilities';
 nirs_utilities.tag    = 'nirs_utilities';
-nirs_utilities.values = {nirs_run_nii_to_2D_cfg}; 
+nirs_utilities.values = {nirs_run_nii_to_2D_cfg nirs_run_liom_focus_projection_cfg nirs_run_liom_sensitivity_specificity_cfg}; %add one module by Ke Peng 2012-08-09
 nirs_utilities.help   = {'Various utilities.'};
 
 %module 11

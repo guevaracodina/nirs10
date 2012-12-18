@@ -69,16 +69,18 @@ try
                 %Ke Peng, 2012-07-18
                 %**********************************************************
                 
-               % if isfield(SPM,'Avg')
-                    %Z.Avg = 1;
-                %    W.covbeta = xXn{f1}.covbeta;
-                %end
+                if isfield(SPM,'Avg')
+                    W.covbeta = xXn{f1}.covbeta;
+                else
+                    try 
+                        W.covbeta = xXn{f1}.covbeta;
+                    end
+                end
                   %**********************************************************
 
                 if isfield(xXn{f1},'res')
                     W.res = fopen_NIR(xXn{f1}.res,NC);
                 else
-                    %Z.Avg = 1;
                     W.covbeta = xXn{f1}.covbeta;
                 end
                 try

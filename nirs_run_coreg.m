@@ -494,6 +494,7 @@ for iSubj=1:size(job.NIRSmat,1)
                         %Ke Peng, 2012-09-06
                         %**************************************************************
                         if isfield(job.render_choice,'render_subject')
+                            render_template = 0;
                             if isempty(job.render_choice.render_subject.render_file)
                                 [dir0 fil0] = fileparts(NIRS.Dt.ana.T1);
                                 [files,dirs] = spm_select('FPList',dir0,'c1*');
@@ -518,6 +519,8 @@ for iSubj=1:size(job.NIRSmat,1)
                                 
                                 
                             end
+                        else
+                            render_template = 1;
                         end
                         %**************************************************************
                         use_fSeg = 1;
@@ -539,8 +542,10 @@ for iSubj=1:size(job.NIRSmat,1)
                         %%%% la notation serait Cp_rmv
                         for kk = 1:6
                             rendered_MNI{kk}.ren = rend{kk}.ren;
+                            rendered_MNI{kk}.render_template = render_template;
                         end
                         rend_file = fullfile(dir_coreg,'TopoData.mat');
+                        
                         save(rend_file, 'rendered_MNI');
                         NIRS.Dt.ana.rend = rend_file;
                         
