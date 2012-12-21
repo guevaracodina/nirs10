@@ -41,7 +41,9 @@ try
     end
     save_data = 1;
     if save_data
-         
+        jmm = cell2mat(minmax)';
+        fname = fullfile(dir0,'jump_minmax.nirs');
+        fwrite_NIR(fname,jmm);
     end
 catch exception
     disp(exception.identifier);
