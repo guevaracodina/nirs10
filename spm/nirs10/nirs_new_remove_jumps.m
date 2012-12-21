@@ -1,6 +1,7 @@
-function d = nirs_new_remove_jumps(d)
+function d = nirs_new_remove_jumps(d,newNIRSlocation)
 %[ dData, minmax, stats ] = AnalyzeEdges( data, scales, thresholds, timestep, startTime, endTime, tranRad );
 try
+    [dir0 fil0] = fileparts(newNIRSlocation);
     N = size(d,2);
     wi = 5;
     level_after = 0;
@@ -37,6 +38,10 @@ try
         end
         %figure; plot(td); hold on; plot(d(i0,:),'r')
         d(i0,:) = td;
+    end
+    save_data = 1;
+    if save_data
+         
     end
 catch exception
     disp(exception.identifier);

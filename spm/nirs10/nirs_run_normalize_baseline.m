@@ -75,7 +75,7 @@ for Idx=1:size(job.NIRSmat,1)
                 
                 switch fill_jump_on
                     case 2
-                        d = nirs_new_remove_jumps(d);
+                        d = nirs_new_remove_jumps(d,newNIRSlocation);
                     case 1                       
                         OP.Sb = num_standard_deviation;
                         OP.Nr = num_points;

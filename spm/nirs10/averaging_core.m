@@ -179,7 +179,14 @@ try
             % for l0 = 1 : nch
             %for d0 = 1 : (ons_duration)
             % if V{u0}((co+ons_delay+d0),l0)  == 0
-            V{u0}((co+ons_delay+(1:(ons_duration))),:) = repmat(ds{u0}(k0,:),ons_duration,1);
+            offset = co+ons_delay+1;
+            range = offset:min(offset+ons_duration-1,size(KY,1));
+            if offset+ons_duration -1 > size(KY,1)
+                adj_duration = size(KY,1) - offset + 1;
+            else
+                adj_duration = ons_duration;
+            end
+            V{u0}(range,:) = repmat(ds{u0}(k0,:),adj_duration,1);
             %                     else
             %                         V{u0}((co+ons_delay+d0),l0) = (V{u0}((co+ons_delay+d0),l0) + da{u0}(k0,l0))/2;
             %      end
