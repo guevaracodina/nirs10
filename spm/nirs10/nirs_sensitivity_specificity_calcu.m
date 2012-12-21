@@ -106,7 +106,7 @@ try
         render_proj.focus{z0}.f_map = cell(1,length(rend));
     end
     
-    render_proj.contrast = cell(1,length(TOPO.v{3}.s)); %Take Dorsal view to obtain the session number
+    render_proj.contrast = cell(1,length(TOPO.v{4}.s)); %Take Dorsal view to obtain the session number
     for s0 = 1 : length(render_proj.contrast)
         render_proj.contrast{s0} = struct();
         render_proj.contrast{s0}.session = s0;

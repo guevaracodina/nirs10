@@ -199,7 +199,7 @@ disp('- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ');
 for Idx = 1:total_NIRS
     if isnan(subject_sen_spe{Idx,1}.sensitivity)
         sen_spe_NaN = sen_spe_NaN + 1;
-        disp([subject_sen_spe{Idx,1}.subj_name '     Unknown          Unknown']);
+        disp([subject_sen_spe{Idx,1}.subj_name '                           Unknown          Unknown']);
     else
         disp([subject_sen_spe{Idx,1}.subj_name '     ' int2str(subject_sen_spe{Idx,1}.sensitivity) '                  ' int2str(subject_sen_spe{Idx,1}.specificity)]);
         if subject_sen_spe{Idx,1}.sensitivity == 1

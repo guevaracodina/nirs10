@@ -1,4 +1,4 @@
-function nirs_focus_contrast_render(dat,brt,thres,rendfile,TOPO,rendered_MNI,sessions,views,Q,Af)
+function nirs_focus_contrast_render(dat,brt,thres,TOPO,rend,sessions,views)
 % Render blobs on surface of a 'standard' brain
 % FORMAT spm_render(dat,brt,rendfile)
 %
@@ -37,7 +37,7 @@ function nirs_focus_contrast_render(dat,brt,thres,rendfile,TOPO,rendered_MNI,ses
 % 2012-08-20
 
 %============================Configurations================================
-
+try
 num     = length(dat);
 %define the colours for focus and contrasts display
 %col_focus = eye(3);%Red
@@ -45,46 +45,46 @@ col_contrast_neg = [0,0,1;0,1,0;0,0,1];%Blue for decrease
 %col_contrast = [0,1,0;0,0,1;0,0,1]; %red for increase
 col_contrast = eye(3); %red for increase
 
-%Load the render file
-[p,f,e] = fileparts(rendfile);
-loadgifti = false;
-if strcmpi(e,'.mat')
-    load(rendfile);
-    if ~exist('rend','var') && ~exist('Matrixes','var')
-        loadgifti = true;
-    end
-end
-if ~strcmpi(e,'.mat') || loadgifti
-    try
-        rend = export(gifti(rendfile),'patch');
-    catch
-        error('\nCannot read  render file "%s".\n', rendfile);
-    end
-    if num == 1
-        col = hot(256);
-    else
-        col = eye(3);
-        if spm_input('Which colours?','!+1','b',{'RGB','Custom'},[0 1],1)
-            for k = 1:num
-                col(k,:) = uisetcolor(col(k,:),sprintf('Colour of blob set %d',k));
-            end
-        end
-    end
-    surf_rend(dat,rend,col);
-    return
-end
+% %Load the render file
+% [p,f,e] = fileparts(rendfile);
+% loadgifti = false;
+% if strcmpi(e,'.mat')
+%     load(rendfile);
+%     if ~exist('rend','var') && ~exist('Matrixes','var')
+%         loadgifti = true;
+%     end
+% end
+% if ~strcmpi(e,'.mat') || loadgifti
+%     try
+%         rend = export(gifti(rendfile),'patch');
+%     catch
+%         error('\nCannot read  render file "%s".\n', rendfile);
+%     end
+%     if num == 1
+%         col = hot(256);
+%     else
+%         col = eye(3);
+%         if spm_input('Which colours?','!+1','b',{'RGB','Custom'},[0 1],1)
+%             for k = 1:num
+%                 col(k,:) = uisetcolor(col(k,:),sprintf('Colour of blob set %d',k));
+%             end
+%         end
+%     end
+%     surf_rend(dat,rend,col);
+%     return
+% end
 
 spm('Pointer','Watch');
 
-if ~exist('rend','var') % Assume old format...
-    rend = cell(size(Matrixes,1),1);
-    for i=1:size(Matrixes,1),
-        rend{i}=struct('M',eval(Matrixes(i,:)),...
-            'ren',eval(Rens(i,:)),...
-            'dep',eval(Depths(i,:)));
-        rend{i}.ren = rend{i}.ren/max(max(rend{i}.ren));
-    end
-end
+% if ~exist('rend','var') % Assume old format...
+%     rend = cell(size(Matrixes,1),1);
+%     for i=1:size(Matrixes,1),
+%         rend{i}=struct('M',eval(Matrixes(i,:)),...
+%             'ren',eval(Rens(i,:)),...
+%             'dep',eval(Depths(i,:)));
+%         rend{i}.ren = rend{i}.ren/max(max(rend{i}.ren));
+%     end
+% end
 
 %Display Calibration
 Fgraph = spm_figure('GetWin','Graphics');
@@ -108,7 +108,7 @@ try
 
     end    
     
-    render_proj.contrast = cell(1,length(TOPO.v{2}.s)); %Take Dorsal view to obtain the session number
+    render_proj.contrast = cell(1,length(TOPO.v{4}.s)); %Take Dorsal view to obtain the session number
     for i = 1 : length(render_proj.contrast)
         render_proj.contrast{i} = struct();
         render_proj.contrast{i}.session = i;
@@ -123,22 +123,22 @@ clear z0 z00
 
 %===================Render the epileptic focus (sixviews)==================
 
-for i=1:length(rend),
-    rend{i}.max=0;
-    rend{i}.data = cell(size(dat,1),1);
-    if issparse(rend{i}.ren),
+for brain_view=1:length(rend),
+    rend{brain_view}.max=0;
+    rend{brain_view}.data = cell(size(dat,1),1);
+    if issparse(rend{brain_view}.ren),
         % Assume that images have been DCT compressed
         % - the SPM99 distribution was originally too big.
-        d = size(rend{i}.ren);
+        d = size(rend{brain_view}.ren);
         B1 = spm_dctmtx(d(1),d(1));
         B2 = spm_dctmtx(d(2),d(2));
-        rend{i}.ren = B1*rend{i}.ren*B2';
+        rend{brain_view}.ren = B1*rend{brain_view}.ren*B2';
         % the depths did not compress so well with
         % a straight DCT - therefore it was modified slightly
-        rend{i}.dep = exp(B1*rend{i}.dep*B2')-1;
+        rend{brain_view}.dep = exp(B1*rend{brain_view}.dep*B2')-1;
     end
-    rend{i}.ren(rend{i}.ren>=1) = 1;
-    rend{i}.ren(rend{i}.ren<=0) = 0;
+    rend{brain_view}.ren(rend{brain_view}.ren>=1) = 1;
+    rend{brain_view}.ren(rend{brain_view}.ren<=0) = 0;
    
 end
 
@@ -151,11 +151,11 @@ for j=1:length(dat),
     dim = dat(j).DIM; %modified for NIRS
     mat = dat(j).M; %modified for NIRS
 
-    for i=1:length(rend),
+    for brain_view=1:length(rend),
 
         % transform from Talairach space to space of the rendered image
         %------------------------------------------------------------------
-        M1  = rend{i}.M*mat;
+        M1  = rend{brain_view}.M*mat;
         zm  = sum(M1(1:2,1:3).^2,2).^(-1/2);
         M2  = diag([zm' 1 1]);
         M  = M2*M1;
@@ -171,7 +171,7 @@ for j=1:length(dat),
         % Calculate 'depth' of values
         %------------------------------------------------------------------
         if ~isempty(d2)
-            dep = spm_slice_vol(rend{i}.dep,spm_matrix([0 0 1])*inv(M2),d2,1);
+            dep = spm_slice_vol(rend{brain_view}.dep,spm_matrix([0 0 1])*inv(M2),d2,1);
             z1  = dep(round(xyz(1,:))+round(xyz(2,:)-1)*size(dep,1));
 
             if ~isfinite(brt), msk = find(xyz(3,:) < (z1+20) & xyz(3,:) > (z1-5));
@@ -193,11 +193,11 @@ for j=1:length(dat),
             end
             X0  = full(sparse(round(xyz(1,:)), round(xyz(2,:)), t0, d2(1), d2(2)));
             hld = 1; if ~isfinite(brt), hld = 0; end
-            X_pos   = spm_slice_vol(X0,spm_matrix([0 0 1])*M2,size(rend{i}.dep),hld);
+            X_pos   = spm_slice_vol(X0,spm_matrix([0 0 1])*M2,size(rend{brain_view}.dep),hld);
             msk = find(X_pos<0);
             X_pos(msk) = 0;
         else
-            X_pos = zeros(size(rend{i}.dep));
+            X_pos = zeros(size(rend{brain_view}.dep));
         end
 
         % Brighten the blobs
@@ -207,53 +207,26 @@ for j=1:length(dat),
         mx(j) = max([mx(j) max(max(X_pos))]);
         mn(j) = min([mn(j) min(min(X_pos))]);
 
-        rend{i}.data_focus{j} = X_pos;
+        rend{brain_view}.data_focus{j} = flipud(X_pos);
         
         %Write the view name
         %------------------------------------------------------------------
-        render_proj.focus{j}.f_map{i}.data = X_pos;
-        
-        switch i
-            case 1
-                %For old version of render file
-                %render_proj.focus{j}.f_map{i}.view = 'Dorsal';
-                %For new version of render file
-                render_proj.focus{j}.f_map{i}.view = 'Ventral';
-            case 2
-                %For old version of render file
-                %render_proj.focus{j}.f_map{i}.view = 'Ventral';
-                %For new version of render file
-                render_proj.focus{j}.f_map{i}.view = 'Dorsal';
-            case 3
-                %For old version of render file
-                %render_proj.focus{j}.f_map{i}.view = 'Left';
-                %For new version of render file
-                render_proj.focus{j}.f_map{i}.view = 'Right';
-            case 4
-                %For old version of render file
-                %render_proj.focus{j}.f_map{i}.view = 'Right';
-                %For new version of render file
-                render_proj.focus{j}.f_map{i}.view = 'Left';
-            case 5
-                render_proj.focus{j}.f_map{i}.view = 'Frontal';
-            case 6
-                render_proj.focus{j}.f_map{i}.view = 'Occipital';
-            otherwise
-                render_proj.focus{j}.f_map{i}.view = 'Unknown';
-        end
+        render_proj.focus{j}.f_map{brain_view}.data = flipud(X_pos);
+        [side_hemi spec_hemi] = nirs_get_brain_view(brain_view);
+        render_proj.focus{j}.f_map{brain_view}.view = side_hemi;
 
     end
 end
 
 if ~isempty(dat) %If more than one focus is indicated, add all the focus maps
-    for i = 1 : length(rend)
-        render_proj.all_focus{i} = struct();
-        render_proj.all_focus{i}.view = render_proj.focus{1}.f_map{i}.view;
-        render_proj.all_focus{i}.map = zeros(size(render_proj.focus{1}.f_map{i}.data));
+    for brain_view = 1 : length(rend)
+        render_proj.all_focus{brain_view} = struct();
+        render_proj.all_focus{brain_view}.view = render_proj.focus{1}.f_map{brain_view}.view;
+        render_proj.all_focus{brain_view}.map = zeros(size(render_proj.focus{1}.f_map{brain_view}.data));
         for j=1:length(dat)
-            render_proj.all_focus{i}.map = render_proj.all_focus{i}.map + render_proj.focus{j}.f_map{i}.data;
+            render_proj.all_focus{brain_view}.map = render_proj.all_focus{brain_view}.map + render_proj.focus{j}.f_map{brain_view}.data;
         end
-        render_proj.all_focus{i}.map(find(render_proj.all_focus{i}.map > 1)) = 1; %#ok<FNDSB>
+        render_proj.all_focus{brain_view}.map(find(render_proj.all_focus{brain_view}.map > 1)) = 1; %#ok<FNDSB>
     end
 end
 
@@ -268,21 +241,21 @@ for i = sessions
         con_XYZ = squeeze(TOPO.v{j}.s{i}.hb{2}.stat_map(1,:,:)); %To project HbR concentration as a first stage. Only have the first activation.
         
         %Remove massive interpolation
-        if isfield(rendered_MNI{j},'view_mask_2d') % for back-compatibility
-            con_XYZ = con_XYZ .* rendered_MNI{j}.view_mask_2d;
+        if isfield(rend{j},'view_mask_2d') % for back-compatibility
+            con_XYZ = con_XYZ .* rend{j}.view_mask_2d;
         end
 
         
         %Apply the threshold value
         if thres
             if isfield(TOPO.v{j}.s{i}.hb{2}, 'th_z') %Corresponding to HbR
-                if isfield(TOPO.v{j}.s{i}.hb{2}.th_z{1}{1}, 'positive_thz') %Corresponding to the first activation
-                    thz_p = TOPO.v{j}.s{i}.hb{2}.th_z{1}{1}.positive_thz;
+                if isfield(TOPO.v{j}.s{i}.hb{2}.th_z{1}, 'positive_thz') %Corresponding to the first activation
+                    thz_p = TOPO.v{j}.s{i}.hb{2}.th_z{1}.positive_thz;
                     con_p = con_XYZ;
                     con_p((con_XYZ - thz_p) <= 0) = 0;  
                 end
-                if isfield(TOPO.v{j}.s{i}.hb{2}.th_z{1}{1}, 'negative_thz')
-                    thz_n = TOPO.v{j}.s{i}.hb{2}.th_z{1}{1}.negative_thz;
+                if isfield(TOPO.v{j}.s{i}.hb{2}.th_z{1}, 'negative_thz')
+                    thz_n = TOPO.v{j}.s{i}.hb{2}.th_z{1}.negative_thz;
                     con_n = con_XYZ;
                     con_n((con_XYZ + thz_n) >= 0) = 0;  
                 end
@@ -416,22 +389,8 @@ for i = sessions
         render_proj.contrast{i}.c_map{j} = struct();
         render_proj.contrast{i}.c_map{j}.view_no = j;
 
-        switch j
-            case 1
-                render_proj.contrast{i}.c_map{j}.view = 'Ventral';
-            case 2
-                render_proj.contrast{i}.c_map{j}.view = 'Dorsal';
-            case 3
-                render_proj.contrast{i}.c_map{j}.view = 'Right';
-            case 4
-                render_proj.contrast{i}.c_map{j}.view = 'Left';
-            case 5
-                render_proj.contrast{i}.c_map{j}.view = 'Frontal';
-            case 6
-                render_proj.contrast{i}.c_map{j}.view = 'Occipital';
-            otherwise
-                render_proj.contrast{i}.c_map{j}.view = 'Unknown';
-        end
+        [side_hemi spec_hemi] = nirs_get_brain_view(j);
+        render_proj.contrast{i}.c_map{j}.view = side_hemi;
  
         render_proj.contrast{i}.c_map{j}.data{1} = con_XYZ;%Modify when adding multiple activations
         render_proj.contrast{i}.c_map{j}.mxmx{1} = mxmx;
@@ -494,7 +453,7 @@ else
                 n_t = n_t - length(views);
             end
             
-            ren = rend{i}.ren;
+            ren = flipud(rend{i}.ren);
 %             X = cell(3,1);
 %             
 %             for j=1:length(render_proj.contrast{h}.c_map{n}.data),
@@ -572,7 +531,10 @@ else
 end
 
 spm('Pointer','Arrow');
-
+catch exception
+        disp(exception.identifier);
+        disp(exception.stack(1));
+end
 
 %==========================================================================
 % function surf_rend(dat,rend,col)
