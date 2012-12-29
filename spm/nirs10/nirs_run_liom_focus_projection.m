@@ -115,12 +115,32 @@ for Idx=1:size(job.NIRSmat,1)
                 tXYZwmm = Q * tXYZmm;
                 fwT1 = fullfile(dirT1,['w' fil ext(1:4)]);
                 
-                V_tp = spm_vol(ftemplate);
-                tXYZwvx = V_tp.mat\tXYZwmm;
-                xSPM.XYZ = tXYZwvx(1:3,:);
-                xSPM.M = V_tp.mat;
-                xSPM.DIM = V_tp.dim;
-%                 V_wT1 = spm_vol(fwT1);
+                %V_tp = spm_vol(ftemplate);
+                    V_wT1 = spm_vol(fwT1);
+%                  
+                  xSPM.M = V_wT1.mat; %V_tp.mat;
+                 xSPM.DIM = V_wT1.dim; % + [36 34 0]; %V_tp.dim;
+                 tmat = zeros(4);
+                 tmat(3,4) = -40;
+                 tXYZwvx = (V_wT1.mat + tmat)\tXYZwmm; %V_tp.mat\tXYZwmm;
+                 xSPM.XYZ = tXYZwvx(1:3,:);
+                
+% fname = fullfile(spm('dir'),'templates','T1.nii');
+%     V_wT1 = spm_vol(fname);
+                 
+%                  xSPM.M = V_wT1.mat; %V_tp.mat;
+%                 xSPM.DIM = V_wT1.dim; % + [36 34 0]; %V_tp.dim;
+%                 tXYZwvx = V_wT1.mat\tXYZwmm; %V_tp.mat\tXYZwmm;
+%                 xSPM.XYZ = tXYZwvx(1:3,:);
+%                 
+%                 
+%                 xSPM.M = wT1.VG.mat; %V_tp.mat;
+%                 xSPM.DIM = wT1.dim; %V_tp.dim;
+%                  V_wT1 = spm_vol(fwT1);
+                 
+%                  xSPM.M = V_wT1.mat; %V_tp.mat;
+%                 xSPM.DIM = V_wT1.dim; %V_tp.dim;
+%                 
 %                 tXYZwvx = V_wT1.mat\tXYZwmm;
 %                 xSPM.XYZ = tXYZwvx(1:3,:);
 %                 xSPM.M = V_wT1.mat;
