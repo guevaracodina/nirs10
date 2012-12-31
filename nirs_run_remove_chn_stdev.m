@@ -104,6 +104,9 @@ for Idx=1:size(job.NIRSmat,1)
                 end
                 NIRS.Dt.fir.pp(lst+1).p{f,1} = outfile;
                 NIRS.Dt.fir.pp(lst+1).kept{f,1} = k2; %kept channels
+                
+                nirs_time_plots(d,fs,NC,f,newNIRSlocation,'rm_std',NIRS.Cf.dev.wl);
+          
             end
             %update NIRS matrix
             NIRS.Cf.H.C.N = length(k2);
