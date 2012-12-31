@@ -25,7 +25,7 @@ for Idx=1:size(job.NIRSmat,1)
             Cwl = NIRS.Cf.H.C.wl; % channels wavelength indexes (e.g. wl #1 or #2)
             NC = NIRS.Cf.H.C.N; % number of channels
             wl = NIRS.Cf.dev.wl; % device wavelengths
-            
+            fs = NIRS.Cf.dev.fs;
             % Partial volume correction factor
             if isfield(job.PVF,'PVFval') && ~isempty(job.PVF.PVFval)
                 PVF = job.PVF.PVFval; % 1 x nLambda
@@ -128,9 +128,11 @@ for Idx=1:size(job.NIRSmat,1)
                 if markers_available
                     for i1 =1:length(si)
                         d(:,si(i1):ei(i1)) = -1e6 * real(log(d(:,si(i1):ei(i1))));
+                        %d(:,si(i1):ei(i1)) = - real(log(d(:,si(i1):ei(i1))));
                     end
                 else
                     d = -1e6 * real(log(d));
+                    %d = - real(log(d));
                 end
                 
                 %Effective path length

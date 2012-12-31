@@ -163,6 +163,27 @@ for iSubj=1:size(job.NIRSmat,1)
                 Pvoid,p_cutoff,fc1,fSeg,0,dir_coreg);
             Pp_c1_wmm = zeros(4,NP);
             
+            %Improve the projection by checking if positions have moved
+            %sufficiently -- if not, use the line to the center of the
+            %brain as the best direction to the cortex
+            %typical distance:
+            Pdist = pdist2(Pp_c1_rmm(1:3,:)',Pp_rmm');
+            Pdist = diag(Pdist);
+            Pdist_m = Pdist(logical(1-Pvoid));
+            Mdist = mean(Pdist_m);
+            corr_factor = 1.5; %to ensure that all optodes will be on cortex
+            %dcutoff = 10; %in millimeters
+            for Pi=1:NP
+                if ~Pvoid(Pi)
+                    cPs = Pp_rmm(:,Pi);
+                    %cPc = Pp_c1_rmm(:,Pi);
+                    %if Pdist(Pi) < dcutoff
+                        dcent = pdist2(cPs',[0 0 0]);
+                        Pp_c1_rmm(:,Pi) = [cPs*(1-corr_factor*Mdist/dcent);1];
+                    %end
+                end
+                %if pdist2(cPs,cP
+            end
             Nch0 = size(NIRS.Cf.H.C.id,2)/2;
             
             Pch_rmm = zeros(3,Nch0);
@@ -175,6 +196,19 @@ for iSubj=1:size(job.NIRSmat,1)
             %project channels onto cortex
             Pch_c1_rmm = nirs_coreg_optodes_unnormalized(Pch_rmm,...
                 Pvoid,p_cutoff,fc1,fSeg,1,dir_coreg);
+            %Pdist = pdist2(Pch_c1_rmm(1:3,:)',Pch_rmm');
+            %Pdist = diag(Pdist);
+            for Pi=1:Nch0
+                cPs = Pch_rmm(:,Pi);
+                %cPc = Pp_c1_rmm(:,Pi);
+                %if Pdist(Pi) < dcutoff
+                    dcent = pdist2(cPs',[0 0 0]);
+                    Pch_c1_rmm(:,Pi) = [cPs*(1-corr_factor*Mdist/dcent);1];
+                %end
+                %if pdist2(cPs,cP
+            end
+            
+            
             Pch_c1_wmm = Q*Pch_c1_rmm;
             for Pi = 1:NP
                 if ~Pvoid(Pi)
@@ -299,7 +333,7 @@ for iSubj=1:size(job.NIRSmat,1)
                     ch_MNIw_vx(:,i) = pos_wvx_t;
                 end
             end
-            
+                   
             for i=1:Ns
                 src_MNI_vx(:,i) = Vfc1.mat\[Pp_c1_rmm(:,i);1];
                 src_MNIw_vx(:,i) = V.mat\Pp_c1_wmm(:,i);
