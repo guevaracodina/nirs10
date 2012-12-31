@@ -58,14 +58,19 @@ for Idx=1:size(job.NIRSmat,1)
             for f=1:size(rDtp,1)
                 % Read raw data (intensity)
                 d = fopen_NIR(rDtp{f,1},NC);
-                %reset negative values to the minimal positive value
+                %reset negative values to the minimal positive value: not a good idea
+                %Instead: add twice the minimum value to all the channels
                 %treat each channel separately
                 for c0=1:size(d,1)
                     td = d(c0,:);
-                    dMin = min(td(td>0));
-                    %nL0 = sum(d(:)<0);
-                    td(td<=0) = dMin;
-                    d(c0,:) = td;
+                    dMin = min(td);
+                    if dMin < 0
+                        d(c0,:) = td - 2*dMin;
+                    else
+                        if dMin == 0
+                            d(c0,:) = td + mean(td);
+                        end
+                    end
                 end
                 
                 %**************************************************************************

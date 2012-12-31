@@ -30,7 +30,11 @@ CF.GInv = GInv;
 CF.split = split;
 CF.nC = nC;
 if ~W.Avg
-    LKC = [Q.L0 Q.L1 Q.L2];
+    if Z.LKC
+        LKC = [Q.L0 Q.L1 Q.L2];
+    else
+        LKC = [];
+    end
 else
     Z.output_unc = 1;
     LKC = [1 1 1];

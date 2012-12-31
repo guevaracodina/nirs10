@@ -214,8 +214,18 @@ for Idx=1:size(job.NIRSmat,1)
                     if job.GLM_include_cardiac
                         %heart rate regressor
                         C = NIRS.Dt.fir.Sess(iSess).fR{1};
-                        C = C - repmat(mean(C),[length(C),1]);
+                        %remove NaNs
+                        Cnan = find(isnan(NIRS.Dt.fir.Sess(iSess).fR{1}));
+                        Ctemp = C;
+                        Ctemp(Cnan) = [];
+                        Cmean = mean(Ctemp);
+                        C(Cnan) = Cmean;
+                        C = C - repmat(Cmean,[length(C),1]);
                         Cname = {'H'};
+                        if any(isnan(C))
+                             C = [];
+                             Cname = {};
+                        end
                     end
                     if job.GLM_include_Mayer
                         %Mayer wave regressor
