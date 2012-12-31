@@ -78,22 +78,14 @@ for Idx=1:size(job.NIRSmat,1)
                 %Filling jumps in nirs data
                 %Ke Peng
                 %**************************************************************************
-                lp = linspace(0,size(d,2)/fs,size(d,2));
-                h = figure; plot(lp,d');
-                [dir0 fil0] = fileparts(newNIRSlocation);
-                print(h,'-dpng',fullfile(dir0,['RawData_Sess' int2str(f) '.png']),'-r300');
-                saveas(h,fullfile(dir0,['RawData_Sess' int2str(f) '.fig']));
-                close(h);
-                lp2 = linspace(0,30,round(30*fs));
-                h = figure; plot(lp2,d(:,1:round(30*fs))');
-                print(h,'-dpng',fullfile(dir0,['RawData_Sess' int2str(f) '_zoom.png']),'-r300');
-                saveas(h,fullfile(dir0,['RawData_Sess' int2str(f) '_zoom.fig']));
-                close(h);               
+                nirs_time_plots(d,fs,NC,f,newNIRSlocation,'rm_Neg',NIRS.Cf.dev.wl);
+                          
                 
                 %disp(newNIRSlocation)
                 switch fill_jump_on
                     case 2
                         d = nirs_new_remove_jumps(d,newNIRSlocation);
+                        nirs_time_plots(d,fs,NC,f,newNIRSlocation,'rm_jumps',NIRS.Cf.dev.wl);                
                     case 1                       
                         OP.Sb = num_standard_deviation;
                         OP.Nr = num_points;
@@ -268,6 +260,11 @@ for Idx=1:size(job.NIRSmat,1)
                     NIRS.Dt.fir.pp(lst+1).si{f,1} = si;
                     NIRS.Dt.fir.pp(lst+1).ei{f,1} = ei;
                 catch
+                end
+                if add_or_mult
+                    nirs_time_plots(d,fs,NC,f,newNIRSlocation,'norm_add',['HbO' 'HbR']);
+                else
+                    nirs_time_plots(d,fs,NC,f,newNIRSlocation,'norm_mult',NIRS.Cf.dev.wl);
                 end
             end
             NIRS.flags.normbaseOK = 1;
