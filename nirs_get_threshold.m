@@ -32,7 +32,7 @@ switch fign
     case 3
         %%%%%%%%%%%%%%%%%
         %Get threshold
-        if LKCflag || UseCorrelRes
+        if LKCflag % || UseCorrelRes
             th_z = calc_EC(LKC,p_value,tstr,[eidf,erdf]);
             str_cor = StatStr;
         else
