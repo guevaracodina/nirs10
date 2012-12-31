@@ -68,7 +68,8 @@ for Idx=1:size(job.NIRSmat,1)
                         d(c0,:) = td - 2*dMin;
                     else
                         if dMin == 0
-                            d(c0,:) = td + mean(td);
+                            dMin = min(td(td>0));
+                            d(c0,:) = td + dMin;
                         end
                     end
                 end
