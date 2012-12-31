@@ -181,7 +181,7 @@ for Idx=1:size(job.NIRSmat,1)
                     NIRS.Dt.fir.pp(lst+1).ei{f,1} = ei;
                 catch
                 end
-                nirs_time_plots(d,fs,NC,f,newNIRSlocation,'conc',['HbO' 'HbR']);          
+                nirs_time_plots(d,fs,NC,f,newNIRSlocation,'conc',{'HbO' 'HbR'});          
             end
             NIRS.flags.concOK = 1;
             save(job.NIRSmat{Idx,1},'NIRS');
