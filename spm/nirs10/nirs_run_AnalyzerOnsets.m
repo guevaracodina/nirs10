@@ -254,7 +254,8 @@ for Idx=1:nsubj
                         end
                         %**********************************************************************************************
                         
-                        vRi = interp1(vR(2:end),dvR,lpi,'linear');
+                        %vRi = interp1(vR(2:end),dvR,lpi,'linear');
+                        vRi = interp1(vR(2:end),dvR,lpi,'pchip');
                         
                         %derivative of pulse rate - too noisy
                         %ddvR = diff(dvR);
@@ -268,6 +269,12 @@ for Idx=1:nsubj
                         %subtract the mean
                         %vRi = vRi - mean(vRi); %PP not required: will be done by spm_detrend
                         fR = 60./vRi'; % vRi2']; %cardiac frequency in heart beats per minute, as a column vector
+                        h = figure; plot(lpi,fR); title([NIRS.Dt.s.p ': Heart rate (BPM), Sess' int2str(i3)]);
+                        [dirNIRS fil0] = fileparts(newNIRSlocation);
+                        fname = fullfile(dirNIRS, ['HeartRate_Sess' int2str(i3)]); 
+                        print(h,'-dpng',[fname '.png'],'-r300');
+                        saveas(h,[fname '.fig']);
+                        close(h);
                         %save(fRegress,'fR','-ascii');
                         %*****************************************************
                         %Ke Peng, 12/03/2012
