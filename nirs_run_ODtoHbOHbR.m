@@ -128,11 +128,9 @@ for Idx=1:size(job.NIRSmat,1)
                 if markers_available
                     for i1 =1:length(si)
                         d(:,si(i1):ei(i1)) = -1e6 * real(log(d(:,si(i1):ei(i1))));
-                        %d(:,si(i1):ei(i1)) = - real(log(d(:,si(i1):ei(i1))));
                     end
                 else
                     d = -1e6 * real(log(d));
-                    %d = - real(log(d));
                 end
                 
                 %Effective path length

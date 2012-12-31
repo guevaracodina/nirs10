@@ -264,7 +264,7 @@ for Idx=1:size(job.NIRSmat,1)
                 if add_or_mult
                     nirs_time_plots(d,fs,NC,f,newNIRSlocation,'norm_add',{'HbO' 'HbR'});
                 else
-                    %nirs_time_plots(d,fs,NC,f,newNIRSlocation,'norm_mult',{NIRS.Cf.dev.wl(1) NIRS.Cf.dev.wl(2)});
+                    nirs_time_plots(d,fs,NC,f,newNIRSlocation,'norm_mult',{NIRS.Cf.dev.wl(1) NIRS.Cf.dev.wl(2)});
                     nirs_time_plots(1./d,fs,NC,f,newNIRSlocation,'inverse_norm_mult',{NIRS.Cf.dev.wl(1) NIRS.Cf.dev.wl(2)});
                 end
             end

@@ -178,7 +178,7 @@ for iSubj=1:size(job.NIRSmat,1)
                     cPs = Pp_rmm(:,Pi);
                     %cPc = Pp_c1_rmm(:,Pi);
                     %if Pdist(Pi) < dcutoff
-                        dcent = pdist2(cPs',[0 0 0]);
+                        dcent = pdist2(cPs',[0 0 25]);
                         Pp_c1_rmm(:,Pi) = [cPs*(1-corr_factor*Mdist/dcent);1];
                     %end
                 end
