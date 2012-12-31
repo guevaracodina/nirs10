@@ -78,14 +78,14 @@ for Idx=1:size(job.NIRSmat,1)
                 %Filling jumps in nirs data
                 %Ke Peng
                 %**************************************************************************
-                nirs_time_plots(d,fs,NC,f,newNIRSlocation,'rm_Neg',NIRS.Cf.dev.wl);
+                nirs_time_plots(d,fs,NC,f,newNIRSlocation,'rm_Neg',{NIRS.Cf.dev.wl(1) NIRS.Cf.dev.wl(2)});
                           
                 
                 %disp(newNIRSlocation)
                 switch fill_jump_on
                     case 2
                         d = nirs_new_remove_jumps(d,newNIRSlocation);
-                        nirs_time_plots(d,fs,NC,f,newNIRSlocation,'rm_jumps',NIRS.Cf.dev.wl);                
+                        nirs_time_plots(d,fs,NC,f,newNIRSlocation,'rm_jumps',{NIRS.Cf.dev.wl(1) NIRS.Cf.dev.wl(2)});                
                     case 1                       
                         OP.Sb = num_standard_deviation;
                         OP.Nr = num_points;
@@ -262,9 +262,9 @@ for Idx=1:size(job.NIRSmat,1)
                 catch
                 end
                 if add_or_mult
-                    nirs_time_plots(d,fs,NC,f,newNIRSlocation,'norm_add',['HbO' 'HbR']);
+                    nirs_time_plots(d,fs,NC,f,newNIRSlocation,'norm_add',{'HbO' 'HbR'});
                 else
-                    nirs_time_plots(d,fs,NC,f,newNIRSlocation,'norm_mult',NIRS.Cf.dev.wl);
+                    nirs_time_plots(d,fs,NC,f,newNIRSlocation,'norm_mult',{NIRS.Cf.dev.wl(1) NIRS.Cf.dev.wl(2)});
                 end
             end
             NIRS.flags.normbaseOK = 1;
