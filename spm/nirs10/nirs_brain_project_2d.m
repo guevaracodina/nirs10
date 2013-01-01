@@ -79,9 +79,12 @@ for kk=1:6
         print(fh0(kk), '-dpng', [filen '.png'],'-r300');
         if Fbrain_mask
             %add brain_mask
-            sbrain(rendered_MNI{kk}.view_mask_2d) = 0.7;
+            sbrain(logical(rendered_MNI{kk}.view_mask_2d .* reshape((sbrain > 0.025),size(sbrain)))) = 0.7;
             imagesc(sbrain);
-            filen = fullfile(dir_extra_coreg,[subj_str spec_hemi suffix '_brain_mask']);           
+            colormap(split);
+            axis image;
+            axis off;
+            filen = fullfile(dir_coreg,[subj_str spec_hemi suffix '_brain_mask']);           
             saveas(fh0(kk),[filen '.fig'],'fig');
             print(fh0(kk), '-dpng', [filen '.png'],'-r300');
         end
