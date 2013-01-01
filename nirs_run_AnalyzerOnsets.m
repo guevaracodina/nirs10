@@ -272,8 +272,10 @@ for Idx=1:nsubj
                         h = figure; plot(lpi,fR); title([NIRS.Dt.s.p ': Heart rate (BPM), Sess' int2str(i3)]);
                         [dirNIRS fil0] = fileparts(newNIRSlocation);
                         fname = fullfile(dirNIRS, ['HeartRate_Sess' int2str(i3)]); 
+                        warning('off')
                         print(h,'-dpng',[fname '.png'],'-r300');
                         saveas(h,[fname '.fig']);
+                        warning('on')
                         close(h);
                         %save(fRegress,'fR','-ascii');
                         %*****************************************************
