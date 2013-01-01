@@ -65,6 +65,7 @@ for Idx=1:size(job.NIRSmat,1)
         run_contrast_OK = 1;
         [NIRS newNIRSlocation]= nirs_load(job.NIRSmat{Idx,1},job.NIRSmatCopyChoice,job.force_redo);
         job.NIRSmat{Idx,1} = newNIRSlocation;
+        if ~isfield(NIRS,'flags'), NIRS.flags = []; end
         if ~isempty(NIRS) && (~isfield(NIRS.flags,'con_OK') || job.force_redo)
             NC = NIRS.Cf.H.C.N;
             [rendered_MNI run_contrast_OK NIRS] = nirs_load_TopoData(job,NIRS,run_contrast_OK);
@@ -76,7 +77,11 @@ for Idx=1:size(job.NIRSmat,1)
                 disp(exception.stack(1));
                 disp('Could not find SPM file as specified in NIRS.mat')
             end
-            load(NIRS.SPM{end});
+            try 
+                load(NIRS.SPM{end});
+            catch
+                load(fullfile(NIRS.SPM{end},'SPM.mat')); %old format
+            end
             if ~exist('SPM','var')
                 run_contrast_OK = 0;
                 disp('SPM not found');

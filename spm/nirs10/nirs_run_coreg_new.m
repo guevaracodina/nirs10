@@ -170,15 +170,16 @@ for iSubj=1:size(job.NIRSmat,1)
             Pdist = pdist2(Pp_c1_rmm(1:3,:)',Pp_rmm');
             Pdist = diag(Pdist);
             Pdist_m = Pdist(logical(1-Pvoid));
-            Mdist = mean(Pdist_m);
-            corr_factor = 1.5; %to ensure that all optodes will be on cortex
+            Mdist = max(13,mean(Pdist_m)); %ensure to move by at least 13 mm toward the cortex
+            corr_factor = 1; %1.5; %to ensure that all optodes will be on cortex
             %dcutoff = 10; %in millimeters
+            Zcenter_brain = 10;
             for Pi=1:NP
                 if ~Pvoid(Pi)
                     cPs = Pp_rmm(:,Pi);
                     %cPc = Pp_c1_rmm(:,Pi);
                     %if Pdist(Pi) < dcutoff
-                        dcent = pdist2(cPs',[0 0 25]);
+                        dcent = pdist2(cPs',[0 0 Zcenter_brain]);
                         Pp_c1_rmm(:,Pi) = [cPs*(1-corr_factor*Mdist/dcent);1];
                     %end
                 end
@@ -376,11 +377,11 @@ for iSubj=1:size(job.NIRSmat,1)
             NIRS.Dt.ana.rend = rend_file;
             dir_extra_coreg = fullfile(dir_coreg,'extra_coreg');
             if ~exist(dir_extra_coreg,'dir'), mkdir(dir_extra_coreg); end
-            nirs_brain_project_2d(NIRS,dir_coreg,rendered_MNI,[],'r','','',[]);
-            nirs_brain_project_2d(NIRS,dir_extra_coreg,rendered_MNI,[],'r','','',[]); %just copy the files
-            nirs_brain_project_2d(NIRS,dir_extra_coreg,rendered_MNI_skin,[],'r','','skin',[]);
-            nirs_brain_project_2d(NIRS,dir_extra_coreg,rendered_MNI_src,rendered_MNI_det,'b','g','SD',Pvoid);
-            nirs_brain_project_2d(NIRS,dir_extra_coreg,rendered_MNI_src_skin,rendered_MNI_det_skin,'b','g','SD_skin',Pvoid);
+            nirs_brain_project_2d(NIRS,dir_coreg,rendered_MNI,[],'r','','',[],0);
+            nirs_brain_project_2d(NIRS,dir_extra_coreg,rendered_MNI,[],'r','','',[],1); %just copy the files
+            nirs_brain_project_2d(NIRS,dir_extra_coreg,rendered_MNI_skin,[],'r','','skin',[],0);
+            nirs_brain_project_2d(NIRS,dir_extra_coreg,rendered_MNI_src,rendered_MNI_det,'b','g','SD',Pvoid,0);
+            nirs_brain_project_2d(NIRS,dir_extra_coreg,rendered_MNI_src_skin,rendered_MNI_det_skin,'b','g','SD_skin',Pvoid,0);            
             NIRS.flags.coregOK = 1;
         end
         save(newNIRSlocation,'NIRS');

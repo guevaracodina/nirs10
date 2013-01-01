@@ -129,7 +129,7 @@ for i=1:length(rend),
         % a straight DCT - therefore it was modified slightly
         rend{i}.dep = exp(B1*rend{i}.dep*B2')-1;
     end;
-    msk = rend{i}.ren>1;rend{i}.ren(msk)=1;
+    msk = find(rend{i}.ren>1);rend{i}.ren(msk)=1;
     msk = find(rend{i}.ren<0);rend{i}.ren(msk)=0;
 end;
 
@@ -310,7 +310,7 @@ for i=1:length(rend),
         view_mask_2d = double(X>0);
         hh=fspecial('disk',30);
         view_mask_2d=imfilter(view_mask_2d,hh,'same');
-        view_mask_2d=view_mask_2d>0.01;
+        view_mask_2d=view_mask_2d>0; %PP, was > 0.01 -- this made the mask shrink considerably
         % End change
         
     else

@@ -1,4 +1,4 @@
-function nirs_brain_project_2d(NIRS,dir_coreg,rendered_MNI,rendered_MNI2,color1,color2,suffix,Pvoid)
+function nirs_brain_project_2d(NIRS,dir_coreg,rendered_MNI,rendered_MNI2,color1,color2,suffix,Pvoid,Fbrain_mask)
 N1 = size(rendered_MNI{1}.rchn,1);
 if isempty(rendered_MNI2)
     sdmode = 0;
@@ -77,6 +77,14 @@ for kk=1:6
         filen = fullfile(dir_coreg,[subj_str spec_hemi suffix]);
         saveas(fh0(kk),[filen '.fig'],'fig');
         print(fh0(kk), '-dpng', [filen '.png'],'-r300');
+        if Fbrain_mask
+            %add brain_mask
+            sbrain(rendered_MNI{kk}.view_mask_2d) = 0.7;
+            imagesc(sbrain);
+            filen = fullfile(dir_extra_coreg,[subj_str spec_hemi suffix '_brain_mask']);           
+            saveas(fh0(kk),[filen '.fig'],'fig');
+            print(fh0(kk), '-dpng', [filen '.png'],'-r300');
+        end
         close(fh0(kk));
     end
 end
