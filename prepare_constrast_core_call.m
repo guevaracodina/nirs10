@@ -1,6 +1,10 @@
 function TOPO = prepare_constrast_core_call(Z,W,SPM,TOPO)
 xXn = SPM.xXn;
-NC = SPM.xY.Cf;
+try
+    NC = SPM.xY.Cf;
+catch
+    NC = size(xXn{1}.t,2); %backward compatibility
+end
 if isfield(SPM,'FlagAvg')
     Z.Avg = SPM.FlagAvg;
 else
@@ -64,7 +68,7 @@ try
                 end
             else
                 W.beta = xXn{f1}.beta;
-    %**********************************************************
+                %**********************************************************
                 %do not rely on 'res' field to distinguish Avg method
                 %Ke Peng, 2012-07-18
                 %**********************************************************
@@ -72,19 +76,23 @@ try
                 if isfield(SPM,'Avg')
                     W.covbeta = xXn{f1}.covbeta;
                 else
-                    try 
+                    try
                         W.covbeta = xXn{f1}.covbeta;
                     end
                 end
-                  %**********************************************************
-
+                %**********************************************************
+                
                 if isfield(xXn{f1},'res')
                     W.res = fopen_NIR(xXn{f1}.res,NC);
                 else
+                    try
                     W.covbeta = xXn{f1}.covbeta;
+                    catch
+                        W.covbeta = diag(xXn{f1}.Bcov)*xXn{f1}.ResSS(:)'/xXn{f1}.trRV; %old covbeta for backward compatibility
+                    end
                 end
                 try
-                    if ~Z.Avg
+                    if ~Z.Avg && Z.UseCorrelRes
                         %for NIRS_SPM method
                         W.var = xXn{f1}.ResSS./xXn{f1}.trRV;
                         W.varch = xXn{f1}.ResSSch./xXn{f1}.trRV; %channel by channel

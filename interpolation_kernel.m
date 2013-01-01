@@ -12,7 +12,7 @@ try
             ch = W.ch_HbT;
     end
     nch = length(ch);
-    if ~W.Avg
+    if ~W.Avg && UseCorrelRes
         res = W.res(ch,:)';
         corr_beta = W.corr_beta;
         mtx_var = diag(W.var(ch)); %old NIRS_SPM version
@@ -32,7 +32,7 @@ try
     %When using LKC, B, Bx, By are defined differently, and B_volume is
     %like the old B
     
-    warning('off') %this is to turn off the
+    %warning('off') %this is to turn off the
     %Warning: Duplicate x-y data points detected: using average values for duplicate points
     %This is a problem that should be investigated, eventually...
     if nch > 2
@@ -158,7 +158,7 @@ try
     else %not enough channels for interpolation
         disp('not enough channels for interpolation');
     end
-    warning('on')
+    %warning('on')
     Q.B = B;
     Q.Bx = Bx;
     Q.By = By;

@@ -142,6 +142,7 @@ for Idx=1:size(job.NIRSmat,1)
                         tSPM = [];
                         tSPM.Sess = SPM.Sess(s);
                         tSPM.xX = SPM.xX;
+                        try tSPM.TrRVRVexact = SPM.TrRVRVexact; end
                         try
                             %This only worked for constant number of regressors
                             %across sessions

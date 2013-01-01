@@ -147,6 +147,11 @@ for Idx=1:size(job.NIRSmat,1)
             else
                 nirs_focus_render(xSPM,brt,NIRS.Dt.ana.render_c1);
             end
+            %save image
+            [dirNIRS fil0] = fileparts(newNIRSlocation);
+            fname = fullfile(dirNIRS,'focus_projection');
+            print(gcf,'-dpng',[fname '.png'],'-r300');
+            saveas(gcf,[fname '.fig']);
         end
         NIRS.flags.Proj_OK = 1;
         save(newNIRSlocation,'NIRS');
@@ -156,8 +161,5 @@ for Idx=1:size(job.NIRSmat,1)
         disp(exception.stack(1));
         disp(['Could not project on focus for subject' int2str(Idx) ' for ' job.NIRSmat{Idx,1}]);
     end
-    
-    
-    
 end
 out.NIRSmat = job.NIRSmat;
