@@ -76,16 +76,6 @@ col_contrast = eye(3); %red for increase
 
 spm('Pointer','Watch');
 
-% if ~exist('rend','var') % Assume old format...
-%     rend = cell(size(Matrixes,1),1);
-%     for i=1:size(Matrixes,1),
-%         rend{i}=struct('M',eval(Matrixes(i,:)),...
-%             'ren',eval(Rens(i,:)),...
-%             'dep',eval(Depths(i,:)));
-%         rend{i}.ren = rend{i}.ren/max(max(rend{i}.ren));
-%     end
-% end
-
 %Display Calibration
 Fgraph = spm_figure('GetWin','Graphics');
 spm_results_ui('Clear',Fgraph);
@@ -207,11 +197,11 @@ for j=1:length(dat),
         mx(j) = max([mx(j) max(max(X_pos))]);
         mn(j) = min([mn(j) min(min(X_pos))]);
 
-        rend{brain_view}.data_focus{j} = flipud(X_pos);
+        rend{brain_view}.data_focus{j} = X_pos;
         
         %Write the view name
         %------------------------------------------------------------------
-        render_proj.focus{j}.f_map{brain_view}.data = flipud(X_pos);
+        render_proj.focus{j}.f_map{brain_view}.data = X_pos;
         [side_hemi spec_hemi] = nirs_get_brain_view(brain_view);
         render_proj.focus{j}.f_map{brain_view}.view = side_hemi;
 
@@ -239,6 +229,7 @@ for i = sessions
     for j = views
         
         con_XYZ = squeeze(TOPO.v{j}.s{i}.hb{2}.stat_map(1,:,:)); %To project HbR concentration as a first stage. Only have the first activation.
+        con_XYZ = flipud(con_XYZ); %Upside down
         
         %Remove massive interpolation
         if isfield(rend{j},'view_mask_2d') % for back-compatibility
@@ -278,111 +269,7 @@ for i = sessions
                 con_XYZ = zeros(size(con_XYZ));
             end
         end
-
-        %Negative values to Positive values
-        
-        %Negative values to Positive values      
-        %con_XYZ = abs(con_XYZ);
-        
-        %         con_XYZ_co = [];
-%         for c_x0 = 1 : size(con_XYZ,1)
-%             for c_y0 = 1 : size(con_XYZ, 2)
-%                 if con_XYZ(c_x0,c_y0) > 0
-%                    %con_Z = [con_Z con_XYZ(c_x0,c_y0)];
-%                 elseif con_XYZ(c_x0,c_y0) < 0
-%                    con_XYZ(c_x0,c_y0) = - con_XYZ(c_x0,c_y0);
-%                    %con_Z = [con_Z con_XYZ(c_x0,c_y0)]; 
-%                 else
-%                    con_XYZ(c_x0,c_y0) = 0;
-%                 end
-%                 
-%                 %To create coordinate matrix
-%                 
-%                 %**********************************************************
-%                 %unnormalise contrasts
-%                 
-% %                 if con_XYZ(c_x0,c_y0) ~= 0
-% %                     if j == 2
-% %                         con_XYZ_co  = [con_XYZ_co [c_x0;c_y0;-24;con_XYZ(c_x0,c_y0)]];
-% %                     elseif j == 3
-% %                         con_XYZ_co  = [con_XYZ_co [0;c_x0;c_y0;con_XYZ(c_x0,c_y0)]];
-% %                     elseif j == 4
-% %                         con_XYZ_co  = [con_XYZ_co [0;c_x0;c_y0;con_XYZ(c_x0,c_y0)]];
-% %                     elseif j == 5
-% %                         con_XYZ_co  = [con_XYZ_co [c_x0;-44;c_y0;con_XYZ(c_x0,c_y0)]];
-% %                     end
-% %                 end
-% %      
-%              end
-%          end
-%         
-%         con_XYZ_co = Af\con_XYZ_co;
-%         
-%         if j == 2
-%             con_Z = con_XYZ_co(4,:);
-%             con_XYZ_co = con_XYZ_co(1:2,:);
-%         elseif j == 3 || j == 4
-%             con_Z = con_XYZ_co(4,:);
-%             con_XYZ_co = con_XYZ_co(2:3,:);
-%         elseif j == 5
-%             con_Z = con_XYZ_co(4,:);
-%             con_XYZ_co = [con_XYZ_co(1,:); con_XYZ_co(3,:)]; 
-%         end
-%         
-%         con_XYZ = zeros(size(con_XYZ));
-%         for c_z0 = 1 : length(con_Z)
-%             if con_Z(c_z0) ~= 0
-%                 con_XYZ(ceil(abs(con_XYZ_co(1,c_z0))),ceil(abs(con_XYZ_co(2,c_z0)))) = con_Z(c_z0);
-%             end
-%         end
-%         
-%         clear c_x0 c_y0 x_z0 con_XYZ_co con_Z
-        %******************************************************************
-
-        %Restore separately        
-        
-        switch j
-            case 1
-                disp('Ventral view is not supported at this stage. Please select a different view');
-            case 2
-                %Dorsal View
-                %con_XYZ = imrotate(con_XYZ, 90);%Rotate for 90 couterclockwise
-                con_XYZ = flipud(con_XYZ);%Upside down
-                %con_XYZ = imresize(con_XYZ,[size(rend{1}.ren,1), size(rend{1}.ren,2)],'bilinear');%resize and interpolate to fit the required view
-                
-            case 3
-                %Left View
-                con_XYZ = flipud(con_XYZ);
-                %d_r = size(rend{3}.ren,1) - size(con_XYZ, 1);
-                %d_c = size(rend{3}.ren,2) - size(con_XYZ, 2);
-                %con_XYZ = [zeros(round(2*d_r/3),size(con_XYZ,2)); con_XYZ; zeros(d_r - round(2*d_r/3), size(con_XYZ,2))]; %#ok<AGROW>
-                %con_XYZ = [zeros(size(rend{3}.ren,1),round(d_c/2)), con_XYZ, zeros(size(rend{3}.ren,1),d_c-round(d_c/2))]; %#ok<AGROW>
-                
-            case 4
-                %Right View
-                con_XYZ = flipud(con_XYZ);
-                %d_r = size(rend{3}.ren,1) - size(con_XYZ, 1);
-                %d_c = size(rend{3}.ren,2) - size(con_XYZ, 2);
-                %con_XYZ = [zeros(round(2*d_r/3),size(con_XYZ,2)); con_XYZ; zeros(d_r - round(2*d_r/3), size(con_XYZ,2))]; %#ok<AGROW>
-                %con_XYZ = [zeros(size(rend{3}.ren,1),round(d_c/2)), con_XYZ, zeros(size(rend{3}.ren,1),d_c-round(d_c/2))]; %#ok<AGROW>
-                
-            case 5
-                %Frontal View
-                %con_XYZ = imresize(con_XYZ, [size(rend{5}.ren,2), size(rend{5}.ren,2)], 'bilinear');
-                con_XYZ = flipud(con_XYZ);
-                %d_r = size(rend{5}.ren,1) - size(con_XYZ, 1);
-                %con_XYZ = [zeros(round(d_r/2),size(rend{5}.ren,2)); con_XYZ; zeros(d_r - round(d_r/2), size(rend{5}.ren,2))]; %#ok<AGROW>
-
-            case 6
-                disp('Occipital view is not supported at this stage. Please select a different view');
-            otherwise
-                disp('Unknown view selected. Please verify.');
-        end
-        
-        %Alternatvie interpolation methods
-        %[xyx_xi xyz_yi] = meshgrid(linspace(1,size(con_XYZ,2),size(rend{1}.ren,2)),linspace(1,size(con_XYZ,1),size(rend{1}.ren,1)));
-        %con_XYZ = interp2(con_XYZ,xyx_xi,xyz_yi);
-        
+  
         mxmx = max(max(abs(con_XYZ)));
         mnmn = min(min(abs(con_XYZ)));
         
@@ -453,7 +340,8 @@ else
                 n_t = n_t - length(views);
             end
             
-            ren = flipud(rend{i}.ren);
+            %ren = flipud(rend{i}.ren);
+            ren = rend{i}.ren;
 %             X = cell(3,1);
 %             
 %             for j=1:length(render_proj.contrast{h}.c_map{n}.data),
