@@ -18,7 +18,22 @@ if isfield(job.render_choice,'render_template')
 else
     render_template = 0; %render to subject
 end
-useKoreanCortexProjection = 1;
+if isfield(job,'cortex_projection_method')
+    CPM = job.cortex_projection_method;
+    if isfield(CPM,'project_liom')
+        cpm = 1;
+    else
+        if isfield(CPM,'project_liom_Ke')
+            cpm = 2;
+        else
+            if isfield(CPM,'project_Korean')
+                cpm = 3;
+            end
+        end
+    end
+else
+    cpm = 3;
+end
 ForceReprocessSegmentation = 0;
 coreg_projected_channels_on_cortex_rather_than_midpoint = 1;
 use_fSeg = 1; %option to use Clément's segmented image to extract c1; otherwise default to c1 image
@@ -59,6 +74,10 @@ for iSubj=1:size(job.NIRSmat,1)
                 sn_filename  = fullfile(pth,['m' nam '_sn.mat']);
             end
             NIRS.Dt.ana.wT1 = load(sn_filename);
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % Step 1: coregistration: finding the affine transformation
+            % relating the 2 coordinate systems
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
             %There are two physical objects: the MRI image, and the NIRS construct
             %for the MRI image, it can be normalized to a standard atlas (Talairach Tournoux) or not
@@ -157,87 +176,102 @@ for iSubj=1:size(job.NIRSmat,1)
             else
                 fSeg = [];
             end
-            p_cutoff = 0.8;
-            %project sources and detectors onto cortex
-            Pp_c1_rmm = nirs_coreg_optodes_unnormalized(Pp_rmm,...
-                Pvoid,p_cutoff,fc1,fSeg,0,dir_coreg);
-            Pp_c1_wmm = zeros(4,NP);
-            
-            %Improve the projection by checking if positions have moved
-            %sufficiently -- if not, use the line to the center of the
-            %brain as the best direction to the cortex
-            %typical distance:
-            Pdist = pdist2(Pp_c1_rmm(1:3,:)',Pp_rmm');
-            Pdist = diag(Pdist);
-            Pdist_m = Pdist(logical(1-Pvoid));
-            Mdist = max(13,mean(Pdist_m)); %ensure to move by at least 13 mm toward the cortex
-            corr_factor = 1.4; %1.5; %to ensure that all optodes will be on cortex
-            %dcutoff = 10; %in millimeters
-            Zcenter_brain = 10;
-            for Pi=1:NP
-                if ~Pvoid(Pi)
-                    cPs = Pp_rmm(:,Pi);
-                    %cPc = Pp_c1_rmm(:,Pi);
-                    %if Pdist(Pi) < dcutoff
-                        dcent = pdist2(cPs',[0 0 Zcenter_brain]);
-                        Pp_c1_rmm(:,Pi) = [cPs*(1-corr_factor*Mdist/dcent);1];
-                    %end
-                end
-                %if pdist2(cPs,cP
-            end
             Nch0 = size(NIRS.Cf.H.C.id,2)/2;
             
             Pch_rmm = zeros(3,Nch0);
+            Pch_wmm = zeros(4,Nch0); %different convention of keeping the 4th row
             for i=1:Nch0
                 %indices of source and detector
                 Si = NIRS.Cf.H.C.id(2,i);
                 Di = NIRS.Cf.H.C.id(3,i)+Ns;
                 Pch_rmm(:,i) = (Pp_rmm(:,Si)+Pp_rmm(:,Di))/2;
+                Pch_wmm(:,i) = (Pp_wmm(:,Si)+Pp_wmm(:,Di))/2;
             end
-            %project channels onto cortex
-            Pch_c1_rmm = nirs_coreg_optodes_unnormalized(Pch_rmm,...
-                Pvoid,p_cutoff,fc1,fSeg,1,dir_coreg);
-            %Pdist = pdist2(Pch_c1_rmm(1:3,:)',Pch_rmm');
-            %Pdist = diag(Pdist);
-            for Pi=1:Nch0
-                cPs = Pch_rmm(:,Pi);
-                %cPc = Pp_c1_rmm(:,Pi);
-                %if Pdist(Pi) < dcutoff
-                    dcent = pdist2(cPs',[0 0 0]);
-                    Pch_c1_rmm(:,Pi) = [cPs*(1-corr_factor*Mdist/dcent);1];
-                %end
-                %if pdist2(cPs,cP
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %Step 2: Cortex projection method
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%            
+            switch cpm 
+                case 1 %PP
+                    p_cutoff = 0.8;
+                    %project sources and detectors onto cortex
+                    Pp_c1_rmm = nirs_coreg_optodes_unnormalized(Pp_rmm,...
+                        Pvoid,p_cutoff,fc1,fSeg,0,dir_coreg);
+                    Pp_c1_wmm = zeros(4,NP);
+                    
+                    %Improve the projection by checking if positions have moved
+                    %sufficiently -- if not, use the line to the center of the
+                    %brain as the best direction to the cortex
+                    %typical distance:
+                    Pdist = pdist2(Pp_c1_rmm(1:3,:)',Pp_rmm');
+                    Pdist = diag(Pdist);
+                    Pdist_m = Pdist(logical(1-Pvoid));
+                    Mdist = max(13,mean(Pdist_m)); %ensure to move by at least 13 mm toward the cortex
+                    corr_factor = 1.4; %1.5; %to ensure that all optodes will be on cortex
+                    %dcutoff = 10; %in millimeters
+                    Zcenter_brain = 10;
+                    for Pi=1:NP
+                        if ~Pvoid(Pi)
+                            cPs = Pp_rmm(:,Pi);
+                            %cPc = Pp_c1_rmm(:,Pi);
+                            %if Pdist(Pi) < dcutoff
+                            dcent = pdist2(cPs',[0 0 Zcenter_brain]);
+                            Pp_c1_rmm(:,Pi) = [cPs*(1-corr_factor*Mdist/dcent);1];
+                            %end
+                        end
+                        %if pdist2(cPs,cP
+                    end
+                    
+                    %project channels onto cortex
+                    Pch_c1_rmm = nirs_coreg_optodes_unnormalized(Pch_rmm,...
+                        Pvoid,p_cutoff,fc1,fSeg,1,dir_coreg);
+                    %Pdist = pdist2(Pch_c1_rmm(1:3,:)',Pch_rmm');
+                    %Pdist = diag(Pdist);
+                    for Pi=1:Nch0
+                        cPs = Pch_rmm(:,Pi);
+                        %cPc = Pp_c1_rmm(:,Pi);
+                        %if Pdist(Pi) < dcutoff
+                        dcent = pdist2(cPs',[0 0 0]);
+                        Pch_c1_rmm(:,Pi) = [cPs*(1-corr_factor*Mdist/dcent);1];
+                        %end
+                        %if pdist2(cPs,cP
+                    end
+                    Pch_c1_wmm = Q*Pch_c1_rmm;
+                    for Pi = 1:NP
+                        if ~Pvoid(Pi)
+                            %inversion: unnormalized -> normalized
+                            Pp_c1_wmm(:,Pi) = Q*Pp_c1_rmm(:,Pi);
+                        end
+                    end;
+                case 2
+                    Pp_c1_wmm = nirs_coreg_optodes(Pp_wmm,...
+                        Pvoid,job.coreg_choice.coreg_c1,NIRS.Dt.ana.T1);
+                    if isempty(Pp_c1_wmm)
+                         disp('Coregistration of optodes onto wc1 failed. Now try to coregister onto template using projection_CS');
+                         Pp_c1_wmm = projection_CS(Pp_wmm);
+                     end
+                     
+                     Pp_c1_rmm = zeros(4,NP);
+                     for Pi = 1:NP
+                         if ~Pvoid(Pi)
+                             %inversion: normalized -> unnormalized
+                             Pp_c1_rmm(:,Pi) = Q\Pp_c1_wmm(:,Pi);
+                         end
+                     end;
+                case 3
+                    Pp_c1_wmm = projection_CS(Pp_wmm);%Using Korean template 
+                    Pch_c1_wmm = projection_CS(Pch_wmm);
+                    Pp_c1_rmm = zeros(4,NP);
+                    for Pi = 1:NP
+                        if ~Pvoid(Pi)
+                            %inversion: normalized -> unnormalized
+                            Pp_c1_rmm(:,Pi) = Q\Pp_c1_wmm(:,Pi);
+                        end
+                    end
+                    for Pi=1:Nch0
+                        Pch_c1_rmm(:,Pi) = Q\Pch_c1_wmm(:,Pi);
+                    end
             end
             
-            
-            Pch_c1_wmm = Q*Pch_c1_rmm;
-            for Pi = 1:NP
-                if ~Pvoid(Pi)
-                    %inversion: unnormalized -> normalized
-                    Pp_c1_wmm(:,Pi) = Q*Pp_c1_rmm(:,Pi);
-                end
-            end;
-            %             else
-            %                 if useKoreanCortexProjection
-            %                     Pp_c1_wmm = projection_CS(Pp_wmm);%Using Korean template
-            %                 else
-            %                     %This will no longer work because field
-            %                     %job.coreg_choice.coreg_c1 doesn't exist anymore
-            %                     Pp_c1_wmm = nirs_coreg_optodes(Pp_wmm,...
-            %                         Pvoid,job.coreg_choice.coreg_c1,NIRS.Dt.ana.T1);
-            %                     if isempty(Pp_c1_wmm)
-            %                         disp('Coregistration of optodes onto wc1 failed. Now try to coregister onto template using projection_CS');
-            %                         Pp_c1_wmm = projection_CS(Pp_wmm);
-            %                     end
-            %                 end
-            %                 Pp_c1_rmm = zeros(4,NP);
-            %                 for Pi = 1:NP
-            %                     if ~Pvoid(Pi)
-            %                         %inversion: normalized -> unnormalized
-            %                         Pp_c1_rmm(:,Pi) = Q\Pp_c1_wmm(:,Pi);
-            %                     end
-            %                 end;
-            %             end
             Pp_c1_rmm = Pp_c1_rmm(1:3,:);
             
             % Save Normalized coordinates of optodes
@@ -275,9 +309,9 @@ for iSubj=1:size(job.NIRSmat,1)
             end
             % Save all changes to NIRS structure
             save(newNIRSlocation,'NIRS');
-            
-            % GENERATE TOPO DATA %
-            %%%%%%%%%%%%%%%%%%%%%%
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % Step 3: GENERATE TOPO DATA %
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%            
             V = spm_vol(fwT1);
             wT1_info.mat = V.mat;
             wT1_info.dim = V.dim;
@@ -375,6 +409,10 @@ for iSubj=1:size(job.NIRSmat,1)
             rend_file = fullfile(dir_coreg,'TopoData.mat');
             save(rend_file, 'rendered_MNI');
             NIRS.Dt.ana.rend = rend_file;
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % Step 4: output various figures
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%            
             dir_extra_coreg = fullfile(dir_coreg,'extra_coreg');
             if ~exist(dir_extra_coreg,'dir'), mkdir(dir_extra_coreg); end
             nirs_brain_project_2d(NIRS,dir_coreg,rendered_MNI,[],'r','','',[],0);

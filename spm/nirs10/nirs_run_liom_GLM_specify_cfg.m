@@ -398,6 +398,15 @@ channel_pca.def = @(val)nirs_get_defaults('model_specify.wls_bglm_specify.channe
 channel_pca.help = {'Choose whether to do a channel PCA removal: '
     'Principal component analysis and removing the largest eigenvalue.'}';
 
+NumPCAComponents         = cfg_entry;
+NumPCAComponents.name    = 'Number of PCA components to remove';
+NumPCAComponents.tag     = 'NumPCAComponents';
+NumPCAComponents.strtype = 'r';
+NumPCAComponents.num     = [1 1];
+NumPCAComponents.val     = {1};
+NumPCAComponents.help    = {'Enter number of PCA components to be removed.'
+    'This option will only be used when the PCA option above is selected'}';
+
 hpf_butter_freq         = cfg_entry;
 hpf_butter_freq.name    = 'Cutoff frequency for HPF';
 hpf_butter_freq.tag     = 'hpf_butter_freq';
@@ -451,13 +460,13 @@ NoNIRSconfounds.name    = 'No NIRS channels as confounds';
 NoNIRSconfounds.val     = {};
 NoNIRSconfounds.help    = {'No NIRS channels as confounds.'};
 
-NumChConfounds         = cfg_entry;
-NumChConfounds.name    = 'Maximum Number of Confounds';
-NumChConfounds.tag     = 'NumChConfounds';
-NumChConfounds.strtype = 'r';
-NumChConfounds.num     = [1 1];
-NumChConfounds.val     = {1};
-NumChConfounds.help    = {'Enter maximum number of NIRS channels to be included as physiological confounds.'};
+% NumChConfounds         = cfg_entry;
+% NumChConfounds.name    = 'Maximum Number of Confounds';
+% NumChConfounds.tag     = 'NumChConfounds';
+% NumChConfounds.strtype = 'r';
+% NumChConfounds.num     = [1 1];
+% NumChConfounds.val     = {1};
+% NumChConfounds.help    = {'Enter maximum number of NIRS channels to be included as physiological confounds.'};
 
 MinChDist         = cfg_entry;
 MinChDist.name    = 'Minimum Channel Length';
@@ -556,7 +565,7 @@ wls_bglm_specify.name = 'LIOM GLM Specification';
 wls_bglm_specify.tag  = 'wls_bglm_specify';
 wls_bglm_specify.val  = {NIRSmat redo1 NIRSmatCopyChoice sessions subj units time_res derivs bases ...
     volt GLM_include_cardiac GLM_include_Mayer vasomotion_choice NIRSchannelsConfound GenerateHbT flag_window ...
-    channel_pca hpf_butter generate_trRV TrRVRVexact ... %filter_design_matrix ...
+    channel_pca NumPCAComponents hpf_butter generate_trRV TrRVRVexact ... %filter_design_matrix ...
     wls_or_bglm};
 wls_bglm_specify.prog = @nirs_run_liom_GLM_specify;
 wls_bglm_specify.vout = @nirs_cfg_vout_liom_GLM_specify;

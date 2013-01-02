@@ -269,13 +269,14 @@ for Idx=1:nsubj
                         %subtract the mean
                         %vRi = vRi - mean(vRi); %PP not required: will be done by spm_detrend
                         fR = 60./vRi'; % vRi2']; %cardiac frequency in heart beats per minute, as a column vector
-                        h = figure; plot(lpi,fR); title([NIRS.Dt.s.p ': Heart rate (BPM), Sess' int2str(i3)]);
+                        h = figure; plot(lpi,fR); 
+                        title([NIRS.Dt.s.p ': Heart rate (BPM), Sess' int2str(i3)],'interpreter','none');
                         [dirNIRS fil0] = fileparts(newNIRSlocation);
                         fname = fullfile(dirNIRS, ['HeartRate_Sess' int2str(i3)]); 
-                        warning('off')
+                        %warning('off')
                         print(h,'-dpng',[fname '.png'],'-r300');
                         saveas(h,[fname '.fig']);
-                        warning('on')
+                        %warning('on')
                         close(h);
                         %save(fRegress,'fR','-ascii');
                         %*****************************************************
