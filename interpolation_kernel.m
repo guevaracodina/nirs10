@@ -55,9 +55,11 @@ try
             %try
             %    grid_eye = TriScatteredInterp(X, Y, V);
             %catch
-            %warning('off')
+            warning('off') %no big deal if some channels are superposed: the values will be averaged,
+            %Unless one channel is bad, and one is good, and then the
+            %average is useless...
             grid_eye = griddata(cchn, rchn, (mtx_eye(:,kk))', x, y, 'cubic');
-            %warning('on')
+            warning('on')
             
             %end
             if kk == 1

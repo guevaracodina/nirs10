@@ -96,12 +96,18 @@ for Idx=1:size(job.NIRSmat,1)
                         sigma_unf = std(Y,0,1);
                         % PCA
                         if SPM.xX.PCA
-                            nComponents = 1;
+                            if isfield(SPM.job,'NumPCAComponents')
+                                nComponents = SPM.job.NumPCAComponents;
+                            else
+                                nComponents = 1;
+                            end
                             %process HbO, HbR separately
                             which_channels = 1:(NC/2); %all HbOchannels
-                            Y1 = makePca(Y,which_channels,nComponents);
-                            Y2 = makePca(Y,which_channels+NC/2,nComponents);
+                            Y1 = nirs_makePca(Y(:,which_channels),which_channels,nComponents);
+                            Y2 = nirs_makePca(Y(:,which_channels+NC/2),which_channels,nComponents);
                             Y = [Y1 Y2];
+                            %Output graphs of PCA result
+                            nirs_time_plots(Y',fs,NC,s,newNIRSlocation,'PCA',{'HbO' 'HbR'});
                         end
                         
                         %LPF
