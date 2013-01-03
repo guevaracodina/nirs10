@@ -76,10 +76,12 @@ save_nifti_contrasts.help = {'This option is useful for 2nd level studies: '
 
 [override_colorbar GroupColorbars] = nirs_dfg_colorbars;
 
+show_boundary = nirs_dfg_show_boundary;
+
 display_options         = cfg_branch;
 display_options.tag     = 'display_options';
 display_options.name    = 'Display options'; 
 display_options.val     = {GenerateInverted GroupColorbars ...
     contrast_figures override_colorbar figures_visible GroupFiguresIntoSubplots ...
-    output_unc SmallFigures write_neg_pos save_nifti_contrasts};
+    output_unc SmallFigures write_neg_pos save_nifti_contrasts show_boundary};
 display_options.help    = {'Display options or rarely used options.'}';
