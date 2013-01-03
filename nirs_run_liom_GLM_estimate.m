@@ -103,8 +103,8 @@ for Idx=1:size(job.NIRSmat,1)
                             end
                             %process HbO, HbR separately
                             which_channels = 1:(NC/2); %all HbOchannels
-                            Y1 = nirs_makePca(Y(:,which_channels),which_channels,nComponents);
-                            Y2 = nirs_makePca(Y(:,which_channels+NC/2),which_channels,nComponents);
+                            Y1 = nirs_makePcaV2(Y(:,which_channels),which_channels,nComponents);
+                            Y2 = nirs_makePcaV2(Y(:,which_channels+NC/2),which_channels,nComponents);
                             Y = [Y1 Y2];
                             %Output graphs of PCA result
                             nirs_time_plots(Y',fs,NC,s,newNIRSlocation,'PCA',{'HbO' 'HbR'});
