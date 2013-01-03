@@ -188,6 +188,12 @@ for Idx=1:nl
                     %brain = brain(end:-1:1,:); %???
                     brain = brain * 0.5;
                     W.brain = brain;
+                    %For single subject group of sessions analysis
+                    if isfield(rendered_MNI0{W.side_hemi},'view_mask_2d') 
+                        W.brain_view_mask_2d = rendered_MNI0{W.side_hemi}.view_mask_2d;
+                    end
+                    %for group of subjects analysis
+                    W = nirs_get_common_brain_mask(W,big_TOPO,v1);
                     W = nirs_get_boundary(W,job);
                     W.s1 = size(brain, 1);
                     W.s2 = size(brain, 2);

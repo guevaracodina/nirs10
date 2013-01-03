@@ -106,6 +106,10 @@ try
                 %Structure for passing GLM and interpolation data
                 W = [];
                 W.brain = brain;
+                if isfield(rendered_MNI0{W.side_hemi},'view_mask_2d')
+                    W.brain_view_mask_2d = rendered_MNI0{W.side_hemi}.view_mask_2d;
+                end
+                W = nirs_get_common_brain_mask(W,big_TOPO,v1);
                 W = nirs_get_boundary(W,job);
                 W.s1 = size(brain, 1);
                 W.s2 = size(brain, 2);
@@ -217,7 +221,7 @@ try
                             end
                             try
                                 A = liom_anova(cbeta,ccov_beta,s1,s2,ns,min_s,level_subj);
-                                %A = calc_hfgg(cbeta,A,ns,level_subj,1);                                
+                                %A = calc_hfgg(cbeta,A,ns,level_subj,1);
                             catch exception2
                                 disp(exception2.identifier);
                                 disp(exception2.stack(1));
@@ -229,31 +233,31 @@ try
                             F.eidf = A.dfbetween;
                             %Only for repeated measures anovas, which is
                             %not the case here!
-%                             if isfield(A,'Eps')
-%                                 %Recommendation: If epsilon is >0.75, use the Huynh-Feldt correction.
-%                                 %If epsilon is <0.75, or nothing is known about sphericity at all,
-%                                 %use the Greenhouse-Geisser correction                               
-%                                 switch Z.CorrectionMethod
-%                                     case 0
-%                                         %use Greenhouse-Geisser
-%                                         epscor = A.Eps.EpsGG(ze);
-%                                     case 1
-%                                         if A.Eps.EpsGG(ze) >= 0.75
-%                                             %use Huynh-Feldt
-%                                             epscor = A.Eps.EpsHF(ze);
-%                                         else
-%                                             %use Greenhouse-Geisser
-%                                             epscor = A.Eps.EpsGG(ze);
-%                                         end
-%                                     case 2 %none
-%                                         epscor = 1;
-%                                 end
-%                                 %reduction in the number of degrees of freedom
-%                                 F.erdf = epscor*F.erdf;
-%                                 F.eidf = epscor*F.eidf;                                
-%                                 Astr = [Astr '_eps_' num2str(epscor,'%0.2f')];
-%                                 A.epscor = epscor;
-%                             end
+                            %                             if isfield(A,'Eps')
+                            %                                 %Recommendation: If epsilon is >0.75, use the Huynh-Feldt correction.
+                            %                                 %If epsilon is <0.75, or nothing is known about sphericity at all,
+                            %                                 %use the Greenhouse-Geisser correction
+                            %                                 switch Z.CorrectionMethod
+                            %                                     case 0
+                            %                                         %use Greenhouse-Geisser
+                            %                                         epscor = A.Eps.EpsGG(ze);
+                            %                                     case 1
+                            %                                         if A.Eps.EpsGG(ze) >= 0.75
+                            %                                             %use Huynh-Feldt
+                            %                                             epscor = A.Eps.EpsHF(ze);
+                            %                                         else
+                            %                                             %use Greenhouse-Geisser
+                            %                                             epscor = A.Eps.EpsGG(ze);
+                            %                                         end
+                            %                                     case 2 %none
+                            %                                         epscor = 1;
+                            %                                 end
+                            %                                 %reduction in the number of degrees of freedom
+                            %                                 F.erdf = epscor*F.erdf;
+                            %                                 F.eidf = epscor*F.eidf;
+                            %                                 Astr = [Astr '_eps_' num2str(epscor,'%0.2f')];
+                            %                                 A.epscor = epscor;
+                            %                             end
                             TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.A = A;
                             TOPO.v{v1}.group.hb{h1}.c{2*c1-1}.c = xCon(c1);
                             
@@ -283,19 +287,19 @@ try
                                     H = nirs_copy_figure(H,DF,CF,c1,hb,1,F.tstr,1,0);
                                 end
                                 
-%                                 %A = calc_hfgg(cbeta,A,ns,B,nfac);
-%                                 %For post-hoc contrasts only -- not done yet
-%                                 switch Z.CorrectionMethod
-%                                     case 1 %Huynh-Feldt
-%                                         F.erdf = F.erdf;
-%                                         F.eidf = F.eidf;
-%                                     case 2 %Bonferroni
-%                                         p_value = Z.p_value/length(level_subj-1);
-%                                     case 3 %Greenhouse-Gasser
-%                                         F.erdf = F.erdf;
-%                                         F.eidf = F.eidf;
-%                                 end
-%                                 
+                                %                                 %A = calc_hfgg(cbeta,A,ns,B,nfac);
+                                %                                 %For post-hoc contrasts only -- not done yet
+                                %                                 switch Z.CorrectionMethod
+                                %                                     case 1 %Huynh-Feldt
+                                %                                         F.erdf = F.erdf;
+                                %                                         F.eidf = F.eidf;
+                                %                                     case 2 %Bonferroni
+                                %                                         p_value = Z.p_value/length(level_subj-1);
+                                %                                     case 3 %Greenhouse-Gasser
+                                %                                         F.erdf = F.erdf;
+                                %                                         F.eidf = F.eidf;
+                                %                                 end
+                                %
                             catch exception2
                                 disp(exception2.identifier);
                                 disp(exception2.stack(1));
