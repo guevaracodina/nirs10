@@ -188,6 +188,7 @@ for Idx=1:nl
                     %brain = brain(end:-1:1,:); %???
                     brain = brain * 0.5;
                     W.brain = brain;
+                    W = nirs_get_boundary(W,job);
                     W.s1 = size(brain, 1);
                     W.s2 = size(brain, 2);
                     TOPO.v{v1}.(fg).ns = ns;

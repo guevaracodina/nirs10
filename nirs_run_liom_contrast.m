@@ -5,7 +5,6 @@ function out = nirs_run_liom_contrast(job)
 %Contrasts need to be put in the SPM xCon structures
 %If there is more than one session, contrasts can be run by session or
 %over all sessions - the latter is the SPM standard way
-
 %Fill Z Structure, for passing the most generic data
 Z = get_contrast_group_common_options(job);
 %Views:
@@ -127,7 +126,7 @@ for Idx=1:size(job.NIRSmat,1)
                         %find channels which are visible from this projection view
                         W.index_ch = find(rchn ~= -1);
                         if isfield(rendered_MNI{W.side_hemi},'view_mask_2d') % for back-compatibility
-                            W.brain_view_mask_2d = rendered_MNI{W.side_hemi}.view_mask_2d;
+                            W.brain_view_mask_2d = rendered_MNI{W.side_hemi}.view_mask_2d;                            
                         end
                         
                         if isempty(W.index_ch)
@@ -137,8 +136,9 @@ for Idx=1:size(job.NIRSmat,1)
                             end
                         else
                             %rendering surface
-                            brain = rendered_MNI{W.side_hemi}.ren;
+                            brain = rendered_MNI{W.side_hemi}.ren;                                                        
                             W.brain = brain * 0.5;
+                            W = nirs_get_boundary(W,job);
                             W.s1 = size(brain, 1);
                             W.s2 = size(brain, 2);
                             %split into HbO and HbR interpolations

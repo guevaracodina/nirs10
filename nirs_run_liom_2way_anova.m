@@ -97,6 +97,7 @@ try
                 %Structure for passing GLM and interpolation data
                 W = [];
                 W.brain = brain;
+                W = nirs_get_boundary(W,job);
                 W.s1 = size(brain, 1);
                 W.s2 = size(brain, 2);
                 W.spec_hemi = spec_hemi;
