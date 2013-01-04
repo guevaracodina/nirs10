@@ -103,8 +103,8 @@ try
                 %Structure for passing GLM and interpolation data
                 W = [];
                 W.brain = brain;
-                if isfield(rendered_MNI0{W.side_hemi},'view_mask_2d')
-                    W.brain_view_mask_2d = rendered_MNI0{W.side_hemi}.view_mask_2d;
+                if isfield(rendered_MNI0{v1},'view_mask_2d')
+                    W.brain_view_mask_2d = rendered_MNI0{v1}.view_mask_2d;
                 end
                 W = nirs_get_common_brain_mask(W,big_TOPO,v1);
                 W = nirs_get_boundary(W,job);
