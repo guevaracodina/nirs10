@@ -39,7 +39,7 @@ nasion_wMNI         = cfg_entry; %nasion_wMNI
 nasion_wMNI.name    = 'Nasion';
 nasion_wMNI.tag     = 'nasion_wMNI';
 nasion_wMNI.strtype = 'r';
-nasion_wMNI.num     = [1 3];
+nasion_wMNI.num     = [3 Inf];
 nasion_wMNI.val{1}  = [0 84 -48];
 nasion_wMNI.help    = {'Coordinates of the nasion.'};
 
@@ -47,7 +47,7 @@ AL_wMNI         = cfg_entry; %AL_wMNI
 AL_wMNI.name    = 'Auricular left';
 AL_wMNI.tag     = 'AL_wMNI';
 AL_wMNI.strtype = 'r';
-AL_wMNI.num     = [1 3];
+AL_wMNI.num     = [3 Inf];
 AL_wMNI.val{1}  = [-83 -19 -38];
 AL_wMNI.help    = {'Coordinates of Auricular Left.'};
 
@@ -55,7 +55,7 @@ AR_wMNI         = cfg_entry; %AR_wMNI
 AR_wMNI.name    = 'Auricular right';
 AR_wMNI.tag     = 'AR_wMNI';
 AR_wMNI.strtype = 'r';
-AR_wMNI.num     = [1 3];
+AR_wMNI.num     = [3 Inf];
 AR_wMNI.val{1}  = [ 83 -19 -38];
 AR_wMNI.help    = {'Coordinates of Auricular Right.'};
 
