@@ -101,7 +101,11 @@ for iSubj=1:size(job.NIRSmat,1)
             Q = (wT1.VG.mat/wT1.Affine)/wT1.VF.mat;
             % FIT ROM TO RMM POSITIONS, USING FIDUCIALS %
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            job_MNI_fiducials = [job.nasion_wMNI' job.AL_wMNI' job.AR_wMNI'];
+            if length(job.nasion_wMNI(:)) > 3
+                job_MNI_fiducials = [job.nasion_wMNI(iSubj,:)' job.AL_wMNI(iSubj,:)' job.AR_wMNI(iSubj,:)'];
+            else
+                job_MNI_fiducials = [job.nasion_wMNI' job.AL_wMNI' job.AR_wMNI'];
+            end
             % Positions of fiducial points
             if job.fiducial_MNI_choice
                 %use specified coordinates in subject MNI coordinates
