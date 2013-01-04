@@ -104,7 +104,7 @@ for iSubj=1:size(job.NIRSmat,1)
             if length(job.nasion_wMNI(:)) > 3
                 job_MNI_fiducials = [job.nasion_wMNI(iSubj,:)' job.AL_wMNI(iSubj,:)' job.AR_wMNI(iSubj,:)'];
             else
-                job_MNI_fiducials = [job.nasion_wMNI' job.AL_wMNI' job.AR_wMNI'];
+                job_MNI_fiducials = [job.nasion_wMNI job.AL_wMNI job.AR_wMNI];
             end
             % Positions of fiducial points
             if job.fiducial_MNI_choice
