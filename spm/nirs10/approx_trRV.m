@@ -10,6 +10,9 @@ else
     exact = 0;
 end
 
+%Now always enforce exact calculation
+exact = 1;
+
 X = varargin{1};
 pKX = varargin{2};
 S = varargin{3};

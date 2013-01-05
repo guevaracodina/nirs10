@@ -102,7 +102,7 @@ for iSubj=1:size(job.NIRSmat,1)
             % FIT ROM TO RMM POSITIONS, USING FIDUCIALS %
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             if length(job.nasion_wMNI(:)) > 3
-                job_MNI_fiducials = [job.nasion_wMNI(iSubj,:)' job.AL_wMNI(iSubj,:)' job.AR_wMNI(iSubj,:)'];
+                job_MNI_fiducials = [job.nasion_wMNI(:,iSubj) job.AL_wMNI(:,iSubj) job.AR_wMNI(:,iSubj)];
             else
                 job_MNI_fiducials = [job.nasion_wMNI job.AL_wMNI job.AR_wMNI];
             end
@@ -395,7 +395,7 @@ for iSubj=1:size(job.NIRSmat,1)
             %Additional projections
             %channels on skin
             rendered_MNI_skin = render_MNI_coordinates_new(ch_MNIw_vx_skin,...
-                ch_MNI_vx_skin,wT1_info, NIRS.Dt.ana.wT1.VF,render_template,fSeg,dir_coreg,1);
+                ch_MNI_vx_skin,wT1_info, NIRS.Dt.ana.wT1.VF,0,fSeg,dir_coreg,1);
             %sources on cortex
             rendered_MNI_src = render_MNI_coordinates_new(src_MNIw_vx,...
                 src_MNI_vx,wT1_info, NIRS.Dt.ana.wT1.VF,render_template,fSeg,dir_coreg,0);
@@ -405,10 +405,10 @@ for iSubj=1:size(job.NIRSmat,1)
             
             %sources on skin
             rendered_MNI_src_skin = render_MNI_coordinates_new(src_MNIw_vx_skin,...
-                src_MNI_vx_skin,wT1_info, NIRS.Dt.ana.wT1.VF,render_template,fSeg,dir_coreg,1);
+                src_MNI_vx_skin,wT1_info, NIRS.Dt.ana.wT1.VF,0,fSeg,dir_coreg,1);
             %detectors on skin
             rendered_MNI_det_skin = render_MNI_coordinates_new(det_MNIw_vx_skin,...
-                det_MNI_vx_skin,wT1_info, NIRS.Dt.ana.wT1.VF,render_template,fSeg,dir_coreg,1);
+                det_MNI_vx_skin,wT1_info, NIRS.Dt.ana.wT1.VF,0,fSeg,dir_coreg,1);
             
             rend_file = fullfile(dir_coreg,'TopoData.mat');
             save(rend_file, 'rendered_MNI');
