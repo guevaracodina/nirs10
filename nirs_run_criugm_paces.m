@@ -472,7 +472,20 @@ for Idx=1:size(job.NIRSmat,1)
                         reg(1:size(hp,2)) = interp1(interpx,interpY,interpxi,'linear');
                     end
                     NIRS.Dt.fir.Sess(f).fR{1} = reg';
-                    %save(job.NIRSmat{Idx,1},'NIRS');
+                    %Plot figure
+                    h = figure; hr = NIRS.Dt.fir.Sess(f).fR{1}; 
+                    n = length(hr); lp = linspace(0,n/fs,n); plot(lp,hr)
+                    if isfield(NIRS.Dt.s,'subj_id')
+                        subj_str = NIRS.Dt.s.subj_id;
+                    else
+                        subj_str = NIRS.Dt.s.p;
+                    end
+                    title([subj_str ': Heart rate CB (BPM), Sess' int2str(f)],'interpreter','none');
+                    [dirNIRS fil0] = fileparts(newNIRSlocation);
+                    fname = fullfile(dirNIRS, [subj_str '_HeartRateCB_Sess' int2str(f)]);
+                    print(h,'-dpng',[fname '.png'],'-r300');
+                    saveas(h,[fname '.fig']);
+                    close(h);
                 end
             end
             
