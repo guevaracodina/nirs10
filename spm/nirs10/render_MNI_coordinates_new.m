@@ -6,7 +6,7 @@ if skinOn
 else
     skin_suffix = 'c1';
 end
-if render_template %would need to have a skin template...
+if render_template 
     %use SPM template
     load([spm('dir') filesep 'rend' filesep 'render_single_subj.mat']);
     rnc = -1;

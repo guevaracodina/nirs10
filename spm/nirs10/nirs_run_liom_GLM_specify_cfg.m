@@ -349,8 +349,12 @@ nirs_lpf.tag       = 'nirs_lpf';
 nirs_lpf.values    = {lpf_none
     lpf_gauss
     lpf_hrf};
-nirs_lpf.val       = {lpf_gauss};
-nirs_lpf.help      = {'Choose low-pass filter.'};
+nirs_lpf.val       = {lpf_hrf};
+nirs_lpf.help      = {'Choose low-pass filter.'
+    'Currently, the only valid choice is the LPF based on the hemodynamic response function.'
+    '(Or a Gaussian filter with a long cutoff of 4 or 5 s.)'
+    'A Gaussian filter with a short cutoff leads to an inaccurate estimation '
+    'of the number of degrees of freedom and hence incorrect statistics (t-stats being larger than they should be)'}';
 
 NIRS_SPM         = cfg_branch;
 NIRS_SPM.tag     = 'NIRS_SPM';
