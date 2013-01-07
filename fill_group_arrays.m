@@ -1,6 +1,12 @@
 function [cbeta ccov_beta new_version] = fill_group_arrays(TOPO,big_TOPO,v1,c1,h1,Z,xCon,ns,shb)
-Sess = TOPO.Sess;
-Cp = TOPO.Cp;
+if isfield(TOPO,'Sess')
+    Sess = TOPO.Sess;
+    Cp = TOPO.Cp;
+else
+    %Group of sessions
+    Sess{1} = 1;
+    Cp = [];
+end
 new_version = 0;
 if shb
     sign_hb = 1;
