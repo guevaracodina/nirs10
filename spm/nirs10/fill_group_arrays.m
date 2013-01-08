@@ -1,5 +1,7 @@
 function [cbeta ccov_beta new_version] = fill_group_arrays(TOPO,big_TOPO,v1,c1,h1,Z,xCon,ns,shb)
-if isfield(TOPO,'Sess')
+%PP not sure this is right, this code modification was imported from
+%unknown source
+if isfield(TOPO,'Sess') 
     Sess = TOPO.Sess;
     Cp = TOPO.Cp;
 else
