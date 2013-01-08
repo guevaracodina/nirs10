@@ -424,6 +424,7 @@ for iSubj=1:size(job.NIRSmat,1)
             nirs_brain_project_2d(NIRS,dir_extra_coreg,rendered_MNI_skin,[],'r','','skin',[],0);
             nirs_brain_project_2d(NIRS,dir_extra_coreg,rendered_MNI_src,rendered_MNI_det,'b','g','SD',Pvoid,0);
             nirs_brain_project_2d(NIRS,dir_extra_coreg,rendered_MNI_src_skin,rendered_MNI_det_skin,'b','g','SD_skin',Pvoid,0);            
+            NIRS.jobCoreg = job; %Required when coregistration needs to be redone in the GLM
             NIRS.flags.coregOK = 1;
         end
         save(newNIRSlocation,'NIRS');
