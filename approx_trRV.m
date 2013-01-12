@@ -126,7 +126,7 @@ end
 
 if trRVRVon
     if target_sampling_rate
-        varargout{2} = varargout{1}^2 * trRVRV/(trRV)^2;
+        varargout{2} =  1.0280 * varargout{1}^2 * trRVRV/(trRV)^2; %numerical factor is an estimated correction 
     else
         varargout{2} = trRVRV;
     end
