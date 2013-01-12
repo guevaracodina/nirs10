@@ -58,7 +58,7 @@ if ~isfield(SPM,'TrRVRVexact')
 end
 
 if SPM.generate_trRV
-    [trRV trRVRV ] = approx_trRV(SPM.xX.xKXs.X,SPM.xX.pKX,S,[],SPM.TrRVRVexact);
+    [trRV trRVRV ] = approx_trRV(SPM.xX.xKXs.X,SPM.xX.pKX,S,[],SPM.TrRVRVexact,SPM);
 else
     trRV = 0;
     trRVRV = 0;

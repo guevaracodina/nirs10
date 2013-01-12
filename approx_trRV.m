@@ -4,12 +4,21 @@ function varargout = approx_trRV(varargin)
 %with a few very large values. Strategy is to calculate the values that
 %contribute to TrRV exactly, and since the indices where they occur will
 %be the same as for trRVRV, approximate trRVRV by those values.
-if nargin == 5
-    exact = varargin{5};
-else
-    exact = 0;
+target_sampling_rate = 0;
+if nargin == 6
+    SPM = varargin{6};
+    if isfield(SPM.job,'target_sampling_rate')
+        if isfield(SPM.job.target_sampling_rate,'specified_sampling_rate')
+            target_sampling_rate = 1;
+            sampling_rate = SPM.job.target_sampling_rate.specified_sampling_rate.sampling_rate;
+        end
+    end
 end
-
+% if nargin == 5 || nargin == 6
+%     exact = varargin{5};
+% else
+%     exact = 0;
+% end
 %Now always enforce exact calculation
 exact = 1;
 
@@ -20,16 +29,12 @@ if nargin == 4
     %F-test 
     c = varargin{4};
 end
-nScan = size(X,1);
 
 if nargout == 2
     trRVRVon = 1;
 else
     trRVRVon = 0;
 end
-  
-%computation of var1 and var2 is fairly quick - actually, no: var1 takes
-%about 3.5 minutes. Why is it slower this time than in the earlier test?
 var1 = S * S';
 if exist('c','var')
     sample_size = 100;
@@ -43,6 +48,35 @@ else
 end
 RVd = diag(var2);
 trRV = sum(RVd); %exact
+varargout{1} = trRV;
+
+if target_sampling_rate
+    %downsample the variables X, pKX and S
+    fs = SPM.fs;
+    decimate_factor = round(fs/sampling_rate);
+    X = X(round(decimate_factor/2):decimate_factor:end,:);
+    pKX = pKX(:,round(decimate_factor/2):decimate_factor:end);
+    S = S(round(decimate_factor/2):decimate_factor:end,:);
+    S = S(:,round(decimate_factor/2):decimate_factor:end);
+    %recalculate trRV
+    var1 = S * S';
+    if exist('c','var')
+        sample_size = 100;
+        X0 = X*(eye(size(c,1))-c*c');
+        xKXs0 = spm_sp('Set',X0);
+        pKX0 = spm_sp('x-', xKXs0);
+        var2 = X*(pKX *var1) - X0 * (pKX0 * var1); % RV * e(kk)
+    else
+        sample_size = 100;
+        var2 = var1 - X * (pKX * var1); % RV * e(kk)
+    end
+    RVd = diag(var2);
+    trRV = sum(RVd); %exact
+end
+%computation of var1 and var2 is fairly quick - actually, no: var1 takes
+%about 3.5 minutes. Why is it slower this time than in the earlier test?
+nScan = size(X,1);
+
 if trRVRVon
     if exact
         var3 = var1 * var2;
@@ -89,7 +123,11 @@ if trRVRVon
         %so the error is as much as 15%
     end
 end
-varargout{1} = trRV;
+
 if trRVRVon
-    varargout{2} = trRVRV;
+    if target_sampling_rate
+        varargout{2} = varargout{1}^2 * trRVRV/(trRV)^2;
+    else
+        varargout{2} = trRVRV;
+    end
 end
