@@ -130,8 +130,8 @@ for Idx=1:size(job.NIRSmat,1)
                                 nS = size(Y,1);
                                 mX = linspace(0,round(nS/fs),nS);
                                 mX = [mX' ones(nS,1)];
-                                pmX = pinv(mX);    
-                                Y = Y - mX * (pmX * Y);                                
+                                pmX = pinv(mX);
+                                Y = Y - mX * (pmX * Y);
                         end
                         
                         
@@ -148,6 +148,8 @@ for Idx=1:size(job.NIRSmat,1)
                         tSPM = [];
                         tSPM.Sess = SPM.Sess(s);
                         tSPM.xX = SPM.xX;
+                        tSPM.job = SPM.job;
+                        tSPM.fs = fs;
                         try tSPM.TrRVRVexact = SPM.TrRVRVexact; end
                         try
                             %This only worked for constant number of regressors
@@ -189,13 +191,13 @@ for Idx=1:size(job.NIRSmat,1)
                             if SPM.filter_design_matrix
                                 switch SPM.xX.HPFbutter
                                     case 1
-                                    %filter the design matrix
-                                    cutoff=SPM.xX.hpf_butter_freq; %Hz, or 100s
-                                    FilterOrder=SPM.xX.hpf_butter_order; %Is this too weak?
-                                    %exclude the constant
-                                    tX=ButterHPF(fs,cutoff,FilterOrder,tSPM.xX.X(:,1:end-1));
-                                    %add back the constant
-                                    tSPM.xX.X = [tX tSPM.xX.X(:,end)];
+                                        %filter the design matrix
+                                        cutoff=SPM.xX.hpf_butter_freq; %Hz, or 100s
+                                        FilterOrder=SPM.xX.hpf_butter_order; %Is this too weak?
+                                        %exclude the constant
+                                        tX=ButterHPF(fs,cutoff,FilterOrder,tSPM.xX.X(:,1:end-1));
+                                        %add back the constant
+                                        tSPM.xX.X = [tX tSPM.xX.X(:,end)];
                                     case 2
                                         %do nothing -- no linear trend in
                                         %design matrix
@@ -212,7 +214,7 @@ for Idx=1:size(job.NIRSmat,1)
                                         n       = fix(2*(k/fs)*SPM.xX.hpf_butter_freq + 1);
                                         X0      = spm_dctmtx(k,n);
                                         X0 = X0(:,2:end)./repmat(max(X0(:,2:end),[],1),[k 1]);
-                                        tSPM.xX.X = [tSPM.xX.X(:,1:end-1) X0 tSPM.xX.X(:,end)];                                        
+                                        tSPM.xX.X = [tSPM.xX.X(:,1:end-1) X0 tSPM.xX.X(:,end)];
                                 end
                                 %                             %LPF
                                 %                             if SPM.xX.LPFbutter
@@ -242,15 +244,15 @@ for Idx=1:size(job.NIRSmat,1)
                             case 'WLS'
                                 %remove constant regressor - assume it is the last entry
                                 %if size(tSPM.xX.X,2) > 1
-                                 %   tmpX = tSPM.xX.X(:,1:end-1);
+                                %   tmpX = tSPM.xX.X(:,1:end-1);
                                 %else
                                 %    tmpX = tSPM.xX.X;
                                 %end
-
+                                
                                 %**********************************************************
                                 %Temporarily added by Ke Peng
-                                %**********************************************************                                
-                          
+                                %**********************************************************
+                                
                                 %remove constant regressor - assume it is the last entry
                                 if size(tSPM.xX.X,2) > 1
                                     tmpX = tSPM.xX.X(:,1:end-1);
@@ -272,18 +274,18 @@ for Idx=1:size(job.NIRSmat,1)
                                     case 'none'
                                         tSPM.xX.xKXs = spm_sp('Set', spm_filter_HPF_LPF_WMDL(tSPM.xX.K, tSPM.xX.X)); % KX ?
                                 end
-
+                                
                                 tSPM.xX.xKXs.X = full(tSPM.xX.xKXs.X);
                                 tSPM.xX.pKX = spm_sp('x-', tSPM.xX.xKXs);
                                 
                                 
                                 switch tSPM.xX.K.LParam.type
-                                case {'hrf', 'Gaussian'}
-                                    S = tSPM.xX.K.KL;
-                                case 'none'
-                                    S = speye(nScan);
+                                    case {'hrf', 'Gaussian'}
+                                        S = tSPM.xX.K.KL;
+                                    case 'none'
+                                        S = speye(nScan);
                                 end
-
+                                
                                 switch tSPM.xX.K.HParam.type
                                     case 'DCT'
                                         S = S - tSPM.xX.K.X0 * (tSPM.xX.K.X0' * S);
@@ -292,7 +294,7 @@ for Idx=1:size(job.NIRSmat,1)
                                 if ~isfield(tSPM,'TrRVRVexact')
                                     tSPM.TrRVRVexact = 0; %approximation
                                 end
-
+                                
                                 if tSPM.generate_trRV
                                     [trRV trRVRV ] = approx_trRV(tSPM.xX.xKXs.X,tSPM.xX.pKX,S,[],tSPM.TrRVRVexact);
                                 else
@@ -301,14 +303,14 @@ for Idx=1:size(job.NIRSmat,1)
                                 end
                                 tSPM.xX.trRV = trRV; % <R'*y'*y*R>
                                 tSPM.xX.trRVRV = trRVRV; %- Satterthwaite
-                                try 
-                                    tSPM.xX.erdf = trRV^2/trRVRV; 
+                                try
+                                    tSPM.xX.erdf = trRV^2/trRVRV;
                                 catch exception
                                     disp(exception.identifier);
                                     disp(exception.stack(1));
-                                    disp('Problem calculating degrees of freedom');    
+                                    disp('Problem calculating degrees of freedom');
                                 end
-                            
+                                
                                 tSPM.xX.Bcov = (tSPM.xX.pKX * S);
                                 tSPM.xX.Bcov = tSPM.xX.Bcov * tSPM.xX.Bcov';
                                 
@@ -326,9 +328,9 @@ for Idx=1:size(job.NIRSmat,1)
                                 
                                 
                                 tSPM.xX.xKXs.X = tSPM.xX.xKXs.X(:,1:(end-1));% to remove the constant regressor
-
-                                %**********************************************************                                
-                                                                 
+                                
+                                %**********************************************************
+                                
                             case 'NIRS_SPM'
                                 if precolor
                                     [tSPM res] = precoloring_batch(tSPM,Y);
@@ -371,19 +373,19 @@ for Idx=1:size(job.NIRSmat,1)
                                 V2r = 2;
                             end
                             
-
+                            
                             
                             %Need filtered Y (KY) and filtered X ()
                             %sigma = std(tSPM.KY- (tSPM.xX.X(:,1)*tSPM.xX.beta(1,:) + tSPM.xX.X(:,V2r)*tSPM.xX.beta(V2r,:)),0,1);
                             %sigma = std(tSPM.KY- (tSPM.xX.xKXs.X(:,1)*tSPM.xX.beta(1,:) + tSPM.xX.xKXs.X(:,V2r)*tSPM.xX.beta(V2r,:)),0,1);
                             
-
+                            
                             sigma = std(tSPM.KY- (tSPM.xX.xKXs.X*tSPM.xX.beta),0,1);
                             
                             %**********************************************************
                             %Temporarily added by Ke Peng
                             %**********************************************************
-
+                            
                             if strcmp(SPM.xX.opt.meth, 'WLS')
                                 V2r = size(tSPM.xX.xKXs.X,2);
                                 tSPM.xX.xKXs.X = [tSPM.xX.xKXs.X ones(length(tSPM.xX.xKXs.X), 1)];% to fill the blanc left for constant regressor
@@ -415,7 +417,7 @@ for Idx=1:size(job.NIRSmat,1)
                                     tSPM.xX.a2 = (tSPM.xX.beta(1,:) ./ sigma);
                                 end %norm_bf = 4.7506 = 1/max(X(:,1)) for a protocol with only one spike
                             end
-                                 
+                            
                         catch exception
                             disp(exception.identifier)
                             disp(exception.stack(1));

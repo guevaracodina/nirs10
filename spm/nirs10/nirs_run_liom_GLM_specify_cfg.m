@@ -1,10 +1,9 @@
 function wls_bglm_specify = nirs_run_liom_GLM_specify_cfg
 [NIRSmat redo1 NIRSmatCopyChoice] = get_common_NIRSmat(1,'Stat');
-
+target_sampling_rate = nirs_dfg_target_sampling_rate;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Vasomotion
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 select_chromophore         = cfg_menu;
 select_chromophore.tag     = 'select_chromophore';
 select_chromophore.name    = 'Select chromophore';
@@ -35,7 +34,6 @@ vasomotion_choice.help   = {'Choose whether to include a vasomotion regressor in
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % General Linear Model Specification
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % ---------------------------------------------------------------------
 % dir Directory
 % ---------------------------------------------------------------------
@@ -74,7 +72,6 @@ units.values  = {
     1
     };
 units.val = {1};
-%units.def = @(val)nirs_get_defaults('model_specify.units', val{:});
 
 time_res      = cfg_entry;
 time_res.tag  = 'time_res';
@@ -82,7 +79,6 @@ time_res.name = 'Time resolution';
 time_res.val = {1};
 time_res.strtype = 'r';
 time_res.num     = [1 1];
-%time_res.def = @(val)nirs_get_defaults('model_specify.time_res', val{:});
 time_res.help    = {'Time resolution for onsets will be given by NIRS sampling rate divided by this factor  - value is 10 in NIRS_SPM.'};
 
 input_onsets         = cfg_files;
@@ -135,7 +131,6 @@ nirs_noise.values  = {
     0
     1
     };
-%nirs_noise.val = {0};
 nirs_noise.def = @(val)nirs_get_defaults(...
     'model_specify.wls_bglm_specify.wls_or_bglm.NIRS_SPM.nirs_noise', val{:});
 
@@ -165,17 +160,6 @@ volt.val = {1};
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % LIOM General Linear Model Specification
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% dir1         = cfg_entry;
-% dir1.name    = 'Stats Directory';
-% dir1.tag     = 'dir1';
-% dir1.strtype = 's';
-% dir1.num     = [1 Inf];
-% dir1.val{1}  = 'Stat';
-% %dir1.def    = @(val)nirs_get_defaults('readNIRS.boxy1.cf1.sizebloc', val{:});
-% dir1.help    = {'Enter a subdirectory name where the NIRS_SPM.mat files '
-%     'containing the specified design matrix will be written.'}';
-
 GenerateHbT      = cfg_menu;
 GenerateHbT.tag  = 'GenerateHbT';
 GenerateHbT.name = 'Generate HbT';
@@ -288,7 +272,6 @@ hpf_dct_cutoff      = cfg_entry;
 hpf_dct_cutoff.tag  = 'hpf_dct_cutoff';
 hpf_dct_cutoff.name = 'DCT cutoff in seconds';
 hpf_dct_cutoff.val  = {128};
-%hpf_dct_cutoff.def    = @(val)nirs_get_defaults('hpf_dct_cutoff', val{:});
 hpf_dct_cutoff.strtype = 'r';
 hpf_dct_cutoff.num     = [1 1];
 hpf_dct_cutoff.help    = {'Specify DCT cutoff in seconds.'};
@@ -311,7 +294,6 @@ nirs_hpf.values    = {hpf_none
     hpf_wavelet
     hpf_dct};
 nirs_hpf.val       = {hpf_none};
-%nirs_hpf.def    = @(val)nirs_get_defaults('nirs_hpf', val{:});
 nirs_hpf.help      = {'Choose high-pass filter.'};
 
 % ---------------------------------------------------------------------
@@ -532,21 +514,11 @@ TrRVRVexact.help = {'Perform an exact calculation for TrRVRV (long for long data
     'Note that discrepancies of 30% have been found between this approximation and the exact result.'
     'This will affect the number of degrees of freedom, and therefore the statistical thresholds'}';
 
-% filter_design_matrix      = cfg_menu;
-% filter_design_matrix.tag  = 'filter_design_matrix';
-% filter_design_matrix.name = 'Filter the design matrix';
-% filter_design_matrix.labels = {'Yes','No'};
-% filter_design_matrix.values = {1,0};
-% filter_design_matrix.val = {1};
-% filter_design_matrix.help = {'THIS OPTION SHOULD ALWAYS BE LEFT AT YES.'}';
-
 hpf_butter      = cfg_choice;
 hpf_butter.tag  = 'hpf_butter';
 hpf_butter.name = 'Additional High Pass Filter';
-%hpf_butter.labels = {'Yes','No'};
 hpf_butter.values = {hpf_butter_On hpf_butter_Off remove_linear GLM_remove_linear SPM_cosine_filter};
 hpf_butter.val = {hpf_butter_On};
-%hpf_butter.def = @(val)nirs_get_defaults('model_specify.wls_bglm_specify.hpf_butter', val{:});
 hpf_butter.help = {'Additional High Pass Filter'}';
 
 %This is a duplication -- already specified in HRF -- but its purpose is
@@ -570,7 +542,7 @@ wls_bglm_specify.tag  = 'wls_bglm_specify';
 wls_bglm_specify.val  = {NIRSmat redo1 NIRSmatCopyChoice sessions subj units time_res derivs bases ...
     volt GLM_include_cardiac GLM_include_Mayer vasomotion_choice NIRSchannelsConfound GenerateHbT flag_window ...
     channel_pca NumPCAComponents hpf_butter generate_trRV TrRVRVexact ... %filter_design_matrix ...
-    wls_or_bglm};
+    target_sampling_rate wls_or_bglm };
 wls_bglm_specify.prog = @nirs_run_liom_GLM_specify;
 wls_bglm_specify.vout = @nirs_cfg_vout_liom_GLM_specify;
 wls_bglm_specify.help = {'Specify LIOM General Linear Model.'};
