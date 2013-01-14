@@ -2,6 +2,8 @@ function nirs_batch_coreg(NIRS,newNIRSlocation)
 if isfield(NIRS,'jobCoreg')
     job = NIRS.jobCoreg;
     job.force_redo = 1;
+    job.NIRSmatCopyChoice = rmfield(job.NIRSmatCopyChoice,'NIRSmatCopy');
+    job.NIRSmatCopyChoice.NIRSmatOverwrite = struct([]);
     nirs_run_coreg_new(job);
 else
     clear matlabbatch
