@@ -27,6 +27,17 @@ switch int2str(job.system) % System used for the acquisition
         NIRS.Cf.dev.gn = f.systemInfo.gain;
         NIRS.Cf.dev.fs = 1/(f.t(2)-f.t(1));
         
+        % Information about auxilaries 
+        NIRS.Dt.aux = f.aux;
+        if isfield(job.biopac, 'choice_biopac')
+            biopac.n = job.biopac.choice_biopac;
+            max.aux = 4;
+            NIRS.Dt.aux.eprime = f.aux(:,1:max.aux-biopac.n);
+            NIRS.Dt.aux.biopac = f.aux(:,biopac.n+1:max.aux);
+        else
+            NIRS.Dt.aux.eprime = f.aux;
+        end
+        
         % Information about the Helmet
         NIRS.Cf.H.n = f.systemInfo.SDfilenm;
         NIRS.Cf.H.p = f.systemInfo.SDfilepath;

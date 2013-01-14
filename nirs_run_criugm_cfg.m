@@ -36,6 +36,18 @@ text_brainsight.ufilter = '.*';
 text_brainsight.num     = [1 1];
 text_brainsight.help    = {'Select the text file from Brainsight.'};
 
+%%%
+choice_biopac       = cfg_entry;
+choice_biopac.tag   = 'choice_biopac';
+choice_biopac.name  = 'Number of ports from biopac module';
+choice_biopac.num   = [1 1];
+choice_biopac.help  = {'Select number of the auxilary files from Biopac to be loaded.'};
+
+no_biopac      = cfg_branch;
+no_biopac.name = 'No Biopac recording';
+no_biopac.tag  = 'no_biopac';
+no_biopac.help = {'All aux data from ''.nirs'' file. will be considered as TTL from e-prime'};
+
 T1_vitamins      = cfg_branch;
 T1_vitamins.name = 'Vitamins markers on T1';
 T1_vitamins.tag  = 'T1_vitamins';
@@ -194,10 +206,18 @@ helmet.values  = {text_brainsight T1_vitamins no_helmet helm_temp};
 helmet.val     = {helm_temp};
 helmet.help    = {'If you choose a Brainsight text file, it will be used to determine all you need about sources, detectors and other points of interest.'};
 
+%%%
+biopac         = cfg_choice;
+biopac.tag     = 'biopac';
+biopac.name    = 'Biopac';
+biopac.values  = {choice_biopac no_biopac};
+biopac.val     = {no_biopac};
+biopac.help    = {'If you choose biopac, physiology records of the subject will be considered as regressors.'};
+
 subj         = cfg_branch;
 subj.tag     = 'subj';
 subj.name    = 'Subject';
-subj.val     = {subj_id age1 anatT1 helmet CWsystem nirs_files protocol TopoData boldmask};%config_path2
+subj.val     = {subj_id age1 anatT1 helmet biopac CWsystem nirs_files protocol TopoData boldmask};%config_path2
 subj.help    = {'Subject'};
 
 generic2         = cfg_repeat;

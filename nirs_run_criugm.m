@@ -149,6 +149,7 @@ for is=1:sN
                 job1.sDtp = sDtp;
                 job1.coregType = NIRS.Dt.fir.stax.n;
                 job1.NIRS = NIRS;
+                job1.biopac = job.subj(1,is).biopac;
                 % The function will update the NIRS matrix
                 NIRS = nirs_criugm_readtechen(job1);% get C configuration from nirs files
                 
