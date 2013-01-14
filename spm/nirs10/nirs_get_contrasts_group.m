@@ -21,8 +21,13 @@ try
                 for t2=1:length(SSxCon{t1})
                     if ~any(strcmp(SSxCon{t1}(t2).name,Nlist))
                         %add to the list
-                        Clist{end+1} = SSxCon{t1}(t2);
-                        Nlist{end+1} = SSxCon{t1}(t2).name;
+                        try %probably never works -- 
+                            Clist{end+1} = SSxCon{t1}(t2);
+                            Nlist{end+1} = SSxCon{t1}(t2).name;
+                        catch %always default to this?                            
+                            Clist(end+1) = SSxCon{t1}(t2);
+                            Nlist{end+1} = SSxCon{t1}(t2).name;
+                        end
                     end
                 end
             end
