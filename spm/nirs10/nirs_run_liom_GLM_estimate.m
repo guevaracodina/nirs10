@@ -476,7 +476,7 @@ for Idx=1:size(job.NIRSmat,1)
                     end
                 end
                 
-                save(fGLM{g}, 'SPM');
+                save(fGLM{g}, 'SPM','-v7.3');
                 if save_dataON
                     save(job.NIRSmat{Idx,1},'NIRS');
                 end
