@@ -61,12 +61,10 @@ for Idx=1:nl
             fname_ch = NIRS.Dt.ana.rend;
             load(fname_ch);
             rendered_MNI0 = rendered_MNI;
-            ftopo = NIRS.TOPO;
-            [dir1 fil1 ext1] = fileparts(ftopo);
-            TOPO = [];
-            load(ftopo);
-            TOPO.rendered_MNI = rendered_MNI;
+            [dir1 fil1] = fileparts(newNIRSlocation);
             dir_group = fullfile(dir1, Z.group_dir_name);
+            [TOPO dir_group fTOPO] = nirs_load_TOPO(fullfile(dir_group,'NIRS.mat'));
+            TOPO.rendered_MNI = rendered_MNI;           
         else
             [dir0,dummy,dummy2] = fileparts(job.NIRSmat{1});
             %extract previous directory
@@ -76,7 +74,7 @@ for Idx=1:nl
         end
         if ~exist(dir_group,'dir'), mkdir(dir_group); end
         %store in same directory as first subject
-        ftopo = fullfile(dir_group,'TOPO.mat');
+        fTOPO = fullfile(dir_group,'TOPO.mat');
         %save a NIRS structure for the group
         newNIRSlocation = fullfile(dir_group,'NIRS.mat');
         if ~(Z.FFX || nS==1)
@@ -87,7 +85,7 @@ for Idx=1:nl
         end
         job.NIRSmat{Idx,1} = newNIRSlocation;
         
-        NIRS.TOPO = ftopo;
+        NIRS.TOPO = fTOPO;
         save(newNIRSlocation,'NIRS');
         if ~isfield(NIRS,'flags')
             NIRS.flags = [];
@@ -117,13 +115,13 @@ for Idx=1:nl
                         rendered_MNI0 = rendered_MNI;
                     end
                     try
-                        ftopo = NIRS.TOPO;
+                        fTOPO = NIRS.TOPO;
                     catch
-                        ftopo = fullfile(dir1,'TOPO.mat');
+                        fTOPO = fullfile(dir1,'TOPO.mat');
                         disp('TOPO not found in NIRS.TOPO');
                     end
                     TOPO = [];
-                    load(ftopo);
+                    load(fTOPO);
                     %large structure
                     big_TOPO{Idx2} = TOPO;
                     big_TOPO{Idx2}.rendered_MNI = rendered_MNI;
@@ -250,7 +248,7 @@ for Idx=1:nl
                 TOPO.Sess = Sess;
                 TOPO.Cp = Cp;
             end
-            save(ftopo,'TOPO','-v7.3');
+            save(fTOPO,'TOPO','-v7.3');
             %save NIRS
             if Z.FFX || nS==1
                 NIRS.flags.session_groupOK = 1;

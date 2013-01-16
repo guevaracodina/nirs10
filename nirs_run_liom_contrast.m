@@ -87,15 +87,7 @@ for Idx=1:size(job.NIRSmat,1)
             end
             if run_contrast_OK
                 %load TOPO (topographic maps) if already (partially) generated
-                ftopo = NIRS.Dt.ana.rend; %fullfile(dir1,'TOPO.mat');
-                TOPO = [];
-                try load(ftopo); end
-                %[newDir job] = nirs_get_current_dir(job,Idx);
-                [newDir dummy1 dummy2] = fileparts(job.NIRSmat{Idx,1});
-                %Update ftopo
-                [dir fil1 ext1] = fileparts(ftopo); %#ok<ASGLU>
-                ftopo = fullfile(newDir, [fil1 ext1]);
-                if exist(ftopo,'file'), load(ftopo); end
+                [TOPO newDir fTOPO] = nirs_load_TOPO(newNIRSlocation);
                 %Careful, this is one aspect of Z that is subject specific
                 Z.dir1 = newDir;
                 Z.Idx = Idx;
@@ -162,10 +154,10 @@ for Idx=1:size(job.NIRSmat,1)
                         disp(['Could not create contrasts for view ' W.spec_hemi ' for subject ' int2str(Idx) ' for ' job.NIRSmat{Idx,1}]);
                     end
                 end %end for v1
-                save(ftopo,'TOPO','-v7.3'); %file can be large - because it stores all the contrast data
+                save(fTOPO,'TOPO','-v7.3'); %file can be large - because it stores all the contrast data
             end
             NIRS.flags.con_OK = 1;
-            NIRS.TOPO = ftopo;
+            NIRS.TOPO = fTOPO;
             save(job.NIRSmat{Idx,1},'NIRS');
         end
     catch exception
