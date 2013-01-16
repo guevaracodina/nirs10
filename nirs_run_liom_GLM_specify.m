@@ -703,7 +703,7 @@ for Idx=1:size(job.NIRSmat,1)
                 save(newNIRSlocation,'NIRS'); %This is essential 
                 nirs_batch_coreg(NIRS,newNIRSlocation);
                 [dir0 fil0] = fileparts(newNIRSlocation);
-                NIRS.Dt.ana.rend = fullfile(dir0,'TopoData.mat');
+                %NIRS.Dt.ana.rend = fullfile(dir0,'TopoData.mat');
             end
             NIRS.flags.GLMspec_OK = 1;
             save(newNIRSlocation,'NIRS');
