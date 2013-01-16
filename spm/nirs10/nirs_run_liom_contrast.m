@@ -87,9 +87,9 @@ for Idx=1:size(job.NIRSmat,1)
             end
             if run_contrast_OK
                 %load TOPO (topographic maps) if already (partially) generated
-                ftopo = fullfile(dir1,'TOPO.mat');
+                ftopo = NIRS.Dt.ana.rend; %fullfile(dir1,'TOPO.mat');
                 TOPO = [];
-                
+                try load(ftopo); end
                 %[newDir job] = nirs_get_current_dir(job,Idx);
                 [newDir dummy1 dummy2] = fileparts(job.NIRSmat{Idx,1});
                 %Update ftopo

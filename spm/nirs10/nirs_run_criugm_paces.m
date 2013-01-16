@@ -252,7 +252,7 @@ for Idx=1:size(job.NIRSmat,1)
                 
                 %    delete(rDtp{f,1});
                 outfile = fullfile(dir1,[prefix fil1 ext1]);
-
+                
                 
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 % tant qu'on y met pas autre chose que d, a mon avis, pas grand
@@ -473,7 +473,7 @@ for Idx=1:size(job.NIRSmat,1)
                     end
                     NIRS.Dt.fir.Sess(f).fR{1} = reg';
                     %Plot figure
-                    h = figure; hr = NIRS.Dt.fir.Sess(f).fR{1}; 
+                    h = figure; hr = NIRS.Dt.fir.Sess(f).fR{1};
                     n = length(hr); lp = linspace(0,n/fs,n); plot(lp,hr)
                     if isfield(NIRS.Dt.s,'subj_id')
                         subj_str = NIRS.Dt.s.subj_id;
