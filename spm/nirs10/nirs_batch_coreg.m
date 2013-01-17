@@ -1,6 +1,7 @@
 function nirs_batch_coreg(NIRS,newNIRSlocation)
 if isfield(NIRS,'jobCoreg')
     job = NIRS.jobCoreg;
+    job.NIRSmat = {newNIRSlocation};
     job.force_redo = 1;
     try
     job.NIRSmatCopyChoice = rmfield(job.NIRSmatCopyChoice,'NIRSmatCopy');
