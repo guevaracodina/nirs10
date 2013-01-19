@@ -693,6 +693,9 @@ for Idx=1:size(job.NIRSmat,1)
                 try NIRS.Cf.H.C.wl = NIRS.Cf.H.C.wl(ch_keep); end
                 try NIRS.Cf.H.C.gp = NIRS.Cf.H.C.gp(ch_keep); end
                 try NIRS.Cf.H.C.ok = NIRS.Cf.H.C.ok(ch_keep); end
+                %Important: need to save NIRS before running batch coreg,
+                %so that the channels are updated! 
+                save(newNIRSlocation,'NIRS');
                 nirs_batch_coreg(NIRS,newNIRSlocation);
                 rend_file = fullfile(spm_dir,'TopoData.mat');
                 NIRS.Dt.ana.rend = rend_file;                
