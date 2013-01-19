@@ -63,7 +63,7 @@ for Idx=1:nl
             rendered_MNI0 = rendered_MNI;
             [dir1 fil1] = fileparts(newNIRSlocation);
             dir_group = fullfile(dir1, Z.group_dir_name);
-            [TOPO dir_group fTOPO] = nirs_load_TOPO(fullfile(dir_group,'NIRS.mat'));
+            [TOPO dir_group fTOPO] = nirs_load_TOPO(fullfile(dir1,'NIRS.mat')); %MA nirs_load_TOPO(fullfile(dir_group,'NIRS.mat'))
             TOPO.rendered_MNI = rendered_MNI;           
         else
             [dir0,dummy,dummy2] = fileparts(job.NIRSmat{1});
@@ -74,15 +74,17 @@ for Idx=1:nl
         end
         if ~exist(dir_group,'dir'), mkdir(dir_group); end
         %store in same directory as first subject
-        fTOPO = fullfile(dir_group,'TOPO.mat');
+        fTOPO = fullfile(dir0,'TOPO.mat'); % MA 'dir0' instead of 'dir_group' since there is still no TOPO.mat in the new directory of the group analysis
         %save a NIRS structure for the group
-        newNIRSlocation = fullfile(dir_group,'NIRS.mat');
+        %%% MA why we need to change the dir to dir_group (which is void at this point) before loading NIRS.mat of each indiv ?!! 
+        % newNIRSlocation = fullfile(dir_group,'NIRS.mat'); 
         if ~(Z.FFX || nS==1)
-            job.NIRSmat{nl,1} = newNIRSlocation;
+            % MA job.NIRSmat{nl,1} = newNIRSlocation;
             try
                 [NIRS newNIRSlocation]= nirs_load(job.NIRSmat{Idx,1},job.NIRSmatCopyChoice,job.force_redo);
             end
         end
+        newNIRSlocation = fullfile(dir_group,'NIRS.mat'); 
         job.NIRSmat{Idx,1} = newNIRSlocation;
         
         NIRS.TOPO = fTOPO;

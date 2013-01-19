@@ -682,13 +682,7 @@ for Idx=1:size(job.NIRSmat,1)
             SPM.job = job;
             spm_file = fullfile(spm_dir,'SPM.mat');
             save(spm_file,'SPM');
-            %store path to SPM, after possible prior GLMs
-            %try
-            %    l1 = length(NIRS.SPM);
-            %    NIRS.SPM{l1+1} = spm_file;
-            %catch
-                NIRS.SPM{1} = spm_file;
-            %end
+            NIRS.SPM{1} = spm_file;
             
             %NIRS is now modified - it includes a link to the GLM
             if NIRSconfoundsOn
@@ -699,11 +693,10 @@ for Idx=1:size(job.NIRSmat,1)
                 try NIRS.Cf.H.C.wl = NIRS.Cf.H.C.wl(ch_keep); end
                 try NIRS.Cf.H.C.gp = NIRS.Cf.H.C.gp(ch_keep); end
                 try NIRS.Cf.H.C.ok = NIRS.Cf.H.C.ok(ch_keep); end
-            
-                save(newNIRSlocation,'NIRS'); %This is essential 
+                
                 nirs_batch_coreg(NIRS,newNIRSlocation);
-                [dir0 fil0] = fileparts(newNIRSlocation);
-                %NIRS.Dt.ana.rend = fullfile(dir0,'TopoData.mat');
+                fullfile(spm_dir,'TopoData.mat');
+                NIRS.Dt.ana.rend = rend_file;                
             end
             NIRS.flags.GLMspec_OK = 1;
             save(newNIRSlocation,'NIRS');
