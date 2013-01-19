@@ -693,9 +693,8 @@ for Idx=1:size(job.NIRSmat,1)
                 try NIRS.Cf.H.C.wl = NIRS.Cf.H.C.wl(ch_keep); end
                 try NIRS.Cf.H.C.gp = NIRS.Cf.H.C.gp(ch_keep); end
                 try NIRS.Cf.H.C.ok = NIRS.Cf.H.C.ok(ch_keep); end
-                
                 nirs_batch_coreg(NIRS,newNIRSlocation);
-                fullfile(spm_dir,'TopoData.mat');
+                rend_file = fullfile(spm_dir,'TopoData.mat');
                 NIRS.Dt.ana.rend = rend_file;                
             end
             NIRS.flags.GLMspec_OK = 1;
