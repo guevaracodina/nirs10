@@ -356,6 +356,27 @@ wls_or_bglm.help = {'Choose which GLM method to use:'
     'WLS: wavelet least square'
     'BGLM: Bayesian general linear model'
     'NIRS_SPM: Ye et al methods (MDL), with either precoloring or prewhitening.'}';
+%%%
+trs_file         = cfg_files;
+trs_file.tag     = 'trs_file';
+trs_file.name    = 'File from TRS data';
+trs_file.filter  = '.mat';
+trs_file.ufilter = '.*';
+trs_file.num     = [1 1];
+trs_file.help    = {'Select the file with concentration values from TRS.'};
+
+no_trs      = cfg_branch;
+no_trs.name = 'No TRS recording';
+no_trs.tag  = 'no_trs';
+no_trs.help = {''};
+
+%%% 
+GLM_include_trs         = cfg_choice;
+GLM_include_trs.tag     = 'GLM_include_trs';
+GLM_include_trs.name    = 'Include time domain regressor';
+GLM_include_trs.values  = {trs_file no_trs};
+GLM_include_trs.val     = {no_trs};
+GLM_include_trs.help    = {''};
 
 GLM_include_cardiac    = cfg_menu;
 GLM_include_cardiac.name   = 'Include cardiac regressor';
@@ -540,7 +561,7 @@ wls_bglm_specify      = cfg_exbranch;
 wls_bglm_specify.name = 'LIOM GLM Specification';
 wls_bglm_specify.tag  = 'wls_bglm_specify';
 wls_bglm_specify.val  = {NIRSmat redo1 NIRSmatCopyChoice sessions subj units time_res derivs bases ...
-    volt GLM_include_cardiac GLM_include_Mayer vasomotion_choice NIRSchannelsConfound GenerateHbT flag_window ...
+    volt GLM_include_trs GLM_include_cardiac GLM_include_Mayer vasomotion_choice NIRSchannelsConfound GenerateHbT flag_window ...
     channel_pca NumPCAComponents hpf_butter generate_trRV TrRVRVexact ... %filter_design_matrix ...
     target_sampling_rate wls_or_bglm };
 wls_bglm_specify.prog = @nirs_run_liom_GLM_specify;
