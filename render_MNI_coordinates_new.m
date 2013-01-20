@@ -308,7 +308,7 @@ for i=1:length(rend),
         % we filter an image with max = 1 this hard coded number is not a
         % problem).
         view_mask_2d = double(X>0);
-        hh=fspecial('disk',30);
+        hh=fspecial('disk',35); %PP made it larger
         view_mask_2d=imfilter(view_mask_2d,hh,'same');
         view_mask_2d=view_mask_2d>0; %PP, was > 0.01 -- this made the mask shrink considerably
         % End change
