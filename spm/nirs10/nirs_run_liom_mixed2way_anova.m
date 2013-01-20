@@ -65,7 +65,9 @@ try
     ftopo = fullfile(dir_group,'TOPO.mat');
     %save a NIRS structure for the group
     newNIRSlocation = fullfile(dir_group,'NIRS.mat');
+    [NIRS newNIRSlocation]= nirs_load(newNIRSlocation,job.NIRSmatCopyChoice,job.force_redo);
     NIRS.TOPO = ftopo;
+    NIRSgroup = NIRS;
     save(newNIRSlocation,'NIRS');
     job.NIRSmat{nl,1} = newNIRSlocation;
     Z.dir1 = dir_group;
@@ -124,8 +126,15 @@ try
                     xCon = big_TOPO{1}.xCon;
                 end
                 %Contrasts - assume same contrasts for all subjects
-                nC = length(xCon{1});
-                
+                try
+                    nC = length(xCon{1});
+                catch
+                     nC = length(xCon);
+                     xCon0 = xCon; 
+                     clear xCon;
+                     
+                     xCon{1} = xCon0;
+                end
                 %Add loop over effects to look at:
                 %1: interaction A*B,
                 %2: main A,
@@ -189,7 +198,17 @@ try
                         hb = get_chromophore(h1);
                         %Fill cbeta with session by contrast information
                         sC = 0; %session counter
-                        Ns = length(big_TOPO{1}.v{v1}.s); %number of sessions
+                        if isfield(big_TOPO{1}.v{v1},'s') 
+                            Ns = length(big_TOPO{1}.v{v1}.s); %number of sessions
+                            group_sessions = 0;
+                        else
+                            if isfield(big_TOPO{1}.v{v1},'g') 
+                                Ns = 1;
+                                group_sessions = 1;
+                            else
+                                disp('Corrupted data, 2-anova will break');
+                            end
+                        end
                         for s1=1:Ns
                             %only selected sessions
                             if any(s1==Z.anova2_sessions)
@@ -208,10 +227,19 @@ try
                                                 for f1=1:ns
                                                     try
                                                         fC = fC+1;
-                                                        if isfield(big_TOPO{f1}.v{v1}.s{s1}.hb{h1},'beta_map')
-                                                            tmp = squeeze(big_TOPO{f1}.v{v1}.s{s1}.hb{h1}.beta_map(c1,:,:));
+                                                        if group_sessions
+                                                            %if isfield(big_TOPO{f1}.v{v1}.group.hb{h1},'beta_map')
+                                                                %tmp = squeeze(big_TOPO{f1}.v{v1}.group.hb{h1}.c{2*c1-1}.beta_group);
+                                                                tmp = squeeze(big_TOPO{f1}.v{v1}.g{1}.hb{h1}.beta_map(c1,:,:));
+                                                            %else
+                                                            %    tmp = squeeze(big_TOPO{f1}.v{v1}.group.hb{h1}.c_interp_beta(c1,:,:));
+                                                            %end
                                                         else
-                                                            tmp = squeeze(big_TOPO{f1}.v{v1}.s{s1}.hb{h1}.c_interp_beta(c1,:,:));
+                                                            if isfield(big_TOPO{f1}.v{v1}.s{s1}.hb{h1},'beta_map')
+                                                                tmp = squeeze(big_TOPO{f1}.v{v1}.s{s1}.hb{h1}.beta_map(c1,:,:));
+                                                            else
+                                                                tmp = squeeze(big_TOPO{f1}.v{v1}.s{s1}.hb{h1}.c_interp_beta(c1,:,:));
+                                                            end
                                                         end
                                                         %now fill cbeta
                                                         cbeta{h1}(fC,sC,cC,:) = tmp(:);
@@ -436,7 +464,8 @@ try
         end %end for v1
         save(ftopo,'TOPO');
         save(fullfile(dir_group,'big_TOPO.mat'),'big_TOPO','-v7.3');
-        NIRS.flags.anovamixed2_OK = 1;
+        NIRSgroup.flags.anovamixed2_OK = 1;
+        NIRS = NIRSgroup;
         save(newNIRSlocation,'NIRS');
     end
 catch exception

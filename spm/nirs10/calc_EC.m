@@ -7,6 +7,7 @@ function [threshold] = calc_EC(LKC, p_value, stat, df)
 % df: degrees of freedom
 % output:
 % threshold: calculated threshold according to T or F statistics
+pb = 0; %if problem
 L0 = LKC(1);
 L1 = LKC(2);
 L2 = LKC(3);
@@ -20,9 +21,24 @@ if isnan(L2)
 end
 pOK = 0;
 lc = 0;
+fp = 1;
+dof_cutoff = 340;
 while ~pOK && lc < 2
     lc = lc+1;
     v = df(2);
+    if fp
+        if v > dof_cutoff
+            vOld = v;
+            v = dof_cutoff;
+            disp(['First pass, # d.o.f. too large (' num2str(vOld) '), reset to ' int2str(v)]);
+            fp = 0;
+        end
+    else
+        if v > dof_cutoff
+            vOld = v;
+            v = min(vOld/2,dof_cutoff);
+        end
+    end
     cstT = 1/ power(2*pi,3/2) / sqrt(v/2) / gamma(v/2);
     dv2 = (1-v)/2;
     gam2 = gamma((v+1)/2);
@@ -66,6 +82,7 @@ while ~pOK && lc < 2
         if lc == 1
             df(2) = 340; %quick fix to get out of infinite loop -- but only for 1st level of GLM, not for 2nd level
             disp('problem with calc_EC'); % sum(p)= ' sum(p(2:end))]);
+            pb = 1;
         else
             disp('Still problem with calc_EC')
         end
@@ -78,3 +95,8 @@ while isempty(index_th) == 1;
     dp = dp*10;
 end
 threshold = t(index_th(end));
+if pb
+    disp(['Problematic threshold: ' stat ' = ' num2str(threshold)]);
+else
+    disp(['Calc_EC OK; threshold: ' stat ' = ' num2str(threshold)]);    
+end

@@ -9,7 +9,12 @@ Z.StatStr = 'EC';
 %Run simple group level analysis as a one sample t-test
 Z.FFX = job.FFX_or_RFX;
 Z.p_value = job.contrast_p_value;
-Z.LKC = job.StatMethod;
+switch job.StatMethod
+    case 0
+        Z.LKC = 1;
+    case 1
+        Z.LKC = 0;
+end
 % if ~Z.LKC
 %     %at the group level, two ways to get corrected statistics:
 %     %1-LKC
@@ -61,9 +66,9 @@ for Idx=1:nl
             fname_ch = NIRS.Dt.ana.rend;
             load(fname_ch);
             rendered_MNI0 = rendered_MNI;
-            [dir1 fil1] = fileparts(newNIRSlocation);
-            dir_group = fullfile(dir1, Z.group_dir_name);
-            [TOPO dir_group fTOPO] = nirs_load_TOPO(fullfile(dir1,'NIRS.mat')); %MA nirs_load_TOPO(fullfile(dir_group,'NIRS.mat'))
+            %[dir1 fil1] = fileparts(newNIRSlocation);
+            %dir_group = fullfile(dir1, Z.group_dir_name);
+            [TOPO dir_group fTOPO] = nirs_load_TOPO(newNIRSlocation); %nirs_load_TOPO(fullfile(dir1,'NIRS.mat')); %MA nirs_load_TOPO(fullfile(dir_group,'NIRS.mat'))
             TOPO.rendered_MNI = rendered_MNI;           
         else
             [dir0,dummy,dummy2] = fileparts(job.NIRSmat{1});
@@ -74,24 +79,37 @@ for Idx=1:nl
         end
         if ~exist(dir_group,'dir'), mkdir(dir_group); end
         %store in same directory as first subject
-        fTOPO = fullfile(dir0,'TOPO.mat'); % MA 'dir0' instead of 'dir_group' since there is still no TOPO.mat in the new directory of the group analysis
+        
+        %PP Group level TOPO.mat
+        fTOPO = fullfile(dir_group,'TOPO.mat'); % MA 'dir0' instead of 'dir_group' since there is still no TOPO.mat in the new directory of the group analysis
         %save a NIRS structure for the group
         %%% MA why we need to change the dir to dir_group (which is void at this point) before loading NIRS.mat of each indiv ?!! 
         % newNIRSlocation = fullfile(dir_group,'NIRS.mat'); 
-        if ~(Z.FFX || nS==1)
-            % MA job.NIRSmat{nl,1} = newNIRSlocation;
-            try
-                [NIRS newNIRSlocation]= nirs_load(job.NIRSmat{Idx,1},job.NIRSmatCopyChoice,job.force_redo);
-            end
-        end
-        newNIRSlocation = fullfile(dir_group,'NIRS.mat'); 
-        job.NIRSmat{Idx,1} = newNIRSlocation;
         
-        NIRS.TOPO = fTOPO;
-        save(newNIRSlocation,'NIRS');
+        
+        if ~(Z.FFX || nS==1)            
+            newNIRSlocation = fullfile(dir_group,'NIRS.mat'); 
+            try
+                job.NIRSmatCopyChoice = rmfield(job.NIRSmatCopyChoice,'NIRSmatCopy');
+            end
+            job.NIRSmatCopyChoice.NIRSmatOverwrite = struct([]);
+            % MA job.NIRSmat{nl,1} = newNIRSlocation;
+            %try
+            
+            %Load group level NIRS
+                [NIRS newNIRSlocation]= nirs_load(newNIRSlocation,job.NIRSmatCopyChoice,job.force_redo);
+            %end
+        end
+        
+        %job.NIRSmat{Idx,1} = newNIRSlocation; %PP commented out
+        
+        NIRS.TOPO = fTOPO; %group level NIRS.mat
         if ~isfield(NIRS,'flags')
             NIRS.flags = [];
         end
+        save(newNIRSlocation,'NIRS');
+       
+        NIRSgroup = NIRS;
         %Could save time by making these checks before loading all the
         %group data
         if (( (Z.FFX || nS==1) && ~isfield(NIRS.flags,'session_groupOK') || job.force_redo) || ...
@@ -250,13 +268,15 @@ for Idx=1:nl
                 TOPO.Sess = Sess;
                 TOPO.Cp = Cp;
             end
+            fTOPO = NIRSgroup.TOPO;
             save(fTOPO,'TOPO','-v7.3');
             %save NIRS
             if Z.FFX || nS==1
                 NIRS.flags.session_groupOK = 1;
             else
-                NIRS.flags.groupOK = 1;
+                NIRSgroup.flags.groupOK = 1;
             end
+            NIRS = NIRSgroup;
             save(newNIRSlocation,'NIRS');
         end
     catch exception
