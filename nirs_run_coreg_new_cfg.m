@@ -80,12 +80,21 @@ render_choice.values = {render_template,render_subject};
 render_choice.val    = {render_template};
 render_choice.help   = {'Projection (render) choice: projection to template (normalized) or to subject'}';
 
+OutputSkinFigs      = cfg_menu;
+OutputSkinFigs.tag  = 'OutputSkinFigs';
+OutputSkinFigs.name = 'Output skin figures';
+OutputSkinFigs.labels = {'True','False'};
+OutputSkinFigs.values = {1,0};
+OutputSkinFigs.val  = {1};
+OutputSkinFigs.help = {'Choose to output figures of sources and detectors on skin or not.'}';
+
+
 coregnew1      = cfg_exbranch;
 coregnew1.name = 'NIRScoreg (new)';
 coregnew1.tag  = 'coregnew1';
 coregnew1.val  = {NIRSmat redo1 ForceReprocess NIRSmatCopyChoice ...
     fiducial_MNI_choice nasion_wMNI AL_wMNI AR_wMNI ...
-    cortex_projection_method render_choice};
+    cortex_projection_method render_choice OutputSkinFigs};
 coregnew1.prog = @nirs_run_coreg_new;
 coregnew1.vout = @nirs_cfg_vout_coreg_new;
 coregnew1.help = {'Automatic coregistration (new version).'};
