@@ -270,6 +270,7 @@ for Idx=1:nl
             end
             fTOPO = NIRSgroup.TOPO;
             save(fTOPO,'TOPO','-v7.3');
+            %save(fbig_TOPO,'big_TOPO','-v7.3'); %to extract map data
             %save NIRS
             if Z.FFX || nS==1
                 NIRS.flags.session_groupOK = 1;

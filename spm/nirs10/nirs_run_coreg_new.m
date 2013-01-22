@@ -34,6 +34,11 @@ if isfield(job,'cortex_projection_method')
 else
     cpm = 3;
 end
+if isfield(job,'OutputSkinFigs')
+    OutputSkinFigs = job.OutputSkinFigs;
+else
+    OutputSkinFigs = 1;
+end
 ForceReprocessSegmentation = 0;
 coreg_projected_channels_on_cortex_rather_than_midpoint = 1;
 use_fSeg = 1; %option to use Clément's segmented image to extract c1; otherwise default to c1 image
@@ -193,8 +198,8 @@ for iSubj=1:size(job.NIRSmat,1)
             end
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %Step 2: Cortex projection method
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%            
-            switch cpm 
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            switch cpm
                 case 1 %PP
                     p_cutoff = 0.8;
                     %project sources and detectors onto cortex
@@ -250,19 +255,19 @@ for iSubj=1:size(job.NIRSmat,1)
                     Pp_c1_wmm = nirs_coreg_optodes(Pp_wmm,...
                         Pvoid,job.coreg_choice.coreg_c1,NIRS.Dt.ana.T1);
                     if isempty(Pp_c1_wmm)
-                         disp('Coregistration of optodes onto wc1 failed. Now try to coregister onto template using projection_CS');
-                         Pp_c1_wmm = projection_CS(Pp_wmm);
-                     end
-                     
-                     Pp_c1_rmm = zeros(4,NP);
-                     for Pi = 1:NP
-                         if ~Pvoid(Pi)
-                             %inversion: normalized -> unnormalized
-                             Pp_c1_rmm(:,Pi) = Q\Pp_c1_wmm(:,Pi);
-                         end
-                     end;
+                        disp('Coregistration of optodes onto wc1 failed. Now try to coregister onto template using projection_CS');
+                        Pp_c1_wmm = projection_CS(Pp_wmm);
+                    end
+                    
+                    Pp_c1_rmm = zeros(4,NP);
+                    for Pi = 1:NP
+                        if ~Pvoid(Pi)
+                            %inversion: normalized -> unnormalized
+                            Pp_c1_rmm(:,Pi) = Q\Pp_c1_wmm(:,Pi);
+                        end
+                    end;
                 case 3
-                    Pp_c1_wmm = projection_CS(Pp_wmm);%Using Korean template 
+                    Pp_c1_wmm = projection_CS(Pp_wmm);%Using Korean template
                     Pch_c1_wmm = projection_CS(Pch_wmm);
                     Pp_c1_rmm = zeros(4,NP);
                     for Pi = 1:NP
@@ -315,7 +320,7 @@ for iSubj=1:size(job.NIRSmat,1)
             save(newNIRSlocation,'NIRS');
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % Step 3: GENERATE TOPO DATA %
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             V = spm_vol(fwT1);
             wT1_info.mat = V.mat;
             wT1_info.dim = V.dim;
@@ -372,7 +377,7 @@ for iSubj=1:size(job.NIRSmat,1)
                     ch_MNIw_vx(:,i) = pos_wvx_t;
                 end
             end
-                   
+            
             for i=1:Ns
                 src_MNI_vx(:,i) = Vfc1.mat\[Pp_c1_rmm(:,i);1];
                 src_MNIw_vx(:,i) = V.mat\Pp_c1_wmm(:,i);
@@ -394,36 +399,42 @@ for iSubj=1:size(job.NIRSmat,1)
             
             %Additional projections
             %channels on skin
-            rendered_MNI_skin = render_MNI_coordinates_new(ch_MNIw_vx_skin,...
-                ch_MNI_vx_skin,wT1_info, NIRS.Dt.ana.wT1.VF,0,fSeg,dir_coreg,1);
+            if OutputSkinFigs
+                rendered_MNI_skin = render_MNI_coordinates_new(ch_MNIw_vx_skin,...
+                    ch_MNI_vx_skin,wT1_info, NIRS.Dt.ana.wT1.VF,0,fSeg,dir_coreg,1);
+            end
             %sources on cortex
             rendered_MNI_src = render_MNI_coordinates_new(src_MNIw_vx,...
                 src_MNI_vx,wT1_info, NIRS.Dt.ana.wT1.VF,render_template,fSeg,dir_coreg,0);
             %detectors on cortex
             rendered_MNI_det = render_MNI_coordinates_new(det_MNIw_vx,...
                 det_MNI_vx,wT1_info, NIRS.Dt.ana.wT1.VF,render_template,fSeg,dir_coreg,0);
-            
-            %sources on skin
-            rendered_MNI_src_skin = render_MNI_coordinates_new(src_MNIw_vx_skin,...
-                src_MNI_vx_skin,wT1_info, NIRS.Dt.ana.wT1.VF,0,fSeg,dir_coreg,1);
-            %detectors on skin
-            rendered_MNI_det_skin = render_MNI_coordinates_new(det_MNIw_vx_skin,...
-                det_MNI_vx_skin,wT1_info, NIRS.Dt.ana.wT1.VF,0,fSeg,dir_coreg,1);
-            
+            if OutputSkinFigs
+                %sources on skin
+                rendered_MNI_src_skin = render_MNI_coordinates_new(src_MNIw_vx_skin,...
+                    src_MNI_vx_skin,wT1_info, NIRS.Dt.ana.wT1.VF,0,fSeg,dir_coreg,1);
+                %detectors on skin
+                rendered_MNI_det_skin = render_MNI_coordinates_new(det_MNIw_vx_skin,...
+                    det_MNI_vx_skin,wT1_info, NIRS.Dt.ana.wT1.VF,0,fSeg,dir_coreg,1);
+            end
             rend_file = fullfile(dir_coreg,'TopoData.mat');
             save(rend_file, 'rendered_MNI');
             NIRS.Dt.ana.rend = rend_file;
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % Step 4: output various figures
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             dir_extra_coreg = fullfile(dir_coreg,'extra_coreg');
             if ~exist(dir_extra_coreg,'dir'), mkdir(dir_extra_coreg); end
             nirs_brain_project_2d(NIRS,dir_coreg,rendered_MNI,[],'r','','',[],0);
             nirs_brain_project_2d(NIRS,dir_extra_coreg,rendered_MNI,[],'r','','',[],1); %just copy the files
-            nirs_brain_project_2d(NIRS,dir_extra_coreg,rendered_MNI_skin,[],'r','','skin',[],0);
+            if OutputSkinFigs
+                nirs_brain_project_2d(NIRS,dir_extra_coreg,rendered_MNI_skin,[],'r','','skin',[],0);
+            end
             nirs_brain_project_2d(NIRS,dir_extra_coreg,rendered_MNI_src,rendered_MNI_det,'b','g','SD',Pvoid,0);
-            nirs_brain_project_2d(NIRS,dir_extra_coreg,rendered_MNI_src_skin,rendered_MNI_det_skin,'b','g','SD_skin',Pvoid,0);            
+            if OutputSkinFigs
+                nirs_brain_project_2d(NIRS,dir_extra_coreg,rendered_MNI_src_skin,rendered_MNI_det_skin,'b','g','SD_skin',Pvoid,0);
+            end
             NIRS.jobCoreg = job; %Required when coregistration needs to be redone in the GLM
             NIRS.flags.coregOK = 1;
         end
