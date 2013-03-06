@@ -420,7 +420,35 @@ for iSubj=1:size(job.NIRSmat,1)
             rend_file = fullfile(dir_coreg,'TopoData.mat');
             save(rend_file, 'rendered_MNI');
             NIRS.Dt.ana.rend = rend_file;
-            
+            %save coordinates
+            try
+                if render_template
+                    NIRS.Cf.H.C.w.m.vx.c1.p = ch_MNIw_vx;
+                    NIRS.Cf.H.C.w.m.vx.fp = ch_MNIw_vx_skin;
+                    NIRS.Cf.H.S.w.m.vx.c1.p = src_MNIw_vx;
+                    NIRS.Cf.H.S.w.m.vx.fp = src_MNIw_vx_skin;
+                    NIRS.Cf.H.D.w.m.vx.c1.p = det_MNIw_vx;
+                    NIRS.Cf.H.D.w.m.vx.fp = det_MNIw_vx_skin;
+                    NIRS.Cf.H.C.w.m.mm.c1.p = V.mat*ch_MNIw_vx;
+                    NIRS.Cf.H.C.w.m.mm.fp = V.mat*ch_MNIw_vx_skin;
+                    NIRS.Cf.H.S.w.m.mm.c1.p = V.mat*src_MNIw_vx;
+                    NIRS.Cf.H.S.w.m.mm.fp = V.mat*src_MNIw_vx_skin;
+                    NIRS.Cf.H.D.w.m.mm.c1.p = V.mat*det_MNIw_vx;
+                    NIRS.Cf.H.D.w.m.mm.fp = V.mat*det_MNIw_vx_skin;
+                end
+                NIRS.Cf.H.C.r.m.vx.c1.p = ch_MNI_vx;
+                NIRS.Cf.H.C.r.m.vx.fp = ch_MNI_vx_skin;
+                NIRS.Cf.H.S.r.m.vx.c1.p = src_MNI_vx;
+                NIRS.Cf.H.S.r.m.vx.fp = src_MNI_vx_skin;
+                NIRS.Cf.H.D.r.m.vx.c1.p = det_MNI_vx;
+                NIRS.Cf.H.D.r.m.vx.fp = det_MNI_vx_skin;
+                NIRS.Cf.H.C.r.m.mm.c1.p = Vfc1.mat*ch_MNI_vx;
+                NIRS.Cf.H.C.r.m.mm.fp = Vfc1.mat*ch_MNI_vx_skin;
+                NIRS.Cf.H.S.r.m.mm.c1.p = Vfc1.mat*src_MNI_vx;
+                NIRS.Cf.H.S.r.m.mm.fp = Vfc1.mat*src_MNI_vx_skin;
+                NIRS.Cf.H.D.r.m.mm.c1.p = Vfc1.mat*det_MNI_vx;
+                NIRS.Cf.H.D.r.m.mm.fp = Vfc1.mat*det_MNI_vx_skin;
+            end
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % Step 4: output various figures
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

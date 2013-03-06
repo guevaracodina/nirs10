@@ -73,13 +73,13 @@ try
                 %Ke Peng, 2012-07-18
                 %**********************************************************
                 
-                if isfield(SPM,'Avg')
-                    W.covbeta = xXn{f1}.covbeta;
-                else
-                    try
-                        W.covbeta = xXn{f1}.covbeta;
-                    end
-                end
+%                 if isfield(SPM,'Avg') %not used anymore?
+%                     W.covbeta = xXn{f1}.covbeta;
+%                 else
+%                     try
+%                         W.covbeta = xXn{f1}.covbeta;
+%                     end
+%                 end
                 %**********************************************************
                 
                 if isfield(xXn{f1},'res')
@@ -88,7 +88,11 @@ try
                     try
                     W.covbeta = xXn{f1}.covbeta;
                     catch
+                        try 
                         W.covbeta = diag(xXn{f1}.Bcov)*xXn{f1}.ResSS(:)'/xXn{f1}.trRV; %old covbeta for backward compatibility
+                        catch %for Averaging case where no covbeta is generated -- best would be to remove this covbeta variable entirely
+                            W.covbeta = [];
+                        end
                     end
                 end
                 try

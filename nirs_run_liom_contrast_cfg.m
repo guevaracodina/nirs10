@@ -44,6 +44,17 @@ StatMethod.help = {'Choose statistical method to account '
     'Other choice: tube formula applicable only to t-statistics for individual sessions,'
     'and Bonferroni correction at patient/subject (group of sessions) level and for F-statistics.'}';
 
+GenerateStats      = cfg_menu;
+GenerateStats.tag  = 'GenerateStats';
+GenerateStats.name = 'Generate statistics as usual';
+GenerateStats.labels = {'Yes','No'};
+GenerateStats.values = {1,0};
+GenerateStats.val  = {1};
+GenerateStats.help = {'This option is for generating interpolated betas only, '
+    'it does not generate the usual statistical maps. '
+    'These interpolated betas can then be used in the group/anova modules.'}';
+
+
 UseCorrelRes      = cfg_menu;
 UseCorrelRes.tag  = 'UseCorrelRes';
 UseCorrelRes.name = 'Use covariance of residuals';
@@ -161,7 +172,7 @@ liom_contrast.name = 'Liom Contrast Calculations';
 liom_contrast.tag  = 'liom_contrast';
 %PP removed: liom_contrast_struct
 liom_contrast.val  = {NIRSmat redo1 NIRSmatCopyChoice ContrastChoice Sessions ...
-    view TopoData StatMethod UseCorrelRes ...
+    view TopoData GenerateStats StatMethod UseCorrelRes ...
     spatial_LPF contrast_p_value display_options}; %Study_type
 liom_contrast.prog = @nirs_run_liom_contrast;
 liom_contrast.vout = @nirs_cfg_vout_liom_contrast;

@@ -75,18 +75,20 @@ try
         try
             hb = get_chromophore(h1);
             %Note that var(ch_HbO) depends on HbO vs HbR
-            Q = interpolation_kernel(h1,W,Z.LKC,Z.UseCorrelRes);
+            Q = interpolation_kernel(h1,W,Z.LKC,Z.UseCorrelRes,Z.DoStats);
             if Z.LKC || Z.UseCorrelRes || Z.Avg
                 C = loop_contrasts_new(h1,Q,W,xCon,Z,f1,TOPO.cSigma,xX);
             else
                 C = loop_contrasts(h1,Q,W,xCon,Z);
             end
-            if Z.gen_fig || Z.gen_tiff
+            if (Z.gen_fig || Z.gen_tiff) && Z.DoStats
                 if Z.LKC || Z.UseCorrelRes || Z.Avg
                     [H thz] = interpolated_maps_new(Z,W,C,Q,xCon,f1,xX.erdf,hb,H);
                 else
                     [H thz] = interpolated_maps(Z,W,C,Q,xCon,f1,xX.erdf,hb,H);
                 end
+            else
+                thz = [];
             end
             %fill TOPO
             TOPO = fill_TOPO(TOPO,C,W.side_hemi,f1,hb,thz);
@@ -96,6 +98,7 @@ try
             disp(['Problem with ' hb ' contrast']);
         end
     end
+    if Z.DoStats
     if Z.use_nCloop
         nCl = 0;
         for c1=1:nC
@@ -116,6 +119,7 @@ try
         end
     else
         call_save_assembled_figures(Z,W,H{1},f1);
+    end
     end
 catch exception2
     disp(exception2.identifier);

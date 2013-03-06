@@ -69,7 +69,7 @@ for Idx=1:nl
             %[dir1 fil1] = fileparts(newNIRSlocation);
             %dir_group = fullfile(dir1, Z.group_dir_name);
             [TOPO dir_group fTOPO] = nirs_load_TOPO(newNIRSlocation); %nirs_load_TOPO(fullfile(dir1,'NIRS.mat')); %MA nirs_load_TOPO(fullfile(dir_group,'NIRS.mat'))
-            TOPO.rendered_MNI = rendered_MNI;           
+            TOPO.rendered_MNI = rendered_MNI;
         else
             [dir0,dummy,dummy2] = fileparts(job.NIRSmat{1});
             %extract previous directory
@@ -125,6 +125,13 @@ for Idx=1:nl
                     NIRS = [];
                     load(job.NIRSmat{Idx2,1});
                     dir1 = NIRS.SPM{1};
+                    try
+                        if Idx2 == 1
+                            %an SPM structure, just to get the names of the
+                            %averaged sessions, for option Z.AvgInterpBetaMode = 1;
+                            load(dir1);
+                        end
+                    end
                     %load topographic information (formerly known as preproc_info)
                     fname_ch = NIRS.Dt.ana.rend;
                     %quick fix for Claudine's study:
@@ -135,13 +142,14 @@ for Idx=1:nl
                         rendered_MNI0 = rendered_MNI;
                     end
                     try
-                        fTOPO = NIRS.TOPO;
+                        fTOPOsubj = NIRS.TOPO;
                     catch
-                        fTOPO = fullfile(dir1,'TOPO.mat');
+                        [dir1a fil1a] = fileparts(dir1);
+                        fTOPOsubj = fullfile(dir1a,'TOPO.mat');
                         disp('TOPO not found in NIRS.TOPO');
                     end
                     TOPO = [];
-                    load(fTOPO);
+                    load(fTOPOsubj);
                     %large structure
                     big_TOPO{Idx2} = TOPO;
                     big_TOPO{Idx2}.rendered_MNI = rendered_MNI;
@@ -168,18 +176,24 @@ for Idx=1:nl
             CF.split = split;
             xCon = TOPO.xCon;
             nC = length(xCon);
-            CF.nC = nC;
+            
             %Big loop over views
             for v1=1:6
                 view_estimated = 0;
                 try
                     if isfield(TOPOsrc.v{v1},'s1')
-                        ns = length(TOPOsrc.v{v1}.s); %number of sessions 
+                        ns = length(SPM.xXn); %length(TOPOsrc.v{v1}.s); %number of sessions
                         if (Z.FFX || nS==1) && ns == 1
                             view_estimated = 0; %force not running the group if only one subject and only one session
                         else
                             view_estimated = 1;
                         end
+                    end
+                catch %for case AvgInterpBetaMode == 1
+                    try %another try, to catch case v1 == 6
+                    if ~isempty(TOPOsrc{1}.v{v1})
+                        view_estimated = 1;
+                    end
                     end
                 end
                 try
@@ -188,8 +202,31 @@ for Idx=1:nl
                         view_estimated = 1;
                     end
                 end
-                     
+                
                 if view_estimated
+                    %Reconstruct a contrast structure in the special case
+                    %of AvgInterpBetaMode, i.e. when the averaging mode led
+                    %to only betas, no covariance
+                    if nC == 0 || isfield(xCon(1),'SessionNumber')
+                        Z.AvgInterpBetaMode = 1;
+                        %use all sessions
+                        nSessions = length(SPM.xXn); %length(TOPOsrc{1}.v{v1}.s);
+                        nC = nSessions;
+                        for c1 = 1:nC
+                            try
+                                xCon(c1).name = SPM.xXn{c1}.Sname;
+                            catch
+                                xCon(c1).name = ['A' gen_num_str(c1,2)]; %could put the user-specified names
+                            end
+                            xCon(c1).STAT = 'T';
+                            xCon(c1).SessionNumber = c1;
+                            xCon(c1).eidf = 1;
+                        end
+                    else
+                        Z.AvgInterpBetaMode = 0;
+                    end
+                    CF.nC = nC;
+                    
                     %Structure for passing GLM and interpolation data
                     W = [];
                     [W.side_hemi W.spec_hemi] = nirs_get_brain_view(v1);
@@ -207,7 +244,7 @@ for Idx=1:nl
                     brain = brain * 0.5;
                     W.brain = brain;
                     %For single subject group of sessions analysis
-                    if isfield(rendered_MNI0{W.side_hemi},'view_mask_2d') 
+                    if isfield(rendered_MNI0{W.side_hemi},'view_mask_2d')
                         W.brain_view_mask_2d = rendered_MNI0{W.side_hemi}.view_mask_2d;
                     end
                     %for group of subjects analysis
@@ -221,7 +258,7 @@ for Idx=1:nl
                     TOPO.v{v1}.(fg).s2 = W.s2;
                     %maximal number of contrasts to group in assembled
                     %figures
-                                      
+                    
                     Z.nCloop = 4;
                     for c1=1:nC %Loop over contrasts
                         %effective c1 contrast number for the purpose of
@@ -237,7 +274,7 @@ for Idx=1:nl
                                 if k0 <= nC
                                     Z.scon = [Z.scon '_' xCon(k0).name];
                                     %nrep = regexprep(xCon(k0).name, '_', ' ');
-                                    %Z.sconFig = [Z.sconFig ' ' nrep];       
+                                    %Z.sconFig = [Z.sconFig ' ' nrep];
                                 end
                             end
                             %Handles for assembled figures
@@ -248,7 +285,7 @@ for Idx=1:nl
                         end
                         
                         %Loop over chromophores
-                        for h1=1:3 %including HbT                        
+                        for h1=1:3 %including HbT
                             %Positive stats
                             [H,TOPO,big_TOPO] = fill_group(H,TOPO,big_TOPO,v1,c1,h1,Z,W,F,CF,xCon,ns,1);
                             %Negative stats
@@ -260,7 +297,6 @@ for Idx=1:nl
                             call_save_assembled_figures(Z,W,H,0);
                         end
                     end
-                    
                 end %if view_estimated
             end %end for v1
             

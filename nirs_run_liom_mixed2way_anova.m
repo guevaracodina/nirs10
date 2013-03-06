@@ -21,6 +21,7 @@ Z.GInv = 1; %enforce
 Z.GFIS = 1; %enforce
 Z.anova_dir_name = job.anova_dir_name;
 Z.includeSubjectEffects = job.includeSubjectEffects;
+Z.AvgInterpBetaMode = 0; %A boolean to invoke the mode where whole sessions are averaged and compared
 number_dir_to_remove = job.number_dir_to_remove;
 min_s = 2; %not used
 p_value0 = Z.p_value;
@@ -270,7 +271,7 @@ try
                             Xab = []; %main effect of A*B interaction
                             ns0 = size(cbeta{h1},1);
                             
-                            sX = ns0*nS0*nC0;
+                            sX = ns0*nS0*nC0;                           
                             %subject effects
                             if Z.includeSubjectEffects
                                 for s1=1:nS0
@@ -279,17 +280,23 @@ try
                                     end
                                 end
                             end
+                            if nC0 > 1
+                                nC0X = nC0;
+                            else
+                                %sessions rather than contrasts
+                                nC0X = nS0;
+                            end
                             %main effect of subject
                             for s1=2:length(level_subj)
                                 x = zeros(sX,1);
-                                for c1=1:nC0
+                                for c1=1:nC0X
                                     x(level_subj{s1}+((c1-1)*ns0)) = 1;
                                     x(level_subj{s1-1}+((c1-1)*ns0)) = -1;
                                 end
                                 Xa = [Xa x];
                             end
                             
-                            %main effect of condition
+                            %main effect of condition 
                             for c1=1:nC0
                                 if c1 > 1
                                     x2 = x; %previous x
@@ -305,7 +312,21 @@ try
                                 end
                             end
                             
-                            %interaction of session and intensity (contrast)
+                            %main effect of session 
+                            for S1=1:nS0
+                                if S1 > 1
+                                    x2 = x; %previous x
+                                end
+                                x = zeros(sX,1);
+                                rs = (1+ (S1-1)*ns0);
+                                re = rs+ns0-1;
+                                x(rs:re) = ones(ns0,1);
+                                if S1 > 1
+                                    Xb = [Xb -x+x2];
+                                end
+                            end
+                            
+                            %interaction of factor 1 and intensity (contrast)
                             for s1=2:length(level_subj)
                                 for c1=2:nC0
                                     x = zeros(sX,1);
@@ -316,14 +337,38 @@ try
                                     Xab = [Xab x];
                                 end
                             end
+                            
+                            %interaction of factor 1 and intensity (session)
+                            for s1=2:length(level_subj)
+                                for S1=2:nS0
+                                    x = zeros(sX,1);
+                                    x(level_subj{s1}+(S1-2)*ns0) = 1;
+                                    x(level_subj{s1-1}+(S1-1)*ns0) = 1;
+                                    x(level_subj{s1}+(S1-1)*ns0) = -1;
+                                    x(level_subj{s1-1}+(S1-2)*ns0) = -1;
+                                    Xab = [Xab x];
+                                end
+                            end
+                            
                             %effect of A at each level of B
                             XeA = [];
-                            for c1=1:nC0 %B
-                                for s1=2:length(level_subj) %B
-                                    x = zeros(sX,1);
-                                    x(level_subj{s1}+(c1-1)*ns0) = 1;
-                                    x(level_subj{s1-1}+(c1-1)*ns0) = -1;
-                                    XeA = [XeA x];
+                            if nS0 == 1
+                                for c1=1:nC0 %B
+                                    for s1=2:length(level_subj) %B
+                                        x = zeros(sX,1);
+                                        x(level_subj{s1}+(c1-1)*ns0) = 1;
+                                        x(level_subj{s1-1}+(c1-1)*ns0) = -1;
+                                        XeA = [XeA x];
+                                    end
+                                end
+                            else
+                                for S1=1:nS0 %B
+                                    for s1=2:length(level_subj) %B
+                                        x = zeros(sX,1);
+                                        x(level_subj{s1}+(S1-1)*ns0) = 1;
+                                        x(level_subj{s1-1}+(S1-1)*ns0) = -1;
+                                        XeA = [XeA x];
+                                    end
                                 end
                             end
                             %effect of B at each level of A
@@ -337,6 +382,14 @@ try
                                 end
                             end
                             
+                            for s1=1:length(level_subj) %A
+                                for S1=2:nS0 %B
+                                    x = zeros(sX,1);
+                                    x(level_subj{s1}+(S1-1)*ns0) = 1;
+                                    x(level_subj{s1}+(S1-2)*ns0) = -1;
+                                    XeB = [XeB x];
+                                end
+                            end
                             %overall mean
                             M = ones(sX,1);
                         end
@@ -360,7 +413,9 @@ try
                                 %2nd factor: Contrasts or sessions
                                 tmp0 = zeros(nC0*ns0,nS0);
                                 for i0=1:nC0
-                                    tmp0((i0-1)*ns0+(1:ns0),:) = i0;
+                                    for S1=1:nS0
+                                        tmp0((i0-1)*ns0+(1:ns0),S1) = i0*S1;
+                                    end
                                 end
                                 B.WInFacs(:,1) = tmp0(:);
                                 B.S = zeros(ns0*nB,1);
@@ -379,10 +434,19 @@ try
                                 %                                     end
                                 %                                 end
                                 %
-                                x = zeros(sX,1);
-                                for s1=1:length(level_subj)
-                                    for c1=1:nC0
-                                        x(level_subj{s1}+(c1-1)*ns0) = s1;
+                                if nC0 > 1
+                                    x = zeros(sX,1);
+                                    for s1=1:length(level_subj)
+                                        for c1=1:nC0
+                                            x(level_subj{s1}+(c1-1)*ns0) = s1;
+                                        end
+                                    end
+                                else
+                                    x = zeros(sX,1);
+                                    for s1=1:length(level_subj)
+                                        for S1=1:nS0
+                                            x(level_subj{s1}+(S1-1)*ns0) = s1;
+                                        end
                                     end
                                 end
                                 B.BTFacs = x;

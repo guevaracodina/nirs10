@@ -139,13 +139,21 @@ for is=1:sN
                 for fi=1:size(job.subj(1,is).nirs_files,1)
                     [dummy1,namef,extf] = fileparts(job.subj(1,is).nirs_files{fi,:});
                     nirs_files{fi,:} = fullfile(sDtp,'fir',[namef extf]);
-                    copyfile(job.subj(1,is).nirs_files{fi,:},nirs_files{fi,:});
+                    try
+                        copyfile(job.subj(1,is).nirs_files{fi,:},nirs_files{fi,:});
+                    catch
+                        disp(['File not found: ' job.subj(1,is).nirs_files{fi,:}])
+                    end
                 end
                 % Read setup information from nirs file
                 % System used for acquisition
                 job1.system = job.subj(1,is).CWsystem;
                 % Read only nirs file from first session
-                job1.nirs_file = load(nirs_files{1,1},'-mat');
+                try 
+                    job1.nirs_file = load(nirs_files{1,1},'-mat');
+                catch 
+                    disp(['File not found: ' nirs_files{1,1}])
+                end
                 job1.sDtp = sDtp;
                 job1.coregType = NIRS.Dt.fir.stax.n;
                 job1.NIRS = NIRS;
