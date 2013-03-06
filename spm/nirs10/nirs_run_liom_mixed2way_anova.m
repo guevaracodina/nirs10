@@ -72,6 +72,9 @@ try
     save(newNIRSlocation,'NIRS');
     job.NIRSmat{nl,1} = newNIRSlocation;
     Z.dir1 = dir_group;
+    if ~isfield(NIRS,'flags')
+        NIRS.flags = [];
+    end
     if ~isfield(NIRS.flags,'anovamixed2_OK') || job.force_redo
         %Big loop over views
         for v1=1:6
@@ -136,6 +139,9 @@ try
                      
                      xCon{1} = xCon0;
                 end
+                %not clear this will work as such
+                [xCon nC Z] = nirs_fix_for_AvgInterpBetaMode(nC,xCon,big_TOPO,v1,Z,NIRS);
+
                 %Add loop over effects to look at:
                 %1: interaction A*B,
                 %2: main A,
