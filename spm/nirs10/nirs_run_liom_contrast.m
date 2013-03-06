@@ -15,6 +15,7 @@ Z.views_to_run = job.view;
 % 4: 'left_lateral'
 % 5: 'frontal'
 % 6: 'occipital'
+Z.DoStats = job.GenerateStats; %Boolean; if set to false, will skip LKC, statistics and maps 
 Z.LKC = job.StatMethod; %Use Lipschitz-Killing curvature
 Z.UseCorrelRes = job.UseCorrelRes;
 if Z.LKC

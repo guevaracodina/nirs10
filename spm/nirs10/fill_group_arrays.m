@@ -1,7 +1,7 @@
 function [cbeta ccov_beta new_version] = fill_group_arrays(TOPO,big_TOPO,v1,c1,h1,Z,xCon,ns,shb)
 %PP not sure this is right, this code modification was imported from
 %unknown source
-if isfield(TOPO,'Sess') 
+if isfield(TOPO,'Sess')
     Sess = TOPO.Sess;
     Cp = TOPO.Cp;
 else
@@ -57,7 +57,7 @@ try
             else
                 if ~isfield(big_TOPO{f1}.v{v1},'s')
                     if isfield(big_TOPO{f1}.v{v1}.g{1}.hb{h1},'stat_map')
-                        %group analysis of a group of sessions analysis -- new version 
+                        %group analysis of a group of sessions analysis -- new version
                         tmp = sign_hb*squeeze(big_TOPO{f1}.v{v1}.g{1}.hb{h1}.beta_map(c1,:,:));
                         if f1 == 1
                             cbeta = zeros(ns,length(tmp(:)));
@@ -70,7 +70,7 @@ try
                         ccov_beta(f1,:) = tmp(:).^2;
                         new_version = 1;
                     else
-                        %group analysis of a group of sessions analysis -- old version 
+                        %group analysis of a group of sessions analysis -- old version
                         tmp = sign_hb*squeeze(big_TOPO{f1}.v{v1}.g{1}.hb{h1}.c_interp_beta(c1,:,:));
                         if f1 == 1
                             cbeta = zeros(ns,length(tmp(:)));
@@ -81,30 +81,40 @@ try
                         ccov_beta(f1,:) = tmp(:);
                     end
                 else
-                    %for is1=1:length(big_TOPO{f1}.v{v1}.s)
-                    is1 = Z.group_session_to_average;
-                    %do each session separately
-                    if isfield(big_TOPO{f1}.v{v1}.s{is1}.hb{h1},'stat_map')
-                        tmp = sign_hb*squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.beta_map(c1,:,:));
-                        if f1 == 1
-                            cbeta = zeros(1,length(tmp(:)));
-                            ccov_beta = cbeta;
-                        end
-                        cbeta(f1,:) = tmp(:);
-                        if ~Z.simple_sum
-                            tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.beta_map(c1,:,:))./squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.stat_map(c1,:,:));
-                        end
-                        ccov_beta(f1,:) = tmp(:).^2;
+                    if Z.AvgInterpBetaMode
                         new_version = 1;
-                    else
-                        tmp = sign_hb*squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_beta(c1,:,:));
+                        ccov_beta = [];
+                        is1 = c1;
+                        tmp = sign_hb*squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.beta_map(1,:,:));
                         if f1 == 1
-                            cbeta = zeros(1,length(tmp(:)));
-                            ccov_beta = cbeta;
+                            cbeta = zeros(ns,length(tmp(:)));
                         end
-                        cbeta(f1,:) = tmp(:);
-                        tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_cov_interp_beta(c1,:,:));
-                        ccov_beta(f1,:) = tmp(:);
+                        cbeta(f1,:) = tmp(:);                        
+                    else %normal group calculations
+                        is1 = Z.group_session_to_average;
+                        %do each session separately
+                        if isfield(big_TOPO{f1}.v{v1}.s{is1}.hb{h1},'stat_map')
+                            tmp = sign_hb*squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.beta_map(c1,:,:));
+                            if f1 == 1
+                                cbeta = zeros(1,length(tmp(:)));
+                                ccov_beta = cbeta;
+                            end
+                            cbeta(f1,:) = tmp(:);
+                            if ~Z.simple_sum
+                                tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.beta_map(c1,:,:))./squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.stat_map(c1,:,:));
+                            end
+                            ccov_beta(f1,:) = tmp(:).^2;
+                            new_version = 1;
+                        else
+                            tmp = sign_hb*squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_beta(c1,:,:));
+                            if f1 == 1
+                                cbeta = zeros(1,length(tmp(:)));
+                                ccov_beta = cbeta;
+                            end
+                            cbeta(f1,:) = tmp(:);
+                            tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_cov_interp_beta(c1,:,:));
+                            ccov_beta(f1,:) = tmp(:);
+                        end
                     end
                 end
             end
@@ -149,7 +159,7 @@ catch exception
     disp(exception.identifier);
     disp(exception.stack(1));
     try
-    hb = get_chromophore(h1);
-    disp(['Group: Problem with filling arrays for a specific contrast ' int2str(c1) ' and chromophore ' hb ' for view ' int2str(v1) ' for subject ' int2str(f1)]);
+        hb = get_chromophore(h1);
+        disp(['Group: Problem with filling arrays for a specific contrast ' int2str(c1) ' and chromophore ' hb ' for view ' int2str(v1) ' for subject ' int2str(f1)]);
     end
 end

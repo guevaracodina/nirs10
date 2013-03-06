@@ -1,4 +1,4 @@
-function Q = interpolation_kernel(h1,W,LKC,UseCorrelRes)
+function Q = interpolation_kernel(h1,W,LKC,UseCorrelRes,DoStats)
 try
     %Here we do 2 things
     %1- generate the interpolation kernels, B, Bx, By, B_volume
@@ -22,7 +22,7 @@ try
     %To have the pseudo-residuals in case of using the Avg method
     %Ke Peng, 2012-07-18
     %**********************************************************************
-    if LKC
+    if LKC && DoStats
         res = W.res(ch,:)';
     end
     %**********************************************************************
@@ -86,7 +86,7 @@ try
                 if ~W.Avg || LKC
                     
                     %if ~W.Avg
-                    if kk == nch && LKC
+                    if kk == nch && LKC && DoStats
                         L2 = calc_LKC(B_volume, mask, res,'individual');
                     end
                 end
@@ -107,7 +107,7 @@ try
             Q.rmask = rmask;
             Q.cmask = cmask;
         end
-        if LKC
+        if LKC && DoStats
             L2 = sum(L2);
             r = sqrt(L2./pi);
             L1 = pi * r;
@@ -154,7 +154,9 @@ try
                 Q.cov_beta_r =cov_beta_r;
             else %for Avg
                 Q.ibeta = W.beta(:,ch) * B;
-                Q.ivar =  W.covbeta(:,ch) * B; %Imaginary values are always very small
+                if DoStats
+                    Q.ivar =  W.covbeta(:,ch) * B; %Imaginary values are always very small
+                end
             end
         end
     else %not enough channels for interpolation

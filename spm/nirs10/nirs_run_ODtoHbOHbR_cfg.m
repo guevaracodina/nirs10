@@ -119,12 +119,13 @@ nirs_lpf2.val       = {lpf_none};
 nirs_lpf2.help      = {'Choose low-pass filter.'};
 
 nirs_filling_jumps = nirs_dfg_nirs_filling_jumps;
+outputdatafigures = nirs_dfg_outputdatafigures;
 
 % Executable Branch
 ODtoHbOHbR      = cfg_exbranch;
 ODtoHbOHbR.name = 'Convert OD to HbO/HbR ';
 ODtoHbOHbR.tag  = 'ODtoHbOHbR';
-ODtoHbOHbR.val  = {NIRSmat redo1 NIRSmatCopyChoice DPF PVF nirs_filling_jumps}; % nirs_lpf2};
+ODtoHbOHbR.val  = {NIRSmat redo1 NIRSmatCopyChoice DPF PVF nirs_filling_jumps outputdatafigures}; % nirs_lpf2};
 ODtoHbOHbR.prog = @nirs_run_ODtoHbOHbR;
 ODtoHbOHbR.vout = @nirs_cfg_vout_ODtoHbOHbR;
 ODtoHbOHbR.help = {'Convert OD to HbO/HbR.'}';

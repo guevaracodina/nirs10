@@ -67,7 +67,7 @@ for Idx=1:size(job.NIRSmat,1)
                     correction2 = 0.01;
                 else
                     correction1 = 2;
-                    correction2 = 1; 
+                    correction2 = 1;
                 end
                 
                 for c0=1:size(d,1)
@@ -87,15 +87,18 @@ for Idx=1:size(job.NIRSmat,1)
                 %Filling jumps in nirs data
                 %Ke Peng
                 %**************************************************************************
-                nirs_time_plots(d,fs,NC,f,newNIRSlocation,'rm_Neg',{NIRS.Cf.dev.wl(1) NIRS.Cf.dev.wl(2)});
-                          
+                if job.outputdatafigures
+                    nirs_time_plots(d,fs,NC,f,newNIRSlocation,'rm_Neg',{NIRS.Cf.dev.wl(1) NIRS.Cf.dev.wl(2)});
+                end
                 
                 %disp(newNIRSlocation)
                 switch fill_jump_on
                     case 2
                         d = nirs_new_remove_jumps(d,newNIRSlocation);
-                        nirs_time_plots(d,fs,NC,f,newNIRSlocation,'rm_jumps',{NIRS.Cf.dev.wl(1) NIRS.Cf.dev.wl(2)});                
-                    case 1                       
+                        if job.outputdatafigures
+                            nirs_time_plots(d,fs,NC,f,newNIRSlocation,'rm_jumps',{NIRS.Cf.dev.wl(1) NIRS.Cf.dev.wl(2)});
+                        end
+                    case 1
                         OP.Sb = num_standard_deviation;
                         OP.Nr = num_points;
                         OP.Mp = size_gap;
@@ -270,11 +273,13 @@ for Idx=1:size(job.NIRSmat,1)
                     NIRS.Dt.fir.pp(lst+1).ei{f,1} = ei;
                 catch
                 end
-                if add_or_mult
-                    nirs_time_plots(d,fs,NC,f,newNIRSlocation,'norm_add',{'HbO' 'HbR'});
-                else
-                    nirs_time_plots(d,fs,NC,f,newNIRSlocation,'norm_mult',{NIRS.Cf.dev.wl(1) NIRS.Cf.dev.wl(2)});
-                    nirs_time_plots(1./d,fs,NC,f,newNIRSlocation,'inverse_norm_mult',{NIRS.Cf.dev.wl(1) NIRS.Cf.dev.wl(2)});
+                if job.outputdatafigures
+                    if add_or_mult
+                        nirs_time_plots(d,fs,NC,f,newNIRSlocation,'norm_add',{'HbO' 'HbR'});
+                    else
+                        nirs_time_plots(d,fs,NC,f,newNIRSlocation,'norm_mult',{NIRS.Cf.dev.wl(1) NIRS.Cf.dev.wl(2)});
+                        nirs_time_plots(1./d,fs,NC,f,newNIRSlocation,'inverse_norm_mult',{NIRS.Cf.dev.wl(1) NIRS.Cf.dev.wl(2)});
+                    end
                 end
             end
             NIRS.flags.normbaseOK = 1;

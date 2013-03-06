@@ -1,4 +1,4 @@
-function SPM = nirs_liom_average(NIRS,SPM)
+function [SPM NIRS] = nirs_liom_average(NIRS,SPM)
 try
     NC = NIRS.Cf.H.C.N;
     fs = NIRS.Cf.dev.fs;
@@ -8,7 +8,11 @@ try
     catch
         disp(['Could not find data file for subject ' int2str(Idx)]);
     end
-    
+    if SPM.GenerateHbT
+        NCt = 3/2*NC;
+    else
+        NCt = NC;
+    end
     %loop over sessions
     nsess = length(SPM.xY.P);
     first_pass = 1;
@@ -26,9 +30,26 @@ try
             srun = [baseline_session 1:nsess];
             storeY = 1;
         else
-            base_choice = 1;
-            srun = 1:nsess;
-            storeY = 0;
+            if isfield(SPM.job.baseline_choice,'no_baseline')
+                base_choice = 4;
+                srun = 1:nsess;
+                storeY = 0;               
+                a = zeros(length(srun),NCt);
+            else
+                if isfield(SPM.job.baseline_choice,'baseline_average_sessions')
+                    base_choice = 5;
+                    baseline_session = SPM.job.baseline_choice.baseline_average_sessions.sessions_to_average;
+                    srun = [baseline_session 1:nsess];
+                    nBaseline = length(baseline_session);
+                    first_pass = length(baseline_session);
+                    baselineB = zeros(1,NCt);
+                    storeY = 1;
+                else
+                    base_choice = 1;
+                    srun = 1:nsess;
+                    storeY = 0;
+                end
+            end
         end
     end
     for s=srun
@@ -74,14 +95,6 @@ try
                 Y2 = makePca(Y,which_channels+NC/2,nComponents);
                 Y = [Y1 Y2];
             end
-            
-            %LPF
-            %                     if SPM.xX.LPFbutter
-            %                         cutoff=SPM.xX.lpf_butter_freq; %0.666; %Hz, or 1.5s
-            %                         FilterOrder=5; %Is this too weak?
-            %                         Y = ButterLPF(fs,cutoff,FilterOrder,Y);
-            %                     end
-            
             %HPF
             switch SPM.xX.HPFbutter
                 case 1
@@ -168,28 +181,45 @@ try
                 %matrix?
             end
             
-            %onsets
-            tU = SPM.Sess(s).U;
-            if markers_available
-                for u0=1:length(tU)
-                    %subtract time of subsession
-                    tU(u0).ons = tU(u0).ons-si(iSubSess);
-                    %remove negative onsets and onsets beyond end of subsession
-                    id0 = tU(u0).ons > 0 & tU(u0).ons < (ei(iSubSess)-si(iSubSess));
-                    tU(u0).ons = tU(u0).ons(id0);
-                    tU(u0).dur = tU(u0).dur(id0);
+            if isfield(SPM.job.averaging_choice,'average_all_data')
+                need_onsets = 0;
+                need_res = 0;
+                tU = [];
+            else
+                need_res = 1;
+                need_onsets = 1;
+            end
+            if need_onsets
+                %onsets
+                tU = SPM.Sess(s).U;
+                if markers_available
+                    for u0=1:length(tU)
+                        %subtract time of subsession
+                        tU(u0).ons = tU(u0).ons-si(iSubSess);
+                        %remove negative onsets and onsets beyond end of subsession
+                        id0 = tU(u0).ons > 0 & tU(u0).ons < (ei(iSubSess)-si(iSubSess));
+                        tU(u0).ons = tU(u0).ons(id0);
+                        tU(u0).dur = tU(u0).dur(id0);
+                    end
                 end
             end
-            
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %Filtering and averaging
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             Avg = [];
             if storeY
-                if (s == baseline_session) && first_pass
-                    baselineY = Y;
+                if any(s == baseline_session) && first_pass
+                    if base_choice == 2 || base_choice == 3
+                        baselineY = Y;
+                    else
+                        if base_choice == 5
+                            %store a single value per channel
+                            baselineB = baselineB + mean(Y,1)/nBaseline;
+                        end
+                    end
                 else
-                    tSPM.baselineY = baselineY;
+                    try tSPM.baselineY = baselineY; end
+                    try tSPM.baselineB = baselineB; end
                     [tSPM Avg] = averaging_core(tSPM,Y,tU);
                 end
             else
@@ -204,65 +234,51 @@ try
             end
             
             if first_pass
-                first_pass = 0;
+                first_pass = first_pass-1;
                 if storeY
                     %storeY = 0;
                 else
                     iSPM = iSPM + 1;
-                    if (storeY == 0 || (storeY == 1 && ((~(s == baseline_session) && base_choice == 2) || base_choice == 3)))
+                    if (storeY == 0 || (storeY == 1 && ((~any(s == baseline_session) && (base_choice == 2 )) || base_choice == 3)))
                         SPM.xXn{iSPM} = tSPM.xX;
                     end
                 end
             else
                 iSPM = iSPM + 1;
-                if (storeY == 0 || (storeY == 1 && ((~(s == baseline_session) && base_choice == 2) || base_choice == 3)))
+                if (storeY == 0 || (storeY == 1 && ((~any(s == baseline_session) && (base_choice == 2 )) || base_choice == 3 || base_choice == 5)))
                     SPM.xXn{iSPM} = tSPM.xX;
                 end
             end
             if iSPM == 1
                 xX0 = tSPM.xX;
             end
-            
-            %save
             save_dataON = 1; %we need the residuals for statistics calculations and the
             %filtered data is often useful too
-            if save_dataON && ~isempty(Avg) && (storeY == 0 || (storeY == 1 && ((~(s == baseline_session) && base_choice == 2) || base_choice == 3)))
+            if save_dataON && ~isempty(Avg) && (storeY == 0 || (storeY == 1 && ((~any(s == baseline_session) && (base_choice == 2 )) || base_choice == 3 || base_choice ==5)))
                 try
                     spm_dir = NIRS.spm_dir;
-                    %if iSPM == 1
                     nlst = lst;
-                    %end
                     temp  = Avg.KY';
                     Avg = rmfield(Avg,'KY');
-                    %if storeY
-                    %    outfile = fullfile(spm_dir,['Sess' int2str(iSPM-1) '.nir']);
-                    %else
                     outfile = fullfile(spm_dir,['Sess' int2str(iSPM) '.nir']);
-                    %end
-                    %Careful, this data may include HbT, therefore may
-                    %have 50% more channels than the user expected...
                     fwrite_NIR(outfile,temp(:));
                     SPM.xY.Pf{iSPM,1} = outfile; %filtered
-                    %                     res_outfile = fullfile(spm_dir,['res_Sess' int2str(iSPM) '.nir']);
-                    %                     fwrite_NIR(res_outfile,res(:));
-                    %                     SPM.xXn{iSPM}.res = res_outfile;
-                    %if storeY
-                    %    Avg_outfile = fullfile(spm_dir,['Avg' int2str(iSPM-1) '.mat']);
-                    %else
-                    Avg_outfile = fullfile(spm_dir,['Avg' int2str(iSPM) '.mat']);
-                    %end
-                    save(Avg_outfile,'Avg');
+                    if base_choice == 4 || base_choice == 5
+                        a(iSPM,:) = Avg.a;
+                        NIRS.Avg.a = a;
+                    else
+                        Avg_outfile = fullfile(spm_dir,['Avg' int2str(iSPM) '.mat']);
+                        %end
+                        save(Avg_outfile,'Avg');
+                        SPM.xXn{iSPM}.AvgFile = Avg_outfile;
+                    end
                     SPM.xY.Cf = size(temp,1); %number of filtered channels stored
                     NIRS.Dt.fir.pp(nlst+1).p{iSPM,1} = outfile;
-                    %******************************************************
-                    %To save the pseudo-residuals to file
-                    %Ke Peng, 2012-07-17
-                    %******************************************************
-                    res_outfile = fullfile(spm_dir,['res_Sess' int2str(iSPM) '.nir']);
-                    fwrite_NIR(res_outfile,Avg.res(:));
-                    SPM.xXn{iSPM}.res = res_outfile;
-                    SPM.xXn{iSPM}.AvgFile = Avg_outfile;
-                    %******************************************************                    
+                    if need_res
+                        res_outfile = fullfile(spm_dir,['res_Sess' int2str(iSPM) '.nir']);
+                        fwrite_NIR(res_outfile,Avg.res(:));
+                        SPM.xXn{iSPM}.res = res_outfile;
+                    end                    
                 catch exception
                     disp(exception.identifier);
                     disp(exception.stack(1));
@@ -271,13 +287,7 @@ try
             end
         end %end for 1:nSubSess
     end
-    % try
-    %     K = SPM.xX.K;
-    %     K = rmfield(K, 'X');
-    %     K = rmfield(K, 'KL');
-    %     SPM.xX.K = K;
-    % end
-    
+
     SPM.xX = xX0;
     try
         %add duration of subsessions, for convenience
@@ -288,6 +298,35 @@ try
             end
         end
     end
+    %
+    averaging_choice = SPM.job.averaging_choice;
+    if isfield(averaging_choice,'average_all_data')
+        if isfield(averaging_choice.average_all_data,'combine_sessions')
+            %combine the sessions 
+            oldSPM = SPM;
+            SPM = [];
+            SPM.xY.Cf = oldSPM.xY.Cf;
+            iSPM = 0;
+            SL = averaging_choice.average_all_data.combine_sessions.session_list2;
+            for s0=1:length(SL)
+                try 
+                    iSPM = iSPM+1;
+                    temp = oldSPM.xXn{SL(s0).SL_List(1)}.beta;
+                    nSess = length(SL(s0).SL_List);
+                    for k0=2:nSess
+                        temp = temp + oldSPM.xXn{SL(s0).SL_List(k0)}.beta;
+                    end
+                    temp = temp/nSess;
+                    SPM.xXn{iSPM}.beta = temp;
+                    SPM.xXn{iSPM}.Sname = SL(s0).SL_Label;
+                    SPM.xXn{iSPM}.X = oldSPM.xXn{1}.X; 
+                catch
+                    iSPM = iSPM-1;
+                    disp(['Could not process session list ' int2str(s0)])
+                end
+            end
+        end
+    end    
 catch exception
     disp(exception.identifier)
     disp(exception.stack(1));

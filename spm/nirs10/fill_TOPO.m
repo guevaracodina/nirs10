@@ -20,7 +20,9 @@ if isfield(C,'sum_kappa')
     TOPO.v{side_hemi}.(fg){f1}.hb{hbi}.c_interp_ess = C.c_interp_ess;
     TOPO.v{side_hemi}.(fg){f1}.hb{hbi}.c_interp_ess0 = C.c_interp_ess0;
 else
+    try %skips the case Z.DoStats == 0
     TOPO.v{side_hemi}.(fg){f1}.hb{hbi}.stat_map = C.stat_map;
+    end
     TOPO.v{side_hemi}.(fg){f1}.hb{hbi}.beta_map = C.beta_map;
     %TOPO.v{side_hemi}.(fg){f1}.hb{hbi}.cov_map = C.cov_map;
 end

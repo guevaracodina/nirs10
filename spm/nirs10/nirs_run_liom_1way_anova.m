@@ -132,6 +132,8 @@ try
                 ccov_beta = zeros(ns,s1*s2);
                 tmp = zeros(s1,s2);
                 nC = length(xCon);
+                [xCon nC Z] = nirs_fix_for_AvgInterpBetaMode(nC,xCon,big_TOPO,v1,Z,NIRS);
+                
                 H = initialize_assembled_figure_handles;
                 H = initialize_assembled_figures(Z,H,0,'Group');
                 load Split
@@ -173,8 +175,10 @@ try
                                                 %do each session separately
                                                 tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.beta_map(c1,:,:));
                                                 cbeta(f1,:) = tmp(:);
+                                                try
                                                 tmp = (tmp./squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.stat_map(c1,:,:))).^2;
                                                 ccov_beta(f1,:) = tmp(:);
+                                                end
                                             else
                                                 %do each session separately
                                                 tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_beta(c1,:,:));

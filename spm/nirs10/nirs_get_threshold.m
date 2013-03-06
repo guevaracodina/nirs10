@@ -214,7 +214,9 @@ switch fign
                     end
                 end
             end
-            th_z = min(xth_z(xth_z> spm_invFcdf(1-p_value, eidf, udf(i1)))); %exceed threshold of unc. F stat
+            %take median or max of udf values??? why do we have different
+            %udf values??? problem with mask???
+            th_z = min(xth_z(xth_z> spm_invFcdf(1-p_value, eidf, max(udf)))); %exceed threshold of unc. F stat
             index_over2 = [];
         end        
     case 9

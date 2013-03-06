@@ -164,9 +164,9 @@ for Idx=1:size(job.NIRSmat,1)
                     end
                 end
                 [dir1,fil1,ext1] = fileparts(rDtp{f});
-           
+                
                 outfile = fullfile(dir1,[prefix fil1 ext1]);
-
+                
                 fwrite_NIR(outfile,c);
                 %add outfile name to NIRS
                 if f == 1
@@ -181,7 +181,9 @@ for Idx=1:size(job.NIRSmat,1)
                     NIRS.Dt.fir.pp(lst+1).ei{f,1} = ei;
                 catch
                 end
-                nirs_time_plots(d,fs,NC,f,newNIRSlocation,'conc',{'HbO' 'HbR'});          
+                if job.outputdatafigures
+                    nirs_time_plots(d,fs,NC,f,newNIRSlocation,'conc',{'HbO' 'HbR'});
+                end
             end
             NIRS.flags.concOK = 1;
             save(job.NIRSmat{Idx,1},'NIRS');

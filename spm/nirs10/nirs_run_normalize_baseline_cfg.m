@@ -60,13 +60,14 @@ Analyzer_sf.help    = {'Apply a scaling factor on the amplitude of '
     'all channels (for easier visualization with Analyzer.)'}';
 
 nirs_filling_jumps = nirs_dfg_nirs_filling_jumps;
+outputdatafigures = nirs_dfg_outputdatafigures;
 
 % Executable Branch
 normalize_baseline      = cfg_exbranch;
 normalize_baseline.name = 'Normalize Baseline';
 normalize_baseline.tag  = 'normalize_baseline';
 normalize_baseline.val  = {NIRSmat redo1 NIRSmatCopyChoice Normalize_OD add_or_mult ...
-    baseline_duration normalization_type Analyzer_sf nirs_filling_jumps};
+    baseline_duration normalization_type Analyzer_sf nirs_filling_jumps outputdatafigures};
 normalize_baseline.prog = @nirs_run_normalize_baseline;
 normalize_baseline.vout = @nirs_cfg_vout_normalize_baseline;
 normalize_baseline.help = {'Normalize to baseline'}';

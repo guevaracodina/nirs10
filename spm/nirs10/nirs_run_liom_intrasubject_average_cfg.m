@@ -71,10 +71,32 @@ unique_baseline.help    = {'In this variant, the specified session is used'
     'This works by subtracting from all onsets the same baseline, typically computed at the beginning of the session.'
     'Note that the average will be performed for the session on which the baseline was chosen, contrary to the previous option.'}';
 
+no_baseline         = cfg_branch;
+no_baseline.tag     = 'no_baseline';
+no_baseline.name    = 'No baseline';
+no_baseline.val     = {};
+no_baseline.help    = {'No baseline.'}';
+
+sessions_to_average         = cfg_entry;
+sessions_to_average.name    = 'Sessions to average';
+sessions_to_average.tag     = 'sessions_to_average';
+sessions_to_average.strtype = 'r';
+sessions_to_average.num     = [1 Inf];
+sessions_to_average.val     = {1};
+sessions_to_average.help    = {'Enter single session or list of sessions to average,'
+    'this average then to be used as a baseline value.'}';
+
+baseline_average_sessions         = cfg_branch;
+baseline_average_sessions.tag     = 'baseline_average_sessions';
+baseline_average_sessions.name    = 'For baseline, take average of specified sessions';
+baseline_average_sessions.val     = {sessions_to_average};
+baseline_average_sessions.help    = {'For baseline, take average of specified sessions.'}';
+
 baseline_choice        = cfg_choice;
 baseline_choice.name   = 'Choose baseline method';
 baseline_choice.tag    = 'baseline_choice';
-baseline_choice.values = {baseline_block_averaging baseline_block_whole_session unique_baseline};
+baseline_choice.values = {baseline_block_averaging baseline_block_whole_session ...
+    unique_baseline no_baseline baseline_average_sessions};
 baseline_choice.val    = {unique_baseline};
 baseline_choice.help   = {'Choose baseline method.'}';
 
@@ -108,10 +130,63 @@ block_averaging.help    = {'Block averaging.'
     'This works by first averaging the data for each onset over the specified window'
     'These averages for each onset are then averaged and their standard deviation is calculated.'}';
 
+SL_List         = cfg_entry;
+SL_List.name    = 'List of sessions to average';
+SL_List.tag     = 'SL_List';
+SL_List.strtype = 'r';
+SL_List.num     = [0 Inf];
+SL_List.val     = {''};
+SL_List.help    = {'Enter session numbers of sessions to be averaged.'}';
+
+SL_Label         = cfg_entry; 
+SL_Label.name    = 'Name for this session list';
+SL_Label.tag     = 'SL_Label';
+SL_Label.strtype = 's';
+SL_Label.num     = [0 Inf];
+SL_Label.val{1}  = '';
+SL_Label.help    = {'Enter name or label for this session list.'};
+
+session_list2         = cfg_branch;
+session_list2.tag     = 'session_list2';
+session_list2.name    = 'Session List';
+session_list2.val     = {SL_Label SL_List};
+session_list2.help    = {'Specify name for list and its content. The list can be a single session if no further averaging is required.'}';
+
+session_list         = cfg_repeat;
+session_list.tag     = 'session_list';
+session_list.name    = 'List of sessions';
+session_list.help    = {'Create a new item for each list of sessions to be averaged.'}';
+session_list.values  = {session_list2};
+session_list.num     = [1 Inf];
+
+average_each_session         = cfg_branch;
+average_each_session.tag     = 'average_each_session';
+average_each_session.name    = 'Average each session';
+average_each_session.val     = {};
+average_each_session.help    = {'Simplest option, each session will be averaged separately.'}';
+
+combine_sessions         = cfg_branch;
+combine_sessions.tag     = 'combine_sessions';
+combine_sessions.name    = 'Average by combining sessions';
+combine_sessions.val     = {session_list};
+combine_sessions.help    = {'Specify how each session should be treated.'
+    'A list must be given, each item of the list being itself a list of sessions to be averaged.'}';
+
+average_all_data         = cfg_choice;
+average_all_data.tag     = 'average_all_data';
+average_all_data.name    = 'Average all data';
+average_all_data.values  = {average_each_session combine_sessions};
+average_all_data.val     = {average_each_session};
+average_all_data.help    = {'Average all data: for each channel this option '
+    'will average all time points -- designed for use with the no_baseline option, '
+    'and choosing option 3 in module normalize_baseline for the normalization choice'
+    '(median of 1st session applied to all sessions).'}';
+
+
 averaging_choice        = cfg_choice;
 averaging_choice.name   = 'Choose averaging method';
 averaging_choice.tag    = 'averaging_choice';
-averaging_choice.values = {block_averaging};
+averaging_choice.values = {block_averaging average_all_data};
 averaging_choice.val    = {block_averaging};
 averaging_choice.help   = {'Choose averaging method.'}';
 
