@@ -101,7 +101,17 @@ for Idx=1:nl
             %end
         end
         
+        %PP: my conflicted version
+        % newNIRSlocation = fullfile(dir_group,'NIRS.mat');
+        %      try load(newNIRSlocation); end
+        %         if ~(Z.FFX || nS==1)
+        %             %job.NIRSmat{nl,1} = newNIRSlocation; %PP commented out
+        %             try
+        %                 [NIRS newNIRSlocation]= nirs_load(job.NIRSmat{Idx,1},job.NIRSmatCopyChoice,job.force_redo);
+        %             end
+        %         end
         %job.NIRSmat{Idx,1} = newNIRSlocation; %PP commented out
+
         
         NIRS.TOPO = fTOPO; %group level NIRS.mat
         if ~isfield(NIRS,'flags')
