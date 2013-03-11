@@ -21,17 +21,7 @@ try
         SPM.xX.xKXs.X = full(SPM.xX.xKXs.X);
         SPM.xX.pKX = spm_sp('x-', SPM.xX.xKXs); % projector
     end
-    %filtering of the data
-    KY = spm_filter_HPF_LPF_WMDL(SPM.xX.K, Y);
-    if isfield(SPM,'baselineY')
-        baselineY = spm_filter_HPF_LPF_WMDL(SPM.xX.K, SPM.baselineY);
-    end
-    if nreg > length(U)+1
-        %Further filtering of the confounds
-        KY = KY - SPM.xX.xKXs.X * (SPM.xX.pKX * KY);
-    end
-    SPM.KY = KY; %Store
-    
+        
     %baseline
     baseline_choice = SPM.job.baseline_choice;
     if isfield(baseline_choice,'baseline_block_averaging')
@@ -66,6 +56,23 @@ try
             end
         end
     end
+    
+    %filtering of the data
+    if base_choice ~= 5
+        KY = spm_filter_HPF_LPF_WMDL(SPM.xX.K, Y);
+        if isfield(SPM,'baselineY')
+            baselineY = spm_filter_HPF_LPF_WMDL(SPM.xX.K, SPM.baselineY);
+        end
+        if nreg > length(U)+1
+            %Further filtering of the confounds
+            KY = KY - SPM.xX.xKXs.X * (SPM.xX.pKX * KY);
+        end
+    else
+        KY = Y;
+    end
+    SPM.KY = KY; %Store
+    
+    
     %averaging
     averaging_choice = SPM.job.averaging_choice;
     if isfield(averaging_choice,'block_averaging')
@@ -80,10 +87,7 @@ try
         end
     end
     switch avg_choice
-        case 2
-            %nst = 1;
-            %nch = size(KY,2);
-            %a = zeros(nst,nch);
+        case 2 %basic, extended            
             a = mean(KY,1);
             Avg.a = a;
             Avg.b = SPM.baselineB;
