@@ -43,6 +43,12 @@ try
                     nBaseline = length(baseline_session);
                     first_pass = length(baseline_session);
                     baselineB = zeros(1,NCt);
+                    B_start = SPM.job.baseline_choice.baseline_average_sessions.SL_start;
+                    B_duration = SPM.job.baseline_choice.baseline_average_sessions.SL_duration;
+                    B_end = SPM.job.baseline_choice.baseline_average_sessions.SL_end;   
+                    B_start = nirs_rep_array(B_start,nBaseline); 
+                    B_duration = nirs_rep_array(B_duration,nBaseline);
+                    B_end = nirs_rep_array(B_end,nBaseline);
                     storeY = 1;
                 else
                     base_choice = 1;
@@ -52,6 +58,8 @@ try
             end
         end
     end
+    sc = 0; %session counter for baseline -- only for base_choice = 5
+    sc2 = 0; %session counter for sessions to average -- only for option combine_sessionsEXT
     for s=srun
         d = fopen_NIR(SPM.xY.P{s},NC);
         %loop over subsessions, defined as period in between
@@ -209,18 +217,67 @@ try
             Avg = [];
             if storeY
                 if any(s == baseline_session) && first_pass
+                    sc = sc + 1;
                     if base_choice == 2 || base_choice == 3
                         baselineY = Y;
                     else
                         if base_choice == 5
-                            %store a single value per channel
-                            baselineB = baselineB + mean(Y,1)/nBaseline;
+                            %store a single value per channel                            
+                            if isempty(B_end)
+                                Yb = Y;
+                            else
+                                Yb = Y(1:end-round(fs*B_end(sc)),:);
+                            end
+                            if ~isempty(B_start)
+                                Yb = Yb(round(fs*B_start(sc)):end,:);
+                            end
+                            if ~isempty(B_duration)
+                                if size(Yb,1) > round(fs*B_duration(sc))                                                                 
+                                    Yb = Yb(1:round(fs*B_duration(sc)),:);
+                                end
+                            end
+                            baselineB = baselineB + mean(Yb,1)/nBaseline;
                         end
                     end
                 else
+                    sc2 = sc2 + 1;
                     try tSPM.baselineY = baselineY; end
                     try tSPM.baselineB = baselineB; end
-                    [tSPM Avg] = averaging_core(tSPM,Y,tU);
+                    Ya = Y;
+                    if isfield(SPM.job.averaging_choice,'average_all_data')
+                        if isfield(SPM.job.averaging_choice.average_all_data,'combine_sessionsEXT')
+                            SL = SPM.job.averaging_choice.average_all_data.combine_sessionsEXT.session_list2EXT;
+                            %loop through SL to find start/duration/end for this session
+                            for s0=1:length(SL)
+                                sl0 = SL(s0).SL_List;
+                                sl = find(sc2 == sl0);
+                                A_start = '';
+                                A_duration = '';
+                                A_end = '';
+                                if ~isempty(sl)
+                                    A_start = SL(s0).SL_start;
+                                    A_duration = SL(s0).SL_duration;
+                                    A_end = SL(s0).SL_end;
+                                    nSL = length(sl0);
+                                    A_start = nirs_rep_array(A_start,nSL);
+                                    A_duration = nirs_rep_array(A_duration,nSL);
+                                    A_end = nirs_rep_array(A_end,nSL);
+                                end
+                                if ~isempty(A_end)
+                                    Ya = Ya(1:end-round(fs*A_end(sl)),:);
+                                end
+                                if ~isempty(A_start)
+                                    Ya = Ya(round(fs*A_start(sl)):end,:);
+                                end
+                                if ~isempty(A_duration)
+                                    if size(Ya,1) > round(fs*A_duration(sl))
+                                        Ya = Ya(1:round(fs*A_duration(sl)),:);
+                                    end
+                                end
+                            end
+                        end
+                    end                    
+                    [tSPM Avg] = averaging_core(tSPM,Ya,tU);
                 end
             else
                 [tSPM Avg] = averaging_core(tSPM,Y,tU);
@@ -300,14 +357,23 @@ try
     end
     %
     averaging_choice = SPM.job.averaging_choice;
+    do_SLavg = 0;
     if isfield(averaging_choice,'average_all_data')
         if isfield(averaging_choice.average_all_data,'combine_sessions')
+            SL = averaging_choice.average_all_data.combine_sessions.session_list2;
+            do_SLavg = 1;
+        else
+            if isfield(averaging_choice.average_all_data,'combine_sessionsEXT')
+                SL = averaging_choice.average_all_data.combine_sessionsEXT.session_list2EXT;
+                do_SLavg = 1;
+            end
+        end
+        if do_SLavg
             %combine the sessions 
             oldSPM = SPM;
             SPM = [];
             SPM.xY.Cf = oldSPM.xY.Cf;
-            iSPM = 0;
-            SL = averaging_choice.average_all_data.combine_sessions.session_list2;
+            iSPM = 0;           
             for s0=1:length(SL)
                 try 
                     iSPM = iSPM+1;

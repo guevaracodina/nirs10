@@ -14,6 +14,7 @@ Z.GInv = 1; %enforce
 Z.GFIS = 1; %enforce
 Z.anova_dir_name = job.anova_dir_name;
 Z.includeSubjectEffects = job.includeSubjectEffects;
+Z.AvgInterpBetaMode = 0; %A boolean to invoke the mode where whole sessions are averaged and compared
 number_dir_to_remove = job.number_dir_to_remove;
 min_s = 2; %not used
 p_value0 = Z.p_value;
@@ -119,7 +120,9 @@ try
                 end
                 %Contrasts - assume same contrasts for all subjects
                 nC = length(xCon);
-                
+                %not clear this will work as such
+                [xCon nC Z] = nirs_fix_for_AvgInterpBetaMode_2anova(nC,xCon,big_TOPO,v1,Z,NIRS);
+
                 %Add loop over effects to look at:
                 %1: interaction A*B,
                 %2: main A,
@@ -161,51 +164,84 @@ try
                     for h1=1:3 %including HbT
                         hb = get_chromophore(h1);
                         %Fill cbeta with session by contrast information
-                        sC = 0; %session counter
-                        Ns = length(big_TOPO{1}.v{v1}.s); %number of sessions
-                        for s1=1:Ns
-                            %only selected sessions
-                            if any(s1==Z.anova2_sessions)
-                                sC = sC + 1;
-                                cC = 0; %contrast counter
-                                for c1=1:nC
-                                    %only selected contrasts
-                                    if any(c1==Z.anova2_contrasts)
-                                        cC = cC + 1;
-                                        %add to design matrix
-                                        %Skip F contrasts for now
-                                        if xCon{s1}(c1).STAT == 'T'
-                                            fC = 0;
-                                            %fill in cbeta
-                                            if z1==1
-                                                for f1=1:ns
-                                                    try
-                                                        fC = fC+1;
-                                                        if isfield(big_TOPO{f1}.v{v1}.s{s1}.hb{h1},'beta_map')
-                                                            tmp = squeeze(big_TOPO{f1}.v{v1}.s{s1}.hb{h1}.beta_map(c1,:,:));
-                                                        else
-                                                            tmp = squeeze(big_TOPO{f1}.v{v1}.s{s1}.hb{h1}.c_interp_beta(c1,:,:));
+                        if ~Z.AvgInterpBetaMode
+                            sC = 0; %session counter
+                            Ns = length(big_TOPO{1}.v{v1}.s); %number of sessions
+                            for s1=1:Ns
+                                %only selected sessions
+                                if any(s1==Z.anova2_sessions)
+                                    sC = sC + 1;
+                                    cC = 0; %contrast counter
+                                    for c1=1:nC
+                                        %only selected contrasts
+                                        if any(c1==Z.anova2_contrasts)
+                                            cC = cC + 1;
+                                            %add to design matrix
+                                            %Skip F contrasts for now
+                                            if xCon{s1}(c1).STAT == 'T'
+                                                fC = 0;
+                                                %fill in cbeta
+                                                if z1==1
+                                                    for f1=1:ns
+                                                        try
+                                                            fC = fC+1;
+                                                            if isfield(big_TOPO{f1}.v{v1}.s{s1}.hb{h1},'beta_map')
+                                                                tmp = squeeze(big_TOPO{f1}.v{v1}.s{s1}.hb{h1}.beta_map(c1,:,:));
+                                                            else
+                                                                tmp = squeeze(big_TOPO{f1}.v{v1}.s{s1}.hb{h1}.c_interp_beta(c1,:,:));
+                                                            end
+                                                            %now fill cbeta
+                                                            cbeta{h1}(fC,sC,cC,:) = tmp(:);
+                                                            if isfield(big_TOPO{f1}.rendered_MNI{v1},'view_mask_2d')
+                                                                cbeta{h1}(fC,sC,cC,:) = squeeze(cbeta{h1}(fC,sC,cC,:))'.*big_TOPO{f1}.rendered_MNI{v1}.view_mask_2d(:)';
+                                                            end
+                                                        catch exception %exception for difficulty filling cbeta
+                                                            disp(exception.identifier);
+                                                            disp(exception.stack(1));
+                                                            fC = fC-1; %remove
+                                                            %cbeta{sC,cC}(f1,:) = NaN(length(tmp(:)),1);
+                                                            disp(['No data for subject ' int2str(f1) ', contrast ' int2str(c1) ', session ' int2str(s1) ', chromophore ' hb ', and view ' int2str(v1)]);
                                                         end
-                                                        %now fill cbeta
-                                                        cbeta{h1}(fC,sC,cC,:) = tmp(:);
-                                                        if isfield(big_TOPO{f1}.rendered_MNI{v1},'view_mask_2d')
-                                                            cbeta{h1}(fC,sC,cC,:) = squeeze(cbeta{h1}(fC,sC,cC,:))'.*big_TOPO{f1}.rendered_MNI{v1}.view_mask_2d(:)';
-                                                        end
-                                                    catch exception %exception for difficulty filling cbeta
-                                                        disp(exception.identifier);
-                                                        disp(exception.stack(1));
-                                                        fC = fC-1; %remove
-                                                        %cbeta{sC,cC}(f1,:) = NaN(length(tmp(:)),1);
-                                                        disp(['No data for subject ' int2str(f1) ', contrast ' int2str(c1) ', session ' int2str(s1) ', chromophore ' hb ', and view ' int2str(v1)]);
                                                     end
                                                 end
                                             end
                                         end
                                     end
                                 end
-                            end
-                        end %end for s1
-                        
+                            end %end for s1
+                        else
+                            sC = 0; %session counter
+                            for s1=1:nS0
+                                for c1=1:nC0
+                                    sC = sC + 1;
+                                    fC = 0;
+                                    %fill in cbeta
+                                    if z1==1
+                                        for f1=1:ns
+                                            try
+                                                fC = fC+1;
+                                                if isfield(big_TOPO{f1}.v{v1}.s{sC}.hb{h1},'beta_map')
+                                                    tmp = squeeze(big_TOPO{f1}.v{v1}.s{sC}.hb{h1}.beta_map(1,:,:));
+                                                else
+                                                    tmp = squeeze(big_TOPO{f1}.v{v1}.s{sC}.hb{h1}.c_interp_beta(1,:,:));
+                                                end
+                                                %now fill cbeta
+                                                cbeta{h1}(fC,s1,c1,:) = tmp(:);
+                                                if isfield(big_TOPO{f1}.rendered_MNI{v1},'view_mask_2d')
+                                                    cbeta{h1}(fC,s1,c1,:) = squeeze(cbeta{h1}(fC,s1,c1,:))'.*big_TOPO{f1}.rendered_MNI{v1}.view_mask_2d(:)';
+                                                end
+                                            catch exception %exception for difficulty filling cbeta
+                                                disp(exception.identifier);
+                                                disp(exception.stack(1));
+                                                fC = fC-1; %remove
+                                                %cbeta{sC,cC}(f1,:) = NaN(length(tmp(:)),1);
+                                                disp(['No data for subject ' int2str(f1) ', contrast ' int2str(c1) ', session ' int2str(s1) ', chromophore ' hb ', and view ' int2str(v1)]);
+                                            end
+                                        end
+                                    end
+                                end
+                            end %end for s1
+                        end
                         if z1==1 && h1 == 1%no need to repeat calculation
                             
                             %Construct each part of design matrix separately
