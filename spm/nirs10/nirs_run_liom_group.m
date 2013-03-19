@@ -15,22 +15,40 @@ switch job.StatMethod
     case 1
         Z.LKC = 0;
 end
-% if ~Z.LKC
-%     %at the group level, two ways to get corrected statistics:
-%     %1-LKC
-%     %2-Bonferroni
-%     %currently using output_unc for Bonferroni? That's not clear and that's
-%     %confusing
-%     Z.output_unc = 1;
-%     %Also, if at the contrast module, LKC was run, then some of the older
-%     %options will not be available
-% end
+if isfield(job,'two_sample_t_test') && isfield(job.two_sample_t_test,'two_samples')
+    Z.two_samples = 1;
+    two_samples = job.two_sample_t_test.two_samples;
+    Z.group1 = two_samples.group1;
+    Z.group2 = two_samples.group2;
+    Z.eq_variance = two_samples.eq_variance;
+else
+    Z.two_samples = 0;
+end
+if isfield(job,'ignore_brain_mask')
+    ignore_brain_mask = 1;
+else
+    ignore_brain_mask = 0;
+end
+if isfield(job,'save_big_topo')
+    save_big_topo = 1;
+else
+    save_big_topo = 0;
+end
 Z.group_session_to_average = job.group_session_to_average;
 Z.group_dir_name = job.group_dir_name;
 Z.simple_sum = job.simple_sum;
-Z.min_s = 2;
+Z.min_s = 2; %minimum number of subjects -- not clear this is used
 Z.nS = size(job.NIRSmat,1);
 nS = Z.nS;
+%test that in the case of 2-sample t-test, subjects are not missing
+if Z.two_samples
+    g0 = sort(unique([Z.group1 Z.group2]));
+    try
+    sum(g0 == 1:nS)
+    catch
+        disp('Problem with subject specification for 2 sample ttest')
+    end
+end
 number_dir_to_remove = job.number_dir_to_remove;
 %SPM contrasts or automatic contrasts
 if isfield(job.ContrastChoice,'user_contrasts')
@@ -83,12 +101,12 @@ for Idx=1:nl
         %PP Group level TOPO.mat
         fTOPO = fullfile(dir_group,'TOPO.mat'); % MA 'dir0' instead of 'dir_group' since there is still no TOPO.mat in the new directory of the group analysis
         %save a NIRS structure for the group
-        %%% MA why we need to change the dir to dir_group (which is void at this point) before loading NIRS.mat of each indiv ?!! 
-        % newNIRSlocation = fullfile(dir_group,'NIRS.mat'); 
+        %%% MA why we need to change the dir to dir_group (which is void at this point) before loading NIRS.mat of each indiv ?!!
+        % newNIRSlocation = fullfile(dir_group,'NIRS.mat');
         
         
-        if ~(Z.FFX || nS==1)            
-            newNIRSlocation = fullfile(dir_group,'NIRS.mat'); 
+        if ~(Z.FFX || nS==1)
+            newNIRSlocation = fullfile(dir_group,'NIRS.mat');
             try
                 job.NIRSmatCopyChoice = rmfield(job.NIRSmatCopyChoice,'NIRSmatCopy');
             end
@@ -97,7 +115,7 @@ for Idx=1:nl
             %try
             
             %Load group level NIRS
-                [NIRS newNIRSlocation]= nirs_load(newNIRSlocation,job.NIRSmatCopyChoice,job.force_redo);
+            [NIRS newNIRSlocation]= nirs_load(newNIRSlocation,job.NIRSmatCopyChoice,job.force_redo);
             %end
         end
         
@@ -111,14 +129,14 @@ for Idx=1:nl
         %             end
         %         end
         %job.NIRSmat{Idx,1} = newNIRSlocation; %PP commented out
-
+        
         
         NIRS.TOPO = fTOPO; %group level NIRS.mat
         if ~isfield(NIRS,'flags')
             NIRS.flags = [];
         end
         save(newNIRSlocation,'NIRS');
-       
+        
         NIRSgroup = NIRS;
         %Could save time by making these checks before loading all the
         %group data
@@ -201,9 +219,9 @@ for Idx=1:nl
                     end
                 catch %for case AvgInterpBetaMode == 1
                     try %another try, to catch case v1 == 6
-                    if ~isempty(TOPOsrc{1}.v{v1})
-                        view_estimated = 1;
-                    end
+                        if ~isempty(TOPOsrc{1}.v{v1})
+                            view_estimated = 1;
+                        end
                     end
                 end
                 try
@@ -242,21 +260,22 @@ for Idx=1:nl
                     [W.side_hemi W.spec_hemi] = nirs_get_brain_view(v1);
                     %View dependent info for figures
                     brain = rendered_MNI0{v1}.ren;
-                    if issparse(brain), %does not apply?
-                        d = size(brain);
-                        B1 = spm_dctmtx(d(1),d(1));
-                        B2 = spm_dctmtx(d(2),d(2));
-                        brain = B1*brain*B2';
-                    end;
+                    %                     if issparse(brain), %does not apply?
+                    %                         d = size(brain);
+                    %                         B1 = spm_dctmtx(d(1),d(1));
+                    %                         B2 = spm_dctmtx(d(2),d(2));
+                    %                         brain = B1*brain*B2';
+                    %                     end;
                     msk = brain>1;brain(msk)=1;
                     msk = brain<0;brain(msk)=0;
                     %brain = brain(end:-1:1,:); %???
                     brain = brain * 0.5;
                     W.brain = brain;
                     %For single subject group of sessions analysis
-                    if isfield(rendered_MNI0{W.side_hemi},'view_mask_2d')
+                    if isfield(rendered_MNI0{W.side_hemi},'view_mask_2d') && ~ignore_brain_mask
                         W.brain_view_mask_2d = rendered_MNI0{W.side_hemi}.view_mask_2d;
                     end
+                    W.ignore_brain_mask = ignore_brain_mask;
                     %for group of subjects analysis
                     W = nirs_get_common_brain_mask(W,big_TOPO,v1);
                     W = nirs_get_boundary(W,job);
@@ -316,7 +335,11 @@ for Idx=1:nl
             end
             fTOPO = NIRSgroup.TOPO;
             save(fTOPO,'TOPO','-v7.3');
-            %save(fbig_TOPO,'big_TOPO','-v7.3'); %to extract map data
+            if save_big_topo
+                [dir0 fil0] = fileparts(fTOPO);
+                fbig_TOPO = fullfile(dir0,'big_TOPO.mat');
+                save(fbig_TOPO,'big_TOPO','-v7.3'); %to extract map data
+            end
             %save NIRS
             if Z.FFX || nS==1
                 NIRS.flags.session_groupOK = 1;
