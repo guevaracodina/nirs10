@@ -29,8 +29,8 @@ try
     m2 = mean(cbeta(Z.group2,:),1);
     
     if Z.eq_variance
-        s12 = (((n1-1)*s1.^2+(n2-1)*s2.^2)/(n1+n2-2))^(1/2); %should be identical to s = std_group
-        t = (m1-m2)./(s12*(1/n1+1/n2)^(1/2));
+        s12 = (((n1-1)*s1.^2+(n2-1)*s2.^2)/(n1+n2-2)).^(1/2); %should be identical to s = std_group
+        t = (m1-m2)./(s12*(1/n1+1/n2).^(1/2));
         MM = max(mask(:));
         df = mask*(MM-1)/MM;
         erdf_group = ns-1;
