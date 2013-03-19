@@ -36,24 +36,28 @@ try
     try
         %This is a mess, with confusing storage of LKC0 and interplay with
         %Z.simple_sum
-        if (Z.LKC || new_version)
-            G = liom_group_new(cbeta,W.s1,W.s2);
-            LKC0 = G.LKC; %store
+        if Z.two_samples
+            G = liom_2samples_t_test(Z,cbeta,W.s1,W.s2);
         else
-            if strcmp(xCon(c1).STAT,'T')
-                G = liom_group(cbeta,ccov_beta,W.s1,W.s2,Z.min_s,Z.FFX,Z.simple_sum);
+            if (Z.LKC || new_version)
+                G = liom_group_new(cbeta,W.s1,W.s2);
+                LKC0 = G.LKC; %store
             else
-                G = liom_group_F(cbeta,W.s1,W.s2);
+                if strcmp(xCon(c1).STAT,'T')
+                    G = liom_group(cbeta,ccov_beta,W.s1,W.s2,Z.min_s,Z.FFX,Z.simple_sum);
+                else
+                    G = liom_group_F(cbeta,W.s1,W.s2);
+                end
+                G.LKC = [];
             end
-            G.LKC = [];
-        end
-        if (Z.LKC || new_version) && ~Z.simple_sum
-            if strcmp(xCon(c1).STAT,'T')
-                G = liom_group(cbeta,ccov_beta,W.s1,W.s2,Z.min_s,Z.FFX,Z.simple_sum);
-            else
-                G = liom_group_F(cbeta,W.s1,W.s2);
+            if (Z.LKC || new_version) && ~Z.simple_sum
+                if strcmp(xCon(c1).STAT,'T')
+                    G = liom_group(cbeta,ccov_beta,W.s1,W.s2,Z.min_s,Z.FFX,Z.simple_sum);
+                else
+                    G = liom_group_F(cbeta,W.s1,W.s2);
+                end
+                G.LKC = LKC0;
             end
-            G.LKC = LKC0;
         end
     catch exception2
         disp(exception2.identifier);
@@ -63,6 +67,10 @@ try
         fg = 'g';
     else
         fg = 'group';
+    end
+    if Z.two_samples
+        str2t = '_2stt';
+        str2t2 = ' 2stt';
     end
     %Fill TOPO -- needs to be cleaned up
     %factor of 2 in c{} was for positive vs negative contrasts -- may want
@@ -77,8 +85,8 @@ try
     TOPO.v{v1}.(fg).hb{h1}.c{2*c1-shb}.c = xCon(c1);
     erdf_group = max(G.erdf_group(:)); %quick fix...
     F.s_map = G.tmap_group;
-    filestr = [num2str(Z.p_value) '_' W.spec_hemi '_' hb];
-    filestr_fig = [num2str(Z.p_value) ' ' W.spec_hemi ' ' hb];
+    filestr = [num2str(Z.p_value) '_' W.spec_hemi '_' hb str2t];
+    filestr_fig = [num2str(Z.p_value) ' ' W.spec_hemi ' ' hb str2t2];
     info1 = [filestr '_' strA xCon(c1).name];
     info_for_fig1 = [filestr_fig ' ' strA xCon(c1).name];
     F.contrast_info = info1;

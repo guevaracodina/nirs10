@@ -3,7 +3,6 @@ function liom_group = nirs_run_liom_group_cfg
 display_options = liom_contrast_group_options;
 consess = nirs_spm_get_consess;
 
-
 %factorial_design = nirs_spm_get_factorial_design;
 
 % session_number         = cfg_entry;
@@ -28,7 +27,6 @@ FFX_or_RFX.help = {'Use fixed effects (FFX) for group of sessions (intra-subject
     'RFX can also be used for one subject with multiple sessions, '
     'to take into account the variance between sessions.'}';
 
-
 StatMethod      = cfg_menu;
 StatMethod.tag  = 'StatMethod';
 StatMethod.name = 'Statistical method for spatial correlations';
@@ -40,7 +38,6 @@ StatMethod.help = {'Choose statistical method to account '
     '(Family-wise error rate)'
     'Preferred choice: Euler characteristic calculated via Lipschitz-Killing curvature'
     'Other choice: Bonferroni correction.'}';
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
 group_session_to_average         = cfg_entry;
@@ -111,18 +108,29 @@ ContrastChoice.values    = {user_contrasts automated_contrasts};
 ContrastChoice.val       = {automated_contrasts}; 
 ContrastChoice.help      = {'Choose method to generate contrasts'}'; 
 
+two_sample_t_test = nirs_dfg_two_sample_t_test;
+ignore_brain_mask = nirs_dfg_ignore_brain_mask;
+
+save_big_topo = cfg_menu;
+save_big_topo.tag  = 'save_big_topo';
+save_big_topo.name = 'save_big_TOPO';
+save_big_topo.labels = {'Yes','No'};
+save_big_topo.values = {1,0};
+save_big_topo.val = {1};
+save_big_topo.help = {'ignore brain mask. This is used to potentially '
+    'increase the size of the overlap common to all subjects.'}';
+
 % Executable Branch
 liom_group      = cfg_exbranch;
 liom_group.name = 'Liom Group Model Estimation';
 liom_group.tag  = 'liom_group';
 liom_group.val  = {NIRSmat redo1 NIRSmatCopyChoice ...
     group_dir_name number_dir_to_remove FFX_or_RFX ContrastChoice ...
-    StatMethod contrast_p_value ...
+    StatMethod contrast_p_value two_sample_t_test ignore_brain_mask save_big_topo ...
      group_session_to_average simple_sum display_options}; % factorial_design};
 liom_group.prog = @nirs_run_liom_group;
 liom_group.vout = @nirs_cfg_vout_liom_group;
 liom_group.help = {'Liom Group level model estimation.'};
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function vout = nirs_cfg_vout_liom_group(job)
