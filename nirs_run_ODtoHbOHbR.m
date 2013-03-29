@@ -74,10 +74,10 @@ for Idx=1:size(job.NIRSmat,1)
                 % From Alexis Machado
                 % Differential path length factor --
                 % From 1996 Duncan et al. Measurement of cranial optical path length...
-                table = [690 ; 830 ; 744 ; 807];
-                a = [5.38 ; 4.67 ; 5.11 ; 4.99];
-                b = [0.049 ; 0.062 ; 0.106 ; 0.067];
-                c = [0.877 ; 0.819 ; 0.723 ; 0.814];
+                table = [690 ; 830 ; 744 ; 807; 735; 850]; %need to fill the correct values for 735 and 850
+                a = [5.38 ; 4.67 ; 5.11 ; 4.99; 5.11; 4.67];
+                b = [0.049 ; 0.062 ; 0.106 ; 0.067; 0.106; 0.062];
+                c = [0.877 ; 0.819 ; 0.723 ; 0.814; 0.723; 0.819];
                 for iwl =1:size(wl,2)
                     [raw,col] = find(wl(iwl)==table);
                     DPF(iwl,1) = a(raw,col)+b(raw,col)*age^c(raw,col);

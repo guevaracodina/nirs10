@@ -21,13 +21,10 @@ switch int2str(job.system) % System used for the acquisition
         sDtp = job.sDtp;
         NIRS = job.NIRS;
         
-        % Information about CW system
+        
         NIRS.Cf.dev.n = 'CW6';
         NIRS.Cf.dev.wl = f.SD.Lambda;
-        NIRS.Cf.dev.gn = f.systemInfo.gain;
-        NIRS.Cf.dev.fs = 1/(f.t(2)-f.t(1));
-        
-        % Information about auxilaries 
+        % Information about auxilaries
         NIRS.Dt.aux = f.aux;
         if isfield(job.biopac, 'choice_biopac')
             biopac.n = job.biopac.choice_biopac;
@@ -37,6 +34,11 @@ switch int2str(job.system) % System used for the acquisition
         else
             NIRS.Dt.aux.eprime = f.aux;
         end
+        
+        NIRS.Cf.dev.gn = f.systemInfo.gain;
+        NIRS.Cf.dev.fs = 1/(f.t(2)-f.t(1));
+        
+        
         
         % Information about the Helmet
         NIRS.Cf.H.n = f.systemInfo.SDfilenm;
@@ -138,16 +140,21 @@ switch int2str(job.system) % System used for the acquisition
                 
         end
         
-    case '5'
+    case {'5','1'}  %System 1: Imaginc
         sDtp = job.sDtp;
         NIRS = job.NIRS;
         
         % Information about CW system
-        NIRS.Cf.dev.n = 'CW5';
-        NIRS.Cf.dev.wl = f.SD.Lambda;
-%         NIRS.Cf.dev.gn = f.systemInfo.gain;
-        NIRS.Cf.dev.fs = 1/(f.t(2)-f.t(1));
-
+        if int2str(job.system) == '1'
+            NIRS.Cf.dev.n = 'Imaginc';
+            NIRS.Cf.dev.wl = [735 850];
+        else
+            % Information about CW system
+            NIRS.Cf.dev.n = 'CW5';
+            NIRS.Cf.dev.wl = f.SD.Lambda;
+            %         NIRS.Cf.dev.gn = f.systemInfo.gain;
+        end
+         NIRS.Cf.dev.fs = 1/(f.t(2)-f.t(1));
         switch job.coregType
             
             case 'Brainsight(c)'
@@ -204,7 +211,7 @@ switch int2str(job.system) % System used for the acquisition
                 
                 % All points
                 NIRS.Cf.H.P.N = NIRS.Cf.H.S.N + NIRS.Cf.H.D.N;
-%                 NIRS.Cf.H.P.r.o.mm.p = [NIRS.Cf.H.S.r.o.mm.p NIRS.Cf.H.D.r.o.mm.p]; % nPts x 3, cm->mm
+                %                 NIRS.Cf.H.P.r.o.mm.p = [NIRS.Cf.H.S.r.o.mm.p NIRS.Cf.H.D.r.o.mm.p]; % nPts x 3, cm->mm
                 
                 % Channels (pairs)
                 Cgen = zeros(0);    % [iC iS iD wl gp]
@@ -240,7 +247,7 @@ switch int2str(job.system) % System used for the acquisition
                 % Wavelength
                 NIRS.Cf.H.C.wl = Cgen_s(:,4)';   % Cwl;
                 % Source-detector distance (usually 2D)
-                NIRS.Cf.H.C.gp = Cgen_s(:,5)';   % Cgp;               
+                NIRS.Cf.H.C.gp = Cgen_s(:,5)';   % Cgp;
         end
         
     otherwise

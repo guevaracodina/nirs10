@@ -10,7 +10,7 @@ try
         
         beta_group = reshape(b,s1,s2);
         std_group = reshape(s,s1,s2);
-        t = b./s;
+        t = b./(s/ns^(1/2)); %this ns^(1/2) had been forgotten!!!
         t(isnan(t)) = 0;       
         
         G.erdf_group = ns-1;
