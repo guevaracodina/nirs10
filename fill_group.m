@@ -71,6 +71,9 @@ try
     if Z.two_samples
         str2t = '_2stt';
         str2t2 = ' 2stt';
+    else
+        str2t = '';
+        str2t2 = '';
     end
     %Fill TOPO -- needs to be cleaned up
     %factor of 2 in c{} was for positive vs negative contrasts -- may want

@@ -30,12 +30,12 @@ try
                     cov_tmp(Q.index_mask) = cxCor .* Q.ivar;
                 else
                     c = c(1:end-1);
-                    Q.ivar(isnan(Q.ivar)) = 0;
+                    Q.ivar(isnan(Q.ivar)) = max(Q.ivar(~isnan(Q.ivar)));
                     Q.ibeta(isnan(Q.ibeta)) = 0;
                     Q.ivar(Q.ivar < 0) = -Q.ivar(Q.ivar < 0);
-                    stat = (c' * Q.ibeta)./sqrt(c' * Q.ivar);
-                    beta_tmp(Q.index_mask) = c' * Q.ibeta;
-                    cov_tmp(Q.index_mask) = c' * Q.ivar;
+                    stat = (c' * Q.ibeta(1:nC,:))./sqrt(c' * Q.ivar(1:nC,:));
+                    beta_tmp(Q.index_mask) = c' * Q.ibeta(1:nC,:);
+                    cov_tmp(Q.index_mask) = c' * Q.ivar(1:nC,:);
                 end
                 beta_map(c1,:,:) = beta_tmp;
                 cov_map(c1,:,:) = cov_tmp;
@@ -76,12 +76,22 @@ try
         C.beta_map = beta_map; %Used at the group level
         C.cov_map = cov_map;
     else %simple interpolation of the betas
-        beta_map = zeros(1,s1,s2);
-        beta_tmp = zeros(s1,s2);
-        Q.ibeta(isnan(Q.ibeta)) = 0;
-        beta_tmp(Q.index_mask) = Q.ibeta;
-        beta_map(1,:,:) = beta_tmp;
-        C.beta_map = beta_map; %Used at the group level
+        if nC == 1
+            beta_map = zeros(1,s1,s2);
+            beta_tmp = zeros(s1,s2);
+            Q.ibeta(isnan(Q.ibeta)) = 0;
+            beta_tmp(Q.index_mask) = Q.ibeta;
+            beta_map(1,:,:) = beta_tmp;
+            C.beta_map = beta_map; %Used at the group level
+        else
+            %nV = size(Q.ibeta,1);
+            %beta_map = zeros(nC,s1,s2);
+            beta_tmp = zeros(nC,s1,s2);
+            Q.ibeta(isnan(Q.ibeta)) = 0;
+            beta_tmp(:,Q.index_mask) = Q.ibeta(1:nC,:);
+            %beta_map = beta_tmp;
+            C.beta_map = beta_tmp; %Used at the group level
+        end
     end
 catch exception
     disp(exception.identifier);
