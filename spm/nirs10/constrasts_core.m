@@ -76,6 +76,7 @@ try
             hb = get_chromophore(h1);
             %Note that var(ch_HbO) depends on HbO vs HbR
             Q = interpolation_kernel(h1,W,Z.LKC,Z.UseCorrelRes,Z.DoStats);
+            if ~isfield(TOPO,'cSigma'), TOPO.cSigma = []; end
             if Z.LKC || Z.UseCorrelRes || Z.Avg
                 C = loop_contrasts_new(h1,Q,W,xCon,Z,f1,TOPO.cSigma,xX);
             else
