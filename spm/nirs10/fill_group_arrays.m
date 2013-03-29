@@ -106,14 +106,26 @@ try
                             ccov_beta(f1,:) = tmp(:).^2;
                             new_version = 1;
                         else
-                            tmp = sign_hb*squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_beta(c1,:,:));
-                            if f1 == 1
-                                cbeta = zeros(1,length(tmp(:)));
-                                ccov_beta = cbeta;
+                            if isfield(big_TOPO{f1}.v{v1}.s{is1}.hb{h1},'beta_map')
+                                %averaging mode
+                                new_version = 1;
+                                ccov_beta = [];
+                                is1 = c1;
+                                tmp = sign_hb*squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.beta_map(1,:,:));
+                                if f1 == 1
+                                    cbeta = zeros(ns,length(tmp(:)));
+                                end
+                                cbeta(f1,:) = tmp(:);
+                            else
+                                tmp = sign_hb*squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_interp_beta(c1,:,:));
+                                if f1 == 1
+                                    cbeta = zeros(1,length(tmp(:)));
+                                    ccov_beta = cbeta;
+                                end
+                                cbeta(f1,:) = tmp(:);
+                                tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_cov_interp_beta(c1,:,:));
+                                ccov_beta(f1,:) = tmp(:);
                             end
-                            cbeta(f1,:) = tmp(:);
-                            tmp = squeeze(big_TOPO{f1}.v{v1}.s{is1}.hb{h1}.c_cov_interp_beta(c1,:,:));
-                            ccov_beta(f1,:) = tmp(:);
                         end
                     end
                 end

@@ -603,7 +603,9 @@ for Idx=1:size(job.NIRSmat,1)
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             [SPM NIRS] = nirs_liom_average(NIRS,SPM);
             SPM.FlagAvg = 1; %Flag to indicate that we are in averaging mode
-            save(spm_file,'SPM');
+            SPM.xXn{1}.K.KL = [];
+            SPM.xX.K.KL = [];
+            save(spm_file,'SPM','-v7.3');
             
             NIRS.flags.Avg_OK = 1;
             save(newNIRSlocation,'NIRS');
