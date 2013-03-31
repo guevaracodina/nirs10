@@ -125,7 +125,8 @@ outputdatafigures = nirs_dfg_outputdatafigures;
 ODtoHbOHbR      = cfg_exbranch;
 ODtoHbOHbR.name = 'Convert OD to HbO/HbR ';
 ODtoHbOHbR.tag  = 'ODtoHbOHbR';
-ODtoHbOHbR.val  = {NIRSmat redo1 NIRSmatCopyChoice DPF PVF nirs_filling_jumps outputdatafigures}; % nirs_lpf2};
+ODtoHbOHbR.val  = {NIRSmat redo1 NIRSmatCopyChoice DPF PVF nirs_filling_jumps ...
+    outputdatafigures}; % nirs_lpf2};
 ODtoHbOHbR.prog = @nirs_run_ODtoHbOHbR;
 ODtoHbOHbR.vout = @nirs_cfg_vout_ODtoHbOHbR;
 ODtoHbOHbR.help = {'Convert OD to HbO/HbR.'}';

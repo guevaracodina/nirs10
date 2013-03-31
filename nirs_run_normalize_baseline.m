@@ -38,6 +38,64 @@ else
     end
 end
 
+if isfield(job.filters,'filters_on')
+    FiltersOn = 1;
+    filters_on = job.filters.filters_on;
+    %PCA
+    PCA = filters_on.channel_pca;
+    NumPCAComponents = filters_on.NumPCAComponents;
+    %LPF
+%     lpf0 = filters_on.lpf;
+%     if isfield(lpf0,'lpf_gauss')
+%         FWHM = lpf0.lpf_gauss.fwhm1;
+%         lpf = 'gaussian';
+%     else
+%         if isfield(lpf0,'lpf_hrf')
+%             lpf = 'hrf';
+%         else
+%             if isfield(lpf0,'lpf_none')
+%                 lpf = 'none';
+%             else
+%                 disp('Unrecognized low pass filter');
+%             end
+%         end
+%     end
+
+    %LPF
+    lpf0 = filters_on.lpf;
+    if isfield(lpf0,'lpf_butter')
+        lpf_butter_freq = lpf0.lpf_butter.lpf_butter_freq;
+        lpf_butter_order = lpf0.lpf_butter.lpf_butter_order;
+        lpf = 1;
+    else
+        lpf = 0; %no low pass filter
+    end    
+    %HPF
+    hpf0 = filters_on.hpf;
+    if isfield(hpf0,'hpf_butter_On')
+        hpf_butter_freq = hpf0.hpf_butter_On.hpf_butter_freq;
+        hpf_butter_order = hpf0.hpf_butter_On.hpf_butter_order;
+        hpf = 1;
+    else
+        if isfield(job.hpf_butter,'remove_linear')
+            hpf = 2;
+        else
+            if isfield(job.hpf_butter,'GLM_remove_linear')
+                hpf = 3; %no high pass filter
+            else
+                if isfield(job.hpf_butter,'SPM_cosine_filter')
+                    hpf = 4; %no high pass filter
+                    hpf_cos_freq = 1/300; %1/240; %4 minute
+                    hpf_cos_order = 3; %not used
+                else
+                    hpf = 0; %no high pass filter
+                end
+            end
+        end
+    end
+else
+    FiltersOn = 0;
+end
 %**************************************************************************
 
 
@@ -112,7 +170,54 @@ for Idx=1:size(job.NIRSmat,1)
                 
                 
                 %**************************************************************************
-                
+                %Filters
+                if FiltersOn
+                    %PCA
+                    if PCA
+                        d = d';
+                        %process each wavelength separately
+                        which_channels = 1:(NC/2); %all HbOchannels
+                        Y1 = nirs_makePcaV2(d(:,which_channels),which_channels,nComponents);
+                        Y2 = nirs_makePcaV2(d(:,which_channels+NC/2),which_channels,nComponents);
+                        d = [Y1 Y2];
+                        d = d';
+                        %Output graphs of PCA result
+                        if job.outputdatafigures
+                            nirs_time_plots(d,fs,NC,f,newNIRSlocation,'PCA',{'WL1' 'WL2'});
+                        end
+                    end
+                    %HPF
+                    if hpf
+                        %to add DC value back
+                        DC = mean(d,2);
+                    end
+                    switch hpf
+                        case 1
+                            d = ButterHPF(fs,hpf_butter_freq,hpf_butter_order,d')';
+                        case 2
+                            Y = d';
+                            nS = size(Y,1);
+                            mX = linspace(0,round(nS/fs),nS);
+                            mX = [mX' ones(nS,1)];
+                            pmX = pinv(mX);
+                            Y = Y - mX * (pmX * Y);
+                            d = Y';
+                    end
+                    if hpf
+                        d = d + repmat(DC,[1 size(d,2)]);
+                    end
+                    if hpf && job.outputdatafigures
+                        nirs_time_plots(d,fs,NC,f,newNIRSlocation,'HPF',{'WL1' 'WL2'});
+                    end
+                    %LPF
+                    if lpf
+                        d = ButterLPF(fs,lpf_butter_freq,lpf_butter_order,d')';
+                        if job.outputdatafigures
+                            nirs_time_plots(d,fs,NC,f,newNIRSlocation,'LPF',{'WL1' 'WL2'});
+                        end
+                    end
+                end
+                %**************************************************************************
                 
                 % Read markers for movement if available
                 try
