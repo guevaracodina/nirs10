@@ -10,9 +10,9 @@ Z.StatStr = 'EC';
 Z.FFX = job.FFX_or_RFX;
 Z.p_value = job.contrast_p_value;
 switch job.StatMethod
-    case 0
-        Z.LKC = 1;
     case 1
+        Z.LKC = 1;
+    case 0
         Z.LKC = 0;
 end
 if isfield(job,'two_sample_t_test') && isfield(job.two_sample_t_test,'two_samples')
