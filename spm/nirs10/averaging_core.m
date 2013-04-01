@@ -186,7 +186,8 @@ try
                         da{u0}(k0,:) = mean(ta{u0}(:,k0,:),1);
                         switch base_choice
                             case 1
-                                db{u0}(k0,:) = mean(tb{u0}(:,k0,:),1);
+                                tmp_baseline_array = tb{u0}(:,k0,:);
+                                db{u0}(k0,:) = squeeze(mean(tmp_baseline_array,1));
                                 ds{u0}(k0,:) = da{u0}(k0,:) - db{u0}(k0,:);
                                 ts{u0}(:,k0,:) = ta{u0}(:,k0,:) - permute(repmat(db{u0}(k0,:),[ons_duration 1]),[1 3 2]);
                             case 2
@@ -258,7 +259,9 @@ try
             Avg.KY = KY;
             SPM.xX.beta = a;
             SPM.xX.covbeta = s.^2;
-            SPM.xX.t = a./s;
+            SPM.xX.t = a./(s/length(Avg.go{1})^(1/2)); %incorrect, one needs 
+            %to divide s by the number of stims^0.5 -- this assumes a constant number of stims and that 
+            %Avg.go{1} is this number
             %Fill Avg
             Avg.a = a;
             %     if sum(isnan(a(:)))
