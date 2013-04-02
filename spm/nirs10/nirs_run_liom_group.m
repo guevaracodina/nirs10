@@ -25,7 +25,7 @@ else
     Z.two_samples = 0;
 end
 if isfield(job,'ignore_brain_mask')
-    ignore_brain_mask = 1;
+    ignore_brain_mask = job.ignore_brain_mask;
 else
     ignore_brain_mask = 0;
 end

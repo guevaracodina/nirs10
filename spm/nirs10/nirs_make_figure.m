@@ -191,6 +191,9 @@ try
             if gen_tiff
                 filen2 = fullfile(pathn,[tstr '_' str_cor '_' contrast_info '.png']);
                     print(fh1, '-dpng', filen2,'-r300');
+                    
+                filen3 = fullfile(pathn,[tstr '_' str_cor '_' contrast_info '.pdf']);
+                    print(fh1, '-dpdf', filen3); %,'-r300');
             end
         end
         %Fill Y

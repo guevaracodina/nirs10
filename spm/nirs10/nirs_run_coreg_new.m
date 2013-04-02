@@ -39,6 +39,7 @@ if isfield(job,'OutputSkinFigs')
 else
     OutputSkinFigs = 1;
 end
+ERad = job.radius_channel;
 ForceReprocessSegmentation = 0;
 coreg_projected_channels_on_cortex_rather_than_midpoint = 1;
 use_fSeg = 1; %option to use Clément's segmented image to extract c1; otherwise default to c1 image
@@ -395,27 +396,27 @@ for iSubj=1:size(job.NIRSmat,1)
             
             %PP: the function render_MNI_coordinates has not been checked
             rendered_MNI = render_MNI_coordinates_new(ch_MNIw_vx,...
-                ch_MNI_vx,wT1_info, NIRS.Dt.ana.wT1.VF,render_template,fSeg,dir_coreg,0);
+                ch_MNI_vx,wT1_info, NIRS.Dt.ana.wT1.VF,render_template,fSeg,dir_coreg,0,ERad);
             
             %Additional projections
             %channels on skin
             if OutputSkinFigs
                 rendered_MNI_skin = render_MNI_coordinates_new(ch_MNIw_vx_skin,...
-                    ch_MNI_vx_skin,wT1_info, NIRS.Dt.ana.wT1.VF,0,fSeg,dir_coreg,1);
+                    ch_MNI_vx_skin,wT1_info, NIRS.Dt.ana.wT1.VF,0,fSeg,dir_coreg,1,ERad);
             end
             %sources on cortex
             rendered_MNI_src = render_MNI_coordinates_new(src_MNIw_vx,...
-                src_MNI_vx,wT1_info, NIRS.Dt.ana.wT1.VF,render_template,fSeg,dir_coreg,0);
+                src_MNI_vx,wT1_info, NIRS.Dt.ana.wT1.VF,render_template,fSeg,dir_coreg,0,ERad);
             %detectors on cortex
             rendered_MNI_det = render_MNI_coordinates_new(det_MNIw_vx,...
-                det_MNI_vx,wT1_info, NIRS.Dt.ana.wT1.VF,render_template,fSeg,dir_coreg,0);
+                det_MNI_vx,wT1_info, NIRS.Dt.ana.wT1.VF,render_template,fSeg,dir_coreg,0,ERad);
             if OutputSkinFigs
                 %sources on skin
                 rendered_MNI_src_skin = render_MNI_coordinates_new(src_MNIw_vx_skin,...
-                    src_MNI_vx_skin,wT1_info, NIRS.Dt.ana.wT1.VF,0,fSeg,dir_coreg,1);
+                    src_MNI_vx_skin,wT1_info, NIRS.Dt.ana.wT1.VF,0,fSeg,dir_coreg,1,ERad);
                 %detectors on skin
                 rendered_MNI_det_skin = render_MNI_coordinates_new(det_MNIw_vx_skin,...
-                    det_MNI_vx_skin,wT1_info, NIRS.Dt.ana.wT1.VF,0,fSeg,dir_coreg,1);
+                    det_MNI_vx_skin,wT1_info, NIRS.Dt.ana.wT1.VF,0,fSeg,dir_coreg,1,ERad);
             end
             rend_file = fullfile(dir_coreg,'TopoData.mat');
             save(rend_file, 'rendered_MNI');
