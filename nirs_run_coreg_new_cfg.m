@@ -88,12 +88,19 @@ OutputSkinFigs.values = {1,0};
 OutputSkinFigs.val  = {1};
 OutputSkinFigs.help = {'Choose to output figures of sources and detectors on skin or not.'}';
 
+radius_channel         = cfg_entry; %nasion_wMNI
+radius_channel.name    = 'Radius of mask and of extrapolation';
+radius_channel.tag     = 'radius_channel';
+radius_channel.strtype = 'r';
+radius_channel.num     = [1 1];
+radius_channel.val{1}  = 15;
+radius_channel.help    = {'Specify radius of mask and of extrapolation in millimeters.'};
 
 coregnew1      = cfg_exbranch;
 coregnew1.name = 'NIRScoreg (new)';
 coregnew1.tag  = 'coregnew1';
 coregnew1.val  = {NIRSmat redo1 ForceReprocess NIRSmatCopyChoice ...
-    fiducial_MNI_choice nasion_wMNI AL_wMNI AR_wMNI ...
+    fiducial_MNI_choice nasion_wMNI AL_wMNI AR_wMNI radius_channel ...
     cortex_projection_method render_choice OutputSkinFigs};
 coregnew1.prog = @nirs_run_coreg_new;
 coregnew1.vout = @nirs_cfg_vout_coreg_new;

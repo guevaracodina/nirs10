@@ -1,5 +1,5 @@
 function rendered_MNI = render_MNI_coordinates_new(vx_wMNI,vx_MNI,...
-    wT1_info,VF,render_template,fSeg,dir_coreg,skinOn)
+    wT1_info,VF,render_template,fSeg,dir_coreg,skinOn,ERad)
 Nmark = size(vx_wMNI, 2);
 if skinOn
     skin_suffix = 'skin';
@@ -308,9 +308,9 @@ for i=1:length(rend),
         % we filter an image with max = 1 this hard coded number is not a
         % problem).
         view_mask_2d = double(X>0);
-        hh=fspecial('disk',35); %PP made it larger
+        hh=fspecial('disk',ERad); %PP made it larger
         view_mask_2d=imfilter(view_mask_2d,hh,'same');
-        view_mask_2d=view_mask_2d>0; %PP, was > 0.01 -- this made the mask shrink considerably
+        view_mask_2d=view_mask_2d>0.01/Nmark; %Heuristic formula -- %%PP, was > 0.01 -- this made the mask shrink considerably
         % End change
         
     else

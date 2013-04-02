@@ -155,6 +155,14 @@ ContrastChoice.values    = {user_contrasts automated_contrasts};
 ContrastChoice.val       = {user_contrasts}; 
 ContrastChoice.help      = {'Choose method to generate contrasts'}'; 
 
+AllowExtrapolation           = cfg_menu;
+AllowExtrapolation.name      = 'Allow Extrapolation';
+AllowExtrapolation.tag       = 'AllowExtrapolation';
+AllowExtrapolation.labels    = {'Yes' 'No'};
+AllowExtrapolation.values    = {1,0};
+AllowExtrapolation.val       = {1};
+AllowExtrapolation.help      = {'Allow Extrapolation.'}';
+
 % ---------------------------------------------------------------------
 % sessions Sessions
 % ---------------------------------------------------------------------
@@ -172,7 +180,7 @@ liom_contrast.name = 'Liom Contrast Calculations';
 liom_contrast.tag  = 'liom_contrast';
 %PP removed: liom_contrast_struct
 liom_contrast.val  = {NIRSmat redo1 NIRSmatCopyChoice ContrastChoice Sessions ...
-    view TopoData GenerateStats StatMethod UseCorrelRes ...
+    view TopoData GenerateStats StatMethod UseCorrelRes AllowExtrapolation ...
     spatial_LPF contrast_p_value display_options}; %Study_type
 liom_contrast.prog = @nirs_run_liom_contrast;
 liom_contrast.vout = @nirs_cfg_vout_liom_contrast;

@@ -58,12 +58,19 @@ try
             warning('off') %no big deal if some channels are superposed: the values will be averaged,
             %Unless one channel is bad, and one is good, and then the
             %average is useless...
-            grid_eye = griddata(cchn, rchn, (mtx_eye(:,kk))', x, y, 'cubic');
+            
+            grid_eye_for_LKC = griddata(cchn, rchn, (mtx_eye(:,kk))', x, y, 'cubic');
+            if W.AllowExtrapolation
+                grid_eye = griddata(cchn, rchn, (mtx_eye(:,kk))', x, y, 'v4');
+            else
+                grid_eye = griddata(cchn, rchn, (mtx_eye(:,kk))', x, y, 'cubic');
+            end
             warning('on')
             
             %end
             if kk == 1
                 mask = 1 - isnan(grid_eye);
+                mask_for_LKC = 1 - isnan(grid_eye_for_LKC);
                 if LKC || UseCorrelRes || W.Avg
                     index_mask0 = find(mask == 1);
                     L2 = zeros(1,nch);
@@ -87,7 +94,7 @@ try
                     
                     %if ~W.Avg
                     if kk == nch && LKC && DoStats
-                        L2 = calc_LKC(B_volume, mask, res,'individual');
+                        L2 = calc_LKC(B_volume, mask_for_LKC, res,'individual');
                     end
                 end
             else
