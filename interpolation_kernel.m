@@ -162,7 +162,13 @@ try
             else %for Avg
                 Q.ibeta = W.beta(:,ch) * B;
                 if DoStats
-                    Q.ivar =  W.covbeta(:,ch) * B; %Imaginary values are always very small
+                    %Q.ivar =  W.covbeta(:,ch) * B; %Imaginary values are always very small
+                    %Q.ivar = W.covbeta(:,ch) * reshape(Q.B_volume,[],nch)'; This formula is identical to the one above
+                    for i0 = 1:size(W.covbeta,1)
+                        Q.ivar(i0,:) = sum(B.* (diag(W.covbeta(i0,ch)) * B),1);
+                    end
+                    %Q.t = reshape(Q.ibeta(1,:) ./ (Q.ivar(1,:).^(0.5)),[362 434]) ;
+                    %figure; imagesc(Q.t); colorbar
                 end
             end
         end
