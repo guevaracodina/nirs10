@@ -26,7 +26,9 @@ try %works for both group and single sessions
             end
             %These are usually the only figures produced (FWE corrected and
             %showing both increases and decreases)
-            save_assembled_figures(Z,W,H.Ct,'',Z.StatStr,f1);
+            if ~isempty(H.Ct)
+                save_assembled_figures(Z,W,H.Ct,'',Z.StatStr,f1);
+            end
             if Z.output_unc %uncorrected images
                 save_assembled_figures(Z,W,H.Cu,'',unc_label,f1);
             end
