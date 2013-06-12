@@ -46,6 +46,9 @@ try
         %maximal number of contrasts to group in assembled
         %figures
         nC = length(xCon);
+        if W.Avg
+            nC = size(W.beta,1); %might not work in all cases...
+        end
         Z.nCloop = 4;
         nCl = 0;
         for c1=1:nC %Loop over contrasts
@@ -58,7 +61,11 @@ try
                 Z.scon = '';
                 for k0=c1:(c1+Z.nCloop-1)
                     if k0 <= nC
-                        Z.scon = [Z.scon '_' xCon(k0).name];
+                        if ~W.Avg
+                            Z.scon = [Z.scon '_' xCon(k0).name];
+                        else
+                            Z.scon = [Z.scon '_' gen_num_str(k0,2)];
+                        end
                     end
                 end
                 %Handles for assembled figures
@@ -100,27 +107,31 @@ try
         end
     end
     if Z.DoStats
-    if Z.use_nCloop
-        nCl = 0;
-        for c1=1:nC
-            Z.c1eff = mod(c1,Z.nCloop);
-            if Z.c1eff == 0
-                Z.c1eff = Z.nCloop;
-            end
-            if Z.c1eff == Z.nCloop || c1 == nC
-                nCl = nCl + 1;
-                Z.scon = '';
-                for k0=c1:(c1+Z.nCloop-1)
-                    if k0 <= nC
-                        Z.scon = [Z.scon xCon(k0).name];
-                    end
+        if Z.use_nCloop
+            nCl = 0;
+            for c1=1:nC
+                Z.c1eff = mod(c1,Z.nCloop);
+                if Z.c1eff == 0
+                    Z.c1eff = Z.nCloop;
                 end
-                call_save_assembled_figures(Z,W,H{nCl},f1);
+                if Z.c1eff == Z.nCloop || c1 == nC
+                    nCl = nCl + 1;
+                    Z.scon = '';
+                    for k0=c1:(c1+Z.nCloop-1)
+                        if k0 <= nC
+                            if ~W.Avg
+                                Z.scon = [Z.scon '_' xCon(k0).name];
+                            else
+                                Z.scon = [Z.scon '_' gen_num_str(k0,2)];
+                            end
+                        end
+                    end
+                    call_save_assembled_figures(Z,W,H{nCl},f1);
+                end
             end
+        else
+            call_save_assembled_figures(Z,W,H{1},f1);
         end
-    else
-        call_save_assembled_figures(Z,W,H{1},f1);
-    end
     end
 catch exception2
     disp(exception2.identifier);

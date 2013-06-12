@@ -76,6 +76,7 @@ try
         TF0 = TF;
         %loop over selected sessions
         C_done = 0;
+        ct = 0;
         for s1=1:length(SPM.xXn)
             if any(Z.sessions == 0) || any(s1 == Z.sessions)
                 if Z.automated_contrasts
@@ -89,14 +90,25 @@ try
                     if Z.NonlinearEpilepsyOn
                         sC = nirs_nonlinear_epilepsy_contrasts(SPM,nr);
                     else
-                        for i0=1:nr-1
-                            sC.contrastT{i0} = [zeros(1,i0-1) 1 zeros(1,nr-i0)];
-                            try
-                                sC.contrastT_name{i0} = ['_' validate_name(SPM.Sess(1).U(i0).name{1})];
-                            catch %exception
-                                %disp(exception.identifier);
-                                %disp('Using default names for contrasts');
-                                sC.contrastT_name{i0} = ['C' int2str(i0)];
+                        if SPM.job.volt == 1
+                            for i0=1:nr-1
+                                sC.contrastT{i0} = [zeros(1,i0-1) 1 zeros(1,nr-i0)];
+                                try
+                                    sC.contrastT_name{i0} = validate_name(SPM.Sess(1).U(i0).name{1});
+                                catch %exception
+                                    %disp(exception.identifier);
+                                    %disp('Using default names for contrasts');
+                                    sC.contrastT_name{i0} = ['C' int2str(i0)];
+                                end
+                            end
+                        else
+                            if SPM.job.volt == 2
+                                for i0=1:nr-1
+                                    ct = ct+1; %Will only work if no session is skipped
+                                    sC.contrastT{i0} = [zeros(1,i0-1) 1 zeros(1,nr-i0)];
+                                    temp_name = SPM.xX.name_short{ct};
+                                    sC.contrastT_name{i0} = validate_name(temp_name);
+                                end
                             end
                         end
                     end

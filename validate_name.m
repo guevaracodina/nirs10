@@ -15,3 +15,4 @@ name = regexprep(name,'$','d');
 name = regexprep(name,'^','c');
 name = regexprep(name,'(','_');
 name = regexprep(name,')','_');
+name = regexprep(name,'*','_');

@@ -210,7 +210,11 @@ for Idx=1:nl
                 view_estimated = 0;
                 try
                     if isfield(TOPOsrc.v{v1},'s1')
-                        ns = length(SPM.xXn); %length(TOPOsrc.v{v1}.s); %number of sessions
+                        try 
+                            ns = length(SPM.xXn); 
+                        catch
+                            ns = length(TOPOsrc.v{v1}.s); %number of sessions
+                        end
                         if (Z.FFX || nS==1) && ns == 1
                             view_estimated = 0; %force not running the group if only one subject and only one session
                         else
