@@ -1,7 +1,8 @@
-function U = nirs_get_X(TR,k,U)
+function U = nirs_get_U(TR,k,U)
 ons = U.ons;
-ons = ons(:); %what happens when there are more than 1 onset type?
-dur = U.dur;
+%Added division by TR; is that correct?
+ons = ons(:)/TR; %what happens when there are more than 1 onset type?
+dur = U.dur/TR;
 dur = dur(:);
 xP.name = 'none';
 xP.h = 0;

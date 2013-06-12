@@ -183,24 +183,35 @@ for Idx=1:nsubj
                                 && (~strcmp(tag,rem_onsets{11}))
                             %Possible new onset
                             not_found = 1; %true
-                            for i=1:NTonset
+                            for i=1:NTonset %now, seizures are all named the same way, as a pair of sz start and sz end.
                                 %check whether onset is one of those already found
-                                if strcmpi(names{i},tag) %case insensitive
+                                if strcmpi(names{i},tag) && ~strcmpi('sz end',tag) && ~strcmpi('end sz',tag) %case insensitive
                                     not_found = 0; %found
                                     k{i} = k{i}+1; %#ok<*AGROW>
                                     onsets{i}(k{i}) = str2double(temp(indx(2):indx(3)))*dt-start_scan;
-                                    durations{i}(k{i}) = dt*(str2double(temp(indx(3):indx(4)))-1); %subtract 1 so point onsets have zero duration
+                                    if ~strcmpi('sz start',tag) && ~strcmpi('start sz',tag)
+                                        durations{i}(k{i}) = dt*(str2double(temp(indx(3):indx(4)))-1); %subtract 1 so point onsets have zero duration
+                                    end
                                     break
                                 end
                             end
                             if not_found
-                                if isempty(onset_to_keep) || strcmp(tag,onset_to_keep)
-                                    %new type of onset
-                                    NTonset = NTonset + 1;
-                                    k{NTonset} = 1;
-                                    names{NTonset} = tag;
-                                    onsets{NTonset}(k{NTonset}) = str2double(temp(indx(2):indx(3)))*dt-start_scan;
-                                    durations{NTonset}(k{NTonset}) = dt*(str2double(temp(indx(3):indx(4)))-1); %subtract 1 so point onsets have zero duration
+                                if isempty(onset_to_keep) || strcmp(tag,onset_to_keep)                                    
+                                    if ~strcmpi('sz end',tag) && ~strcmpi('end sz',tag)
+                                        %new type of onset
+                                        NTonset = NTonset + 1;
+                                        k{NTonset} = 1;
+                                        names{NTonset} = tag;
+                                        onsets{NTonset}(k{NTonset}) = str2double(temp(indx(2):indx(3)))*dt-start_scan;
+                                    end
+                                    if ~strcmpi('sz start',tag) && ~strcmpi('start sz',tag)
+                                        if ~strcmpi('sz end',tag) && ~strcmpi('end sz',tag)
+                                            durations{NTonset}(k{NTonset}) = dt*(str2double(temp(indx(3):indx(4)))-1); %subtract 1 so point onsets have zero duration
+                                        else
+                                            durations{NTonset}(k{NTonset}) = str2double(temp(indx(2):indx(3)))*dt-start_scan - ...
+                                                    onsets{NTonset}(k{NTonset}); %subtract 1 so point onsets have zero duration
+                                        end
+                                    end
                                 end
                             end
                         else
@@ -232,6 +243,7 @@ for Idx=1:nsubj
                     %fRpeaks = fullfile(dir1,[fil1 '_Rpeaks.mat']);
                     %save(fRpeaks,'vR')
                     try
+                        if ~isempty(vR)
                         %Calculate pulse regressor
                         %if ~isempty(dp_NIRS1) && ~isempty(freq_NIRS1)
                         lpi = linspace(0,dp_NIRS1/freq_NIRS1,dp_NIRS1); %*res_factor);
@@ -287,8 +299,10 @@ for Idx=1:nsubj
                         %disp(['Flag_Repair = ' num2str(Flag_Repair) ' for session: ' num2str(i3)]);
                         %disp(['TotalAdded_Repair = ' num2str(TotalAdded_Repair) ' for session: ' num2str(i3)]);
                         %iR = iR + TotalAdded_Repair;
-                        
-                    catch
+                        end
+                    catch exception
+                        disp(exception.identifier);
+                        disp(exception.stack(1));
                         disp('Analyze onsets error');
                     end
                 end

@@ -59,11 +59,16 @@ try
             %Unless one channel is bad, and one is good, and then the
             %average is useless...
             
-            grid_eye_for_LKC = griddata(cchn, rchn, (mtx_eye(:,kk))', x, y, 'cubic');
-            if W.AllowExtrapolation
-                grid_eye = griddata(cchn, rchn, (mtx_eye(:,kk))', x, y, 'v4');
+            if W.no_interpolation
+                grid_eye = griddata(cchn, rchn, (mtx_eye(:,kk))', x, y, 'nearest');
+                grid_eye_for_LKC = grid_eye;
             else
-                grid_eye = griddata(cchn, rchn, (mtx_eye(:,kk))', x, y, 'cubic');
+                grid_eye_for_LKC = griddata(cchn, rchn, (mtx_eye(:,kk))', x, y, 'cubic');
+                if W.AllowExtrapolation
+                    grid_eye = griddata(cchn, rchn, (mtx_eye(:,kk))', x, y, 'v4');
+                else
+                    grid_eye = griddata(cchn, rchn, (mtx_eye(:,kk))', x, y, 'cubic');
+                end
             end
             warning('on')
             

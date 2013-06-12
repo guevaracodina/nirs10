@@ -124,48 +124,47 @@ for Idx=1:size(job.NIRSmat,1)
             end
             nsess = length(idx_sess);
             if need_onsets
-                %Find onsets
-                try
-                    for f=1:nsess
-                        iSess = idx_sess(f);
-                        %PLEASE DO NOT MODIFY THE NEXT TWO LINES!!!!!!!!!!!!!!!!
-                        NIRS.Dt.fir.Sess(1).U(1).name;
-                        if ~isempty(NIRS.Dt.fir.Sess(iSess).U(1).name)
-                            SPM.Sess(f) = NIRS.Dt.fir.Sess(iSess);
-                        else % no onsets
-                            SPM.Sess(f).U = [];
-                            SPM.Sess(f).C.C = [];
-                            SPM.Sess(f).C.name = cell(1,0);
+                if isempty(job.subj.input_onsets{1})
+                    %Find onsets
+                    try
+                        for f=1:nsess
+                            iSess = idx_sess(f);
+                            %PLEASE DO NOT MODIFY THE NEXT TWO LINES!!!!!!!!!!!!!!!!
+                            NIRS.Dt.fir.Sess(1).U(1).name;
+                            if ~isempty(NIRS.Dt.fir.Sess(iSess).U(1).name)
+                                SPM.Sess(f) = NIRS.Dt.fir.Sess(iSess);
+                            else % no onsets
+                                SPM.Sess(f).U = [];
+                                SPM.Sess(f).C.C = [];
+                                SPM.Sess(f).C.name = cell(1,0);
+                            end
                         end
+                    catch                        
+                        %Could not load onset
+                        disp(['Could not find onsets - assuming baseline scan (no stimuli) on session ' int2str(iSess) '.']);
+                        % MICHÈLE 21 sept. 2011 - for resting state scans one must
+                        % be allowed to include 0 conditions in the design matrix
+                        % (only other regressors).
+                        SPM.Sess(f).U = [];
+                        SPM.Sess(f).C.C = [];
+                        SPM.Sess(f).C.name = cell(1,0);
+                        % This way, spm_get_ons will not prompt the user to
+                        % manually enter conditions as it does when the U field
+                        % does not exist.
                     end
-                catch
-                    %Ignore parametric modulations - cf spm_run_fmri_design.m
+                else
                     P.name = 'none';
                     P.h    = 0;
                     for f=1:nsess
                         iSess = idx_sess(f);
-                        try
-                            %load onset file
-                            clear names onsets durations
-                            load(job.subj(1,1).input_onsets{f}); %careful, must have same onsets for all subjects
-                            for kk = 1:size(names, 2)
-                                SPM.Sess(f).U(kk).name = names(kk);
-                                SPM.Sess(f).U(kk).ons = onsets{kk};
-                                SPM.Sess(f).U(kk).dur = durations{kk};
-                                SPM.Sess(f).U(kk).P = P;
-                            end
-                        catch
-                            %Could not load onset
-                            disp(['Could not find onsets - assuming baseline scan (no stimuli) on session ' int2str(iSess) '.']);
-                            % MICHÈLE 21 sept. 2011 - for resting state scans one must
-                            % be allowed to include 0 conditions in the design matrix
-                            % (only other regressors).
-                            SPM.Sess(f).U = [];
-                            SPM.Sess(f).C.C = [];
-                            SPM.Sess(f).C.name = cell(1,0);
-                            % This way, spm_get_ons will not prompt the user to
-                            % manually enter conditions as it does when the U field
-                            % does not exist.
+                        %load onset file
+                        clear names onsets durations
+                        load(job.subj(1,1).input_onsets{f}); %careful, must have same onsets for all subjects
+                        for kk = 1:size(names, 2)
+                            SPM.Sess(f).U(kk).name = names(kk);
+                            SPM.Sess(f).U(kk).ons = onsets{kk};
+                            SPM.Sess(f).U(kk).dur = durations{kk};
+                            SPM.Sess(f).U(kk).P = P;
                         end
                     end
                 end
@@ -386,14 +385,14 @@ for Idx=1:size(job.NIRSmat,1)
                 
                 if (s == 1) || ~rep %always true
                     if need_onsets
-                    % Get inputs, neuronal causes or stimulus functions U
-                    %------------------------------------------------------------------
-                    U = spm_get_ons(SPM,s);
-                    
-                    %Will need this to generate contrasts using SPM later
-                    % Convolve stimulus functions with basis functions
-                    %------------------------------------------------------------------
-                    [X,Xn,Fc] = nirs_spm_Volterra(U,bf,1);
+                        % Get inputs, neuronal causes or stimulus functions U
+                        %------------------------------------------------------------------
+                        U = spm_get_ons(SPM,s);
+                        
+                        %Will need this to generate contrasts using SPM later
+                        % Convolve stimulus functions with basis functions
+                        %------------------------------------------------------------------
+                        [X,Xn,Fc] = nirs_spm_Volterra(U,bf,1);
                     else
                         U = [];
                         X = [];

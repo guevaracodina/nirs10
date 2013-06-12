@@ -12,10 +12,15 @@ try
         Cp = [];
         if Z.FFX || Z.nS == 1
             try 
-                SSxCon = TOPO.xCon; % = TOPO.SSxCon; 
+                SSxCon = TOPO.SSxCon; 
             catch
+                try 
+                    SSxCon = TOPO.xCon; % = TOPO.SSxCon; 
+                catch
+                    
                 disp('No SSxCon -- perhaps you are trying to run group level contrasts with only one subject!')
                 disp('This will break -- make sure you have at least 2 subjects');
+                end
             end
             ns = length(SSxCon);
             

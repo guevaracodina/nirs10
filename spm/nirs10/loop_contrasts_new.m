@@ -11,7 +11,11 @@ try
     s1 = W.s1;
     s2 = W.s2;
     B = Q.B;
-    nC = size(xCon,2);
+    if ~W.Avg
+        nC = size(xCon,2);
+    else
+        nC = size(W.beta,1);
+    end
     if Z.DoStats
         stat_map = zeros(nC,s1,s2); %T-stat
         beta_map = zeros(nC,s1,s2);
@@ -20,7 +24,13 @@ try
             stat_tmp = zeros(s1,s2);
             beta_tmp = zeros(s1,s2);
             cov_tmp = zeros(s1,s2);
-            c = xCon(c1).c;
+            if ~W.Avg
+                c = xCon(c1).c;
+            else
+                c = zeros(nC+1,1);
+                c(c1,1) = 1;
+                xCon(c1).STAT = 'T';
+            end
             if xCon(c1).STAT == 'T'
                 % covariance of interpolated beta
                 if ~W.Avg
@@ -76,7 +86,7 @@ try
         C.beta_map = beta_map; %Used at the group level
         C.cov_map = cov_map;
     else %simple interpolation of the betas
-        if nC == 1
+        if nC == 1 && size(Q.ibeta,1) == 1
             beta_map = zeros(1,s1,s2);
             beta_tmp = zeros(s1,s2);
             Q.ibeta(isnan(Q.ibeta)) = 0;
@@ -84,7 +94,7 @@ try
             beta_map(1,:,:) = beta_tmp;
             C.beta_map = beta_map; %Used at the group level
         else
-            %nV = size(Q.ibeta,1);
+            nC = size(Q.ibeta,1);
             %beta_map = zeros(nC,s1,s2);
             beta_tmp = zeros(nC,s1,s2);
             Q.ibeta(isnan(Q.ibeta)) = 0;

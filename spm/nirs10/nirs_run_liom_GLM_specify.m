@@ -447,6 +447,7 @@ for Idx=1:size(job.NIRSmat,1)
             Xx    = [];
             Xb    = [];
             Xname = {};
+            Xname_short = {};
             Bname = {};
             
             for s = 1:length(SPM.nscan)
@@ -538,6 +539,7 @@ for Idx=1:size(job.NIRSmat,1)
                 %---------------------------------------------------------------
                 for i = 1:length(Xn)
                     Xname{end + 1} = [sprintf('Sn(%i) ',s) Xn{i}];
+                    Xname_short{end+1} = Xn{i};
                 end
                 for i = 1:length(Bn)
                     Bname{end + 1} = [sprintf('Sn(%i) ',s) Bn{i}];
@@ -558,7 +560,7 @@ for Idx=1:size(job.NIRSmat,1)
             SPM.xX.iB     = (1:size(Xb,2)) + size(Xx,2);
             SPM.xX.iG     = [];
             SPM.xX.name   = {Xname{:} Bname{:}};
-            
+            SPM.xX.name_short   = {Xname_short{:} Bname{:}};
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             nscan = SPM.nscan;
             nsess = length(nscan);

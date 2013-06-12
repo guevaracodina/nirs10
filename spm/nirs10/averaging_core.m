@@ -79,14 +79,57 @@ try
         avg_choice = 1;
         onset_delay = averaging_choice.block_averaging.onset_delay;
         onset_duration = averaging_choice.block_averaging.onset_duration;
+        %Quick fix for Sarah's study -- if NIRS files are too short, set
+        %duration from 120 s to 60 s (due to protocol duration changing
+        %according to condition (COG: 60 s, MOT, TDT: 120 s).
+        if size(KY,1)/fs < 110 %will affect only very short NIRS files of about 1 minute or less
+            onset_duration = min(55,size(KY,1)/fs-20); %subtract 1.5 s for protocol to start, plus 5 seconds of cross on screen, plus 5 seconds for beginning of hemodynamic response
+        end
         ons_delay = round(onset_delay*fs);
         ons_duration = round(onset_duration*fs);
     else
         if isfield(averaging_choice,'average_all_data')
             avg_choice = 2;
+        else
+            if isfield(averaging_choice,'seizure_evolution')
+               avg_choice = 3; 
+               onset_delays = averaging_choice.seizure_evolution.onset_delays;
+               onset_duration = averaging_choice.seizure_evolution.onset_duration;
+               ons_delays = round(onset_delays*fs);
+               ons_duration = round(onset_duration*fs);
+            end
         end
     end
     switch avg_choice
+        case 3 %seizure_evolution
+            LOD = length(onset_delays);
+            nst = length(U.ons)*LOD;
+            nch = size(KY,2);
+            SPM.xX.beta = zeros(nst,nch);%stimulus types by channels
+            SPM.xX.covbeta = zeros(nst,nch);
+            for u0=1:length(U.ons)
+                %for covbeta
+                switch base_choice
+                    case 1                       
+                        bo = round(fs*(U.ons(u0)-baseline_offset));
+                        bidx = (bo-base_duration):bo;
+                    case 3
+                        bidx = base_start:(base_start+base_duration);
+                end
+                B0 = std(KY(bidx,:),0,1).^2;
+                M0 = mean(KY(bidx,:),1);
+                for t0=1:LOD
+                    idx1 = round(fs*(U.ons(u0)+onset_delays(t0)));
+                    idx = idx1:(idx1+ons_duration-1);
+                    SPM.xX.beta(t0+(u0-1)*LOD,:) = mean(KY(idx,:),1)-M0;
+                    SPM.xX.covbeta(t0+(u0-1)*LOD,:) = B0;                    
+                end
+            end
+            SPM.xX.t = SPM.xX.beta./SPM.xX.covbeta.^(1/2);
+            Avg.a = SPM.xX.beta;
+            Avg.b = B0; %not quite right
+            Avg.KY = KY;
+            %pseudo-residuals -- ?
         case 2 %basic, extended            
             a = mean(KY,1);
             Avg.a = a;
@@ -140,6 +183,7 @@ try
                 
                 for k0=1:nons
                     co =round(U(u0).ons(k0)*fs); %current onset
+                    %co
                     k0_OK = 1;
                     try
                         switch base_choice

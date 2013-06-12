@@ -7,8 +7,11 @@ spec_hemi = W.spec_hemi;
 p_value = Z.p_value;
 GInv = Z.GInv;
 GFIS = Z.GFIS;
-
-nC = size(xCon,2);
+if ~W.Avg
+    nC = size(xCon,2);
+else
+    nC = size(W.beta,1);
+end
 %Structure F
 load Split
 F.split = split;
@@ -59,7 +62,12 @@ try
         end
         
         s_map = zeros(s1, s2);
-        tstr = xCon(c1).STAT;
+        if ~W.Avg
+            tstr = xCon(c1).STAT;
+        else
+            tstr = 'T';
+            xCon(c1).name = gen_num_str(c1,2);
+        end
         F.tstr = tstr;
         s_map(index_mask) = squeeze(stat_map(c1,index_mask));
         F.s_map = s_map;

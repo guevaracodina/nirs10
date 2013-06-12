@@ -94,9 +94,14 @@ while isempty(index_th) == 1;
     index_th=find(p>p_value - dp & p<p_value + dp);
     dp = dp*10;
 end
-threshold = t(index_th(end));
-if pb
-    disp(['Problematic threshold: ' stat ' = ' num2str(threshold)]);
+if dp>0.1 %not converged, take minimum value for
+    disp('EC threshold calculation did not work -- imposing threshold of 3');
+    threshold = 3.9;
 else
-    disp(['Calc_EC OK; threshold: ' stat ' = ' num2str(threshold)]);    
+    threshold = t(index_th(end));
+    if pb
+        disp(['Problematic threshold: ' stat ' = ' num2str(threshold)]);
+    else
+        disp(['Calc_EC OK; threshold: ' stat ' = ' num2str(threshold)]);
+    end
 end

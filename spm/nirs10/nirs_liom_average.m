@@ -194,8 +194,13 @@ try
                 need_res = 0;
                 tU = [];
             else
-                need_res = 1;
-                need_onsets = 1;
+                if isfield(SPM.job.averaging_choice,'seizure_evolution')
+                    need_res = 0;
+                    need_onsets = 1;
+                else
+                    need_res = 1;
+                    need_onsets = 1;
+                end
             end
             if need_onsets
                 %onsets

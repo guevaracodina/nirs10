@@ -87,7 +87,7 @@ model_estimate.help   = {'These modules estimate a GLM.'};
 HDM_options        = cfg_choice; %cfg_repeat;
 HDM_options.name   = 'HDM options';
 HDM_options.tag    = 'HDM_options';
-HDM_options.values = {nirs_run_HDM_cfg nirs_run_NIRS_HDM_cfg nirs_run_liom_HDM_cfg};
+HDM_options.values = {nirs_run_HDM_cfg nirs_run_NIRS_HDM_cfg nirs_run_liom_HDM_cfg nirs_run_SCKS_cfg};
 HDM_options.help   = {'These modules perform hemodynamic modelling.'};
 
 %module 13

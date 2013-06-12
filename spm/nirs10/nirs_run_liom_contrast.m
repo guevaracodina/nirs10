@@ -117,6 +117,7 @@ for Idx=1:size(job.NIRSmat,1)
                         rchn = rendered_MNI{W.side_hemi}.rchn;
                         cchn = rendered_MNI{W.side_hemi}.cchn;
                         W.AllowExtrapolation = job.AllowExtrapolation;
+                        W.no_interpolation = job.no_interpolation;
                         %find channels which are visible from this projection view
                         W.index_ch = find(rchn ~= -1);
                         if isfield(rendered_MNI{W.side_hemi},'view_mask_2d') % for back-compatibility

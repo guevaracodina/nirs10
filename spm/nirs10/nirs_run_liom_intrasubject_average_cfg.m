@@ -5,6 +5,31 @@ function liom_intrasubject_average = nirs_run_liom_intrasubject_average_cfg
 % Averaging method
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+onset_delays         = cfg_entry;
+onset_delays.name    = 'Onset delays in seconds';
+onset_delays.tag     = 'onset_delays';
+onset_delays.strtype = 'r';
+onset_delays.num     = [1 Inf];
+onset_delays.val     = {3};
+onset_delays.help    = {'Enter an array of onset delays in seconds; negative numbers are allowed.'};
+
+onset_duration         = cfg_entry;
+onset_duration.name    = 'Onset duration in seconds';
+onset_duration.tag     = 'onset_duration';
+onset_duration.strtype = 'r';
+onset_duration.num     = [1 1];
+onset_duration.val     = {2};
+onset_duration.help    = {'Enter onset duration.'
+    'For an event related protocol, this could be 1 or 2 seconds. '
+    'For a block protocol, this will typically be the length of the block.'}';
+
+seizure_evolution         = cfg_branch;
+seizure_evolution.tag     = 'seizure_evolution';
+seizure_evolution.name    = 'Seizure Evolution';
+seizure_evolution.val     = {onset_delays onset_duration};
+seizure_evolution.help    = {'Seizure evolution.'
+    'Goal here is to use Z-scores where the standard deviation is calculated from the baseline'.'}';
+
 onset_delay         = cfg_entry;
 onset_delay.name    = 'Onset delay in seconds';
 onset_delay.tag     = 'onset_delay';
@@ -140,7 +165,7 @@ average_all_data.help    = {'Average all data: for each channel this option '
 averaging_choice        = cfg_choice;
 averaging_choice.name   = 'Choose averaging method';
 averaging_choice.tag    = 'averaging_choice';
-averaging_choice.values = {block_averaging average_all_data};
+averaging_choice.values = {block_averaging average_all_data seizure_evolution};
 averaging_choice.val    = {block_averaging};
 averaging_choice.help   = {'Choose averaging method.'}';
 

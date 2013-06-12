@@ -163,6 +163,14 @@ AllowExtrapolation.values    = {1,0};
 AllowExtrapolation.val       = {1};
 AllowExtrapolation.help      = {'Allow Extrapolation.'}';
 
+no_interpolation           = cfg_menu;
+no_interpolation.name      = 'Remove interpolation';
+no_interpolation.tag       = 'no_interpolation';
+no_interpolation.labels    = {'Yes' 'No'};
+no_interpolation.values    = {1,0};
+no_interpolation.val       = {0};
+no_interpolation.help      = {'Remove interpolation entirely.'}';
+
 % ---------------------------------------------------------------------
 % sessions Sessions
 % ---------------------------------------------------------------------
@@ -180,7 +188,7 @@ liom_contrast.name = 'Liom Contrast Calculations';
 liom_contrast.tag  = 'liom_contrast';
 %PP removed: liom_contrast_struct
 liom_contrast.val  = {NIRSmat redo1 NIRSmatCopyChoice ContrastChoice Sessions ...
-    view TopoData GenerateStats StatMethod UseCorrelRes AllowExtrapolation ...
+    view TopoData GenerateStats StatMethod UseCorrelRes AllowExtrapolation no_interpolation ...
     spatial_LPF contrast_p_value display_options}; %Study_type
 liom_contrast.prog = @nirs_run_liom_contrast;
 liom_contrast.vout = @nirs_cfg_vout_liom_contrast;
