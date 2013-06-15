@@ -79,10 +79,14 @@ try
                 if LKC || UseCorrelRes || W.Avg
                     index_mask0 = find(mask == 1);
                     L2 = zeros(1,nch);
+                    B = zeros(nch,length(index_mask0));
+                    Bx = B;
+                    By = B;                    
                 else
                     [rmask{1}, cmask{1}] = find(mask == 1);
                     index_mask0 = find(mask == 0);
                 end
+                
             end
             if LKC || UseCorrelRes || W.Avg
                 B(kk, :) = grid_eye(index_mask0)';
