@@ -66,10 +66,10 @@ model_reconstruct.help   = {'3D Reconstruction of NIRS data.'};
 
 %module 9
 model_specify        = cfg_choice; %cfg_repeat;
-model_specify.name   = 'GLM Specification (or Averaging)';
+model_specify.name   = 'GLM Specification (or Averaging/CINE)';
 model_specify.tag    = 'model_specify';
 model_specify.values = {nirs_run_liom_intrasubject_average_cfg ...
-                        nirs_run_liom_GLM_specify_cfg};
+                        nirs_run_liom_GLM_specify_cfg nirs_run_liom_cine_cfg};
 model_specify.help   = {'These modules either perform averaging or specify a GLM.'};
 
 %module 10
