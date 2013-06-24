@@ -156,7 +156,7 @@ try
                         hc2_min = sbar(1);
                         x1 = round((max_T2-min_T2)/(max_T-min_T2)*cmap_res);
                         if x1 < 1, x1 = 1; end
-                        hc2_max = sbar(x1);
+                        hc2_max = sbar(x1); 
                     else
                         if cbar1 && ~cbar2
                             hc1_min = sbar(65);
@@ -192,8 +192,8 @@ try
                 filen2 = fullfile(pathn,[tstr '_' str_cor '_' contrast_info '.png']);
                     print(fh1, '-dpng', filen2,'-r300');
                     
-                filen3 = fullfile(pathn,[tstr '_' str_cor '_' contrast_info '.pdf']);
-                    print(fh1, '-dpdf', filen3); %,'-r300');
+                %filen3 = fullfile(pathn,[tstr '_' str_cor '_' contrast_info '.pdf']);
+                %    print(fh1, '-dpdf', filen3); %,'-r300');
             end
         end
         %Fill Y
