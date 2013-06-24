@@ -1,6 +1,6 @@
 function out = nirs_run_liom_cine(job)
 %Cine
-Z = get_cine_options(job);
+
 %Views:
 Z.views_to_run = job.view;
 % 1: 'ventral'

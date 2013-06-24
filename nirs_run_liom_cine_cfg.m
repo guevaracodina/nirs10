@@ -1,8 +1,7 @@
 function liom_cine = nirs_run_liom_cine_cfg
 %This is based on nirs_run_liom_contrast, developed to do cinés
 [NIRSmat redo1 NIRSmatCopyChoice] = get_common_NIRSmat(1,'Cine');
-consess = nirs_spm_get_consess;
-display_options = liom_contrast_group_options;
+display_options = liom_cine_options;
 
 %Select view
 view         = cfg_entry;
@@ -107,6 +106,15 @@ Sessions.num     = [0 Inf];
 Sessions.val     = {''};
 Sessions.help    = {'Enter the numbers of the sessions to include. If not specified, all sessions present in the NIRS matrix will be included.'};
 
+use_onset_files           = cfg_menu;
+use_onset_files.name      = 'Use onset files';
+use_onset_files.tag       = 'use_onset_files';
+use_onset_files.labels    = {'Yes' 'No'};
+use_onset_files.values    = {1,0};
+use_onset_files.val       = {0};
+use_onset_files.help      = {'If selecting no, a single onset will be assumed starting 5 seconds after'
+    'the beginning of the file. Otherwise the specified onsets will be used.'}';
+
 OnsetChoice         = cfg_entry; %Careful, not the same as sessions in user-defined SPM contrasts
 OnsetChoice.name    = 'Onset choice';
 OnsetChoice.tag     = 'OnsetChoice';
@@ -142,6 +150,14 @@ time_resolution.val     = {2};
 time_resolution.help    = {'Enter time interval(s) between cine frames, in seconds.'
     'Enter a list to specify non-evenly spaced intervals'}';
 
+use_whole_file_for_baseline           = cfg_menu;
+use_whole_file_for_baseline.name      = 'Use whole file to compute baseline';
+use_whole_file_for_baseline.tag       = 'use_whole_file_for_baseline';
+use_whole_file_for_baseline.labels    = {'Yes' 'No'};
+use_whole_file_for_baseline.values    = {1,0};
+use_whole_file_for_baseline.val       = {0};
+use_whole_file_for_baseline.help      = {'If selecting yes, the next two parameters will not be used.'}';
+
 baseline_offset         = cfg_entry;
 baseline_offset.name    = 'Baseline offset in seconds';
 baseline_offset.tag     = 'baseline_offset';
@@ -164,8 +180,8 @@ baseline_duration.help    = {'Enter baseline duration.'}';
 onsetInfo         = cfg_branch;
 onsetInfo.tag     = 'onsetInfo';
 onsetInfo.name    = 'Information about onsets'; 
-onsetInfo.val     = {OnsetChoice onset_delay onset_duration time_resolution ...
-    baseline_offset baseline_duration};
+onsetInfo.val     = {use_onset_files OnsetChoice onset_delay onset_duration time_resolution ...
+    use_whole_file_for_baseline baseline_offset baseline_duration};
 onsetInfo.help    = {'Information about onsets.'}';
 
 select_chromophore         = cfg_entry;

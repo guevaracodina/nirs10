@@ -8,13 +8,23 @@ try
             case 2
                 ch = W.ch_HbR;
             case 3
-                ch = W.ch_HbT;
+                chO = W.ch_HbO;
+                chR = W.ch_HbR;
         end
         hb = get_chromophore(h1);
         %Interpolation of beta and covbeta
-        Q.ibeta = W.beta(:,ch) * Q.B;
-        for i0 = 1:size(W.covbeta,1)
-            Q.ivar(i0,:) = sum(Q.B.* (diag(W.covbeta(i0,ch)) * Q.B),1);
+        if h1 == 3
+            Q.ibeta = (W.beta(:,chO)+W.beta(:,chR)) * Q.B;
+            ivar_temp = sum(Q.B.* (diag(W.covbeta(1,chO)+W.covbeta(1,chR)) * Q.B),1);
+            for i0 = 1:size(W.covbeta,1)
+                Q.ivar(i0,:) = ivar_temp;
+            end
+        else
+            Q.ibeta = W.beta(:,ch) * Q.B;
+            ivar_temp = sum(Q.B.* (diag(W.covbeta(1,ch)) * Q.B),1);
+            for i0 = 1:size(W.covbeta,1)
+                Q.ivar(i0,:) = ivar_temp;
+            end
         end
         C = loop_cine(Q,W,Z);
         interpolated_cine(Z,W,C,Q,f1,Z.erdf_default,hb,u1,k0);

@@ -4,4 +4,4 @@ str_cor = 'unc';
 %threshold
 th_z = spm_invTcdf(1-p_value, erdf);
 index_over = find(s_map > th_z);
-index_over2 = [find(s_map > th_z); find(-s_map > th_z)];
+index_over2 = find(-s_map > th_z);

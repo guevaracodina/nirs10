@@ -6,6 +6,12 @@ OnsetChoice = Z.onsetInfo.OnsetChoice;
 onset_delay = Z.onsetInfo.onset_delay;
 onset_duration = Z.onsetInfo.onset_duration;
 time_resolution = Z.onsetInfo.time_resolution;
+%if isfield(Z.onsetInfo,'use_whole_file_for_baseline')
+    use_whole_file_for_baseline = Z.onsetInfo.use_whole_file_for_baseline;
+% else
+%     use_whole_file_for_baseline = 1;
+% end
+use_onset_files = Z.onsetInfo.use_onset_files;
 baseline_offset = Z.onsetInfo.baseline_offset;
 baseline_duration = Z.onsetInfo.baseline_duration;
 if length(onset_delay) == 1
@@ -14,7 +20,7 @@ else
     onset_delays = onset_delay;
 end
 LOD = length(onset_delays);
-
+W.time_resolution = time_resolution;
 %Filters
 %HPF - Butterworth infinite impulse response filter
 hpf_butter = Z.CineFilters.hpf_butter;
@@ -84,6 +90,8 @@ try
                     mX = [mX' ones(nS,1)];
                     pmX = pinv(mX);
                     KY = Y - mX * (pmX * Y);
+                case 0
+                    KY = Y;
             end
             %LPF
             svec = 1:size(Y,1);
@@ -94,8 +102,12 @@ try
             KY = spm_filter_HPF_LPF_WMDL(K,KY);
             
             %Get onset information
+            if use_onset_files
             U = NIRS.Dt.fir.Sess(f1).U;
-            
+            else
+                U.ons = 5.1;
+                OnsetChoice = 1;
+            end
             %loop over onset types
             for u1 = OnsetChoice
                 %loop over onsets
@@ -106,22 +118,30 @@ try
                     covbeta = zeros(LOD,NC);
                     %Baseline
                     bo = round(fs*(ons(k0)-baseline_offset));
-                    bidx = round((bo-fs*baseline_duration)):bo;
-                    if bidx(1) > 1 %else skip onset
-                        B0 = std(KY(bidx,:),0,1).^2; %Baseline variance
-                        M0 = mean(KY(bidx,:),1); %Baseline mean
+                    bidx = round((bo-fs*baseline_duration)+1):bo;
+                    if bidx(1) > 0 %else skip onset
+                        %B0 = std(KY(bidx,:),0,1).^2; %Baseline variance
+                        B0 = std(KY,0,1).^2; %Baseline variance
+                        if use_whole_file_for_baseline
+                            M0 = mean(KY,1);
+                        else
+                            M0 = mean(KY(bidx,:),1); %Baseline mean
+                        end
                         for t0=1:LOD
                             idx1 = round(fs*(ons(k0)+onset_delays(t0)));
-                            idx = idx1:round(idx1+fs*onset_duration-1);
-                            if idx(end) <= size(KY,1);
+                            idx = idx1:round(idx1+fs*time_resolution-1);
+                            if idx(end) <= size(KY,1)
                                 beta(t0,:) = mean(KY(idx,:),1)-M0;
                                 covbeta(t0,:) = B0;
-                                %t = SPM.xX.beta./SPM.xX.covbeta.^(1/2);
+                                %t = beta./covbeta.^(1/2);
                             else
                                 LODmax = t0-1;
-                                beta = beta(1:LODmax,:);
-                                covbeta = covbeta(1:LODmax,:);
-                                disp(['Only ' int2str(LODmax) ' time points can be included for onset ' int2str(k0) ' of onset type ' int2str(u0)]);
+                                if t0>1
+                                    beta = beta(1:LODmax,:);
+                                    covbeta = covbeta(1:LODmax,:);
+                                end
+                                disp(['Only ' int2str(LODmax) ' time points can be included for onset ' int2str(k0) ' of onset type ' int2str(u1)]);
+                                break
                             end
                         end
                     end
