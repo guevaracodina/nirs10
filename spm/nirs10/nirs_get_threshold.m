@@ -34,7 +34,14 @@ switch fign
         %Get threshold
         if LKCflag % || UseCorrelRes
             th_z = calc_EC(LKC,p_value,tstr,[eidf,erdf]);
+            %Bonferroni
+            th_z2 = spm_invTcdf(1-p_value/nchn, erdf);
             str_cor = StatStr;
+            %Take lower threshold of EC or Bonferroni
+            if th_z2 < th_z
+                th_z = th_z2;
+                str_cor = [StatStr 'Bonf'];                
+            end           
         else
             if tstr == 'T'
                 %Tube
@@ -124,10 +131,18 @@ switch fign
                         end
                         th_z = max(th_zi(1:end/2)); %completely heuristic
                         %a=[]; for i0=1:(G.ns-G.min_subj+1), a = [a length(G.idxi{i0})]; end, a
+                        str_cor = StatStr;
                     else
                         th_z = calc_EC(LKC,p_value,tstr,[eidf,erdf]);
-                    end
-                    str_cor = StatStr;
+                        %Bonferroni
+                        th_z2 = spm_invTcdf(1-p_value/nchn, erdf);
+                        str_cor = StatStr;
+                        %Take lower threshold of EC or Bonferroni
+                        if th_z2 < th_z
+                            th_z = th_z2;
+                            str_cor = [StatStr 'Bonf'];
+                        end
+                    end                    
                 else
                     th_z = spm_invTcdf(1-p_value, erdf);
                 end
@@ -163,6 +178,10 @@ switch fign
         %threshold
         if tstr == 'T'
             th_z = spm_invTcdf(1-p_value, erdf);
+            if isnan(th_z)                
+                th_z = spm_invTcdf(1-p_value, 10);
+                disp('Problem with erdf: Imposing threshold')
+            end
         else
             th_z = spm_invFcdf(1-p_value, eidf,erdf);
         end

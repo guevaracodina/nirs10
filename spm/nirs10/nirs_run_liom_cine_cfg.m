@@ -156,7 +156,10 @@ use_whole_file_for_baseline.tag       = 'use_whole_file_for_baseline';
 use_whole_file_for_baseline.labels    = {'Yes' 'No'};
 use_whole_file_for_baseline.values    = {1,0};
 use_whole_file_for_baseline.val       = {0};
-use_whole_file_for_baseline.help      = {'If selecting yes, the next two parameters will not be used.'}';
+use_whole_file_for_baseline.help      = {'If selecting yes, the next two parameters will not be used.'
+    'If selecting yes, a high pass filter is probably required.'
+    'Note that wheter selecting yes or no, the variance of the baseline will be calculated over the '
+    'whole dataset; only the choice of the mean for the baseline is affected by this choice.'}';
 
 baseline_offset         = cfg_entry;
 baseline_offset.name    = 'Baseline offset in seconds';
