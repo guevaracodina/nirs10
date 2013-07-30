@@ -22,14 +22,6 @@ if isfinite(brt)
         case 3
             brt = 0.25;
     end
-    col = eye(3);
-    % ask for custom colours & get rgb values
-    %------------------------------------------------------------------
-    %         if spm_input('Which colours?','!+1','b',{'RGB','Custom'},[0 1],1)
-    %             for k = 1:num
-    %                 col(k,:) = uisetcolor(col(k,:),sprintf('Colour of blob set %d',k));
-    %             end
-    %         end
 end
 
 total_NIRS = size(job.NIRSmat,1);
@@ -106,35 +98,41 @@ for Idx=1:size(job.NIRSmat,1)
             catch
                 disp(['TopoData.mat not found at ' file_topodata]);
             end
-%             for kk=1:6
-%             rendered_MNI{kk}.render_template = 1;
-%             end
+            
+            try
+               [dirTD,filTD,extTD] = fileparts(file_topodata);
+               rend_extracted = load(fullfile(dirTD, ['render_c1Extracted' '.mat']));
+               for kk = 1 : length(rend_extracted.rend)
+                    rend_extracted.rend{kk}.view_mask_2d = flipud(rendered_MNI{kk}.view_mask_2d);
+                    rend_extracted.rend{kk}.render_template = rendered_MNI{kk}.render_template;
+               end
+               rendered_MNI = rend_extracted.rend;
+               clear rend_extracted
+            catch
+                disp(['render_c1Extracted not found at ' dirTD]);
+                disp(['Render on template instead. Warning! The focus position may not be correct!']);
+            end
+            
             render_template = rendered_MNI{1}.render_template;
                  
-            T1 = NIRS.Dt.ana.T1;
-            V1 = spm_vol(T1);
             tXYZmm = [xSPM.XYZmm;ones(1,size(xSPM.XYZmm,2))];
             tXYZ = V1.mat\tXYZmm;
-            anatT1 = NIRS.Dt.ana.T1;
             [dirT1, fil, ext] = fileparts(anatT1);
+            
             if render_template
+
                 %Instead we want projection on the template -- need to redo
                 %the spm_surf on the template.
-                
-                %**************************************************************
-                %Normalise mm coordinates and voxel coordinates
-                %Ke Peng, 2012-09-26
-                %**************************************************************
                 wT1 = NIRS.Dt.ana.wT1;
                 Q = (wT1.VG.mat/wT1.Affine)/wT1.VF.mat;
                 tXYZwmm = Q * tXYZmm;
-                fwT1 = fullfile(dirT1,['w' fil ext(1:4)]);
-                V_wT1 = spm_vol(fwT1);
-                tXYZwvx = V_wT1.mat\tXYZwmm;
+
+                T1template = fullfile(fileparts(which('spm')),'templates','T1.nii');
+                V_tp = spm_vol(T1template);
+                tXYZwvx = V_tp.mat\tXYZwmm;
                 xSPM.XYZ = tXYZwvx(1:3,:);
-                xSPM.M = V_wT1.mat;
-                xSPM.DIM = V_wT1.dim;
-%                 fwc1 =  fullfile(dirT1,['wc1' fil ext(1:4)]);               
+                xSPM.M = V_tp.mat;
+                xSPM.DIM = V_tp.dim;        
                 %**************************************************************
 %                 %check if render file on gray matter is available
 %                 if ~isfield(NIRS.Dt.ana,'render_wc1')
@@ -144,22 +142,15 @@ for Idx=1:size(job.NIRSmat,1)
 %                 end
 %                 rend_file = NIRS.Dt.ana.render_wc1;
             else
-%                 fc1 =  fullfile(dirT1,['c1' fil ext(1:4)]);
-%                 %check if segmentation is required
-%                 if ~spm_existfile(fc1)
-%                     disp('Need to run segmentation');
-%                 end
-%                 
-%                 %check if render file on gray matter is available
-%                 if ~isfield(NIRS.Dt.ana,'render_c1')
-%                     %generate rendered image
-%                     spm_surf(fc1,1);
-%                     NIRS.Dt.ana.render_c1 = fullfile(dirT1,['render_c1' fil '.mat']);                  
-%                 end
-%                 rend_file = NIRS.Dt.ana.render_c1;
+                file_c1 = fullfile(dirT1,['c1' fil ext(1:4)]);
+                V_c1 = spm_vol(file_c1);
+                
+                tXYZmm = [xSPM.XYZmm;ones(1,size(xSPM.XYZmm,2))];
+                tXYZ = V_c1.mat\tXYZmm;
+                
                 xSPM.XYZ = tXYZ(1:3,:);
-                xSPM.M = V1.mat;
-                xSPM.DIM = V1.dim;
+                xSPM.M = V_c1.mat;
+                xSPM.DIM = V_c1.dim;
             end           
             %Load TOPO file
             try
@@ -168,6 +159,7 @@ for Idx=1:size(job.NIRSmat,1)
             catch
                 disp(['Could not load TOPO file for subject' int2str(Idx) ' for ' job.NIRSmat{Idx,1}]);
             end
+            
             %sensitivity and specificity check for subject
             [sen_spe render_proj] = nirs_sensitivity_specificity_calcu(...
                 job.thres_sel,xSPM,brt,TOPO,rendered_MNI,sessions,views);

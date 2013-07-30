@@ -157,6 +157,23 @@ volt.labels = {
 volt.values = {1 2 3};
 volt.val = {1};
 
+% ----------------------------------------------------------------------
+% Early response
+% ----------------------------------------------------------------------
+
+time_shift         = cfg_entry;
+time_shift.tag     = 'time_shift';
+time_shift.name    = 'Time shift of onsets (early response)';
+time_shift.strtype = 'r';
+time_shift.help    = {
+    'This option is for the study of the early response of onsets.'
+    'Please specify the desired shifting time (in seconds) here (e.g. 0, 3, 6, 9, 12, 15). '
+    'If a nonzero real value is entered, the timing of the onsets of interest will be adjusted ahead.'
+    }';
+time_shift.num     = [1 1];
+time_shift.val     = {0};
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % LIOM General Linear Model Specification
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -356,27 +373,6 @@ wls_or_bglm.help = {'Choose which GLM method to use:'
     'WLS: wavelet least square'
     'BGLM: Bayesian general linear model'
     'NIRS_SPM: Ye et al methods (MDL), with either precoloring or prewhitening.'}';
-%%%
-trs_file         = cfg_files;
-trs_file.tag     = 'trs_file';
-trs_file.name    = 'File from TRS data';
-trs_file.filter  = '.mat';
-trs_file.ufilter = '.*';
-trs_file.num     = [1 1];
-trs_file.help    = {'Select the file with concentration values from TRS.'};
-
-no_trs      = cfg_branch;
-no_trs.name = 'No TRS recording';
-no_trs.tag  = 'no_trs';
-no_trs.help = {''};
-
-%%% 
-GLM_include_trs         = cfg_choice;
-GLM_include_trs.tag     = 'GLM_include_trs';
-GLM_include_trs.name    = 'Include time domain regressor';
-GLM_include_trs.values  = {trs_file no_trs};
-GLM_include_trs.val     = {no_trs};
-GLM_include_trs.help    = {''};
 
 GLM_include_cardiac    = cfg_menu;
 GLM_include_cardiac.name   = 'Include cardiac regressor';
@@ -561,7 +557,7 @@ wls_bglm_specify      = cfg_exbranch;
 wls_bglm_specify.name = 'LIOM GLM Specification';
 wls_bglm_specify.tag  = 'wls_bglm_specify';
 wls_bglm_specify.val  = {NIRSmat redo1 NIRSmatCopyChoice sessions subj units time_res derivs bases ...
-    volt GLM_include_trs GLM_include_cardiac GLM_include_Mayer vasomotion_choice NIRSchannelsConfound GenerateHbT flag_window ...
+    volt time_shift GLM_include_cardiac GLM_include_Mayer vasomotion_choice NIRSchannelsConfound GenerateHbT flag_window ...
     channel_pca NumPCAComponents hpf_butter generate_trRV TrRVRVexact ... %filter_design_matrix ...
     target_sampling_rate wls_or_bglm };
 wls_bglm_specify.prog = @nirs_run_liom_GLM_specify;

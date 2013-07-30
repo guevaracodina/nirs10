@@ -62,6 +62,16 @@ render_colour.help = {'Choose display colours.'
 
 %Project contrasts configurations                   
                    
+chromophore_select      = cfg_menu;
+chromophore_select.tag  = 'chromophore_select';
+chromophore_select.name = 'Select chromophore';
+chromophore_select.labels = {'HbO', 'HbR', 'HbT'};% "custom" option has been removed
+chromophore_select.values = {1, 2, 3};
+chromophore_select.val  = {2};
+chromophore_select.help = {'Choose a chromophore to be projected'
+                       'Must select from these three options:'
+                       'HbR/HbO/HbT'}';
+
 contrasts_views      = cfg_entry;
 contrasts_views.tag  = 'contrasts_views';
 contrasts_views.name = 'Select Views to generate';
@@ -74,10 +84,10 @@ contrasts_views.help    = {'Specify views. Input the corresponding number.'
 contrasts_session      = cfg_entry;
 contrasts_session.tag  = 'contrasts_session';
 contrasts_session.name = 'Select Sessions to project contrasts';
-contrasts_session.val = {1};
+contrasts_session.val = {0};
 contrasts_session.strtype = 'r';
 contrasts_session.num     = [1 inf];
-contrasts_session.help    = {'Specify sessions. Input the number.'};                   
+contrasts_session.help    = {'Specify sessions. Input the number. Input 0 for a group view result (uncorrected).'};                   
                    
 contrasts_disabled         = cfg_branch;
 contrasts_disabled.tag     = 'contrasts_disabled';
@@ -88,14 +98,14 @@ contrasts_disabled.help    = {'Disable the contrasts projection'};
 contrasts_enabled         = cfg_branch;
 contrasts_enabled.tag     = 'contrasts_enabled';
 contrasts_enabled.name    = 'Project contrasts onto a same image';
-contrasts_enabled.val     = {contrasts_session contrasts_views};
+contrasts_enabled.val     = {chromophore_select contrasts_session contrasts_views};
 contrasts_enabled.help    = {'Enable the contrasts projection'};
 
 proj_contrasts      = cfg_choice;
 proj_contrasts.tag  = 'proj_contrasts';
 proj_contrasts.name = 'Contrasts Projection';
 proj_contrasts.values = {contrasts_enabled contrasts_disabled};
-proj_contrasts.val = {contrasts_disabled};
+proj_contrasts.val = {contrasts_enabled};
 proj_contrasts.help = {'Choose whether to project contrasts on the same image.'
                        'Must select from these two options:'
                        'Projuct contrasts onto a same image/Do not project contrasts'}';

@@ -1,4 +1,4 @@
-function nirs_focus_contrast_render(dat,brt,thres,TOPO,rend,sessions,views)
+function nirs_focus_contrast_render(NIRS,dat,brt,TOPO,rend,disp_op)
 % Render blobs on surface of a 'standard' brain
 % FORMAT spm_render(dat,brt,rendfile)
 %
@@ -38,6 +38,14 @@ function nirs_focus_contrast_render(dat,brt,thres,TOPO,rend,sessions,views)
 
 %============================Configurations================================
 try
+
+thres = disp_op.thres_sel;
+sessions = disp_op.sessions;
+views = disp_op.views;
+chromophore = disp_op.chromophore;
+save_dir = disp_op.save_dir;
+activation = 1;
+    
 num     = length(dat);
 %define the colours for focus and contrasts display
 %col_focus = eye(3);%Red
@@ -203,7 +211,7 @@ for j=1:length(dat),
         %------------------------------------------------------------------
         render_proj.focus{j}.f_map{brain_view}.data = X_pos;
         [side_hemi spec_hemi] = nirs_get_brain_view(brain_view);
-        render_proj.focus{j}.f_map{brain_view}.view = side_hemi;
+        render_proj.focus{j}.f_map{brain_view}.view = spec_hemi;
 
     end
 end
@@ -228,60 +236,76 @@ clear i j
 for i = sessions
     for j = views
         
-        con_XYZ = squeeze(TOPO.v{j}.s{i}.hb{2}.stat_map(1,:,:)); %To project HbR concentration as a first stage. Only have the first activation.
-        con_XYZ = flipud(con_XYZ); %Upside down
-        
-        %Remove massive interpolation
-        if isfield(rend{j},'view_mask_2d') % for back-compatibility
-            con_XYZ = con_XYZ .* rend{j}.view_mask_2d;
-        end
+        if i == 0 %Group view
+            con_XYZ = TOPO.v{j}.g.hb{chromophore}.c{activation}.Tmap;
+            con_XYZ = flipud(con_XYZ);
+            con_XYZ(find(abs(con_XYZ) < 2.1)) = 0;
+            con_name = TOPO.v{j}.g.hb{2}.c{1}.c.name;
+            disp(['Projection HbR activation ' con_name ' for view ' j ' in group stage']);
+            disp('Only uncorrected results are presented.');
+            i0 = 20;
+            
+        else
+            con_XYZ = squeeze(TOPO.v{j}.s{i}.hb{chromophore}.stat_map(activation,:,:)); %To project HbR concentration as a first stage. Only have the first activation.
+            activation_type = 1;
+            con_XYZ = flipud(con_XYZ); %Upside down
 
-        
-        %Apply the threshold value
-        if thres
-            if isfield(TOPO.v{j}.s{i}.hb{2}, 'th_z') %Corresponding to HbR
-                if isfield(TOPO.v{j}.s{i}.hb{2}.th_z{1}, 'positive_thz') %Corresponding to the first activation
-                    thz_p = TOPO.v{j}.s{i}.hb{2}.th_z{1}.positive_thz;
-                    con_p = con_XYZ;
-                    con_p((con_XYZ - thz_p) <= 0) = 0;  
-                end
-                if isfield(TOPO.v{j}.s{i}.hb{2}.th_z{1}, 'negative_thz')
-                    thz_n = TOPO.v{j}.s{i}.hb{2}.th_z{1}.negative_thz;
-                    con_n = con_XYZ;
-                    con_n((con_XYZ + thz_n) >= 0) = 0;  
-                end
-                
-                if exist('con_p', 'var') && exist('con_n', 'var')
-                    con_XYZ = con_p + con_n;
-                    clear con_p con_n
-                elseif exist('con_p', 'var')
-                    con_XYZ = con_p;
-                    clear con_p
-                elseif exist('con_n', 'var')
-                    con_XYZ = con_n;
-                    clear con_n;
+            %Remove massive interpolation
+            if isfield(rend{j},'view_mask_2d') % for back-compatibility
+                con_XYZ = con_XYZ .* rend{j}.view_mask_2d;
+            end
+
+
+            %Apply the threshold value
+            if thres
+                if isfield(TOPO.v{j}.s{i}.hb{2}, 'th_z') %Corresponding to HbR
+                    if isfield(TOPO.v{j}.s{i}.hb{2}.th_z{1}, 'positive_thz') %Corresponding to the first activation
+                        thz_p = TOPO.v{j}.s{i}.hb{2}.th_z{1}.positive_thz;
+                        con_p = con_XYZ;
+                        con_p((con_XYZ - thz_p) <= 0) = 0;  
+                    end
+                    if isfield(TOPO.v{j}.s{i}.hb{2}.th_z{1}, 'negative_thz')
+                        thz_n = TOPO.v{j}.s{i}.hb{2}.th_z{1}.negative_thz;
+                        con_n = con_XYZ;
+                        con_n((con_XYZ + thz_n) >= 0) = 0;  
+                    end
+
+                    if exist('con_p', 'var') && exist('con_n', 'var')
+                        con_XYZ = con_p + con_n;
+                        clear con_p con_n
+                    elseif exist('con_p', 'var')
+                        con_XYZ = con_p;
+                        clear con_p
+                    elseif exist('con_n', 'var')
+                        con_XYZ = con_n;
+                        clear con_n;
+                    else
+                        con_XYZ = zeros(size(con_XYZ));
+                    end
+
                 else
+                %No corrected image
                     con_XYZ = zeros(size(con_XYZ));
                 end
-                
             else
-            %No corrected image
-                con_XYZ = zeros(size(con_XYZ));
+                con_XYZ(find(abs(con_XYZ) < 1.7)) = 0;
             end
+            i0 = i;
         end
+        
   
         mxmx = max(max(abs(con_XYZ)));
         mnmn = min(min(abs(con_XYZ)));
         
-        render_proj.contrast{i}.c_map{j} = struct();
-        render_proj.contrast{i}.c_map{j}.view_no = j;
-
+        render_proj.contrast{i0}.c_map{j} = struct();
+        render_proj.contrast{i0}.c_map{j}.view_no = j;
+        
         [side_hemi spec_hemi] = nirs_get_brain_view(j);
-        render_proj.contrast{i}.c_map{j}.view = side_hemi;
+        render_proj.contrast{i0}.c_map{j}.view = spec_hemi;
  
-        render_proj.contrast{i}.c_map{j}.data{1} = con_XYZ;%Modify when adding multiple activations
-        render_proj.contrast{i}.c_map{j}.mxmx{1} = mxmx;
-        render_proj.contrast{i}.c_map{j}.mnmn{1} = mnmn;
+        render_proj.contrast{i0}.c_map{j}.data{1} = con_XYZ;%Modify when adding multiple activations
+        render_proj.contrast{i0}.c_map{j}.mxmx{1} = mxmx;
+        render_proj.contrast{i0}.c_map{j}.mnmn{1} = mnmn;
         
     end
 
@@ -313,10 +337,42 @@ else
     % Combine the brain surface renderings with the blobs, and display using
     % 24 bit colour.
     %----------------------------------------------------------------------
+    
+    switch chromophore
+        case 1
+            c_s = 'HbO';
+        case 2
+            c_s =  'HbR';
+        case 3
+            c_s = 'HbT';
+    end
     for h = sessions
-        i = 0;
+        
+        
         v_t = 0;
+        if h == 0 
+            h0 = 20;
+            image_tab = ['Group_unc_' c_s];
+        else
+            h0 = h;
+            activation_name = NIRS.Dt.fir.Sess(h).U(activation).name{1};
+            if thres
+                image_tab = ['Sess' int2str(h) '_EC_' c_s '_' activation_name];
+            else
+                image_tab = ['Sess' int2str(h) '_unc_' c_s '_' activation_name];
+            end
+            
+        end
+
+        
         for n = views,
+            
+            if h == 0
+                activation_name = TOPO.v{n}.g.hb{chromophore}.c{activation}.c.name;
+                [side_hemi spec_hemi] = nirs_get_brain_view(n);
+                image_tab = [image_tab '_' spec_hemi activation_name];
+            end
+
             %For old version of render file
             %Get the correct render image. Note that views for 1 and 2 are
             %inversed. Views for 3 and 4 are also inversed.
@@ -363,10 +419,10 @@ else
             X_pos = cell(3,1);
             X_neg = cell(3,1);
             
-            for j=1:length(render_proj.contrast{h}.c_map{n}.data),
-                mxmx = render_proj.contrast{h}.c_map{n}.mxmx{j};
-                mnmn = render_proj.contrast{h}.c_map{n}.mnmn{j};
-                X = render_proj.contrast{h}.c_map{n}.data{j};
+            for j=1:length(render_proj.contrast{h0}.c_map{n}.data),
+                mxmx = render_proj.contrast{h0}.c_map{n}.mxmx{j};
+                mnmn = render_proj.contrast{h0}.c_map{n}.mnmn{j};
+                X = render_proj.contrast{h0}.c_map{n}.data{j};
                 X_pos_temp = X; X_neg_temp = X;
                 X_pos_temp(X_pos_temp < 0) = 0;
                 X_neg_temp(X_neg_temp > 0) = 0;
@@ -374,7 +430,7 @@ else
                 X_pos{j} = X_pos_temp/(mxmx-mnmn)-mnmn;%data(j), May need to modify if have multiple activations
                 X_neg{j} = X_neg_temp/(mxmx-mnmn)-mnmn;%data(j), May need to modify if have multiple activations
             end
-            for j=(length(render_proj.contrast{h}.c_map{n}.data)+1):3
+            for j=(length(render_proj.contrast{h0}.c_map{n}.data)+1):3
                 X_pos{j}=zeros(size(X_pos{1}));
                 X_neg{j}=zeros(size(X_neg{1}));
             end
@@ -397,8 +453,12 @@ else
             data_focus = render_proj.all_focus{i}.map;
             for i0 = 1 : size(data_focus,1)
                 for j0 = 1 : size(data_focus,2)
-                    if data_focus(i0,j0) > 0 
+                    if (data_focus(i0,j0) > 0) && ((data_focus(i0-1, j0) == 0) || (data_focus(i0+1, j0) == 0) || (data_focus(i0, j0-1) == 0) || (data_focus(i0, j0+1) == 0))
                         rgb(i0,j0,2) = 1;%Green color
+                        rgb(i0-1,j0,2) = 1;rgb(i0-2,j0,2) = 1;rgb(i0-3,j0,2) = 1;rgb(i0-4,j0,2) = 1;rgb(i0-5,j0,2) = 1;
+                        rgb(i0+1,j0,2) = 1;rgb(i0+2,j0,2) = 1;rgb(i0+3,j0,2) = 1;rgb(i0+4,j0,2) = 1;rgb(i0-5,j0,2) = 1;
+                        rgb(i0,j0-1,2) = 1;rgb(i0,j0-2,2) = 1;rgb(i0,j0-3,2) = 1;rgb(i0,j0-4,2) = 1;rgb(i0,j0-5,2) = 1;
+                        rgb(i0,j0+1,2) = 1;rgb(i0,j0+2,2) = 1;rgb(i0,j0+3,2) = 1;rgb(i0,j0+4,2) = 1;rgb(i0,j0+5,2) = 1;
                     end
                 end
             end
@@ -415,8 +475,14 @@ else
                 'YTick',[],'XTick',[],...
                 'XDir','normal','YDir','normal');
         end
+        %Save projected image
+        proj_image_location = [save_dir '\' image_tab];
+        saveas(gcf, proj_image_location, 'tif');
     end
 end
+
+
+
 
 spm('Pointer','Arrow');
 catch exception
