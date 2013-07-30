@@ -40,9 +40,6 @@ function [sen_spe render_proj] = nirs_sensitivity_specificity_calcu(...
 %============================Configurations================================
 
 num     = length(dat);
-%define the colours for focus and contrasts display
-% col_focus = eye(3);%Red
-% col_contrast = [0,0,1;0,1,0;0,0,1];%Blue
 
 %Load the render file
 % [p,f,e] = fileparts(rendfile);
@@ -282,26 +279,7 @@ for s0 = sessions
         %
         
         %Restore separately
-        switch v0
-            case 1
-                disp('Ventral view is not supported at this stage. Please select a different view');
-            case 2
-                %Dorsal View
-                con_XYZ = flipud(con_XYZ);%Upside down
-            case 3
-                %Left View
-                con_XYZ = flipud(con_XYZ);
-            case 4
-                %Right View
-                con_XYZ = flipud(con_XYZ);
-            case 5
-                %Frontal View
-                con_XYZ = flipud(con_XYZ);
-            case 6
-                disp('Occipital view is not supported at this stage. Please select a different view');
-            otherwise
-                disp('Unknown view selected. Please verify.');
-        end
+        con_XYZ = flipud(con_XYZ);%Upside down
         
         mxmx = max(max(con_XYZ));
         mnmn = min(min(con_XYZ));

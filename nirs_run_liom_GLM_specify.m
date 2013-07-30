@@ -204,6 +204,33 @@ for Idx=1:size(job.NIRSmat,1)
                 end
             end
             
+            %Shifting the onset time for studying early response (if chosen)
+            %Ke Peng, 2013-07-21
+            try
+                time_sft = job.time_shift;
+                if time_sft ~= 0
+                    for f = 1 : nsess
+                        for u = 1 : length(SPM.Sess(f).U)
+                            SPM.Sess(f).U(u).ons = SPM.Sess(f).U(u).ons - time_sft;
+                            SPM.Sess(f).U(u).ts = ['time_shifted for ' num2str(time_sft) ' seconds'];
+                        
+                            %if the time is adjusted to be negative, then
+                            %discard the onset
+                            ot_neg = find(SPM.Sess(f).U(u).ons < 0);
+                            if ~isempty(ot_neg)
+                                ot_num = length(ot_neg);
+                                SPM.Sess(f).U(u).ons = SPM.Sess(f).U(u).ons((ot_num+1):end);
+                                SPM.Sess(f).U(u).dur = SPM.Sess(f).U(u).dur((ot_num+1):end);
+                                SPM.Sess(f).U(u).ts_neg = ot_num;
+                            end
+                        end
+                    end
+                end
+                clear ot_neg ot_num u
+            catch
+                disp('Error in shifting onset time!');
+            end
+            
             %Adding confound regressors
             
             for f=1:nsess
