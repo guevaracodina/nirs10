@@ -39,11 +39,35 @@ for Idx=1:size(job.NIRSmat,1)
                 
                 switch job.coreg_type.NIRS_channels_optodes.channel_optode_select
                     case 0
+                        Nc = size(NIRS.Cf.H.C.id,2)/2;
+                        for i0 = 1 : Nc
+                            Si0 = NIRS.Cf.H.C.id(2,i0);
+                            Di0 = NIRS.Cf.H.C.id(3,i0)+Ns;
+                            switch job.coreg_layer
+                                case 0
+                                    Ci0 = (NIRS.Cf.H.P.r.m.mm.p(:,Si0) + NIRS.Cf.H.P.r.m.mm.p(:,Di0))/2;
+                                case 1
+                                    Ci0 = (NIRS.Cf.H.P.r.m.mm.c1.p(:,Si0) + NIRS.Cf.H.P.r.m.mm.c1.p(:,Di0))/2;
+                                otherwise
+                                    Ci0 = (NIRS.Cf.H.P.r.m.mm.p(:,Si0) + NIRS.Cf.H.P.r.m.mm.p(:,Di0))/2;
+                            end
+                            xSPM.Z(1,i0+3) = 5;
+                            xSPM.XYZmm(:,i0+3) = Ci0;
+                            xSPM.label = [xSPM.label ['C' int2str(i0)]];
+                        end
+                        clear i0 Si0 Di0 Ci0
                     case 1
                         for i0 = 1 : Ns
                             if (NIRS.Cf.H.P.r.m.mm.p(1,i0) ~= 0) || (NIRS.Cf.H.P.r.m.mm.p(2,i0) ~= 0) || (NIRS.Cf.H.P.r.m.mm.p(3,i0) ~= 0)
                                 xSPM.Z = [xSPM.Z 5];
-                                xSPM.XYZmm = [xSPM.XYZmm NIRS.Cf.H.P.r.m.mm.p(:,i0)];
+                                switch job.coreg_layer
+                                    case 0
+                                        xSPM.XYZmm = [xSPM.XYZmm NIRS.Cf.H.P.r.m.mm.p(:,i0)];
+                                    case 1
+                                        xSPM.XYZmm = [xSPM.XYZmm NIRS.Cf.H.P.r.m.mm.c1.p(:,i0)];
+                                    otherwise
+                                        xSPM.XYZmm = [xSPM.XYZmm NIRS.Cf.H.P.r.m.mm.p(:,i0)];
+                                end
                                 xSPM.label = [xSPM.label ['S' int2str(i0)]];
                             end
                         end
@@ -52,12 +76,23 @@ for Idx=1:size(job.NIRSmat,1)
                         for i0 = 1 : Nd
                             if (NIRS.Cf.H.P.r.m.mm.p(1,i0+Ns) ~= 0) || (NIRS.Cf.H.P.r.m.mm.p(2,i0+Ns) ~= 0) || (NIRS.Cf.H.P.r.m.mm.p(3,i0+Ns) ~= 0)
                                 xSPM.Z = [xSPM.Z 5];
-                                xSPM.XYZmm = [xSPM.XYZmm NIRS.Cf.H.P.r.m.mm.p(:,i0+Ns)];
+                                switch job.coreg_layer
+                                    case 0 
+                                        xSPM.XYZmm = [xSPM.XYZmm NIRS.Cf.H.P.r.m.mm.p(:,i0+Ns)];
+                                    case 1
+                                        xSPM.XYZmm = [xSPM.XYZmm NIRS.Cf.H.P.r.m.mm.c1.p(:,i0+Ns)];
+                                    otherwise
+                                        xSPM.XYZmm = [xSPM.XYZmm NIRS.Cf.H.P.r.m.mm.p(:,i0+Ns)];
+                                end
                                 xSPM.label = [xSPM.label ['D' int2str(i0)]];
                             end
                         end
                         clear i0
                     otherwise
+                        disp('Invalide choice. Must choose one of the following Channels/Sources/Detectors');
+                        disp('Aborting...');
+                        out.NIRSmat = NIRSmat;
+                        return
                 end
                 
                 %Transfer mm -> voxel
