@@ -128,8 +128,9 @@ for Idx=1:size(job.NIRSmat,1)
                 end %end for v1
                 save(fCINE,'CINE','-v7.3'); %file can be large - because it stores all the contrast data
             end
-            NIRS.flags.con_OK = 1;
+            NIRS.flags.cine_OK = 1;
             NIRS.CINE = fCINE;
+            NIRS.cine_job = job;
             save(job.NIRSmat{Idx,1},'NIRS');
         end
     catch exception
