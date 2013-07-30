@@ -7,8 +7,8 @@ function liom_OrthCoreg = nirs_run_liom_orth_coreg_cfg
 
 render_image         = cfg_files;
 render_image.tag     = 'render_image';
-render_image.name    = 'Render image';
-render_image.help    = {'Select an image for rendering on.'};
+render_image.name    = 'Render image (Optional)';
+render_image.help    = {'Select an image for rendering on. the T1 image will be rendered by default.'};
 render_image.ufilter = '.*';
 render_image.val{1}  = {''};
 render_image.num     = [0 1];
@@ -70,12 +70,23 @@ Coreg_type.values = {NIRS_channels_optodes, NIRS_activation};
 Coreg_type.val    = {NIRS_channels_optodes};
 Coreg_type.help   = {'Choose whether to coregister NIRS optodes or to coregister activation.'}';
 
+Coreg_layer = cfg_menu;
+Coreg_layer.tag  = 'coreg_layer';
+Coreg_layer.name = 'Select coregistration layer';
+Coreg_layer.labels = {'scalp' 'cortex'};
+Coreg_layer.values = {0 1};
+Coreg_layer.val  = {0};
+Coreg_layer.help = {'Choose results on which layer.'
+                       'Must select from these two options:'
+                       'scalp/cortex'}';  
+
+
 %Excecutable branch
                    
 liom_OrthCoreg      = cfg_exbranch;
 liom_OrthCoreg.name = 'LIOM Orthogonal Coregistration';
 liom_OrthCoreg.tag  = 'liom_OrthCoreg';
-liom_OrthCoreg.val  = {NIRSmat redo1 NIRSmatCopyChoice render_image Coreg_type};
+liom_OrthCoreg.val  = {NIRSmat redo1 NIRSmatCopyChoice render_image Coreg_type Coreg_layer};
 liom_OrthCoreg.prog = @nirs_run_liom_orth_coreg;
 liom_OrthCoreg.vout = @nirs_cfg_vout_liom_orth_coreg;
 liom_OrthCoreg.help = {'This module can now be run by itself or as part of a larger batch.'}';
