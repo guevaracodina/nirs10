@@ -78,8 +78,7 @@ Coreg_layer.values = {0 1};
 Coreg_layer.val  = {0};
 Coreg_layer.help = {'Choose results on which layer.'
                        'Must select from these two options:'
-                       'scalp/cortex'}';  
-
+                       'scalp/cortex'}';   
 
 %Excecutable branch
                    
