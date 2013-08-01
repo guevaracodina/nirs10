@@ -5,6 +5,9 @@ function out = nirs_run_liom_orth_coreg(job)
 %2013-07-25, version 0.1, Function created
 
 %select xSPM template
+
+global opt_info
+
 ftemplate = fullfile(fileparts(which('spm')),'toolbox','nirs10','xSPMtemplate.mat');
 
 for Idx=1:size(job.NIRSmat,1)
@@ -55,6 +58,8 @@ for Idx=1:size(job.NIRSmat,1)
                             xSPM.XYZmm(:,i0+3) = Ci0;
                             xSPM.label = [xSPM.label ['C' int2str(i0)]];
                         end
+                        opt_info.type = 'Channel';
+                        opt_info.label = xSPM.label;
                         clear i0 Si0 Di0 Ci0
                     case 1
                         for i0 = 1 : Ns
@@ -71,6 +76,8 @@ for Idx=1:size(job.NIRSmat,1)
                                 xSPM.label = [xSPM.label ['S' int2str(i0)]];
                             end
                         end
+                        opt_info.type = 'Source';
+                        opt_info.label = xSPM.label;
                         clear i0
                     case 2
                         for i0 = 1 : Nd
@@ -87,6 +94,8 @@ for Idx=1:size(job.NIRSmat,1)
                                 xSPM.label = [xSPM.label ['D' int2str(i0)]];
                             end
                         end
+                        opt_info.type = 'Detector';
+                        opt_info.label = xSPM.label;
                         clear i0
                     otherwise
                         disp('Invalide choice. Must choose one of the following Channels/Sources/Detectors');
@@ -98,6 +107,7 @@ for Idx=1:size(job.NIRSmat,1)
                 %Transfer mm -> voxel
                 tSPM.tXYZmm = [xSPM.XYZmm;ones(1,size(xSPM.XYZmm,2))];
                 tSPM.tXYZ = V_render.mat\tSPM.tXYZmm;
+                opt_info.XYZmm = tSPM.tXYZmm;
                 
                 xSPM.XYZ = tSPM.tXYZ;
                 tSPM.Z = xSPM.Z;
@@ -137,18 +147,18 @@ for Idx=1:size(job.NIRSmat,1)
             %Codes from spm_sections.m
             Fgraph = spm_figure('GetWin','Graphics');
             spm_results_ui('Clear',Fgraph);
-            spm_orthviews('Reset');
+            nirs_orthviews('Reset');
             
 %             global st prevsect
 %             st.Space = spm_matrix([0 0 0  0 0 -pi/2]) * st.Space;
 %             prevsect = file_render;
 
-            h = spm_orthviews('Image', file_render, [0.05 0.05 0.9 0.7]);
-            spm_orthviews('AddContext', h); 
-            spm_orthviews('MaxBB');
+            h = nirs_orthviews('Image', file_render, [0.05 0.05 0.9 0.7]);
+            nirs_orthviews('AddContext', h); 
+            nirs_orthviews('MaxBB');
             %if ~isempty(hReg), spm_orthviews('Register', hReg); end
-            spm_orthviews('AddBlobs', h, xSPM.XYZ, xSPM.Z, xSPM.M);
-            spm_orthviews('Redraw');
+            nirs_orthviews('AddBlobs', h, xSPM.XYZ, xSPM.Z, xSPM.M);
+            nirs_orthviews('Redraw');
             
         end
         NIRS.flags.OrthCoreg_OK = 1;
