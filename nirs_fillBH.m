@@ -3,11 +3,11 @@ function BH = nirs_fillBH(x,P,BH)
 for i1=1:length(BH.name)  
    BH.(BH.name{i1}) = P(i1);
 end
-BH.P0 = BH.P0r*BH.P00;
-BH.Ra0 = BH.Ra0r*BH.Ra00;
+BH.P0 = BH.P0r*BH.P00; %update #1 from variable P0r
+BH.Ra0 = BH.Ra0r*BH.Ra00; %update #2 from variable Ra0r
 %Additional parameters in IOI extrait var
 %calculate variables for Huppert
-BH.lambda=BH.omega*BH.Hn*BH.HGB; %
+BH.lambda=BH.omega*BH.Hn*BH.HGB; %update #3 from variable HGB
 BH.T0=BH.PtO2;
 BH.SaO2=(BH.a/(BH.PaO2^3+BH.b*BH.PaO2)+1)^-1;
 BH.CaO2=BH.lambda*BH.SaO2+BH.zeta1*BH.omega*BH.alphap*BH.PaO2;
@@ -23,10 +23,10 @@ BH.fin      = 1/x(2,:) *(1+BH.mu*(1-x(3,:)^BH.beta)); %%% revoir le -
 BH.fv       = x(3,:)^(2+BH.beta);
 
 % fin = inflow
-BH.fin      = 1/x(2,:) *(1+BH.mu*(1-x(3,:)^BH.beta)); %%% revoir le -
+BH.fin      = 1/x(2,:) *(1+BH.mu*(1-x(3,:)^BH.beta)); %%% revoir le -   %update #4 from variable beta
 
 global Fin0 dataOLD
-data= [BH.alphap  BH.P0*BH.P00 BH.M0 BH.zeta1 BH.delta BH.SaO2 BH.Vt BH.omega BH.alphap BH.lambda BH.rho]  ;
+data= [BH.alphap  BH.P0*BH.P00 BH.M0 BH.zeta1 BH.delta BH.SaO2 BH.Vt BH.omega BH.alphap BH.lambda BH.rho]; %11 parameters
 if  isempty(Fin0) || any(abs((data-dataOLD)./data)>0.000001)
     Fin0=1/(1+BH.delta/(1-BH.delta))*(BH.SaO2-(BH.a/(BH.P0.^3+BH.b*BH.P0)+1).^-1 + ...
         BH.zeta1*BH.omega*BH.alphap*BH.PaO2/BH.lambda-BH.zeta1*BH.omega*BH.alphap*BH.P0./BH.lambda)^(-1)*BH.rho*BH.M0*BH.Vt/BH.lambda; %changé 24 fev 11 (pas d'effet car on calcule cette valeur lorsque fin=fv=1, mais plus logique)

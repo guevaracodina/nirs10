@@ -12,13 +12,13 @@ Niterations.val     = {128};
 Niterations.help    = {'Maximum number of EM iterations. 128 is the basic number.'
     'Increase to 512 or more if necessary.'}';
 
-kernel_depth         = cfg_entry; 
-kernel_depth.name    = 'Kernel depth';
-kernel_depth.tag     = 'kernel_depth';       
-kernel_depth.strtype = 'r';
-kernel_depth.num     = [1 1];     
-kernel_depth.val     = {100};
-kernel_depth.help    = {'Kernel depth.'}';
+kernel_window         = cfg_entry; 
+kernel_window.name    = 'Kernel window length in seconds';
+kernel_window.tag     = 'kernel_window';       
+kernel_window.strtype = 'r';
+kernel_window.num     = [1 1];     
+kernel_window.val     = {20};
+kernel_window.help    = {'Kernel window length in seconds.'}';
 
 dFcriterion         = cfg_entry; 
 dFcriterion.name    = 'Convergence criterion';
@@ -66,6 +66,6 @@ Mstep_iterations.help    = {'Maximum number of M-step iterations. 8 is the stand
 EM_parameters         = cfg_branch;
 EM_parameters.tag     = 'EM_parameters';
 EM_parameters.name    = 'Parameters of EM algorithm';
-EM_parameters.val     = {Niterations kernel_depth spm_integrator ... 
+EM_parameters.val     = {Niterations kernel_window spm_integrator ... 
     dFcriterion LogAscentRate MaxLogAscentRate Mstep_iterations}; 
 EM_parameters.help    = {'Parameters of Expectation Maximization algorithm.'};

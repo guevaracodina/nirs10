@@ -18,5 +18,5 @@ switch M.O.PhysioModel_Choice
             -.5*BH.Va0 *(1-BH.SaO2) *(x(2,:)-1))/(BH.Vw0*(1-BH.S)+ BH.Va0*(1-BH.SaO2));
 end
 y = [];
-if M.O.include_HbR, y = [y; HbR]; end
-if M.O.include_HbT, y = [y; HbT]; end  
+if M.IC.include_HbR, y = [y; HbR]; end
+if M.IC.include_HbT, y = [y; HbT]; end  

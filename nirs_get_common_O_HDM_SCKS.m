@@ -9,6 +9,7 @@ O.use_onset_amplitudes = job.O.use_onset_amplitudes;
 %Hemodynamic model choice
 O.PhysioModel_Choice = job.O.Model_Choice; %eventually, Model_Choice should be
 %replaced by PhysioModel_Choice in all the code.
+O.prior_choice = job.O.prior_choice;
 %Baseline choice
 if isfield(job.O.baseline_choice,'baseline_percentile_choice')
     O.baseline_choice = 1;

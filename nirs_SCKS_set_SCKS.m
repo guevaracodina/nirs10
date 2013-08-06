@@ -60,12 +60,13 @@ end
 M(1).ip = ip;  % indices of model parameters to be estimated
 M(1).cb = cb;  % option to specify constrain on parameters values [min max]
 M(2).v  = 0;   % input initial condition
-M(2).V  = 50;   % input noise precison (fixed) %ini 20% plus gros plus petites barres d'erreur sur U
+M(2).V  = 200; %50;   % input noise precison (fixed) %ini 20% plus gros plus petites barres d'erreur sur U
 % log-évidence plus élevée. Fréquence de U plus lent. Moins de risque de
 % singularité
 M(1).V  = exp(3); %observation noise?
 switch SCKS.O.PhysioModel_Choice
     case 0
+        %M(1).xP = blkdiag(1e-3^2,1e-2^2,1e-1^2,1e-2^2); %eye(4)*1e-3^2;   % state error covariance matrix
         M(1).xP = blkdiag(1e-3^2,1e-2^2,1e-1^2,1e-2^2); %eye(4)*1e-3^2;   % state error covariance matrix
     case 1
         M(1).xP = blkdiag(1e-3^2,1e-2^2,1e-1^2,1e-2^2,1e-2^2); %eye(4)*1e-3^2;   % state error covariance matrix
@@ -81,27 +82,20 @@ M(1).Q  = {speye(M(1).l,M(1).l)}; % if Q is specified then algorithm performs
 %  SCKS.M(1).Q  = [];     % if presion on measurement noise is known then Q = [];
 % disp('MOdif sdgfegwergwergwergrwergwerg qerge qergwergweg')
 M(1).Qf      = 'all';  % form of estimation of measurement noise covariance
-% (after online VB estimatin); options: [auto,all,min,mean]
-% SCKS.M(1).E.nN    = 15;    % max number of iteration of SCKF-SCKS algorithm
-M(1).E.nN    = 8;    % max number of iteration of SCKF-SCKS algorithm
-% % if isfield(SCKS.M(1),'SCKSScript') && strcmpi(SCKS.M(1).SCKSScript,'SPM_SCKS_phil')
-% %     
-% %     SCKS.M(1).A=0.9995;
-% %     SCKS.M(1).Ap=0.95;
-% %     SCKS.M(1).E.nN    = 20;    % max number of iteration of SCKF-SCKS algorithm
-% %     % %Add parameters
+% (after online VB estimation); options: [auto,all,min,mean]
+M(1).E.nN    = 16;    % max number of iteration of SCKF-SCKS algorithm
 % %     ip      = [1:length(P)];
 % %     SCKS.M(1).ip = ip;
 % %     SCKS.M(1).pE = SCKS.M(1).pE(ip);
 % %     SCKS.M(1).pC = SCKS.M(1).pC(ip);
 % %     SCKS.M(1).wP = SCKS.M(1).wP(ip,ip);
 % %     SCKS.M(1).cb = SCKS.M(1).cb(ip,:);
-% % end
 
 M(1).E.Itol  = 1e-2; %1e-8;  % convergence tolerance value for SCKF_SCKS algorithm
-M(1).E.RM    = [1e2 1e6];  % scaling parmater for Robbins-Monro approximation of
+M(1).E.RM    = [1e2 1e6];  % scaling parameter for Robbins-Monro approximation of
 % parameter noise covariance [scaling parameter, max-limit]
 M(1).VB.N    = 10;      % max number of VB iteration during one SCKF-SCKS run
 M(1).VB.Itol = 1e-6;    % convergence tolerance value for VB algorithm
 M(1).VB.l    = 0.95;  
+M(1).IC = SCKS.IC;
 SCKS.M = M;

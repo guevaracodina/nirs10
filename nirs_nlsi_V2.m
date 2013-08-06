@@ -101,8 +101,8 @@ function M = nirs_nlsi_V2(M)
 
 % Volterra kernels
 %==========================================================================
-[K0,K1,K2]   = spm_kernels(M0,M1,L1,L2,M.N,M.dt);
-[dummy,H1] = spm_kernels(M0,M1,M.N,M.dt);
+[K0,K1,K2]   = spm_kernels(M0,M1,L1,L2,(M.EM.kernel_window)/M.dt,M.dt);
+[dummy,H1] = spm_kernels(M0,M1,(M.EM.kernel_window)/M.dt,M.dt);
 %Store results
 M.Ep = Ep;
 M.Cp = Cp;

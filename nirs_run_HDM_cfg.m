@@ -10,13 +10,15 @@ simuOn = nirs_dfg_hdm_simu_options(0); %Simulation options
 hdm_display_options = nirs_dfg_hdm_display_options;
 lpf_choice = nirs_dfg_lpf_choice(1,1.5);
 hpf_butter = nirs_dfg_hpf_butter(1,0.01,3);
+target_sampling_rate = nirs_dfg_target_sampling_rate_HDM;
 
 % Executable Branch
 HDM      = cfg_exbranch;
 HDM.name = 'Hemodynamic Modelling';
 HDM.tag  = 'HDM';
 HDM.val  = {NIRSmat redo1 NIRSmatCopyChoice O ...
-    which_condition session_choice channel_choice lpf_choice hpf_butter ...    
+    which_condition session_choice channel_choice target_sampling_rate ...
+    lpf_choice hpf_butter ...    
     IC hdm_display_options EM_parameters simuOn};
 HDM.prog = @nirs_run_HDM;
 HDM.vout = @nirs_cfg_vout_HDM;

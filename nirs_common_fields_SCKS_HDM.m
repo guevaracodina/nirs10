@@ -95,9 +95,11 @@ baseline_choice.values = {no_baseline_correction,baseline_percentile_choice,base
 baseline_choice.val    = {baseline_percentile_choice};
 baseline_choice.help   = {'Choose baseline selection method'}';
 
+prior_choice = nirs_dfg_prior_choice;
+
 O         = cfg_branch;
 O.name     = 'Options';
 O.tag    = 'O';
-O.val     = {PhysioModel_Choice baseline_choice ...
+O.val     = {PhysioModel_Choice prior_choice baseline_choice ...
     use_onset_amplitudes baseline_HbR baseline_HbO}; 
 O.help    = {'Choose various options.'};
