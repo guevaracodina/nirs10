@@ -7,7 +7,12 @@ DO = nirs_get_common_SCKS_display_options(job);
 IC = nirs_get_colors(job);
 [all_sessions selected_sessions] = nirs_get_sessions(job);
 [all_channels selected_channels] = nirs_get_channels(job);
-
+if isfield(job.target_sampling_rate,'specified_sampling_rate')
+    target_sampling_rate = 1;
+    sampling_rate = job.target_sampling_rate.specified_sampling_rate.sampling_rate;
+else
+    target_sampling_rate = 0;l
+end
 % Loop over subjects
 for Idx=1:size(job.NIRSmat,1)
     % Load NIRS.mat information
@@ -22,6 +27,11 @@ for Idx=1:size(job.NIRSmat,1)
             end
             Sess = NIRS.Dt.fir.Sess;
             dt = 1/NIRS.Cf.dev.fs;
+            dt0= dt;
+            if target_sampling_rate
+                decimate_factor = round(1/(sampling_rate*dt));
+                dt = 1/sampling_rate;
+            end
             NC = NIRS.Cf.H.C.N; %number of HbO and HbR channels
             [dir1 fil1] = fileparts(newNIRSlocation);
             SCKSfname = fullfile(dir1,'SCKS.mat');                        
@@ -32,6 +42,14 @@ for Idx=1:size(job.NIRSmat,1)
                     %get data - selected channels
                     dname = NIRS.Dt.fir.pp(end).p{s1};
                     d = fopen_NIR(dname,NC);
+                    if O.LPF.lpf_gauss_On || target_sampling_rate
+                        K = get_K(1:size(d,2),O.LPF.fwhm1,dt0);
+                        d = nirs_filter_HPF_LPF_WMDL(K,d')';
+                    end                   
+                    if target_sampling_rate
+                        %downsample d
+                        d = d(:,round(decimate_factor/2):decimate_factor:end);
+                    end
                     %get onsets in right format for SCKS?
                     U = Sess(s1).U(Stimuli);
                     if O.use_onset_amplitudes
@@ -53,11 +71,12 @@ for Idx=1:size(job.NIRSmat,1)
                                 Y.y = [Y.y d(c1,:)'+d(c1+NC/2,:)'];
                             end
                             Y.dt = dt;
-                            Y = nirs_SCKS_filter(Y,O.LPF,O.HPF); %creates Y.X0
+                            Y = nirs_SCKS_filter(Y,O.HPF); %creates Y.X0
                             
                             if ~DO.only_display
                                 %SCKS on each channel
                                 SCKS0 = nirs_initial_SCKS_setup(O,DO,IC,S,dt,dir1);
+                                SCKS0.IC = IC;
                                 SCKS0.subj_id = NIRS.Dt.s.subj_id;
                                 SCKS0.s1 = s1; %session
                                 SCKS0.c1 = c1; %channel
@@ -106,17 +125,7 @@ for Idx=1:size(job.NIRSmat,1)
                             end
                             
                             if ~S.simuOn
-%                                 SCKS{s1,c1} = SCKS;
-%                                 save(SCKSfname,'SCKS');
                                 nirs_SCKS_display(SCKS);                            
-                                %Store some of the information in NIRS structure
-                                %NIRS.SCKS{s1,c1}.Ep = SCKS.Ep;
-%                                 NIRS.SCKS{s1,c1}.Cp = SCKS.Cp;
-%                                 NIRS.SCKS{s1,c1}.K1 = SCKS.K1;
-%                                 NIRS.SCKS{s1,c1}.H1 = SCKS.H1;                                
-%                                 NIRS.SCKS{s1,c1}.F  = SCKS.F;
-%                             else
-%                                 save(SCKSfname,'SCKS');
                             end
                             disp(['SCKS for channel ' int2str(c1) ' completed']);
                         end
@@ -132,4 +141,3 @@ for Idx=1:size(job.NIRSmat,1)
     end
 end
 out.NIRSmat = job.NIRSmat;
-

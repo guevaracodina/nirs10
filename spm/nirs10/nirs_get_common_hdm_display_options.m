@@ -6,3 +6,4 @@ DO.plot_algebraic_CMRO2 = job.hdm_display_options.plot_algebraic_CMRO2;
 DO.save_figures = job.hdm_display_options.save_figures;
 DO.generate_figures = job.hdm_display_options.generate_figures;
 DO.show_normalized_parameters = job.hdm_display_options.show_normalized_parameters;
+DO.save_iteration_figures = job.hdm_display_options.save_iteration_figures;

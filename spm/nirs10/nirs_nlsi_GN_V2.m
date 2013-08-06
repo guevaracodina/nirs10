@@ -99,6 +99,7 @@ function [Ep,Cp,Eh,F,k,MSE,MSE_HbR] = nirs_nlsi_GN_V2(M,U,Y)
 try
     M.nograph;
 catch
+    disp('Default: using M.nograph = 0')
     M.nograph = 0;
 end
 if ~M.nograph
@@ -110,6 +111,7 @@ end
 try
     M.IS = M.EM.spm_integrator;
 catch
+    disp('Default: using spm_int');
     M.IS = 'spm_int';
 end
 
@@ -126,6 +128,7 @@ try
         % try FS(y)
         %----------------------------------------------------------------------
     catch
+        disp('Default: using IS = inline...');       
         y  = feval(M.FS,Y.y);
         IS = inline([M.FS '(' M.IS '(P,M,U))'],'P','M','U');
     end
@@ -134,6 +137,7 @@ catch
     
     % otherwise FS(y) = y
     %----------------------------------------------------------------------
+    disp('Default: using IS = inline, 2nd catch');
     y   = Y.y;
     IS  = inline([M.IS '(P,M,U)'],'P','M','U');
 end
@@ -153,6 +157,7 @@ M.ns = ns;                          % store in M.ns for integrator
 try
     M.x;
 catch
+    disp('Default: using M.x = sparse...');
     if ~isfield(M,'n'), M.n = 0;    end
     M.x = sparse(M.n,1);
 end
@@ -162,6 +167,7 @@ end
 try
     U;
 catch
+    disp('Default: using U = []');
     U = [];
 end
 
@@ -171,6 +177,7 @@ try
     spm_vec(M.P) - spm_vec(M.pE);
     %fprintf('\nParameter initialisation successful\n')
 catch
+    disp('Default: using M.P = M.pE');
     M.P = M.pE;
 end
 
@@ -179,6 +186,7 @@ end
 try
     Y.dt;
 catch
+    disp('Default: using Y.dt = 1');
     Y.dt = 1;
 end
 
@@ -188,6 +196,7 @@ try
     Q = Y.Q;
     if isnumeric(Q), Q = {Q}; end
 catch
+    disp('Default: using Q = spm_Ce...');
     Q = spm_Ce(ns*ones(1,nr));
 end
 nh    = length(Q);                  % number of precision components
@@ -207,6 +216,7 @@ try
     nx   = nr*ns/nb;                % number of blocks
     dfdu = kron(speye(nx,nx),Y.X0);
 catch
+    disp('Default: using dfdu = sparse...');
     dfdu = sparse(ns*nr,0);
 end
 
@@ -218,6 +228,7 @@ try
         hE = hE(1) + sparse(nh,1);
     end
 catch
+    disp('Default: using hE = sparse...');
     hE = sparse(nh,1);
 end
 h      = hE;
@@ -230,6 +241,7 @@ try
         ihC = ihC*speye(nh,nh);
     end
 catch
+    disp('Default: using ihC = speye');
     ihC = speye(nh,nh);
 end
 
@@ -290,7 +302,6 @@ for k = 1:M.EM.Niterations %number of iterations
     e     =  spm_vec(y) - spm_vec(f) - dfdu*p(iu);
     dfdp  =  reshape(spm_vec(dfdp),ns*nr,np);
     J     = -[dfdp dfdu];
-    
     
     % M-step; Fisher scoring scheme to find h = max{F(p,h)}
     %======================================================================
@@ -376,6 +387,7 @@ for k = 1:M.EM.Niterations %number of iterations
         F0;
         fprintf(' actual: %.3e (%.2f sec)\n',full(F - C.F),toc(tStart))
     catch
+        disp('Default: using F0 = F');
         F0 = F;
     end
     
@@ -445,20 +457,35 @@ for k = 1:M.EM.Niterations %number of iterations
                 x    = Y.Hz;
                 xLab = 'Frequency (Hz)';
             end
+        catch
+            disp('Default: no catch for xLab=... ');
         end
         
         if isreal(f)
-            
-            subplot(2,1,1)
-            plot(x,f,'-b'), hold on
-            %plot(x,y,':r'), hold on
-            plot(x,f + spm_unvec(e,f),':k'), hold off
-            xlabel(xLab)
-            title(sprintf('%s: %i','prediction (blue, solid) and filtered response (black, dotted): E-Step',k))
-            grid on
-            
+            %Plot HbR
+            if M.IC.include_HbR
+                subplot(3,1,1)
+                plot(x,f(:,1),'-b'), hold on
+                plot(x,y(:,1),':b');
+                e1 = spm_unvec(e,f);
+                plot(x,f(:,1) + e1(:,1),':k'), hold off
+                xlabel(xLab)
+                title(sprintf('%s: %i','HbR prediction (blue, solid), actual(blue, dots), and filtered response (black, dots): E-Step',k))
+                grid on
+            end
+            %Plot HbO
+            if M.IC.include_HbT
+                subplot(3,1,2)
+                plot(x,f(:,2),'-r'), hold on
+                plot(x,y(:,2),':r');
+                e1 = spm_unvec(e,f);
+                plot(x,f(:,2) + e1(:,2),':k'), hold off
+                xlabel(xLab)
+                title(sprintf('%s: %i','HbO prediction (red, solid), actual(red, dots) and filtered response (black, dots): E-Step',k))
+                grid on
+            end
         else
-            
+            %Complex case
             subplot(2,2,1)
             plot(x,real(f)), hold on
             plot(x,real(f + spm_unvec(e,f)),':'), hold off
@@ -474,48 +501,46 @@ for k = 1:M.EM.Niterations %number of iterations
             ylabel('imaginary')
             title(sprintf('%s: %i','prediction and response: E-Step',k))
             grid on
-            
         end
         %Compute MSE
         x0 = spm_unvec(e,f);
-        if M.O.includeHbR
-            x0(:,1) = M.HbRnorm*x0(:,1);
+        if M.IC.include_HbR
+            %x0(:,1) = M.O.baseline_HbR*x0(:,1);
         else
             M.DO.show_mse = 0;
         end
-        if M.O.includeHbT
-            x0(:,2) = M.HbTnorm*x0(:,2);
+        if M.IC.include_HbT
+            %x0(:,2) = (M.O.baseline_HbR+ M.O.baseline_HbO)*x0(:,2);
         else
             M.DO.show_mse = 0;
         end
         if M.DO.show_mse
-            MSE = sum(x0(:).^2)/length(x0(:));
-            x0_HbR = x0(:,1);
-            x0_HbO = x0(:,2)-x0(:,1);
-            MSE_HbR = sum(x0_HbR.^2)/length(x0_HbR(:));
-            MSE_HbO = sum(x0_HbO.^2)/length(x0_HbO(:));
+            [MSE MSE_HbR MSE_HbO] = nirs_get_MSE(x0);            
             legend(['MSE: ' sprintf('%2.3f',MSE)], ['(MSE HbR: ' sprintf('%2.3f',MSE_HbR) ...
                 ', MSE HbO: ' sprintf('%2.3f',MSE_HbO) ')']);
         end
         % subplot parameters
         %------------------------------------------------------------------
-        subplot(2,1,2)
+        subplot(3,1,3)
         bar(full(V*p(ip)))
         xlabel('parameter')
         title('conditional [minus prior] expectation')
         grid on
         drawnow
-        
-    end
-    
+        if M.DO.save_iteration_figures
+            nirs_HDM_print_figures(M,Fsi,['IHDM ' gen_num_str(k,3)]);
+        end
+    catch exception
+        disp(exception.identifier)
+        disp(exception.stack(1))
+        disp('Problem drawing figure')
+    end    
     % convergence
     %----------------------------------------------------------------------
     dF  = dFdp'*dp;
     fprintf('%-6s: %i %6s %-6.3e %6s %.3e ',str,k,'F:',full(C.F - F0),'dF predicted:',full(dF))
-    %criterion = [(dF < 1e-2) criterion(1:end - 1)];
     criterion = [(dF < M.EM.dFcriterion) criterion(1:end - 1)];
-    if all(criterion), fprintf(' convergence\n'), break, end
-    
+    if all(criterion), fprintf(' convergence\n'), break, end    
 end
 
 % outputs
@@ -527,15 +552,16 @@ F      = full(C.F - F0); %C.F;
 
 %k %: number of iterations used
 if isfield(M,'HDM_str')
-    HDM_str = ['_' M.HDM_str];
+    %HDM_str = M.HDM_str; %[' ' M.HDM_str];
     Ffit    = figure;
     header = get(Ffit,'Name');
     set(Ffit,'name','Hemodynamic Fit')
     plot(x,f,'-b'), hold on
     plot(x,f + spm_unvec(e,f),':k'), hold off
     xlabel(xLab)
-    title('prediction (blue, solid) and filtered response (black, dotted)')
+    title('prediction (blue, solid) and filtered response (black, dots)')
     if M.DO.show_mse
+        [MSE MSE_HbR MSE_HbO] = nirs_get_MSE(x0);
         legend(['MSE: '  sprintf('%2.3f',MSE) ', MSE HbR: ' sprintf('%2.3f',MSE_HbR) ...
             ', MSE HbO: ' sprintf('%2.3f',MSE_HbO)]);
     else
@@ -546,10 +572,14 @@ if isfield(M,'HDM_str')
         %     leg_str = [leg_str;  'Filtered hemodynamic data'];
         %     legend(leg_str);
     end
-    
-    filen2 = fullfile(M.dir1,['HDM' HDM_str 'fit_large.fig']);
-    filen4 = fullfile(M.dir1,['HDM' HDM_str 'fit_large.png']);
-    saveas(Ffit,filen2,'fig');
-    print(Ffit, '-dpng', filen4,'-r300');
-    close(Ffit)
+    if M.DO.save_figures
+        nirs_HDM_print_figures(M,Ffit,['LHDM ']);
+    end
 end
+
+function [MSE MSE_HbR MSE_HbO] = nirs_get_MSE(x0)
+MSE = sum(x0(:).^2)/length(x0(:));
+x0_HbR = x0(:,1);
+x0_HbO = x0(:,2)-x0(:,1);
+MSE_HbR = sum(x0_HbR.^2)/length(x0_HbR(:));
+MSE_HbO = sum(x0_HbO.^2)/length(x0_HbO(:));

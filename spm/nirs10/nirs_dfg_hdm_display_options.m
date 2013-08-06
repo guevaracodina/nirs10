@@ -37,9 +37,17 @@ plot_algebraic_CMRO2.help = {'Plot algebraic CMRO2.'}';
 
 [generate_figures save_figures] = nirs_dfg_generate_figures;
 
+save_iteration_figures      = cfg_menu;
+save_iteration_figures.tag  = 'save_iteration_figures';
+save_iteration_figures.name = 'Save iteration figures';
+save_iteration_figures.labels = {'Yes','No'};
+save_iteration_figures.values = {1,0};
+save_iteration_figures.val  = {1};
+save_iteration_figures.help = {'Save iteration figures.'}';
+
 hdm_display_options         = cfg_branch;
 hdm_display_options.tag     = 'hdm_display_options';
 hdm_display_options.name    = 'HDM display options';
-hdm_display_options.val     = {only_display generate_figures save_figures ...
+hdm_display_options.val     = {only_display generate_figures save_figures save_iteration_figures ...
     show_normalized_parameters show_mse plot_algebraic_CMRO2}; 
 hdm_display_options.help    = {'Choose HDM display options.'};

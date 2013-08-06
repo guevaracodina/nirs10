@@ -191,7 +191,7 @@ try
             nirs_SCKS_print_figures(SCKS,f4,['Resid']);
         end
     else
-        disp('SCKS estimation did not work.');
+        disp(['SCKS estimation did not work (SCKS_OK = 0 for Sess' int2str(SCKS.s1) ', Ch' int2str(SCKS.c1) ').']);
     end
 catch exception
     disp(exception.identifier)

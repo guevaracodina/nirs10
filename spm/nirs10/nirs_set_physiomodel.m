@@ -16,7 +16,7 @@ M.m = 1;
 %Number of outputs
 st = M.IC.include_HbR + M.IC.include_HbT + M.IC.include_HbO;
 if st > 1
-    st = 2;
+    st = 2; %number of independent outputs
 end
 M.l = st;
 

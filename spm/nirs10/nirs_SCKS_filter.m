@@ -1,8 +1,8 @@
-function Y = nirs_SCKS_filter(Y,LPF,HPF)
-if LPF.lpf_gauss_On
-    K = get_K(1:size(Y.y,1),LPF.fwhm1,Y.dt);
-    Y.y = nirs_filter_HPF_LPF_WMDL(K,Y.y);   
-end
+function Y = nirs_SCKS_filter(Y,HPF)
+% if LPF.lpf_gauss_On
+%     K = get_K(1:size(Y.y,1),LPF.fwhm1,Y.dt);
+%     Y.y = nirs_filter_HPF_LPF_WMDL(K,Y.y);   
+% end
 Y.X0 = [];
 switch HPF.hpf_filter
     case 1

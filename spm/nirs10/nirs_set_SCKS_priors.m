@@ -1,4 +1,4 @@
-function M=nirs_set_SCKS_priors(M)
+function M=nirs_set_SCKS_priors(M) %Started as same file as nirs_set_HDM_priors -- important to check both files if one wants to make changes
 %load priors
 switch M.O.PhysioModel_Choice
     case 0 %Buxton-Friston

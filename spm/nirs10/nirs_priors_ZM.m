@@ -13,22 +13,16 @@ function [pE,pC] = nirs_priors_ZM(m,h)
 %    P(3) - transit time                  (t0)
 %    P(4) - exponent for Fout(v)          (alpha)
 %    P(5) - resting oxygen extraction     (E0)
-%   P(6) - time constant of vascular tone w               (tau_w)
-%   P(7) - gain parameter b = b0 V0                       (b)
-%   P(8) - ratio of intra- to extra-vascular components   (epsilon)
-%          of the gradient echo signal   
-%
-%
-% plus (m) efficacy priors
-%    P(9) - ....
+%    P(6) - time constant of vascular tone w               (tau_w)
+%    P(7) - gain parameter b = b0 V0                       (b)
+%    plus (m) efficacy priors
+%    P(8) - ....
 %
 %___________________________________________________________________________
 % Copyright (C) 2008 Wellcome Trust Centre for Neuroimaging
 
 % Karl Friston
 % $Id: spm_hdm_priors.m 2050 2008-09-05 19:15:50Z klaas $
-
-
 
 % default: 3 hemodynamic [eigen]modes
 %---------------------------------------------------------------------------

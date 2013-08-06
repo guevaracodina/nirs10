@@ -13,12 +13,8 @@ function [pE,pC] = nirs_SCKS_priors_base_case(m,h)
 %    P(3) - transit time                  (t0)
 %    P(4) - exponent for Fout(v)          (alpha)
 %    P(5) - resting oxygen extraction     (E0)
-%    P(6) - ratio of intra- to extra-     (epsilon)
-%           vascular components of the
-%           gradient echo signal   -- not used in IOI
-%
-% plus (m) efficacy priors
-%    P(7) - ....
+%   plus (m) efficacy priors
+%    P(6) - ....
 %
 %___________________________________________________________________________
 % Copyright (C) 2008 Wellcome Trust Centre for Neuroimaging
@@ -54,11 +50,6 @@ e     = [2.1225    1.2006    0.3519    0.0039    0.0012];
 i     = (h + 1):5;
 e(i)  = 0;
 pC    = v*diag(e)*v'/32;
-
-% % append scaling parameter for epsilon: prior variance = 1/32,
-% %---------------------------------------------------------------------------
-% pE    = [pE 0];
-% pC    = blkdiag(pC,1/32);
 
 % append m efficacy priors
 %---------------------------------------------------------------------------
