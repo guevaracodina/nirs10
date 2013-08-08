@@ -12,10 +12,9 @@ switch M.O.PhysioModel_Choice
     case 2 %Huppert1        
         BH = M.BH;
         BH = nirs_fillBH(x,P,BH);
-        HbT=(BH.Vw0*(x(3,:)-1 )-.5*BH.Va0 ...
-            *(x(2,:)-1))/(BH.Vw0+BH.Va0); %hbTratio
-        HbR=(BH.Vw0*(  (1-BH.S)*x(3,:) - (1-BH.SwO20)*1  ) ...
-            -.5*BH.Va0 *(1-BH.SaO2) *(x(2,:)-1))/(BH.Vw0*(1-BH.S)+ BH.Va0*(1-BH.SaO2));
+        HbT=(BH.Vw0*(x(3,:)-1 )-0.5*BH.Va0 *(x(2,:)-1))/(BH.Vw0+BH.Va0); %HbTratio %Why additional term?
+        HbR=(BH.Vw0*(  (1-BH.S)*x(3,:) - (1-BH.SwO20)) ...
+            -0.5*BH.Va0 *(1-BH.SaO2) *(x(2,:)-1))/(BH.Vw0*(1-BH.S)+ BH.Va0*(1-BH.SaO2));
 end
 y = [];
 if M.IC.include_HbR, y = [y; HbR]; end

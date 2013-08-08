@@ -21,6 +21,7 @@ else
 end
 LOD = length(onset_delays);
 W.time_resolution = time_resolution;
+W.baseline_offset = baseline_offset;
 %Filters
 %HPF - Butterworth infinite impulse response filter
 hpf_butter = Z.CineFilters.hpf_butter;
