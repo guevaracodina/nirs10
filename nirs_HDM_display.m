@@ -48,8 +48,8 @@ try
                 set(gca,'Ytick',[1:m2],'YTickLabel',labels2,'FontSize',8)
                 str = {};
                 for i = 1:m2
-                    str{end + 1} = labels2{i}; %U.name{i};
-                    str{end + 1} = sprintf('mean = %0.2f',P(i));
+                    str{end + 1} = [labels2{i} '*100']; %U.name{i};
+                    str{end + 1} = sprintf('mean = %0.2f',100*P(i));
                     str{end + 1} = '';
                 end
                 set(gca,'Ytick',[1:m2*3]/3 + 1/2,'YTickLabel',str)
@@ -108,7 +108,7 @@ try
                 C(7) = C(7)/10;
                 spm_barh(P,C,pE)
                 title({ 'hemodynamic parameters'},'FontSize',10)
-                set(gca,'Ytick',[1:18+12]/3 + 1/2)
+                set(gca,'Ytick',[1:18+18]/3 + 1/2)
                 set(gca,'YTickLabel',{  'Flow decay (ksr)',...
                     sprintf('%0.2f per sec',P(1)),'',...
                     'Flow feedback (kr)',...

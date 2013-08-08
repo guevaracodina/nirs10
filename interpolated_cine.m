@@ -41,7 +41,7 @@ try
         F.tstr = tstr;
         s_map(index_mask) = squeeze(stat_map(c1,index_mask));
         F.s_map = s_map;
-        F.legend = [hb ', ' int2str(c1*W.time_resolution) ' s'];
+        F.legend = [hb ', ' int2str(c1*W.time_resolution-W.baseline_offset) ' s'];
         %        F.eidf = 1;
         %        F.contrast_info = [filestr tname];
         %        F.contrast_info_for_fig = [filestr_fig tname];

@@ -99,7 +99,7 @@ function [Ep,Cp,Eh,F,k,MSE,MSE_HbR] = nirs_nlsi_GN_V2(M,U,Y)
 try
     M.nograph;
 catch
-    disp('Default: using M.nograph = 0')
+    if M.DO.verbose, disp('Default: using M.nograph = 0'); end
     M.nograph = 0;
 end
 if ~M.nograph
@@ -111,7 +111,7 @@ end
 try
     M.IS = M.EM.spm_integrator;
 catch
-    disp('Default: using spm_int');
+    if M.DO.verbose, disp('Default: using spm_int'); end
     M.IS = 'spm_int';
 end
 
@@ -128,7 +128,7 @@ try
         % try FS(y)
         %----------------------------------------------------------------------
     catch
-        disp('Default: using IS = inline...');       
+        if M.DO.verbose, disp('Default: using IS = inline...'); end       
         y  = feval(M.FS,Y.y);
         IS = inline([M.FS '(' M.IS '(P,M,U))'],'P','M','U');
     end
@@ -137,7 +137,7 @@ catch
     
     % otherwise FS(y) = y
     %----------------------------------------------------------------------
-    disp('Default: using IS = inline, 2nd catch');
+    if M.DO.verbose, disp('Default: using IS = inline, 2nd catch'); end
     y   = Y.y;
     IS  = inline([M.IS '(P,M,U)'],'P','M','U');
 end
@@ -157,7 +157,7 @@ M.ns = ns;                          % store in M.ns for integrator
 try
     M.x;
 catch
-    disp('Default: using M.x = sparse...');
+    if M.DO.verbose, disp('Default: using M.x = sparse...'); end
     if ~isfield(M,'n'), M.n = 0;    end
     M.x = sparse(M.n,1);
 end
@@ -167,7 +167,7 @@ end
 try
     U;
 catch
-    disp('Default: using U = []');
+    if M.DO.verbose, disp('Default: using U = []'); end
     U = [];
 end
 
@@ -177,7 +177,7 @@ try
     spm_vec(M.P) - spm_vec(M.pE);
     %fprintf('\nParameter initialisation successful\n')
 catch
-    disp('Default: using M.P = M.pE');
+    if M.DO.verbose, disp('Default: using M.P = M.pE'); end
     M.P = M.pE;
 end
 
@@ -186,7 +186,7 @@ end
 try
     Y.dt;
 catch
-    disp('Default: using Y.dt = 1');
+    if M.DO.verbose, disp('Default: using Y.dt = 1'); end
     Y.dt = 1;
 end
 
@@ -196,7 +196,7 @@ try
     Q = Y.Q;
     if isnumeric(Q), Q = {Q}; end
 catch
-    disp('Default: using Q = spm_Ce...');
+    if M.DO.verbose, disp('Default: using Q = spm_Ce...'); end
     Q = spm_Ce(ns*ones(1,nr));
 end
 nh    = length(Q);                  % number of precision components
@@ -216,7 +216,7 @@ try
     nx   = nr*ns/nb;                % number of blocks
     dfdu = kron(speye(nx,nx),Y.X0);
 catch
-    disp('Default: using dfdu = sparse...');
+    if M.DO.verbose, disp('Default: using dfdu = sparse...'); end
     dfdu = sparse(ns*nr,0);
 end
 
@@ -228,7 +228,7 @@ try
         hE = hE(1) + sparse(nh,1);
     end
 catch
-    disp('Default: using hE = sparse...');
+    if M.DO.verbose, disp('Default: using hE = sparse...'); end
     hE = sparse(nh,1);
 end
 h      = hE;
@@ -241,7 +241,7 @@ try
         ihC = ihC*speye(nh,nh);
     end
 catch
-    disp('Default: using ihC = speye');
+    if M.DO.verbose, disp('Default: using ihC = speye'); end
     ihC = speye(nh,nh);
 end
 
@@ -369,7 +369,6 @@ for k = 1:M.EM.Niterations %number of iterations
     
     % E-Step with Levenberg-Marquardt regularization
     %======================================================================
-    
     % objective function: F(p) (= log evidence - divergence)
     %----------------------------------------------------------------------
     F = - real(e)'*iS*real(e)/2 ...
@@ -387,7 +386,7 @@ for k = 1:M.EM.Niterations %number of iterations
         F0;
         fprintf(' actual: %.3e (%.2f sec)\n',full(F - C.F),toc(tStart))
     catch
-        disp('Default: using F0 = F');
+        if M.DO.verbose, disp('Default: using F0 = F'); end
         F0 = F;
     end
     
@@ -458,7 +457,7 @@ for k = 1:M.EM.Niterations %number of iterations
                 xLab = 'Frequency (Hz)';
             end
         catch
-            disp('Default: no catch for xLab=... ');
+            if M.DO.verbose, disp('Default: no catch for xLab=... '); end
         end
         
         if isreal(f)
@@ -516,8 +515,10 @@ for k = 1:M.EM.Niterations %number of iterations
         end
         if M.DO.show_mse
             [MSE MSE_HbR MSE_HbO] = nirs_get_MSE(x0);            
-            legend(['MSE: ' sprintf('%2.3f',MSE)], ['(MSE HbR: ' sprintf('%2.3f',MSE_HbR) ...
-                ', MSE HbO: ' sprintf('%2.3f',MSE_HbO) ')']);
+%             legend(['MSE: ' sprintf('%2.3f',MSE)], ['(MSE HbR: ' sprintf('%2.3f',MSE_HbR) ...
+%                 ', MSE HbO: ' sprintf('%2.3f',MSE_HbO) ')']);
+            legend(['MSE(%): '  sprintf('%2.3f',MSE*100) ', MSE HbR: ' sprintf('%2.3f',MSE_HbR*100) ...
+                ', MSE HbO: ' sprintf('%2.3f',MSE_HbO*100)]);
         end
         % subplot parameters
         %------------------------------------------------------------------
@@ -562,15 +563,8 @@ if isfield(M,'HDM_str')
     title('prediction (blue, solid) and filtered response (black, dots)')
     if M.DO.show_mse
         [MSE MSE_HbR MSE_HbO] = nirs_get_MSE(x0);
-        legend(['MSE: '  sprintf('%2.3f',MSE) ', MSE HbR: ' sprintf('%2.3f',MSE_HbR) ...
-            ', MSE HbO: ' sprintf('%2.3f',MSE_HbO)]);
-    else
-        %     leg_str = {'Prediction'};
-        %     for i0=2:size(f,2)
-        %         leg_str = [leg_str; ''];
-        %     end
-        %     leg_str = [leg_str;  'Filtered hemodynamic data'];
-        %     legend(leg_str);
+        legend(['MSE(%): '  sprintf('%2.3f',MSE*100) ', MSE HbR: ' sprintf('%2.3f',MSE_HbR*100) ...
+            ', MSE HbO: ' sprintf('%2.3f',MSE_HbO*100)]);
     end
     if M.DO.save_figures
         nirs_HDM_print_figures(M,Ffit,['LHDM ']);

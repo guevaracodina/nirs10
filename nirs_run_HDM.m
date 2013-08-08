@@ -14,6 +14,7 @@ if isfield(job.target_sampling_rate,'specified_sampling_rate')
 else
     target_sampling_rate = 0;
 end
+DO.verbose = 0;
 % Loop over subjects
 for Idx=1:size(job.NIRSmat,1)
     % Load NIRS.mat information
