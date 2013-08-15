@@ -313,20 +313,56 @@ switch lower(action)
                         delete(hp);
                     catch
                     end
+                    currentp = find(new_dis == least_dis);
                     hTexthd = axes('Parent',Fgraph,...
                             'Position',[0.02 0.95 0.96 0.02],...
                             'Visible','off');
-                    t_str = [opt_info.type ' ' opt_info.label(find(new_dis == least_dis))];
+                    t_str = [opt_info.type ' ' opt_info.label(currentp)];
                     text(0.5,0,t_str,'Parent',hTexthd,...
                     'HorizontalAlignment','center',...
                     'VerticalAlignment','baseline',...
                     'FontWeight','Bold','FontSize',14);
+%                     opt_info.currentL = opt_info.label(currentp);
+%                     opt_info.currentC = opt_info.XYZmm(:,currentp);
+                    opt_info.currentP = currentp;
                     hp = hTexthd;
                 else
                     try
                         delete(hp);
+                        opt_info.currentL = [];
+                        opt_info.currentC = [];
                     catch
                     end
+                end
+            end
+        catch
+        end
+        
+    case 'correspondence'
+        %Added by Ke Peng, called in nirs_run_liom_orth_coreg
+        try
+            if ~isempty(opt_info.currentP)
+                currentP = opt_info.currentP;
+                if currentP ~= 1 && currentP ~= 2 && currentP ~= 3
+                    %Find the corresponding point, either left one or right
+                    %one
+                    p0.XYZmm = opt_info.XYZmm(:,currentP);
+                    p0.label = opt_info.label{currentP};
+                    
+                    p1.XYZmm = opt_info.XYZmm(:,currentP+1);
+                    p1.label = opt_info.label{currentP+1};
+                    
+                    p2.XYZmm = opt_info.XYZmm(:,currentP-1);
+                    p2.label = opt_info.label{currentP-1};
+                    
+                    if strcmp(p0.label,p1.label)
+                        DrawTmp = p1.XYZmm(1:3,:);
+                    else
+                        DrawTmp = p2.XYZmm(1:3,:);
+                    end
+                    
+                    nirs_orthviews('Reposition',DrawTmp);
+
                 end
             end
         catch
