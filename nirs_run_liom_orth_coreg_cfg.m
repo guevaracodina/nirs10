@@ -16,12 +16,12 @@ render_image.num     = [0 1];
 channel_optode_select = cfg_menu;
 channel_optode_select.tag  = 'channel_optode_select';
 channel_optode_select.name = 'Select channel or optode type';
-channel_optode_select.labels = {'NIRS channel' 'NIRS source' 'NIRS detector'};
-channel_optode_select.values = {0 1 2};
+channel_optode_select.labels = {'NIRS channel' 'NIRS source' 'NIRS detector' 'All of the above'};
+channel_optode_select.values = {0 1 2 3};
 channel_optode_select.val  = {0};
 channel_optode_select.help = {'Choose results for which hemoglobin.'
                        'Must select from these three options:'
-                       'HbT/HbR/HbO'}';      
+                       'HbT/HbR/HbO/All of the above'}';      
                    
 hemoglobin_select = cfg_menu;
 hemoglobin_select.tag  = 'hemoglobin_select';

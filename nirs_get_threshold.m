@@ -34,6 +34,8 @@ switch fign
         %Get threshold
         if LKCflag % || UseCorrelRes
             th_z = calc_EC(LKC,p_value,tstr,[eidf,erdf]);
+%             ps = sort();
+%             [P] = spm_P_FDR(Z,[eidf,erdf],tstr,p_value*,Ps)
             %Bonferroni
             th_z2 = spm_invTcdf(1-p_value/nchn, erdf);
             str_cor = StatStr;
