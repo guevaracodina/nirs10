@@ -125,26 +125,53 @@ switch fign
                 th_z = 0;
             else
                 if LKCflag
-                    test_LKC_by_pixel = 0;
-                    if test_LKC_by_pixel && isfield(G,'ns')
-                        th_zi = zeros(1,G.ns-G.min_subj+1);
-                        for i0=1:(G.ns-G.min_subj+1)
-                            th_zi(i0) = calc_EC(G.LKCi{i0},p_value,tstr,[G.eidfi(i0),G.erdfi(i0)]);
-                        end
-                        th_z = max(th_zi(1:end/2)); %completely heuristic
-                        %a=[]; for i0=1:(G.ns-G.min_subj+1), a = [a length(G.idxi{i0})]; end, a
-                        str_cor = StatStr;
-                    else
-                        th_z = calc_EC(LKC,p_value,tstr,[eidf,erdf]);
-                        %Bonferroni
-                        th_z2 = spm_invTcdf(1-p_value/nchn, erdf);
-                        str_cor = StatStr;
-                        %Take lower threshold of EC or Bonferroni
-                        if th_z2 < th_z
-                            th_z = th_z2;
-                            str_cor = [StatStr 'Bonf'];
-                        end
-                    end                    
+                    switch StatStr
+                        case 'EC'
+                            test_LKC_by_pixel = 0;
+                            if test_LKC_by_pixel && isfield(G,'ns')
+                                th_zi = zeros(1,G.ns-G.min_subj+1);
+                                for i0=1:(G.ns-G.min_subj+1)
+                                    th_zi(i0) = calc_EC(G.LKCi{i0},p_value,tstr,[G.eidfi(i0),G.erdfi(i0)]);
+                                end
+                                th_z = max(th_zi(1:end/2)); %completely heuristic
+                                %a=[]; for i0=1:(G.ns-G.min_subj+1), a = [a length(G.idxi{i0})]; end, a
+                                str_cor = StatStr;
+                            else
+                                th_z = calc_EC(LKC,p_value,tstr,[eidf,erdf]);
+                                %Bonferroni
+                                th_z2 = spm_invTcdf(1-p_value/nchn, erdf);% KP ATTENTION! ERROR! nchn is always 0; warnings will be produced. Bonf is not working well 
+                                str_cor = StatStr;
+                                %Take lower threshold of EC or Bonferroni
+                                if th_z2 < th_z
+                                    th_z = th_z2;
+                                    str_cor = [StatStr 'Bonf'];
+                                end
+                            end
+                        case 'Bonf'
+                        case '2DpFDR'
+                            switch F.hb
+                                case 'HbR'
+                                    ch = 2;
+                                case 'HbO'
+                                    ch = 1;
+                                case 'HbT'
+                                    ch = 3;
+                                otherwise
+                                    ch = 0;
+                            end
+                            OP.fdrtype = 1; %FDR-BH
+                            OP.u_thz = 2.5; %initial threshold
+                            OP.ttype = 1; %one-tailed t-test
+                            [p_thz t_thz fdrflag first_k stop_k] = nirs_2D_Bonferroni_FDR_threshold(3,s_map,ones(size(s_map)),ch,p_value,erdf,OP);
+                            if fdrflag % Found a valid threhold
+                                th_z = abs(t_thz);
+                            else % All null hypothesis have to be accepted
+                                disp('2D pFDR did not find a threshold. Infinite number will be imposed to produce a null image.');
+                                th_z = Inf; % Give a high number so that a null image will be produced
+                            end
+                            str_cor = StatStr;
+                        otherwise
+                    end
                 else
                     th_z = spm_invTcdf(1-p_value, erdf);
                 end

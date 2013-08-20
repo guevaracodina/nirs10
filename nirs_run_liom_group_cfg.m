@@ -30,14 +30,14 @@ FFX_or_RFX.help = {'Use fixed effects (FFX) for group of sessions (intra-subject
 StatMethod      = cfg_menu;
 StatMethod.tag  = 'StatMethod';
 StatMethod.name = 'Statistical method for spatial correlations';
-StatMethod.labels = {'EC/LKC','Bonf'};
-StatMethod.values = {1,0};
+StatMethod.labels = {'EC/LKC','Bonf','2D peak-FDR','None'};
+StatMethod.values = {1,2,3,0};
 StatMethod.val  = {1};
 StatMethod.help = {'Choose statistical method to account '
     'for false positives due to spatial correlations.'
     '(Family-wise error rate)'
     'Preferred choice: Euler characteristic calculated via Lipschitz-Killing curvature'
-    'Other choice: Bonferroni correction.'}';
+    'Other choice: Bonferroni correction/2D peak-FDR correction.'}';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%
 group_session_to_average         = cfg_entry;

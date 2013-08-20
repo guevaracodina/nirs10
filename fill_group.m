@@ -112,7 +112,7 @@ try
     end
     try
         DF = nirs_draw_figure(4,F,W,Z,G);
-        if Z.GFIS, H = nirs_copy_figure(H,DF,CF,c1,hb,shb,F.tstr,Z.LKC,Z.write_neg_pos); end
+        if Z.GFIS, H = nirs_copy_figure(H,DF,CF,c1,hb,shb,F.tstr,Z.LKC,Z.write_neg_pos); end 
     catch exception2
         disp(exception2.identifier);
         disp(exception2.stack(1));

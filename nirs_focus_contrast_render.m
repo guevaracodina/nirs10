@@ -48,39 +48,8 @@ activation = 1;
     
 num     = length(dat);
 %define the colours for focus and contrasts display
-%col_focus = eye(3);%Red
 col_contrast_neg = [0,0,1;0,1,0;0,0,1];%Blue for decrease
-%col_contrast = [0,1,0;0,0,1;0,0,1]; %red for increase
 col_contrast = eye(3); %red for increase
-
-% %Load the render file
-% [p,f,e] = fileparts(rendfile);
-% loadgifti = false;
-% if strcmpi(e,'.mat')
-%     load(rendfile);
-%     if ~exist('rend','var') && ~exist('Matrixes','var')
-%         loadgifti = true;
-%     end
-% end
-% if ~strcmpi(e,'.mat') || loadgifti
-%     try
-%         rend = export(gifti(rendfile),'patch');
-%     catch
-%         error('\nCannot read  render file "%s".\n', rendfile);
-%     end
-%     if num == 1
-%         col = hot(256);
-%     else
-%         col = eye(3);
-%         if spm_input('Which colours?','!+1','b',{'RGB','Custom'},[0 1],1)
-%             for k = 1:num
-%                 col(k,:) = uisetcolor(col(k,:),sprintf('Colour of blob set %d',k));
-%             end
-%         end
-%     end
-%     surf_rend(dat,rend,col);
-%     return
-% end
 
 spm('Pointer','Watch');
 
@@ -89,7 +58,6 @@ Fgraph = spm_figure('GetWin','Graphics');
 spm_results_ui('Clear',Fgraph);
 
 nrow = ceil(length(views)/2);
-% subplot('Position',[0, 0, 1, hght]);
 hght = 0.95;
 ax=axes('Parent',Fgraph,'units','normalized','Position',[0, 0, 1, hght],'Visible','off');
 image(0,'Parent',ax);

@@ -51,6 +51,13 @@ switch CType
                     l0 = find(tmap > -u_thz);
                     tmap2 = tmap;
                     tmap2(l0) = 0; %Apply the first threshold
+                    if max(max(abs(tmap2))) == 0
+                        disp('2D Peak-FDR: No peak passes the initial threshold.');
+                        flag = 0;
+                        p_value = 0;t_value = 0;
+                        first_k_value = -1;stop_k_value = -1;
+                        return
+                    end                        
                     [Zt Mt] = find_peak_2D(abs(tmap2)); %All t-values to be positive (for peak localization)
                     Zt = -Zt; % change back to negative
                     p_peak = spm_Tcdf(Zt,erdf);
@@ -58,6 +65,13 @@ switch CType
                     l0 = find(tmap < u_thz);
                     tmap2 = tmap;
                     tmap2(l0) = 0; %Apply the first threshold
+                    if max(max(abs(tmap2))) == 0
+                        disp('2D Peak-FDR: No peak passes the initial threshold.');
+                        flag = 0;
+                        p_value = 0;t_value = 0;
+                        first_k_value = -1;stop_k_value = -1;
+                        return
+                    end  
                     [Zt Mt] = find_peak_2D(tmap2);
                     p_peak = 1 - spm_Tcdf(Zt,erdf); % for positive t-value, use 1-p_value
                 end
@@ -68,6 +82,13 @@ switch CType
                 l0 = find(abs(tmap) < u_thz);
                 tmap2 = tmap;
                 tmap2(l0) = 0; %Apply the first threshold
+                if max(max(abs(tmap2))) == 0
+                    disp('2D Peak-FDR: No peak passes the initial threshold.');
+                    flag = 0;
+                    p_value = 0;t_value = 0;
+                    first_k_value = -1;stop_k_value = -1;
+                    return
+                end                  
                 [Zt Mt] = find_peak_2D(abs(tmap2)); %All t-values to be positive (for peak localization) 
                 p_peak = (1-spm_Tcdf(Zt,erdf))*2; % Two-tailed p-value
                 psort = sort(p_peak);  %Sort in ascending order
