@@ -1,9 +1,10 @@
 function out = nirs_run_liom_orth_coreg(job)
+%==========================================================================
 %This function intends to co-register the optode position as well as 
 %the activations onto orthogonal T1 image
 %Ke Peng,
 %2013-07-25, version 0.1, Function created
-
+%==========================================================================
 %select xSPM template
 
 global opt_info

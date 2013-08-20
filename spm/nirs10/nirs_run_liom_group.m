@@ -5,16 +5,24 @@ try
     out = nirs_spm_run_factorial_design(job);
 end
 Z = get_contrast_group_common_options(job);
-Z.StatStr = 'EC';
+%Z.StatStr = 'EC';
 %Run simple group level analysis as a one sample t-test
 Z.FFX = job.FFX_or_RFX;
 Z.p_value = job.contrast_p_value;
-switch job.StatMethod
-    case 1
+switch job.StatMethod % KP changed Multi-Comparison Correction choice. 1-EC; 2-Bonf; 3-2D pFDR
+    case 1 
+        Z.LKC = 1; % KP LKC field is just an indication of whether correction is applied (Name not changed as it is used in multiple places)
+        Z.StatStr = 'EC';
+    case 2
         Z.LKC = 1;
+        Z.StatStr = 'Bonf';        
+    case 3
+        Z.LKC = 1; 
+        Z.StatStr = '2DpFDR';        
     case 0
         Z.LKC = 0;
 end
+
 if isfield(job,'two_sample_t_test') && isfield(job.two_sample_t_test,'two_samples')
     Z.two_samples = 1;
     two_samples = job.two_sample_t_test.two_samples;
@@ -79,6 +87,9 @@ for Idx=1:nl
     try
         if Z.FFX || nS==1
             [NIRS newNIRSlocation]= nirs_load(job.NIRSmat{Idx,1},job.NIRSmatCopyChoice,job.force_redo);
+            [TOPO dir1 fTOPO] = nirs_load_TOPO(newNIRSlocation);
+            dir_group = fullfile(dir1, Z.group_dir_name); % KP before the change, group_dir_name will not take effect
+            newNIRSlocation = fullfile(dir_group,'NIRS.mat');
             job.NIRSmat{Idx,1} = newNIRSlocation;
             %load topographic information (formerly known as preproc_info)
             fname_ch = NIRS.Dt.ana.rend;
@@ -86,7 +97,7 @@ for Idx=1:nl
             rendered_MNI0 = rendered_MNI;
             %[dir1 fil1] = fileparts(newNIRSlocation);
             %dir_group = fullfile(dir1, Z.group_dir_name);
-            [TOPO dir_group fTOPO] = nirs_load_TOPO(newNIRSlocation); %nirs_load_TOPO(fullfile(dir1,'NIRS.mat')); %MA nirs_load_TOPO(fullfile(dir_group,'NIRS.mat'))
+            %[TOPO dir_group fTOPO] = nirs_load_TOPO(newNIRSlocation); %nirs_load_TOPO(fullfile(dir1,'NIRS.mat')); %MA nirs_load_TOPO(fullfile(dir_group,'NIRS.mat'))   
             TOPO.rendered_MNI = rendered_MNI;
         else
             [dir0,dummy,dummy2] = fileparts(job.NIRSmat{1});
