@@ -175,13 +175,16 @@ switch fign
                 else
                     th_z = spm_invTcdf(1-p_value, erdf);
                 end
-                index_over = find(s_map > th_z);
+                %index_over = find(s_map > th_z);
+                index_over = find(s_map >= th_z); %KP changed
                 %if GInv, index_over2 = find(-T_map > th_z); end
                 if GInv,
                     if GroupColorbars
-                        index_over2 = [find(s_map > th_z); find(-s_map > th_z)];
+                        %index_over2 = [find(s_map > th_z); find(-s_map > th_z)];
+                        index_over2 = [find(s_map >= th_z); find(-s_map >= th_z)]; %KP changed
                     else
-                        index_over2 = find(-s_map > th_z);
+                        %index_over2 = find(-s_map > th_z);
+                        index_over2 = find(-s_map >= th_z); %KP changed
                     end
                 end
             end
