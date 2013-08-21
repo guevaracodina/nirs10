@@ -22,9 +22,9 @@ switch CType
         Z = z0';
         switch t_type
             case 1 %One tailed
-                p_pixel = spm_Tcdf(z0',erdf);
+                p_pixel = spm_Tcdf(Z,erdf);
             case 2 %Two tailed
-                p_pixel = spm_Tcdf(z0',erdf)*2;
+                p_pixel = spm_Tcdf(Z,erdf)*2;
             otherwise
         end
         for zi = 1 : length(Z)
@@ -32,14 +32,14 @@ switch CType
                 p_pixel(zi) = 1 - p_pixel(zi); %for positive t-value, use 1-p_value
             end
         end
-        psort = sort(p_pixel);
+        [psort pidx] = sort(p_pixel);
         N = length(psort); %Number of pixels inside the boundray
         %Perform FDR
-        [p_value t_value flag first_k_value stop_k_value] = nirs_get_FDR_threshold(FDR_type,q_value,N,psort,erdf);
-        if t_type == 2
-            t_value = spm_invTcdf(p_value/2,erdf);
-        end
-        
+        [p_value flag first_k_value stop_k_value] = nirs_get_FDR_threshold(FDR_type,q_value,N,psort);
+        z_idx = pidx(stop_k_value);
+        t_value = Z(z_idx);                
+%                 t_value = spm_invTcdf(p_value/2,erdf);
+
     case 3 % Peak-FDR correction
         FDR_type = OP.fdrtype;
         u_thz = OP.u_thz;
@@ -75,9 +75,6 @@ switch CType
                     [Zt Mt] = find_peak_2D(tmap2);
                     p_peak = 1 - spm_Tcdf(Zt,erdf); % for positive t-value, use 1-p_value
                 end
-                psort = sort(p_peak);  %Sort in ascending order
-                %Perform FDR
-                [p_value t_value flag first_k_value stop_k_value] = nirs_get_FDR_threshold(FDR_type,q_value,length(psort),psort,erdf);                
             case 2  % Two-sided t-test
                 l0 = find(abs(tmap) < u_thz);
                 tmap2 = tmap;
@@ -91,11 +88,16 @@ switch CType
                 end                  
                 [Zt Mt] = find_peak_2D(abs(tmap2)); %All t-values to be positive (for peak localization) 
                 p_peak = (1-spm_Tcdf(Zt,erdf))*2; % Two-tailed p-value
-                psort = sort(p_peak);  %Sort in ascending order
-                [p_value t_value flag first_k_value stop_k_value] = nirs_get_FDR_threshold(FDR_type,q_value,length(psort),psort,erdf);
-                t_value = spm_invTcdf(p_value/2,erdf); % Two-tailed t-value
+%                 [psort pidx] = sort(p_peak);  %Sort in ascending order
+%                 [p_value flag first_k_value stop_k_value] = nirs_get_FDR_threshold(FDR_type,q_value,length(psort),psort);
+%                 t_value = spm_invTcdf(p_value/2,erdf); % Two-tailed t-value
             otherwise
         end
+        [psort pidx] = sort(p_peak);  %Sort in ascending order
+        %Perform FDR
+        [p_value flag first_k_value stop_k_value] = nirs_get_FDR_threshold(FDR_type,q_value,length(psort),psort);
+        z_idx = pidx(stop_k_value);
+        t_value = Zt(z_idx);
 end
 
 function [Zt Mt] = find_peak_2D(tmap)

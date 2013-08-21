@@ -1,4 +1,4 @@
-function [p_value t_value flag first_k_value stop_k_value] = nirs_get_FDR_threshold(FDR_type,q_value,Nc,p,erdf)
+function [p_value flag first_k_value stop_k_value] = nirs_get_FDR_threshold(FDR_type,q_value,Nc,p)
 flag = 0;
 switch FDR_type
     case 1
@@ -22,4 +22,4 @@ switch FDR_type
 end
 first_k_value = Nc;
 stop_k_value = i0;
-p_value = p(i0); t_value = spm_invTcdf(p_value,erdf);
+p_value = p(i0); %t_value = spm_invTcdf(p_value,erdf);
