@@ -98,6 +98,11 @@ switch CType
         [p_value flag first_k_value stop_k_value] = nirs_get_FDR_threshold(FDR_type,q_value,length(psort),psort);
         z_idx = pidx(stop_k_value);
         t_value = Zt(z_idx);
+        if flag == 1 && stop_k_value == 1
+            %t_value = floor(abs(t_value)*10)/10 * (abs(t_value))/t_value; % A temporaory solution for single point problem
+            t_value = t_value - 0.01*sign(t_value);
+            disp('Single point passing pFDR. Imposing a less strict threshold (-0.01)');
+        end
 end
 
 function [Zt Mt] = find_peak_2D(tmap)
