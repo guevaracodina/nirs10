@@ -9,6 +9,9 @@ TOPO.xCon = [];
 %SPM and xCon are for contrasts at the subject level
 %SS_SPM and SSxCon are arrays for each of the sessions
 try
+    if ~isfield(SPM0.job,'volt')
+        SPM0.job.volt = 1;
+    end
     SPM = SPM0;
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     if ~Z.automated_contrasts && Z.GroupMultiSession

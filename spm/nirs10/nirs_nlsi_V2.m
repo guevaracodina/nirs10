@@ -93,7 +93,7 @@ function M = nirs_nlsi_V2(M)
 
 % Gauss-Newton/Bayesian/EM estimation
 %======================================================================
-[Ep,Cp,Eh,F,k,MSE,MSE_HbR] = nirs_nlsi_GN_V2(M,M.U,M.Y);
+[Ep,Cp,Eh,F,k,MSE,MSE_HbR,M] = nirs_nlsi_GN_V2(M,M.U,M.Y);
 
 % Bilinear representation
 %==========================================================================
@@ -101,7 +101,7 @@ function M = nirs_nlsi_V2(M)
 
 % Volterra kernels
 %==========================================================================
-[K0,K1,K2]   = spm_kernels(M0,M1,L1,L2,(M.EM.kernel_window)/M.dt,M.dt);
+[K0,K1,K2] = spm_kernels(M0,M1,L1,L2,(M.EM.kernel_window)/M.dt,M.dt);
 [dummy,H1] = spm_kernels(M0,M1,(M.EM.kernel_window)/M.dt,M.dt);
 %Store results
 M.Ep = Ep;

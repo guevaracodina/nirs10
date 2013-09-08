@@ -24,7 +24,7 @@ for Idx=1:size(job.NIRSmat,1)
         %HDM: for results specific to one channel and session
         %HDMc: 2D cell of HDM structures, to be saved
         %SHDM: HDM for simulations
-        clear NIRS HDM0
+        clear NIRS HDM0 HDMc SHDM
         [NIRS newNIRSlocation]= nirs_load(job.NIRSmat{Idx,1},job.NIRSmatCopyChoice,job.force_redo);
         job.NIRSmat{Idx,1} = newNIRSlocation;
         if ~isempty(NIRS) && ((~isfield(NIRS,'flags') || ~isfield(NIRS.flags,'HDM_OK')) || job.force_redo)
@@ -45,7 +45,11 @@ for Idx=1:size(job.NIRSmat,1)
             NIRS.HDM.HDMfname = HDMfname;
             %set up common HDM structure
             HDM0 = nirs_initial_hdm_setup(O,DO,EM,IC,S,dt,dir1);
-            HDM0.subj_id = NIRS.Dt.s.subj_id;
+            if isfield(NIRS.Dt.s,'subj_id')
+                HDM0.subj_id = NIRS.Dt.s.subj_id;
+            else
+                HDM0.subj_id = int2str(Idx);
+            end
             HDM0.dir1 = dir1;
             HDM0.N = round(EM.kernel_window/dt);
             HDM0 = nirs_set_physiomodel(HDM0);

@@ -1,4 +1,4 @@
-function [Ep,Cp,Eh,F,k,MSE,MSE_HbR] = nirs_nlsi_GN_V2(M,U,Y)
+function [Ep,Cp,Eh,F,k,MSE,MSE_HbR,M] = nirs_nlsi_GN_V2(M,U,Y)
 % Bayesian inversion of a nonlinear model using a Gauss-Newton/EM algorithm
 % FORMAT [Ep,Cp,Eh,F] = spm_nlsi_GN(M,U,Y)
 %
@@ -105,7 +105,8 @@ end
 if ~M.nograph
     Fsi = spm_figure('GetWin','SI');
 end
-
+%Count number of NaN in free energy
+M.nan_count = 0;
 % check integrator
 %--------------------------------------------------------------------------
 try
@@ -384,6 +385,10 @@ for k = 1:M.EM.Niterations %number of iterations
     %----------------------------------------------------------------------
     try
         F0;
+        dF_out = full(F - C.F);
+        if isnan(dF_out)
+            M.nan_count = M.nan_count + 1;
+        end
         fprintf(' actual: %.3e (%.2f sec)\n',full(F - C.F),toc(tStart))
     catch
         if M.DO.verbose, disp('Default: using F0 = F'); end
@@ -502,7 +507,7 @@ for k = 1:M.EM.Niterations %number of iterations
             grid on
         end
         %Compute MSE
-        x0 = spm_unvec(e,f);
+        %e1 = spm_unvec(e,f);
         if M.IC.include_HbR
             %x0(:,1) = M.O.baseline_HbR*x0(:,1);
         else
@@ -514,7 +519,7 @@ for k = 1:M.EM.Niterations %number of iterations
             M.DO.show_mse = 0;
         end
         if M.DO.show_mse
-            [MSE MSE_HbR MSE_HbO] = nirs_get_MSE(x0);            
+            [MSE MSE_HbR MSE_HbO] = nirs_get_MSE(e1,f);            
 %             legend(['MSE: ' sprintf('%2.3f',MSE)], ['(MSE HbR: ' sprintf('%2.3f',MSE_HbR) ...
 %                 ', MSE HbO: ' sprintf('%2.3f',MSE_HbO) ')']);
             legend(['MSE(%): '  sprintf('%2.3f',MSE*100) ', MSE HbR: ' sprintf('%2.3f',MSE_HbR*100) ...
@@ -529,7 +534,10 @@ for k = 1:M.EM.Niterations %number of iterations
         grid on
         drawnow
         if M.DO.save_iteration_figures
-            nirs_HDM_print_figures(M,Fsi,['IHDM ' gen_num_str(k,3)]);
+            M.print_it = 1;
+            M.it.k = k;
+            nirs_HDM_print_figures(M,Fsi,['IHDM ']);
+            M.print_it = 0;
         end
     catch exception
         disp(exception.identifier)
@@ -562,7 +570,7 @@ if isfield(M,'HDM_str')
     xlabel(xLab)
     title('prediction (blue, solid) and filtered response (black, dots)')
     if M.DO.show_mse
-        [MSE MSE_HbR MSE_HbO] = nirs_get_MSE(x0);
+        [MSE MSE_HbR MSE_HbO] = nirs_get_MSE(e1,f);
         legend(['MSE(%): '  sprintf('%2.3f',MSE*100) ', MSE HbR: ' sprintf('%2.3f',MSE_HbR*100) ...
             ', MSE HbO: ' sprintf('%2.3f',MSE_HbO*100)]);
     end
@@ -571,9 +579,14 @@ if isfield(M,'HDM_str')
     end
 end
 
-function [MSE MSE_HbR MSE_HbO] = nirs_get_MSE(x0)
-MSE = sum(x0(:).^2)/length(x0(:));
+function [MSE MSE_HbR MSE_HbO] = nirs_get_MSE(x0,f)
+MSE0 = sum((x0(:)+f(:)).^2);
+MSE = sum(x0(:).^2)/MSE0; %length(x0(:));
 x0_HbR = x0(:,1);
 x0_HbO = x0(:,2)-x0(:,1);
-MSE_HbR = sum(x0_HbR.^2)/length(x0_HbR(:));
-MSE_HbO = sum(x0_HbO.^2)/length(x0_HbO(:));
+f_HbR = f(:,1);
+f_HbO = f(:,2)-f(:,1);
+MSE_HbR0 = sum((x0_HbR(:)+f_HbR(:)).^2); 
+MSE_HbO0 = sum((x0_HbO(:)+f_HbO(:)).^2);
+MSE_HbR = sum(x0_HbR.^2)/MSE_HbR0; %length(x0_HbR(:));
+MSE_HbO = sum(x0_HbO.^2)/MSE_HbO0; %length(x0_HbO(:));
