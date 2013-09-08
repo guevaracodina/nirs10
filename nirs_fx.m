@@ -59,16 +59,16 @@ switch M.O.PhysioModel_Choice
     case 2 %B-H
         x([2 3 5 6 7],:) = exp(x([2 3 5 6 7],:)); 
         
-        BH = M.BH;
-        BH = nirs_fillBH(x,P,BH);
+        BH = nirs_fillBH(x,P,M.BH);
         %--------------------------------------------------------------------------
         f(1,:)     = -BH.effFlow'*u(1,:) - BH.ksr*x(1,:) - BH.kr*(x(2,:) -1); %Why /10? Why -effFlow? that's due to inverse relation between flow and arteriolar resistance
         f(2,:)     = x(1,:)./x(2,:); 
-        f(3,:)     = BH.eta*(BH.fin - BH.fv)/x(3,:);
+        f(3,:)     = BH.eta*(BH.fin - BH.fv)./x(3,:);
         f(4,:)     = BH.effCMRO'*u(1,:) - BH.ksm*x(4,:) - BH.km*(x(5,:) - 1); %Why /10?
         f(5,:)     = x(4,:)./x(5,:);
-        f(6,:)     = BH.gamma*(BH.Gamma0*x(7,:)-x(6,:)-x(5,:)*(BH.Gamma0-1))/x(6,:);
-        f(7,:)     = BH.eta*(  (BH.fin+BH.fv*BH.delta/(1-BH.delta)) *...
-            (BH.Chi -BH.S -BH.Upsilon*x(7,:))  - BH.Psi*( BH.Gamma0*x(7,:) -  x(6,:) )  )/...
-            (x(3,:)*((1-BH.S)^2*(3*x(7,:)^2+BH.B)/BH.A  + BH.Upsilon )*x(7,:));%        
+        f(6,:)     = BH.gamma*(BH.Gamma0*x(7,:)-x(6,:)-x(5,:)*(BH.Gamma0-1))./x(6,:); %In Simon's article, Gamm0=k7 and gamma = k1.
+        f(7,:)     = BH.eta*(  (BH.fin+BH.fv*BH.delta/(1-BH.delta)).*...
+            (BH.Chi -BH.S -BH.Upsilon*x(7,:))  - BH.Psi*( BH.Gamma0*x(7,:) -  x(6,:) )  )./...
+            (x(3,:).*((1-BH.S).^2.*(3*x(7,:).^2+BH.B)/BH.A  + BH.Upsilon ).*x(7,:)); %In Simon's article, 
+        %eta = k2, Upsilon = k4, , Chi = k5, Psi = k3, A = k_A, B = k_B.       
 end

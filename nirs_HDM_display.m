@@ -155,10 +155,8 @@ try
                 case 1 %Zheng-Mayhew
                     legend('s','f','v','q','w','ma',0); %MODIFIER
                 case 2 %Huppert1
-                    %legend('s','f','v','q','s2','m','Ct','Cv','ma',0)
-                    legend('s','f','s2','f2','v','t','p','ma',0)
-                case 3 %Buxton-Friston part 1
-                    legend('s','f',0);
+                    legend('sa','Ra','v','sm','m','t','p','ma',0)
+                    %legend('s','f','s2','f2','v','t','p','ma',0)
                 otherwise
                     legend('s','f','v','q','ma',0);
             end
@@ -176,7 +174,8 @@ try
                     legend('s','f','v','q','w', 0); %MODIFIER
                 case 2 %Huppert1
                     %legend('s','f','v','q','s2','m','Ct','Cv',0)
-                    legend('s','f','s2','f2','v','t','p',0)
+                    %legend('s','f','s2','f2','v','t','p',0)
+                    legend('sa','Ra','v','sm','m','t','p',0)
                 case 3 %Buxton-Friston part 1
                     legend('s','f',0);
                 otherwise
