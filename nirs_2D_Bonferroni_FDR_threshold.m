@@ -54,7 +54,7 @@ switch CType
                     if max(max(abs(tmap2))) == 0
                         disp('2D Peak-FDR: No peak passes the initial threshold.');
                         flag = 0;
-                        p_value = 0;t_value = 0;
+                        p_value = 0;t_value = Inf;
                         first_k_value = -1;stop_k_value = -1;
                         return
                     end                        
@@ -68,7 +68,7 @@ switch CType
                     if max(max(abs(tmap2))) == 0
                         disp('2D Peak-FDR: No peak passes the initial threshold.');
                         flag = 0;
-                        p_value = 0;t_value = 0;
+                        p_value = 0;t_value = Inf;
                         first_k_value = -1;stop_k_value = -1;
                         return
                     end  
@@ -82,7 +82,7 @@ switch CType
                 if max(max(abs(tmap2))) == 0
                     disp('2D Peak-FDR: No peak passes the initial threshold.');
                     flag = 0;
-                    p_value = 0;t_value = 0;
+                    p_value = 0;t_value = Inf;
                     first_k_value = -1;stop_k_value = -1;
                     return
                 end                  
@@ -100,7 +100,7 @@ switch CType
         t_value = Zt(z_idx);
         if flag == 1 && stop_k_value == 1
             %t_value = floor(abs(t_value)*10)/10 * (abs(t_value))/t_value; % A temporaory solution for single point problem
-            t_value = t_value - 0.01*sign(t_value);
+            t_value = t_value - 0.05*sign(t_value);
             disp('Single point passing pFDR. Imposing a less strict threshold (-0.01)');
         end
 end

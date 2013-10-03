@@ -42,7 +42,6 @@ try
     %Get threshold for maps
     [th_z str_cor index_over index_over2] = nirs_get_threshold(fign,F,tstr,erdf,...
         eidf,s_map,GInv,p_value,Z.StatStr,Z.StatStr2,Z.GroupColorbars,G,Z.UseCorrelRes,sum_kappa,nchn,Z.LKC);
-    DF.th_z = th_z;
     I = [];
     I.index_over = index_over;
     Y1 = nirs_make_figure(I,F,W,Z,str_cor,th_z,0);
@@ -108,6 +107,9 @@ try
             DF.fontsize_choice = Y1.fontsize_choice;
             DF.GroupColorbars = Z.GroupColorbars;
         end
+    end 
+    if ~isempty(DF)
+        DF.th_z = th_z; %KP If any figure was produced, record the thz.
     end
 catch exception
     disp(exception.identifier);
