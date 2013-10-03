@@ -87,7 +87,15 @@ contrasts_session.name = 'Select Sessions to project contrasts';
 contrasts_session.val = {0};
 contrasts_session.strtype = 'r';
 contrasts_session.num     = [1 inf];
-contrasts_session.help    = {'Specify sessions. Input the number. Input 0 for a group view result (uncorrected).'};                   
+contrasts_session.help    = {'Specify sessions. Input the number. Input 0 for a group view result.'};
+
+activation_select	   = cfg_entry;
+activation_select.tag  = 'activation_select';
+activation_select.name = 'Select activation for projection';
+activation_select.val = {1};
+activation_select.strtype = 'r';
+activation_select.num     = [1 1];
+activation_select.help    = {'Specify activation number to be projected.'};
                    
 contrasts_disabled         = cfg_branch;
 contrasts_disabled.tag     = 'contrasts_disabled';
@@ -98,7 +106,7 @@ contrasts_disabled.help    = {'Disable the contrasts projection'};
 contrasts_enabled         = cfg_branch;
 contrasts_enabled.tag     = 'contrasts_enabled';
 contrasts_enabled.name    = 'Project contrasts onto a same image';
-contrasts_enabled.val     = {chromophore_select contrasts_session contrasts_views};
+contrasts_enabled.val     = {chromophore_select contrasts_session contrasts_views activation_select};
 contrasts_enabled.help    = {'Enable the contrasts projection'};
 
 proj_contrasts      = cfg_choice;

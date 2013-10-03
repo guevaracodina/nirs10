@@ -45,12 +45,12 @@ for Idx=1:size(job.NIRSmat,1)
                 else
                     rf = job.focus_radius(Idx);
                 end
-                lf = job.focus_location(Idx,:);
+                lf = job.focus_location(Idx,:)';
             catch
                 disp('Problem with focus radius or coordinates for this subject');
                 disp('Check that you entered the data correctly');
             end
-            if rf > 20
+            if rf > 30
                 for x0 = -rf:2:rf
                     for y0 = -rf:2:rf
                         for z0 = - rf:2:rf
@@ -73,6 +73,47 @@ for Idx=1:size(job.NIRSmat,1)
                     end
                 end
             end
+%             bout = rf+5;bout2 = bout*bout;
+%             bin = rf-5;bin2 = bin * bin;
+%             for x0 = -bout : bout
+%                 for y0 = -bout : bout
+%                     for z0 = -bout : bout
+%                         xyz2 = x0*x0+y0*y0+z0*z0;
+%                         if  xyz2 <= bin2
+%                             continue;
+%                         else
+%                             if xyz2 <= bout2
+%                                 xSPM.Z = [xSPM.Z 1];
+%                                 xSPM.XYZmm = [xSPM.XYZmm [lf(1)+x0; lf(2)+y0; lf(3)+z0]];
+%                             end
+%                         end
+%                     end
+%                 end
+%             end
+%             
+%             x0 = -bout : bout;y0 = -bout:bout;z0 = -bout:bout;
+%             lt = 2*bout+1;
+%             CXYZmm = zeros(3,lt^3);
+%             for t0 = 1 : lt
+%                 CXYZmm(1,((t0-1)*lt^2+1):(t0*lt^2)) = x0(t0);
+%                 for t00 = 1 : lt
+%                     CXYZmm(2,((t00-1)*lt+1 + (t0-1)*lt^2):(t00*lt +(t0-1)*lt^2)) = y0(t00);
+%                     CXYZmm(3,((t00-1)*lt+1 + (t0-1)*lt^2):(t00*lt + (t0-1)*lt^2)) = z0;
+%                 end
+%             end
+%             disCXYZ = sqrt(CXYZmm(1,:).^2 + CXYZmm(2,:).^2 + CXYZmm(3,:).^2);
+%             disidx = find((disCXYZ < bout)&(disCXYZ > bin));
+%             tXYZmm = CXYZmm(:,disidx);
+%             xSPM.XYZmm(1,:) = lf(1) + tXYZmm(1,:);
+%             xSPM.XYZmm(2,:) = lf(2) + tXYZmm(2,:);
+%             xSPM.XYZmm(3,:) = lf(3) + tXYZmm(3,:);
+%             xSPM.Z = ones(1,length(disidx));
+% %             for tidx = 1:length(disidx)
+% %                 pidx = disidx(tidx);
+% %                 xSPM.Z = [xSPM.Z 1];
+% %                 xSPM.XYZmm = [xSPM.XYZmm [lf(1)+CXYZmm(1,pidx); lf(2)+CXYZmm(2,pidx); lf(3)+CXYZmm(3,pidx)]];
+% %             end
+            
             
             %From the TopoData file, we can infer whether coregistration
             %was done on template or on subject
@@ -133,34 +174,38 @@ for Idx=1:size(job.NIRSmat,1)
 
             if isfield(job.proj_contrasts,'contrasts_enabled')
                 %Load TOPO file
-                
-                sess = job.proj_contrasts.contrasts_enabled.contrasts_session;
-                if length(sess) == 1
-                    if sess == 0 %Group view
-                        Topo_file = NIRS.TOPO;
-                        [dir_TP,fil_TP,ext_TP] = fileparts(Topo_file);
-                        Topo_group_file = fullfile([dir_TP '\Group'],[fil_TP ext_TP]);
-                        try
-                            load(Topo_group_file);
-                        catch
-                            disp(['Could not load TOPO group file for subject' int2str(Idx) ' for ' job.NIRSmat{Idx,1}]);
-                        end
-                    else
-                        try
-                            Topo_file = NIRS.TOPO;
-                            load(Topo_file);
-                        catch
-                            disp(['Could not load TOPO file for subject' int2str(Idx) ' for ' job.NIRSmat{Idx,1}]);
-                        end
-                    end
-                else
-                    try
-                        Topo_file = NIRS.TOPO;
-                        load(Topo_file);
-                    catch
-                        disp(['Could not load TOPO file for subject' int2str(Idx) ' for ' job.NIRSmat{Idx,1}]);
-                    end
+                Topo_file = NIRS.TOPO;                
+                try
+                    load(Topo_file);
+                catch
+                    disp(['Could not load TOPO group file for subject' int2str(Idx) ' for ' job.NIRSmat{Idx,1}]);
                 end
+%                 if length(sess) == 1
+%                     if sess == 0 %Group view
+%                         Topo_file = NIRS.TOPO;
+%                         [dir_TP,fil_TP,ext_TP] = fileparts(Topo_file);
+%                         Topo_group_file = fullfile([dir_TP '\Group'],[fil_TP ext_TP]);
+%                         try
+%                             load(Topo_group_file);
+%                         catch
+%                             disp(['Could not load TOPO group file for subject' int2str(Idx) ' for ' job.NIRSmat{Idx,1}]);
+%                         end
+%                     else
+%                         try
+%                             Topo_file = NIRS.TOPO;
+%                             load(Topo_file);
+%                         catch
+%                             disp(['Could not load TOPO file for subject' int2str(Idx) ' for ' job.NIRSmat{Idx,1}]);
+%                         end
+%                     end
+%                 else
+%                     try
+%                         Topo_file = NIRS.TOPO;
+%                         load(Topo_file);
+%                     catch
+%                         disp(['Could not load TOPO file for subject' int2str(Idx) ' for ' job.NIRSmat{Idx,1}]);
+%                     end
+%                 end
             end
 
             %do projection
@@ -169,6 +214,7 @@ for Idx=1:size(job.NIRSmat,1)
                 disp_option.sessions = job.proj_contrasts.contrasts_enabled.contrasts_session;
                 disp_option.views = job.proj_contrasts.contrasts_enabled.contrasts_views;
                 disp_option.chromophore = job.proj_contrasts.contrasts_enabled.chromophore_select;
+                disp_option.activation = (job.proj_contrasts.contrasts_enabled.activation_select - 1) * 2 + 1;
                 [NewNIRSDir NewNIRSFile NewNIRSExt] = fileparts(newNIRSlocation);
                 disp_option.save_dir = NewNIRSDir;
                 nirs_focus_contrast_render(NIRS,xSPM,brt,TOPO,rendered_MNI,disp_option);

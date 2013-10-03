@@ -44,7 +44,9 @@ sessions = disp_op.sessions;
 views = disp_op.views;
 chromophore = disp_op.chromophore;
 save_dir = disp_op.save_dir;
-activation = 1;
+activation = disp_op.activation;
+
+c_s = get_chromophore(chromophore);
     
 num     = length(dat);
 %define the colours for focus and contrasts display
@@ -207,15 +209,21 @@ for i = sessions
         if i == 0 %Group view
             con_XYZ = TOPO.v{j}.g.hb{chromophore}.c{activation}.Tmap;
             con_XYZ = flipud(con_XYZ);
-            con_XYZ(find(abs(con_XYZ) < 2.1)) = 0;
-            con_name = TOPO.v{j}.g.hb{2}.c{1}.c.name;
-            disp(['Projection HbR activation ' con_name ' for view ' j ' in group stage']);
-            disp('Only uncorrected results are presented.');
+            con_name = TOPO.v{j}.g.hb{chromophore}.c{activation}.c.name;
+            disp(['Project ' c_s ' associated with activation ' con_name ' for view ' int2str(j) ' in group stage']);
             i0 = 20;
+            
+            if thres
+                if isfield(TOPO.v{j}.g.hb{chromophore}.c{activation}, 'th_z')
+                    thz = TOPO.v{j}.g.hb{chromophore}.c{activation}.th_z;
+                    con_XYZ(find(abs(con_XYZ) < thz)) = 0;
+                else
+                    disp('ERROR! Threshold value not found. Only uncorrected results are presented.');
+                end
+            end
             
         else
             con_XYZ = squeeze(TOPO.v{j}.s{i}.hb{chromophore}.stat_map(activation,:,:)); %To project HbR concentration as a first stage. Only have the first activation.
-            activation_type = 1;
             con_XYZ = flipud(con_XYZ); %Upside down
 
             %Remove massive interpolation
@@ -305,22 +313,15 @@ else
     % Combine the brain surface renderings with the blobs, and display using
     % 24 bit colour.
     %----------------------------------------------------------------------
-    
-    switch chromophore
-        case 1
-            c_s = 'HbO';
-        case 2
-            c_s =  'HbR';
-        case 3
-            c_s = 'HbT';
-    end
     for h = sessions
-        
-        
         v_t = 0;
         if h == 0 
             h0 = 20;
-            image_tab = ['Group_unc_' c_s];
+            if thres
+                image_tab = ['Group_corrected_' c_s];
+            else
+                image_tab = ['Group_unc_' c_s];
+            end
         else
             h0 = h;
             activation_name = NIRS.Dt.fir.Sess(h).U(activation).name{1};
@@ -331,14 +332,13 @@ else
             end
             
         end
-
         
-        for n = views,
-            
+        imgt = image_tab;
+        for n = views, 
             if h == 0
                 activation_name = TOPO.v{n}.g.hb{chromophore}.c{activation}.c.name;
                 [side_hemi spec_hemi] = nirs_get_brain_view(n);
-                image_tab = [image_tab '_' spec_hemi activation_name];
+                image_tab = [imgt '_' spec_hemi activation_name];
             end
 
             %For old version of render file
@@ -428,8 +428,14 @@ else
                         rgb(i0,j0-1,2) = 1;rgb(i0,j0-2,2) = 1;rgb(i0,j0-3,2) = 1;rgb(i0,j0-4,2) = 1;rgb(i0,j0-5,2) = 1;
                         rgb(i0,j0+1,2) = 1;rgb(i0,j0+2,2) = 1;rgb(i0,j0+3,2) = 1;rgb(i0,j0+4,2) = 1;rgb(i0,j0+5,2) = 1;
                     end
+%                     if (data_focus(i0,j0) > 0)
+%                         rgb(i0,j0,2) = 1;
+%                     end
                 end
             end
+
+%             rgb(:,:,2) = render_proj.all_focus{i}.map;
+            
             
             %Display
 

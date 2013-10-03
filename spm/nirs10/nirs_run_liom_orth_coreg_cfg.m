@@ -77,15 +77,23 @@ Coreg_layer.labels = {'scalp' 'cortex'};
 Coreg_layer.values = {0 1};
 Coreg_layer.val  = {0};
 Coreg_layer.help = {'Choose results on which layer.'
-                       'Must select from these two options:'
-                       'scalp/cortex'}';   
+    'Must select from these two options:'
+    'scalp/cortex'}';
+
+radius_channel         = cfg_entry; %nasion_wMNI
+radius_channel.name    = 'Radius of mask and of extrapolation';
+radius_channel.tag     = 'radius_channel';
+radius_channel.strtype = 'r';
+radius_channel.num     = [1 1];
+radius_channel.val{1}  = 30;
+radius_channel.help    = {'Specify radius of mask and of extrapolation in millimeters.'};
 
 %Excecutable branch
                    
 liom_OrthCoreg      = cfg_exbranch;
 liom_OrthCoreg.name = 'LIOM Orthogonal Coregistration';
 liom_OrthCoreg.tag  = 'liom_OrthCoreg';
-liom_OrthCoreg.val  = {NIRSmat redo1 NIRSmatCopyChoice render_image Coreg_type Coreg_layer};
+liom_OrthCoreg.val  = {NIRSmat redo1 NIRSmatCopyChoice render_image Coreg_type Coreg_layer radius_channel};
 liom_OrthCoreg.prog = @nirs_run_liom_orth_coreg;
 liom_OrthCoreg.vout = @nirs_cfg_vout_liom_orth_coreg;
 liom_OrthCoreg.help = {'This module can now be run by itself or as part of a larger batch.'}';

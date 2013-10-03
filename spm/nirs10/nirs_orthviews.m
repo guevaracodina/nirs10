@@ -238,7 +238,7 @@ function varargout = nirs_orthviews(action,varargin)
 %                undefined.
 
 global st;
-global opt_info hp;
+global opt_info;
 
 persistent zoomlist;
 persistent reslist;
@@ -299,73 +299,592 @@ switch lower(action)
             spm_XYZreg('SetCoords',st.centre,st.registry.hReg,st.registry.hMe);
         end
         cm_pos;
-        
+        %Record position
+        opt_info.currentC = tmp(1:3);
         %Add text, Ke Peng
+        clearErrorMsg;
         try
             if ~isempty(opt_info)
-                new_dis = sqrt((opt_info.XYZmm(1,:) - tmp(1)).^2 + ...
-                        (opt_info.XYZmm(2,:) - tmp(2)).^2 + ...
-                        (opt_info.XYZmm(3,:) - tmp(3)).^2);
+                new_dis = sqrt((opt_info.xSPM.XYZmm(1,:) - tmp(1)).^2 + ...
+                        (opt_info.xSPM.XYZmm(2,:) - tmp(2)).^2 + ...
+                        (opt_info.xSPM.XYZmm(3,:) - tmp(3)).^2);
                 least_dis = min(new_dis);
                 if least_dis <= 5
                     Fgraph = spm_figure('GetWin','Graphics');
                     try
-                        delete(hp);
-                    catch
+                        delete(opt_info.hText.ht);
                     end
                     currentp = find(new_dis == least_dis);
-                    hTexthd = axes('Parent',Fgraph,...
-                            'Position',[0.02 0.95 0.96 0.02],...
-                            'Visible','off');
-                    t_str = [opt_info.type ' ' opt_info.label(currentp)];
-                    text(0.5,0,t_str,'Parent',hTexthd,...
-                    'HorizontalAlignment','center',...
-                    'VerticalAlignment','baseline',...
-                    'FontWeight','Bold','FontSize',14);
-%                     opt_info.currentL = opt_info.label(currentp);
-%                     opt_info.currentC = opt_info.XYZmm(:,currentp);
+                    currentXYZmm = opt_info.xSPM.XYZmm(:,currentp);
+                    hTexthd = axes('Parent',Fgraph,'Position',[0.02 0.95 0.96 0.02],'Visible','off');
+                    posstr = ['[' num2str(currentXYZmm(1)) ' ' num2str(currentXYZmm(2)) ' ' num2str(currentXYZmm(3)) ']'];
+                    t_str = [opt_info.type ' ' opt_info.xSPM.label(currentp) posstr];
+                    text(0.5,0,t_str,'Parent',hTexthd,'HorizontalAlignment','center',...
+                    'VerticalAlignment','baseline','FontWeight','Bold','FontSize',14);
                     opt_info.currentP = currentp;
-                    hp = hTexthd;
+                    opt_info.hText.ht = hTexthd;
                 else
                     try
-                        delete(hp);
-                        opt_info.currentL = [];
-                        opt_info.currentC = [];
-                    catch
+                        opt_info.currentP = [];
+                        delete(opt_info.hText.ht);
                     end
                 end
             end
-        catch
+        catch exception
+            disp(exception.identifier);
+            disp(exception.stack(1));
         end
         
-    case 'correspondence'
+    case 'dc_num'
+        try
+            clearErrorMsg;
+            OPnum = str2num(get(findobj('Tag','ByNum'),'String')); %OPnum = get(opt_info.hText.hi,'String');
+            DrawTmp = opt_info.xSPM.XYZmm(:,OPnum*2+2);
+            nirs_orthviews('Reposition',DrawTmp);
+        catch exception
+            disp(exception.identifier);
+            disp(exception.stack(1));
+        end
+        
+    case 'dc_num_plus'
+        try
+            clearErrorMsg;
+            OPnum = str2num(get(opt_info.hText.hi,'String'));
+            OPnum = OPnum + 1;
+            DrawTmp = opt_info.xSPM.XYZmm(:,OPnum*2+2);
+            nirs_orthviews('Reposition',DrawTmp);
+            set(opt_info.hText.hi,'String',int2str(OPnum));
+        catch exception
+            disp(exception.identifier);
+            disp(exception.stack(1));
+        end
+        
+    case 'dc_num_minus'
+        try
+            clearErrorMsg;
+            OPnum = str2num(get(opt_info.hText.hi,'String'));
+            OPnum = OPnum - 1;
+            DrawTmp = opt_info.xSPM.XYZmm(:,OPnum*2+2);
+            nirs_orthviews('Reposition',DrawTmp);
+            set(opt_info.hText.hi,'String',int2str(OPnum));
+        catch exception
+            disp(exception.identifier);
+            disp(exception.stack(1));
+        end
+        
+    case 'goleftpa',
+        try
+            clearErrorMsg;
+            DrawTmp = opt_info.xSPM.XYZmm(:,2);
+            nirs_orthviews('Reposition',DrawTmp);
+        catch exception
+            disp(exception.identifier);
+            disp(exception.stack(1));
+        end
+        
+    case 'gonasion',
+        try
+            clearErrorMsg;
+            DrawTmp = opt_info.xSPM.XYZmm(:,1);
+            nirs_orthviews('Reposition',DrawTmp);
+        catch exception
+            disp(exception.identifier);
+            disp(exception.stack(1));
+        end
+        
+    case 'gorightpa',
+        try
+            clearErrorMsg;
+            DrawTmp = opt_info.xSPM.XYZmm(:,3);
+            nirs_orthviews('Reposition',DrawTmp);
+        catch exception
+            disp(exception.identifier);
+            disp(exception.stack(1));
+        end
+        
+    case 'correspondence',
         %Added by Ke Peng, called in nirs_run_liom_orth_coreg
         try
+            [Fgraph hErrTexthd] = clearErrorMsg;
             if ~isempty(opt_info.currentP)
                 currentP = opt_info.currentP;
                 if currentP ~= 1 && currentP ~= 2 && currentP ~= 3
                     %Find the corresponding point, either left one or right
                     %one
-                    p0.XYZmm = opt_info.XYZmm(:,currentP);
-                    p0.label = opt_info.label{currentP};
+                    p0.XYZmm = opt_info.xSPM.XYZmm(:,currentP);
+                    p0.label = opt_info.xSPM.label{currentP};
+                    p0str = p0.label(1:(end-4));
                     
-                    p1.XYZmm = opt_info.XYZmm(:,currentP+1);
-                    p1.label = opt_info.label{currentP+1};
+                    p1.XYZmm = opt_info.xSPM.XYZmm(:,currentP+1);
+                    p1.label = opt_info.xSPM.label{currentP+1};
+                    p1str = p1.label(1:(end-4));                    
                     
-                    p2.XYZmm = opt_info.XYZmm(:,currentP-1);
-                    p2.label = opt_info.label{currentP-1};
+                    p2.XYZmm = opt_info.xSPM.XYZmm(:,currentP-1);
                     
-                    if strcmp(p0.label,p1.label)
+                    if strcmp(p0str,p1str)
                         DrawTmp = p1.XYZmm(1:3,:);
                     else
                         DrawTmp = p2.XYZmm(1:3,:);
-                    end
-                    
+                    end                   
                     nirs_orthviews('Reposition',DrawTmp);
-
                 end
+            else
+                text(0.5,0,'ERROR: Please choose an optode/a channel first','Parent',hErrTexthd,...
+                'HorizontalAlignment','center',...
+                'VerticalAlignment','baseline',...
+                'FontWeight','Bold','FontSize',14);
+                opt_info.hText.he = hErrTexthd;
             end
-        catch
+        catch exception
+            disp(exception.identifier);
+            disp(exception.stack(1));
+        end
+        
+    case 'coregop',
+        %Added by Ke Peng, called in nirs_run_liom_orth_coreg
+        try
+            [Fgraph hErrTexthd] = clearErrorMsg;
+            if ~isempty(opt_info.currentP) && opt_info.currentP ~= 1 && opt_info.currentP ~= 2 && opt_info.currentP ~= 3
+                currentP = opt_info.currentP;
+                Plabel = opt_info.xSPM.label(currentP);
+                SlpOrCtx = Plabel{1};
+                if currentP ~= 1 && currentP ~= 2 && currentP ~= 3 && strcmp(SlpOrCtx(end-2 : end),'Slp')
+                    set(opt_info.hText.hb.crgop, 'Enable', 'on');
+                    text(0.5,0,'Please choose a new position on the scalp for this optode/channel','Parent',hErrTexthd,...
+                        'HorizontalAlignment','center',...
+                        'VerticalAlignment','baseline',...
+                        'FontWeight','Bold','FontSize',14);
+                    opt_info.RCP = currentP; %Optode to re-coreg
+                    set(opt_info.hText.hb.op, 'Enable', 'Off');
+                    set(opt_info.hText.hb.crgop, 'Enable', 'On');
+                    set(opt_info.hText.hb.fd, 'Enable', 'Off');
+                    setallbutton(0);
+                else
+                    text(0.5,0,'ERROR: Please click on an optode/a channel ON THE SCALP','Parent',hErrTexthd,...
+                        'HorizontalAlignment','center',...
+                        'VerticalAlignment','baseline',...
+                        'FontWeight','Bold','FontSize',14);
+                end
+            else
+                text(0.5,0,'ERROR: Please click on an optode/a channel on the scalp','Parent',hErrTexthd,...
+                    'HorizontalAlignment','center',...
+                    'VerticalAlignment','baseline',...
+                    'FontWeight','Bold','FontSize',14);
+            end
+            opt_info.hText.he = hErrTexthd;
+        catch exception
+            disp(exception.identifier);
+            disp(exception.stack(1));
+        end
+        
+    case 'coregop_exe'
+        %Added by Ke Peng, called in nirs_run_liom_orth_coreg
+        try
+            [Fgraph hErrTexthd] = clearErrorMsg;
+            if isfield(opt_info, 'currentC') && isfield(opt_info, 'RCP')
+                text(0.5,0,'Co-registration ongoing...','Parent',hErrTexthd,...
+                    'HorizontalAlignment','center',...
+                    'VerticalAlignment','baseline',...
+                    'FontWeight','Bold','FontSize',14);
+                Preplace = opt_info.RCP;
+                newp = opt_info.currentC;
+                Q = opt_info.recoreg.Q;
+                newpw = Q * [newp;1];
+                newpw_c1 = projection_CS(newpw); %Korean's method
+                newp_c1 = Q\newpw_c1;
+                newp_c1 = newp_c1(1:3,:);
+                opt_info.OPrecoreg.idx = [opt_info.OPrecoreg.idx (Preplace-2)/2]; %the ith Optode or channel
+                opt_info.OPrecoreg.SlpXYZmm = opt_info.xSPM.XYZmm(:,Preplace);
+                opt_info.OPrecoreg.CtxXYZmm = opt_info.xSPM.XYZmm(:,Preplace + 1);
+                opt_info.OPrecoreg.undo = [0 opt_info.OPrecoreg.undo];
+                opt_info.xSPM.XYZmm(:,Preplace) = newp; %replace the coordinates on the scalp with the new one
+                opt_info.xSPM.XYZmm(:,Preplace + 1) = newp_c1; %replace the coordinates on the cortex with the new one
+                nirs_orthdraw(opt_info.xSPM, opt_info.frender);
+                delete(hErrTexthd);
+                hErrTexthd = axes('Parent',Fgraph,'Position',[0.02 0.85 0.96 0.02],'Visible','off');
+                text(0.5,0,'Co-registration Done','Parent',hErrTexthd,...
+                    'HorizontalAlignment','center',...
+                    'VerticalAlignment','baseline',...
+                    'FontWeight','Bold','FontSize',14);
+                nirs_orthviews('Reposition',newp);
+                set(opt_info.hText.hb.crgopu, 'Enable', 'on');             
+            else
+                text(0.5,0,'ERROR: coordinates not recorded. Please re-do.','Parent',hErrTexthd,...
+                    'HorizontalAlignment','center',...
+                    'VerticalAlignment','baseline',...
+                    'FontWeight','Bold','FontSize',14);               
+            end
+            set(opt_info.hText.hb.crgop, 'Enable', 'off');
+            set(opt_info.hText.hb.op, 'Enable', 'off');
+            set(opt_info.hText.hb.crgopu, 'Enable', 'on');
+            set(opt_info.hText.hb.crgopr, 'Enable', 'off');
+            set(opt_info.hText.hb.crgopcf, 'Enable', 'on');
+            opt_info.hText.he = hErrTexthd;
+        catch exception
+            disp(exception.identifier);
+            disp(exception.stack(1));
+        end
+        
+    case 'coregop_undo',
+        try
+            [Fgraph hErrTexthd] = clearErrorMsg;
+            if isfield(opt_info, 'OPrecoreg')
+                P = opt_info.OPrecoreg.idx(end);
+                Cs = opt_info.OPrecoreg.SlpXYZmm;
+                Cc = opt_info.OPrecoreg.CtxXYZmm;
+                opt_info.OPrecoreg.SlpXYZmm = opt_info.xSPM.XYZmm(:,P*2+2);
+                opt_info.OPrecoreg.CtxXYZmm = opt_info.xSPM.XYZmm(:,P*2+3); %Record the old coordinates for undo
+                opt_info.xSPM.XYZmm(:,P*2+2) = Cs; %replace the coordinates on the scalp with the new one
+                opt_info.xSPM.XYZmm(:,P*2+3) = Cc; %replace the coordinates on the cortex with the new one
+                opt_info.OPrecoreg.undo(end) = 1;
+                nirs_orthdraw(opt_info.xSPM, opt_info.frender);
+                text(0.5,0,'Undo coregistration Done','Parent',hErrTexthd,...
+                    'HorizontalAlignment','center',...
+                    'VerticalAlignment','baseline',...
+                    'FontWeight','Bold','FontSize',14);
+                nirs_orthviews('Reposition',Cs);
+                set(opt_info.hText.hb.crgopu, 'Enable', 'off');
+                set(opt_info.hText.hb.crgopr, 'Enable', 'on');
+            else
+                text(0.5,0,'ERROR: Undo optode not found.','Parent',hErrTexthd,...
+                    'HorizontalAlignment','center',...
+                    'VerticalAlignment','baseline',...
+                    'FontWeight','Bold','FontSize',14);
+            end
+            opt_info.hText.he = hErrTexthd;
+        catch exception
+            disp(exception.identifier);
+            disp(exception.stack(1));
+        end
+        
+    case 'coregop_redo'
+        try
+             [Fgraph hErrTexthd] = clearErrorMsg;
+             if isfield(opt_info, 'OPrecoreg')
+                P = opt_info.OPrecoreg.idx(end);
+                Cs = opt_info.OPrecoreg.SlpXYZmm;
+                Cc = opt_info.OPrecoreg.CtxXYZmm;
+                opt_info.OPrecoreg.SlpXYZmm = opt_info.xSPM.XYZmm(:,P*2+2);
+                opt_info.OPrecoreg.CtxXYZmm = opt_info.xSPM.XYZmm(:,P*2+3); %Record the old coordinates for undo
+                opt_info.xSPM.XYZmm(:,P*2+2) = Cs; %replace the coordinates on the scalp with the new one
+                opt_info.xSPM.XYZmm(:,P*2+3) = Cc; %replace the coordinates on the cortex with the new one
+                opt_info.OPrecoreg.undo(end) = 0;
+                nirs_orthdraw(opt_info.xSPM, opt_info.frender);
+                text(0.5,0,'Redo coregistration Done','Parent',hErrTexthd,...
+                    'HorizontalAlignment','center',...
+                    'VerticalAlignment','baseline',...
+                    'FontWeight','Bold','FontSize',14);                
+                nirs_orthviews('Reposition',Cs);                 
+             else
+                text(0.5,0,'ERROR: Redo optode not found.','Parent',hErrTexthd,...
+                    'HorizontalAlignment','center',...
+                    'VerticalAlignment','baseline',...
+                    'FontWeight','Bold','FontSize',14);
+             end
+             set(opt_info.hText.hb.crgopu, 'Enable', 'on');
+             set(opt_info.hText.hb.crgopr, 'Enable', 'off');
+             opt_info.hText.he = hErrTexthd;
+        catch exception
+            disp(exception.identifier);
+            disp(exception.stack(1));
+        end
+        
+    case 'coregop_confirm'
+        try
+             [Fgraph hErrTexthd] = clearErrorMsg;
+             if isfield(opt_info, 'OPrecoreg')
+                 P = opt_info.OPrecoreg.idx(end);
+                 type = opt_info.type;
+                 recoreg = opt_info.recoreg;
+                 m2v = opt_info.m2v;
+                 Q = opt_info.recoreg.Q;
+                 CSlp = opt_info.xSPM.XYZmm(:,P*2+2);
+                 CCtx = opt_info.xSPM.XYZmm(:,P*2+3);
+                 undo = opt_info.OPrecoreg.undo(end);
+                 if ~undo
+                     recoreg = FillOptodePos(recoreg,Q,m2v,P,type,CSlp,CCtx,opt_info.render_template);
+                 end
+                 opt_info.recoreg = recoreg;
+                 text(0.5,0,'Recoreg op position confirmed.','Parent',hErrTexthd,...
+                     'HorizontalAlignment','center',...
+                     'VerticalAlignment','baseline',...
+                     'FontWeight','Bold','FontSize',14);
+             else
+                text(0.5,0,'ERROR: Recoreg optode not found.','Parent',hErrTexthd,...
+                    'HorizontalAlignment','center',...
+                    'VerticalAlignment','baseline',...
+                    'FontWeight','Bold','FontSize',14);
+             end
+             set(opt_info.hText.hb.crgopu, 'Enable', 'off');
+             set(opt_info.hText.hb.crgopr, 'Enable', 'off');
+             set(opt_info.hText.hb.op, 'Enable', 'on');
+             set(opt_info.hText.hb.fd, 'Enable', 'on');
+             set(opt_info.hText.hb.crgopcf, 'Enable', 'off');
+             setallbutton(1);
+             opt_info.hText.he = hErrTexthd;
+        catch exception
+            disp(exception.identifier);
+            disp(exception.stack(1));
+        end
+        
+    case 'coregfd',
+        try
+            [Fgraph hErrTexthd] = clearErrorMsg;
+            if ~isempty(opt_info.currentP) && (opt_info.currentP == 1 || opt_info.currentP == 2 || opt_info.currentP == 3)
+                set(opt_info.hText.hb.crgfd, 'Enable', 'on');
+                text(0.5,0,'Coreg will based on the latest saved NIRS. Please choose a new position.','Parent',hErrTexthd,...
+                    'HorizontalAlignment','center',...
+                    'VerticalAlignment','baseline',...
+                    'FontWeight','Bold','FontSize',14);
+                opt_info.FCP = opt_info.currentP; %Optode to re-coreg
+                set(opt_info.hText.hb.crgfd, 'Enable', 'On');
+                set(opt_info.hText.hb.fd, 'Enable', 'Off');
+                set(opt_info.hText.hb.op, 'Enable', 'Off');
+                setallbutton(0);
+            else
+                text(0.5,0,'ERROR: Please click on a fiducial point','Parent',hErrTexthd,...
+                    'HorizontalAlignment','center',...
+                    'VerticalAlignment','baseline',...
+                    'FontWeight','Bold','FontSize',14);
+            end
+            opt_info.hText.he = hErrTexthd;
+        catch exception
+            disp(exception.identifier);
+            disp(exception.stack(1));
+            opt_info.hText.he = hErrTexthd;
+        end
+        
+    case 'coregfd_exe',
+        try
+            [Fgraph hErrTexthd] = clearErrorMsg;
+            if isfield(opt_info, 'currentC') && isfield(opt_info, 'FCP')
+                text(0.5,0,'Co-registration ongoing...Please wait...','Parent',hErrTexthd,...
+                    'HorizontalAlignment','center',...
+                    'VerticalAlignment','baseline',...
+                    'FontWeight','Bold','FontSize',14);
+                set(opt_info.hText.hb.crgfd, 'Enable', 'off');
+                set(opt_info.hText.hb.crgfdr, 'Enable', 'off');
+                set(opt_info.hText.hb.crgfdu, 'Enable', 'off');
+                newp = opt_info.currentC;
+                fcp = opt_info.FCP;
+                opt_info.FDrecoreg.xSPM = opt_info.xSPM; %Record for undo
+                opt_info.FDrecoreg.recoreg = opt_info.recoreg; %Record for undo
+                opt_info.xSPM.XYZmm(:,fcp) = newp; %Replace with the new location
+                Q = opt_info.recoreg.Q;
+                fd_omm = opt_info.recoreg.corr.F.r.o.mm.p; % Fiducial coordinates in mm (original, unnormalised)
+                Sp_rom = opt_info.recoreg.corr.S.r.o.mm.p;
+                Dp_rom = opt_info.recoreg.corr.D.r.o.mm.p;
+                Ns = opt_info.recoreg.corr.S.N;
+                Pvoid = opt_info.recoreg.corr.P.void;
+                Cid = opt_info.recoreg.corr.C.id;
+                OPidx = opt_info.OPrecoreg.idx;
+                OPundo = opt_info.OPrecoreg.undo;
+                if ~isempty(OPidx)
+                    OPidx = unique(OPidx(find(OPundo == 0)));%Find optodes/channels that have been aleady recoregistered.
+                else
+                    OPXYZmm_ed = [];
+                end
+                type = opt_info.type;
+                render_template = opt_info.render_template;
+                m2v = opt_info.m2v;
+                if render_template
+                    fd_wmm = opt_info.xSPM.XYZmm(:,1:3);
+                    fd_rmm = Q\[fd_wmm; [1 1 1]];
+                    fd_rmm = fd_rmm(1:3,:);
+                else
+                    fd_rmm = opt_info.xSPM.XYZmm(:,1:3);
+                    fd_wmm = Q*[fd_rmm; [1 1 1]]; %Fiducial coordinates in mm
+                    fd_wmm = fd_wmm(1:3,:); % Fiducial coordinates in mm (MNI, normalised)
+                end
+                switch type
+                    case 'Channel'
+                        sel = 0;
+                        if ~isempty(OPidx)
+                            OPXYZmm_ed = opt_info.recoreg.corr.C.r.m.mm.fp(:,OPidx);
+                        end
+                    case 'Source'
+                        sel = 1;
+                        if ~isempty(OPidx)
+                            OPXYZmm_ed = opt_info.recoreg.corr.P.r.m.mm.fp(:,OPidx);
+                        end
+                    case 'Detector'
+                        sel = 2;
+                        if ~isempty(OPidx)
+                            OPXYZmm_ed = opt_info.recoreg.corr.P.r.m.mm.fp(:,Ns+OPidx);
+                        end
+                    case 'All Channels/Sources/Detectors'
+                        sel = 3;
+                    otherwise
+                        sel = -1;
+                end
+                recoreg1 = LIOMrecoreg(fd_omm,fd_rmm,Q,Sp_rom,Dp_rom,Pvoid,Cid,render_template,m2v,OPidx,OPXYZmm_ed,type);
+                recoreg1.corr.F.w.m.mm.p = fd_wmm;
+                opt_info.recoreg = recoreg1;
+                [coreg xSPM opt] = nirs_orthPrep(recoreg1,sel,render_template,0,opt_info.m2v);
+                opt_info.xSPM = xSPM;
+                nirs_orthdraw(xSPM, opt_info.frender);
+                delete(hErrTexthd);
+                hErrTexthd = axes('Parent',Fgraph,'Position',[0.02 0.85 0.96 0.02],'Visible','off');
+                text(0.5,0,'Co-registration Done','Parent',hErrTexthd,...
+                    'HorizontalAlignment','center',...
+                    'VerticalAlignment','baseline',...
+                    'FontWeight','Bold','FontSize',14);
+                nirs_orthviews('Reposition',newp);
+                set(opt_info.hText.hb.crgfdu, 'Enable', 'on');
+                set(opt_info.hText.hb.crgfdcf, 'Enable', 'on');
+            else
+                try
+                    delete(hErrTexthd);
+                end
+                hErrTexthd = axes('Parent',Fgraph,'Position',[0.02 0.85 0.96 0.02],'Visible','off');
+                text(0.5,0,'ERROR: coordinates not recorded. Please re-do.','Parent',hErrTexthd,...
+                    'HorizontalAlignment','center',...
+                    'VerticalAlignment','baseline',...
+                    'FontWeight','Bold','FontSize',14);
+                set(opt_info.hText.hb.crgfd, 'Enable', 'on');
+                set(opt_info.hText.hb.crgfdu, 'Enable', 'off');
+                set(opt_info.hText.hb.crgfdr, 'Enable', 'off');
+                set(opt_info.hText.hb.crgfdcf, 'Enable', 'off');
+            end
+
+            opt_info.hText.he = hErrTexthd;
+        catch exception
+            disp(exception.identifier);
+            disp(exception.stack(1));
+            set(opt_info.hText.hb.crgfd, 'Enable', 'off');
+            opt_info.hText.he = hErrTexthd;
+        end
+        
+    case 'coregfd_undo',
+        try
+            [Fgraph hErrTexthd] = clearErrorMsg;
+            if isfield(opt_info, 'FDrecoreg') && ~isempty(opt_info.FDrecoreg)
+                xSPM = opt_info.FDrecoreg.xSPM;
+                recoreg = opt_info.FDrecoreg.recoreg;
+                opt_info.FDrecoreg.xSPM = opt_info.xSPM;
+                opt_info.FDrecoreg.recoreg = opt_info.recoreg;
+                opt_info.xSPM = xSPM;
+                opt_info.recoreg = recoreg;
+                nirs_orthdraw(xSPM, opt_info.frender);
+                delete(hErrTexthd);
+                hErrTexthd = axes('Parent',Fgraph,'Position',[0.02 0.85 0.96 0.02],'Visible','off');
+                text(0.5,0,'Undo FD co-registration Done','Parent',hErrTexthd,...
+                    'HorizontalAlignment','center',...
+                    'VerticalAlignment','baseline',...
+                    'FontWeight','Bold','FontSize',14);
+                newp = opt_info.xSPM.XYZmm(:,opt_info.FCP);
+                nirs_orthviews('Reposition',newp);
+                set(opt_info.hText.hb.crgfdr, 'Enable', 'on');
+                set(opt_info.hText.hb.crgfdu, 'Enable', 'off');
+            else
+                text(0.5,0,'ERROR: Undo oldNIRS not found.','Parent',hErrTexthd,...
+                    'HorizontalAlignment','center',...
+                    'VerticalAlignment','baseline',...
+                    'FontWeight','Bold','FontSize',14);
+            end
+            opt_info.hText.he = hErrTexthd;
+        catch exception
+            disp(exception.identifier);
+            disp(exception.stack(1));
+            opt_info.hText.he = hErrTexthd;
+            set(opt_info.hText.hb.fd, 'Enable', 'on');
+        end
+        
+    case 'coregfd_redo',
+        try
+            [Fgraph hErrTexthd] = clearErrorMsg;
+            if isfield(opt_info, 'FDrecoreg') && ~isempty(opt_info.FDrecoreg)
+                xSPM = opt_info.FDrecoreg.xSPM;
+                recoreg = opt_info.FDrecoreg.recoreg;
+                opt_info.FDrecoreg.xSPM = opt_info.xSPM;
+                opt_info.FDrecoreg.recoreg = opt_info.recoreg;
+                opt_info.xSPM = xSPM;
+                opt_info.recoreg = recoreg;
+                nirs_orthdraw(xSPM, opt_info.frender);
+                delete(hErrTexthd);
+                hErrTexthd = axes('Parent',Fgraph,'Position',[0.02 0.85 0.96 0.02],'Visible','off');
+                text(0.5,0,'Redo FD co-registration Done','Parent',hErrTexthd,...
+                    'HorizontalAlignment','center',...
+                    'VerticalAlignment','baseline',...
+                    'FontWeight','Bold','FontSize',14);
+                newp = opt_info.xSPM.XYZmm(:,opt_info.FCP);
+                nirs_orthviews('Reposition',newp);
+                set(opt_info.hText.hb.crgfdr, 'Enable', 'off');
+                set(opt_info.hText.hb.crgfdu, 'Enable', 'on');
+            else
+                text(0.5,0,'ERROR: Undo oldNIRS not found.','Parent',hErrTexthd,...
+                    'HorizontalAlignment','center',...
+                    'VerticalAlignment','baseline',...
+                    'FontWeight','Bold','FontSize',14);
+            end
+            opt_info.hText.he = hErrTexthd;
+        catch exception
+            disp(exception.identifier);
+            disp(exception.stack(1));
+            opt_info.hText.he = hErrTexthd;
+            set(opt_info.hText.hb.fd, 'Enable', 'on');
+        end
+        
+    case 'coregfd_confirm',
+        try
+            [Fgraph hErrTexthd] = clearErrorMsg;
+            if isfield(opt_info.recoreg, 'err')
+                opt_info.recoreg.pro.errValofCoreg_mm2 = opt_info.recoreg.err.errValofCoreg_mm2;
+                opt_info.recoreg.pro.errValofCoreg_mm2_all = opt_info.recoreg.err.errValofCoreg_mm2_all;
+                opt_info.recoreg.pro.errValofCoreg_cm_worst = opt_info.recoreg.err.errValofCoreg_cm_worst;
+            end
+            opt_info.FDcoreg = [];
+            text(0.5,0,'Recoreg fd position confirmed.','Parent',hErrTexthd,...
+                'HorizontalAlignment','center',...
+                'VerticalAlignment','baseline',...
+                'FontWeight','Bold','FontSize',14);
+            set(opt_info.hText.hb.fd, 'Enable', 'on');
+            set(opt_info.hText.hb.op, 'Enable', 'on');
+            set(opt_info.hText.hb.crgfdcf, 'Enable', 'off');       
+            setallbutton(1);
+        catch exception
+            disp(exception.identifier);
+            disp(exception.stack(1));
+        end
+        
+    case 'orthsave',
+        try
+            [Fgraph hErrTexthd] = clearErrorMsg;
+            opt_info.recoreg.corr.n = opt_info.NIRS.Cf.H.n;
+            opt_info.recoreg.corr.C.n = opt_info.NIRS.Cf.H.C.n;
+            opt_info.recoreg.corr.C.wl = opt_info.NIRS.Cf.H.C.wl;
+            opt_info.recoreg.corr.C.gp = opt_info.NIRS.Cf.H.C.gp;
+            opt_info.recoreg.corr.P.n = opt_info.NIRS.Cf.H.P.N;
+            opt_info.recoreg.pro.extcoeff_ref = opt_info.NIRS.Dt.pro.extcoeff_ref;
+            opt_info.NIRS.Cf.H = opt_info.recoreg.corr;
+            opt_info.NIRS.Dt.pro = opt_info.recoreg.pro;
+            NIRS = opt_info.NIRS;
+            save(opt_info.newNIRSlocation,'NIRS');
+            [dir_coreg,dummy] = fileparts(opt_info.newNIRSlocation);
+            ch_MNI_vx = opt_info.recoreg.corr.C.r.m.vx.c1.p;
+            if isfield(opt_info.recoreg.corr.C, 'w')
+                ch_MNIw_vx = opt_info.recoreg.corr.C.w.m.vx.c1.p;
+            else
+                ch_MNIw_vx = opt_info.m2v.w\(opt_info.recoreg.Q*opt_info.recoreg.corr.C.r.m.mm.c1.p);
+            end
+            use_fSeg = 1;
+            if isfield(opt_info.NIRS.Dt.ana,'T1seg') && use_fSeg
+                fSeg = opt_info.NIRS.Dt.ana.T1seg;
+            else
+                fSeg = [];
+            end
+            rendered_MNI = render_MNI_coordinates_new(ch_MNIw_vx,...
+                ch_MNI_vx,opt_info.wT1_info,NIRS.Dt.ana.wT1.VF,opt_info.render_template,fSeg,dir_coreg,0,opt_info.ERad);
+            rend_file = fullfile(dir_coreg,'TopoData.mat');
+            recoreg_file = fullfile(dir_coreg,'opt_info.mat');
+            save(rend_file, 'rendered_MNI');
+            save(recoreg_file, 'opt_info');
+            nirs_brain_project_2d(NIRS,dir_coreg,rendered_MNI,[],'r','','',[],0); %display
+            clear global opt_info
+        catch exception
+            disp(exception.identifier);
+            disp(exception.stack(1));
+            opt_info.hText.he = hErrTexthd;
         end
         
     case 'setcoords',
@@ -552,7 +1071,366 @@ end
 spm('Pointer','Arrow');
 return;
 
+%_______________________________________________________________________
+function [Fgraph hErrTexthd] = clearErrorMsg
+global opt_info
+try
+    delete(opt_info.hText.he);
+end
+Fgraph = spm_figure('GetWin','Graphics');
+hErrTexthd = axes('Parent',Fgraph,'Position',[0.02 0.85 0.96 0.02],'Visible','off');
 
+%_______________________________________________________________________
+function recoreg1 = LIOMrecoreg(x,y,Q,Sp_rom,Dp_rom,Pvoid,Cid,render_template,m2v,OPidx,OPXYZmm,type)
+%codes from nirs_run_coreg_new
+% Compute optimal rigid transformation to match fiducial
+% positions from one coordinate system to the other
+[s R t] = abs_orientation(x,y); % y = s*R(x) + t
+estY = zeros(size(y));
+for Fi = 1:3 %assume 3 fiducials
+    estY(:,Fi) = s*R*x(:,Fi) + t;
+end;
+% Store coregistration error
+err = y - estY;
+errVal = sum(err(:).^2);
+errValMax = (max(sum(err.^2,1))^0.5)/10;
+err %show error on each fiducial
+disp(['Error Value for subject: ' num2str(errVal)]);
+disp(['Worst coregistration error: ' num2str(errValMax) ' cm']);
+% Apply the same transformation to all points in order to
+% achieve coregistration
+Pp_rom = [Sp_rom Dp_rom];
+NP = size(Pp_rom,2);
+Ns = size(Sp_rom,2);
+Nd = size(Dp_rom,2);
+Pp_rmm = zeros(size(Pp_rom));
+for Pi = 1:NP
+    if ~Pvoid(Pi)
+        Pp_rmm(:,Pi) = s*R*Pp_rom(:,Pi) + t; %Optode coordinates, on scalp, unnormalised
+    end
+end;
+% Preserve optode position that have already been re-coregistered
+if ~isempty(OPidx)
+    if strcmp(type, 'Source')
+        for i0 = 1:length(OPidx)
+            idx = OPidx(i0);
+            Pp_rmm(:,idx) = OPXYZmm(:,i0);
+        end
+    elseif strcmp(type, 'Detector')
+        for i0 = 1:length(OPidx)
+            idx = OPidx(i0);
+            Pp_rmm(:,Ns+idx) = OPXYZmm(:,i0);
+        end
+    end
+end
+% unnormalized -> normalized, for optodes
+Pp_wmm = Q * [Pp_rmm;ones(1,NP)];          %% unit : mm %Optode coordinates, on scalp, normalised
+% mm -> voxels, for optodes
+Pp_rvx = m2v.m\[Pp_rmm;ones(1,NP)];
+% PROJECT OPTODE POSITIONS ON CORTEX SURFACE %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%render to subject
+Nch0 = size(Cid,2)/2;
+Pch_rmm = zeros(3,Nch0);
+Pch_wmm = zeros(4,Nch0); %different convention of keeping the 4th row
+for i=1:Nch0
+    %indices of source and detector
+    Si = Cid(2,i);
+    Di = Cid(3,i)+Ns;
+    Pch_rmm(:,i) = (Pp_rmm(:,Si)+Pp_rmm(:,Di))/2;
+    Pch_wmm(:,i) = (Pp_wmm(:,Si)+Pp_wmm(:,Di))/2; %Channel coordinates, on scalp
+end
+%Keep the channel position that have been already coregistered
+if strcmp(type, 'Channel')
+    if ~isempty(OPidx)
+        OPXYZwmm = Q * OPXYZmm;
+        for i0 = 1:length(OPidx)
+            OPtmp = OPXYZmm(:,i0);
+            idx = OPidx(i0);
+            Pch_rmm(:,idx) = OPtmp(1:3,:);
+            Pch_wmm(:,idx) = OPXYZwmm(:,i0);
+            Cwarn = 'Channel positions have been changed without re-placing corresponding sources or detectors. Use source or detector coordinates with caution.';
+        end
+    end
+end
+Pch_rvx = m2v.m\[Pch_rmm; ones(1,Nch0)];
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Step 2: Cortex projection method
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Pp_c1_wmm = projection_CS(Pp_wmm);%Using Korean template Optode coordinates, on cortex, normalised
+Pp_c1_rmm = zeros(4,NP);
+for Pi = 1:NP
+    if ~Pvoid(Pi)
+        %inversion: normalized -> unnormalized
+        Pp_c1_rmm(:,Pi) = Q\Pp_c1_wmm(:,Pi); %Optode coordinates, on cortex, unnormalised
+    end
+end
+
+coreg_projected_channels_on_cortex_rather_than_midpoint = 1;
+if coreg_projected_channels_on_cortex_rather_than_midpoint
+    Pch_c1_wmm = projection_CS(Pch_wmm); %Korean's method
+    Pch_c1_rmm = Q\Pch_c1_wmm;
+else
+    for i0 = 1 : Nc
+        %indices of source and detector
+        Si = Cid(2,i);
+        Di = Cid(3,i)+Ns;
+        Pch_c1_rmm(:,i) = (Pp_c1_rmm(:,Si)+Pp_c1_rmm(:,Di))/2;
+        Pch_c1_wmm(:,i) = (Pp_c1_wmm(:,Si)+Pp_c1_wmm(:,Di))/2; %Channel coordinates, on scalp
+    end
+end
+
+Pp_c1_rvx = m2v.m\Pp_c1_rmm;
+Pch_c1_rvx = m2v.m\Pch_c1_rmm;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Write data
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+recoreg1.err.errValofCoreg_mm2 = errVal;
+recoreg1.err.errValofCoreg_mm2_all = err;
+recoreg1.err.errValofCoreg_cm_worst = errValMax;
+
+recoreg1.corr.F.r.m.mm.p = y;
+recoreg1.corr.F.r.o.mm.p = x;
+recoreg1.corr.S.N = Ns;
+recoreg1.corr.S.r.o.mm.p = Sp_rom;
+recoreg1.corr.S.r.m.mm.fp = Pp_rmm(:,1:Ns);
+recoreg1.corr.S.r.m.mm.c1.p = Pp_c1_rmm(:,1:Ns);
+recoreg1.corr.D.N = Nd;
+recoreg1.corr.D.r.o.mm.p = Dp_rom;
+recoreg1.corr.D.r.m.mm.fp = Pp_rmm(:,(Ns+1):(Ns+Nd));
+recoreg1.corr.D.r.m.mm.c1.p = Pp_c1_rmm(:,(Ns+1):(Ns+Nd));
+recoreg1.corr.P.void = Pvoid;
+recoreg1.corr.P.r.m.mm.p = Pp_rmm;
+recoreg1.corr.P.r.m.mm.fp = Pp_rmm;
+recoreg1.corr.P.r.m.mm.c1.p = Pp_c1_rmm(1:3,:);
+recoreg1.corr.P.w.m.mm.fp = Pp_wmm;
+recoreg1.corr.P.w.m.mm.c1.p = Pp_c1_wmm;
+recoreg1.corr.C.N = Nch0*2;
+recoreg1.corr.C.id = Cid;
+recoreg1.corr.C.r.m.mm.fp = [Pch_rmm; ones(1,size(Pch_rmm, 2))];
+recoreg1.corr.C.r.m.mm.c1.p = [Pch_c1_rmm; ones(1,size(Pch_rmm,2))];
+if exist('Cwarn','var')
+    recoreg1.corr.C.warning = Cwarn;
+end
+
+recoreg1.corr.S.r.m.vx.fp = Pp_rvx(1:3,1:Ns);
+recoreg1.corr.S.r.m.vx.c1.p = Pp_c1_rvx(1:3,1:Ns);
+recoreg1.corr.D.r.m.vx.fp = Pp_rvx(1:3,(Ns+1):(Ns+Nd));
+recoreg1.corr.D.r.m.vx.c1.p = Pp_c1_rvx(1:3,(Ns+1):(Ns+Nd));
+recoreg1.corr.C.r.m.vx.fp = [Pch_rvx; ones(1,size(Pch_rvx,2))];
+recoreg1.corr.C.r.m.vx.c1.p = [Pch_c1_rvx; ones(1,size(Pch_c1_rvx,2))];
+
+recoreg1.Q = Q;
+if render_template
+    recoreg1.corr.C.w.m.mm.fp = Pch_wmm;
+    recoreg1.corr.C.w.m.mm.c1.p = Pch_c1_wmm;
+    recoreg1.corr.S.w.m.mm.fp = Pp_wmm(:,1:Ns);
+    recoreg1.corr.S.w.m.mm.c1.p = Pp_c1_wmm(:,1:Ns);
+    recoreg1.corr.D.w.m.mm.fp = Pp_wmm(:,(Ns+1):(Ns+Nd));
+    recoreg1.corr.D.w.m.mm.c1.p = Pp_c1_wmm(:,(Ns+1):(Ns+Nd));
+    recoreg1.corr.P.w.m.vx.fp = m2v.w\Pp_wmm;
+    recoreg1.corr.P.w.m.vx.c1.p = m2v.w\Pp_c1_wmm;
+    recoreg1.corr.C.w.m.vx.fp = m2v.w\Pch_wmm;
+    recoreg1.corr.C.w.m.vx.c1.p = m2v.w\Pch_c1_wmm;
+    recoreg1.corr.S.w.m.vx.fp = recoreg1.corr.P.w.m.vx.fp(:,1:Ns);
+    recoreg1.corr.S.w.m.vx.c1.p = recoreg1.corr.P.w.m.vx.c1.p(:,1:Ns);
+    recoreg1.corr.D.w.m.vx.fp = recoreg1.corr.P.w.m.vx.fp(:,(Ns+1):(Ns+Nd));
+    recoreg1.corr.D.w.m.vx.c1.p = recoreg1.corr.P.w.m.vx.c1.p(:,(Ns+1):(Ns+Nd));    
+end
+return;
+%_______________________________________________________________________
+%_______________________________________________________________________
+%function recoreg1 = fill_recoreg(recoreg, render_template, type, new_p)
+
+%_______________________________________________________________________
+%_______________________________________________________________________
+function coreg = ReplaceChannelCoordinates(coreg,P,type,m2v,render_template)
+Cid = coreg.corr.C.id;
+Nch0 = coreg.corr.C.N/2;
+Ns = coreg.corr.S.N;
+Q = coreg.Q;
+Cid = Cid(:,1:Nch0);
+coreg_projected_channels_on_cortex_rather_than_midpoint = 1;
+switch type
+    case 'Source'
+        Cidx = find(Cid(2,:) == P);
+    case 'Detector'
+        Cidx = find(Cid(3,:) == P);
+    otherwise
+end
+if render_template %If rendered on template
+    for i0 = 1:length(Cidx)
+        c0 = Cidx(i0);
+        s0 = Cid(2,c0);
+        d0 = Cid(3,c0);
+        coreg.corr.C.w.m.mm.fp(:,c0) = (coreg.corr.P.w.m.mm.fp(:,s0) + coreg.corr.P.w.m.mm.fp(:,d0+Ns))/2;
+        coreg.corr.C.w.m.vx.fp(:,c0) = m2v.w\coreg.corr.C.w.m.mm.fp(:,c0);
+        coreg.corr.C.r.m.mm.fp(:,c0) = Q\coreg.corr.C.w.m.mm.fp(:,c0);
+        coreg.corr.C.r.m.vx.fp(:,c0) = m2v.m\coreg.corr.C.r.m.mm.fp(:,c0);
+        if coreg_projected_channels_on_cortex_rather_than_midpoint
+            coreg.corr.C.w.m.mm.c1.p(:,c0) = projection_CS(coreg.corr.C.w.m.mm.fp(:,c0));
+            coreg.corr.C.w.m.vx.c1.p(:,c0) = m2v.w\coreg.corr.C.w.m.mm.c1.p(:,c0);
+            coreg.corr.C.r.m.mm.c1.p(:,c0) = Q\coreg.corr.C.w.m.mm.c1.p(:,c0);
+            coreg.corr.C.r.m.vx.c1.p(:,c0) = m2v.m\coreg.corr.C.r.m.mm.c1.p(:,c0);
+        else
+            coreg.corr.C.w.m.mm.c1.p(:,c0) = ([coreg.corr.P.w.m.mm.c1.p(:,s0);1] + [coreg.corr.P.w.m.mm.c1.p(:,d0+Ns);1])/2;
+            coreg.corr.C.w.m.vx.c1.p(:,c0) = m2v.w\coreg.corr.C.w.m.mm.c1.p(:,c0);
+            coreg.corr.C.r.m.mm.c1.p(:,c0) = ([coreg.corr.P.r.m.mm.c1.p(:,s0);1] + [coreg.corr.P.r.m.mm.c1.p(:,d0+Ns);1])/2;
+            coreg.corr.C.r.m.vx.c1.p(:,c0) = m2v.m\coreg.corr.C.r.m.mm.c1.p(:,c0);
+        end
+    end
+else %if rendered on patient T1 image
+    for i0 = 1:length(Cidx)
+        c0 = Cidx(i0);
+        s0 = Cid(2,c0);
+        d0 = Cid(3,c0);
+        coreg.corr.C.r.m.mm.fp(:,c0) = ([coreg.corr.P.r.m.mm.fp(:,s0);1] + [coreg.corr.P.r.m.mm.fp(:,d0+Ns);1])/2;
+        coreg.corr.C.r.m.vx.fp(:,c0) = m2v.m\coreg.corr.C.r.m.mm.fp(:,c0);
+        if coreg_projected_channels_on_cortex_rather_than_midpoint
+            Cw = Q * coreg.corr.C.r.m.mm.fp(:,c0);
+            Cw_c1 = projection_CS(Cw); %Korean's method
+            coreg.corr.C.r.m.mm.c1.p(:,c0) = Q\Cw_c1;
+            coreg.corr.C.r.m.vx.c1.p(:,c0) = m2v.m\coreg.corr.C.r.m.mm.c1.p(:,c0);
+        else
+            coreg.corr.C.r.m.mm.c1.p(:,c0) = ([coreg.corr.P.r.m.mm.c1.p(:,s0);1] + [coreg.corr.P.r.m.mm.c1.p(:,d0+Ns);1])/2;
+            coreg.corr.C.r.m.vx.c1.p(:,c0) = m2v.m\coreg.corr.C.r.m.mm.c1.p(:,c0);
+        end
+    end
+end
+return;
+
+%_______________________________________________________________________
+%_______________________________________________________________________
+function coreg = FillOptodePos(coreg,Q,m2v,P,type,CSlp,CCtx,render_template)
+if render_template
+    P_wmm = CSlp;
+    P_c1_wmm = CCtx;
+    P_wmm = [P_wmm;1];
+    P_c1_wmm = [P_c1_wmm;1];
+    P_wvx = m2v.w \ P_wmm;
+    P_c1_wvx = m2v.w \ P_c1_wmm;
+    switch type
+        case 'Source'
+            if isfield(coreg.corr.S, 'w')
+                coreg.corr.S.w.m.mm.fp(:,P) = P_wmm;
+                coreg.corr.S.w.m.mm.c1.p(:,P) = P_c1_wmm;
+                coreg.corr.S.w.m.vx.fp(:,P) = P_wvx;
+                coreg.corr.S.w.m.vx.c1.p(:,P) = P_c1_wvx;
+            end
+            if isfield(coreg.corr.S.r,'m')
+                coreg.corr.S.r.m.mm.fp(:,P) = Q\P_wmm;
+                coreg.corr.S.r.m.mm.c1.p(:,P) = Q\P_c1_wmm;
+                coreg.corr.S.r.m.vx.fp(:,P) = m2v.m\coreg.corr.S.r.m.mm.fp(:,P);
+                coreg.corr.S.r.m.vx.c1.p(:,P) = m2v.m\coreg.corr.S.r.m.mm.c1.p(:,P);
+            end
+            coreg.corr.P.w.m.mm.fp(:,P) = P_wmm;
+            coreg.corr.P.w.m.mm.p(:,P) = P_wmm;
+            coreg.corr.P.w.m.mm.c1.p(:,P) = P_c1_wmm;
+            coreg.corr.P.r.m.mm.fp(:,P) = Q\[P_wmm; 1];
+            coreg.corr.P.r.m.mm.c1.p(:,P) = Q\[P_c1_wmm;1];
+            coreg = ReplaceChannelCoordinates(coreg,P,type,m2v,1);
+        case 'Detector'
+            Ns = coreg.corr.S.N;
+            if isfield(coreg.corr.D, 'w')
+                coreg.corr.D.w.m.mm.fp(:,P) = P_wmm;
+                coreg.corr.D.w.m.mm.c1.p(:,P) = P_c1_wmm;
+                coreg.corr.D.w.m.vx.fp(:,P) = P_wvx;
+                coreg.corr.D.w.m.vx.c1.p(:,P) = P_c1_wvx;
+            end
+            if isfield(coreg.corr.D.r,'m')
+                coreg.corr.D.r.m.mm.fp(:,P) = Q\P_wmm;
+                coreg.corr.D.r.m.mm.c1.p(:,P) = Q\P_c1_wmm;
+                coreg.corr.D.r.m.vx.fp(:,P) = m2v.m\coreg.corr.S.r.m.mm.fp(:,P);
+                coreg.corr.D.r.m.vx.c1.p(:,P) = m2v.m\coreg.corr.S.r.m.mm.c1.p(:,P);
+            end
+            coreg.corr.P.w.m.mm.fp(:,Ns+P) = P_wmm;
+            coreg.corr.P.w.m.mm.p(:,Ms+P) = P_wmm;
+            coreg.corr.P.w.m.mm.c1.p(:,Ns+P) = P_c1_wmm;
+            coreg.corr.P.r.m.mm.fp(:,Ns+P) = Q\P_wmm;
+            coreg.corr.P.r.m.mm.c1.p(:,Ns+P) = Q\P_c1_wmm;
+            coreg = ReplaceChannelCoordinates(coreg,P,type,m2v,1);
+        case 'Channel'
+            coreg.corr.C.w.m.mm.fp(:,P) = P_wmm;
+            coreg.corr.C.w.m.mm.c1.p(:,P) = P_c1_wmm;
+            coreg.corr.C.w.m.vx.fp(:,P) = P_wvx;
+            coreg.corr.C.w.m.vx.c1.p(:,P) = P_c1_wvx;
+            coreg.corr.C.r.m.mm.fp(:,P) = Q\P_wmm;
+            coreg.corr.C.r.m.mm.c1.p(:,P) = Q\P_c1_wmm;
+            coreg.corr.C.r.m.vx.fp(:,P) = m2v.m \ coreg.corr.C.r.m.mm.fp(:,P);
+            coreg.corr.C.r.m.vx.c1.p(:,P) = m2v.m \ coreg.corr.C.r.m.mm.c1.p(:,P);
+            coreg.corr.C.warning = 'Channel positions have been changed without re-placing corresponding sources or detectors. Use source or detector coordinates with caution.';
+        otherwise
+            %Should not come to otherwise
+    end
+else
+    P_mm = CSlp;
+    P_c1_mm = CCtx;
+    P_vx = m2v.m \ [P_mm; 1];
+    P_c1_vx = m2v.m \ [P_c1_mm; 1];
+    switch type
+        case 'Source'
+            if isfield(coreg.corr.S.r, 'm')
+                coreg.corr.S.r.m.mm.fp(:,P) = P_mm;
+                coreg.corr.S.r.m.mm.c1.p(:,P) = P_c1_mm;
+                coreg.corr.S.r.m.vx.fp(:,P) = P_vx(1:3,:);
+                coreg.corr.S.r.m.vx.c1.p(:,P) = P_c1_vx(1:3,:);
+            end
+            coreg.corr.P.r.m.mm.fp(:,P) = P_mm;
+            coreg.corr.P.r.m.mm.p(:,P) = P_mm;
+            coreg.corr.P.r.m.mm.c1.p(:,P) = P_c1_mm;
+            coreg.corr.P.w.m.mm.fp(:,P) = Q*[P_mm; 1];
+            coreg.corr.P.w.m.mm.c1.p(:,P) = Q*[P_c1_mm;1];
+            coreg = ReplaceChannelCoordinates(coreg,P,type,m2v,0);
+        case 'Detector'
+            Ns = coreg.corr.S.N;
+            if isfield(coreg.corr.D.r, 'm')
+                coreg.corr.D.r.m.mm.fp(:,P) = P_mm;
+                coreg.corr.D.r.m.mm.c1.p(:,P) = P_c1_mm;
+                coreg.corr.D.r.m.vx.fp(:,P) = P_vx(1:3,:);
+                coreg.corr.D.r.m.vx.c1.p(:,P) = P_c1_vx(1:3,:);
+            end
+            coreg.corr.P.r.m.mm.fp(:,Ns+P) = P_mm;
+            coreg.corr.P.r.m.mm.p(:,Ns+P) = P_mm;
+            coreg.corr.P.r.m.mm.c1.p(:,Ns+P) = P_c1_mm;
+            coreg.corr.P.w.m.mm.fp(:,Ns+P) = Q*[P_mm; 1];
+            coreg.corr.P.w.m.mm.c1.p(:,Ns+P) = Q*[P_c1_mm;1];
+            coreg = ReplaceChannelCoordinates(coreg,P,type,m2v,0);
+        case 'Channel'
+            coreg.corr.C.r.m.mm.fp(:,P) = [P_mm;1];
+            coreg.corr.C.r.m.mm.c1.p(:,P) = [P_c1_mm;1];
+            coreg.corr.C.r.m.vx.fp(:,P) = P_vx;
+            coreg.corr.C.r.m.vx.c1.p(:,P) = P_c1_vx;
+            coreg.corr.C.warning = 'Channel positions have been changed without re-placing corresponding sources or detectors. Use source or detector coordinates with caution.';
+        otherwise
+            %Should not come to otherwise
+    end
+end
+return;
+
+
+%_______________________________________________________________________
+function setallbutton(on)
+global opt_info
+
+if on
+    set(opt_info.hText.hb.cr, 'Enable', 'On');
+    set(opt_info.hText.hb.bsave, 'Enable', 'On');
+    set(opt_info.hText.hb.bload, 'Enable', 'On');
+    set(opt_info.hText.hb.blpa, 'Enable', 'On');
+    set(opt_info.hText.hb.bnas, 'Enable', 'On');
+    set(opt_info.hText.hb.brpa, 'Enable', 'On');
+    set(opt_info.hText.hb.bnplus, 'Enable', 'On');
+    set(opt_info.hText.hb.bnminus, 'Enable', 'On');
+else
+    set(opt_info.hText.hb.cr, 'Enable', 'Off');
+    set(opt_info.hText.hb.bsave, 'Enable', 'Off');
+    set(opt_info.hText.hb.bload, 'Enable', 'Off');
+    set(opt_info.hText.hb.blpa, 'Enable', 'Off');
+    set(opt_info.hText.hb.bnas, 'Enable', 'Off');
+    set(opt_info.hText.hb.brpa, 'Enable', 'Off');
+    set(opt_info.hText.hb.bnplus, 'Enable', 'Off');
+    set(opt_info.hText.hb.bnminus, 'Enable', 'Off');
+end
 %_______________________________________________________________________
 %_______________________________________________________________________
 function addblobs(handle, xyz, t, mat, name)

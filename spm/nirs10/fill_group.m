@@ -88,6 +88,16 @@ try
     TOPO.v{v1}.(fg).hb{h1}.c{2*c1-shb}.c = xCon(c1);
     erdf_group = max(G.erdf_group(:)); %quick fix...
     F.s_map = G.tmap_group;
+    %******************Ke Peng, for one-tailed t-test, for display only
+%     switch hb
+%         case {'HbO','HbT'}
+%             F.s_map(find(F.s_map < 0)) = 0;
+%         case 'HbR'
+%             F.s_map(find(F.s_map > 0)) = 0;
+%         otherwise
+%     end
+    TOPO.v{v1}.(fg).hb{h1}.c{2*c1-shb}.Tmap = F.s_map;
+    %*****
     filestr = [num2str(Z.p_value) '_' W.spec_hemi '_' hb str2t];
     filestr_fig = [num2str(Z.p_value) ' ' W.spec_hemi ' ' hb str2t2];
     info1 = [filestr '_' strA xCon(c1).name];
@@ -112,7 +122,15 @@ try
     end
     try
         DF = nirs_draw_figure(4,F,W,Z,G);
-        if Z.GFIS, H = nirs_copy_figure(H,DF,CF,c1,hb,shb,F.tstr,Z.LKC,Z.write_neg_pos); end 
+        if ~isfield(TOPO.v{v1}.(fg).hb{h1}.c{2*c1-shb},'th_z') || (isfield(TOPO.v{v1}.(fg).hb{h1}.c{2*c1-shb},'th_z') && isinf(TOPO.v{v1}.(fg).hb{h1}.c{2*c1-shb}.th_z))
+            try
+                TOPO.v{v1}.(fg).hb{h1}.c{2*c1-shb}.th_z = DF.th_z; % KP Record threshold value
+            catch
+                TOPO.v{v1}.(fg).hb{h1}.c{2*c1-shb}.th_z = Inf;
+            end
+        end
+
+        if Z.GFIS, H = nirs_copy_figure(H,DF,CF,c1,hb,shb,F.tstr,Z.LKC,Z.write_neg_pos); end
     catch exception2
         disp(exception2.identifier);
         disp(exception2.stack(1));
