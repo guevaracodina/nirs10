@@ -451,9 +451,7 @@ switch lower(action)
                 if currentP ~= 1 && currentP ~= 2 && currentP ~= 3 && strcmp(SlpOrCtx(end-2 : end),'Slp')
                     set(opt_info.hText.hb.crgop, 'Enable', 'on');
                     text(0.5,0,'Please choose a new position on the scalp for this optode/channel','Parent',hErrTexthd,...
-                        'HorizontalAlignment','center',...
-                        'VerticalAlignment','baseline',...
-                        'FontWeight','Bold','FontSize',14);
+                        'HorizontalAlignment','center','VerticalAlignment','baseline','FontWeight','Bold','FontSize',14);
                     opt_info.RCP = currentP; %Optode to re-coreg
                     set(opt_info.hText.hb.op, 'Enable', 'Off');
                     set(opt_info.hText.hb.crgop, 'Enable', 'On');
@@ -658,13 +656,13 @@ switch lower(action)
         try
             [Fgraph hErrTexthd] = clearErrorMsg;
             if isfield(opt_info, 'currentC') && isfield(opt_info, 'FCP')
+                set(opt_info.hText.hb.crgfd, 'Enable', 'off');
+                set(opt_info.hText.hb.crgfdr, 'Enable', 'off');
+                set(opt_info.hText.hb.crgfdu, 'Enable', 'off');
                 text(0.5,0,'Co-registration ongoing...Please wait...','Parent',hErrTexthd,...
                     'HorizontalAlignment','center',...
                     'VerticalAlignment','baseline',...
                     'FontWeight','Bold','FontSize',14);
-                set(opt_info.hText.hb.crgfd, 'Enable', 'off');
-                set(opt_info.hText.hb.crgfdr, 'Enable', 'off');
-                set(opt_info.hText.hb.crgfdu, 'Enable', 'off');
                 newp = opt_info.currentC;
                 fcp = opt_info.FCP;
                 opt_info.FDrecoreg.xSPM = opt_info.xSPM; %Record for undo
@@ -840,7 +838,9 @@ switch lower(action)
                 'FontWeight','Bold','FontSize',14);
             set(opt_info.hText.hb.fd, 'Enable', 'on');
             set(opt_info.hText.hb.op, 'Enable', 'on');
-            set(opt_info.hText.hb.crgfdcf, 'Enable', 'off');       
+            set(opt_info.hText.hb.crgfdcf, 'Enable', 'off');   
+            set(opt_info.hText.hb.crgfdr, 'Enable', 'off');
+            set(opt_info.hText.hb.crgfdu, 'Enable', 'off');
             setallbutton(1);
         catch exception
             disp(exception.identifier);
@@ -854,7 +854,7 @@ switch lower(action)
             opt_info.recoreg.corr.C.n = opt_info.NIRS.Cf.H.C.n;
             opt_info.recoreg.corr.C.wl = opt_info.NIRS.Cf.H.C.wl;
             opt_info.recoreg.corr.C.gp = opt_info.NIRS.Cf.H.C.gp;
-            opt_info.recoreg.corr.P.n = opt_info.NIRS.Cf.H.P.N;
+            %opt_info.recoreg.corr.P.n = opt_info.NIRS.Cf.H.P.n;
             opt_info.recoreg.pro.extcoeff_ref = opt_info.NIRS.Dt.pro.extcoeff_ref;
             opt_info.NIRS.Cf.H = opt_info.recoreg.corr;
             opt_info.NIRS.Dt.pro = opt_info.recoreg.pro;
@@ -886,6 +886,7 @@ switch lower(action)
             disp(exception.stack(1));
             opt_info.hText.he = hErrTexthd;
         end
+     
         
     case 'setcoords',
         st.centre = varargin{1};
@@ -1208,7 +1209,7 @@ recoreg1.corr.P.w.m.mm.c1.p = Pp_c1_wmm;
 recoreg1.corr.C.N = Nch0*2;
 recoreg1.corr.C.id = Cid;
 recoreg1.corr.C.r.m.mm.fp = [Pch_rmm; ones(1,size(Pch_rmm, 2))];
-recoreg1.corr.C.r.m.mm.c1.p = [Pch_c1_rmm; ones(1,size(Pch_rmm,2))];
+recoreg1.corr.C.r.m.mm.c1.p = Pch_c1_rmm;
 if exist('Cwarn','var')
     recoreg1.corr.C.warning = Cwarn;
 end
@@ -1217,8 +1218,8 @@ recoreg1.corr.S.r.m.vx.fp = Pp_rvx(1:3,1:Ns);
 recoreg1.corr.S.r.m.vx.c1.p = Pp_c1_rvx(1:3,1:Ns);
 recoreg1.corr.D.r.m.vx.fp = Pp_rvx(1:3,(Ns+1):(Ns+Nd));
 recoreg1.corr.D.r.m.vx.c1.p = Pp_c1_rvx(1:3,(Ns+1):(Ns+Nd));
-recoreg1.corr.C.r.m.vx.fp = [Pch_rvx; ones(1,size(Pch_rvx,2))];
-recoreg1.corr.C.r.m.vx.c1.p = [Pch_c1_rvx; ones(1,size(Pch_c1_rvx,2))];
+recoreg1.corr.C.r.m.vx.fp = Pch_rvx;
+recoreg1.corr.C.r.m.vx.c1.p = Pch_c1_rvx;
 
 recoreg1.Q = Q;
 if render_template
@@ -1370,10 +1371,10 @@ else
     switch type
         case 'Source'
             if isfield(coreg.corr.S.r, 'm')
-                coreg.corr.S.r.m.mm.fp(:,P) = P_mm;
-                coreg.corr.S.r.m.mm.c1.p(:,P) = P_c1_mm;
-                coreg.corr.S.r.m.vx.fp(:,P) = P_vx(1:3,:);
-                coreg.corr.S.r.m.vx.c1.p(:,P) = P_c1_vx(1:3,:);
+                coreg.corr.S.r.m.mm.fp(1:3,P) = P_mm;
+                coreg.corr.S.r.m.mm.c1.p(1:3,P) = P_c1_mm;
+                coreg.corr.S.r.m.vx.fp(1:3,P) = P_vx(1:3,:);
+                coreg.corr.S.r.m.vx.c1.p(1:3,P) = P_c1_vx(1:3,:);
             end
             coreg.corr.P.r.m.mm.fp(:,P) = P_mm;
             coreg.corr.P.r.m.mm.p(:,P) = P_mm;
@@ -1384,10 +1385,10 @@ else
         case 'Detector'
             Ns = coreg.corr.S.N;
             if isfield(coreg.corr.D.r, 'm')
-                coreg.corr.D.r.m.mm.fp(:,P) = P_mm;
-                coreg.corr.D.r.m.mm.c1.p(:,P) = P_c1_mm;
-                coreg.corr.D.r.m.vx.fp(:,P) = P_vx(1:3,:);
-                coreg.corr.D.r.m.vx.c1.p(:,P) = P_c1_vx(1:3,:);
+                coreg.corr.D.r.m.mm.fp(1:3,P) = P_mm;
+                coreg.corr.D.r.m.mm.c1.p(1:3,P) = P_c1_mm;
+                coreg.corr.D.r.m.vx.fp(1:3,P) = P_vx(1:3,:);
+                coreg.corr.D.r.m.vx.c1.p(1:3,P) = P_c1_vx(1:3,:);
             end
             coreg.corr.P.r.m.mm.fp(:,Ns+P) = P_mm;
             coreg.corr.P.r.m.mm.p(:,Ns+P) = P_mm;
@@ -1415,7 +1416,6 @@ global opt_info
 if on
     set(opt_info.hText.hb.cr, 'Enable', 'On');
     set(opt_info.hText.hb.bsave, 'Enable', 'On');
-    set(opt_info.hText.hb.bload, 'Enable', 'On');
     set(opt_info.hText.hb.blpa, 'Enable', 'On');
     set(opt_info.hText.hb.bnas, 'Enable', 'On');
     set(opt_info.hText.hb.brpa, 'Enable', 'On');
@@ -1424,7 +1424,6 @@ if on
 else
     set(opt_info.hText.hb.cr, 'Enable', 'Off');
     set(opt_info.hText.hb.bsave, 'Enable', 'Off');
-    set(opt_info.hText.hb.bload, 'Enable', 'Off');
     set(opt_info.hText.hb.blpa, 'Enable', 'Off');
     set(opt_info.hText.hb.bnas, 'Enable', 'Off');
     set(opt_info.hText.hb.brpa, 'Enable', 'Off');
