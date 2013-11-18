@@ -466,8 +466,8 @@ for iSubj=1:size(job.NIRSmat,1)
             end
             NIRS.jobCoreg = job; %Required when coregistration needs to be redone in the GLM
             NIRS.flags.coregOK = 1;
+            save(newNIRSlocation,'NIRS');
         end
-        save(newNIRSlocation,'NIRS');
     catch exception
         disp(exception.identifier);
         disp(exception.stack(1));

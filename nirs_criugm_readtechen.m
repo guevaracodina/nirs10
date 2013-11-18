@@ -8,16 +8,16 @@ function out = nirs_criugm_readtechen(job)
 
 f = job.nirs_file;
 out = 0;
-if ~isfield(f,'systemInfo')
-    [dir_spm, dummy1,dummy2] = fileparts(which('spm'));
-    load(fullfile(dir_spm, 'toolbox','nirs10','nirs10_templates','systemInfo.mat'));
-    f.systemInfo = systemInfo;
-    load(fullfile(dir_spm, 'toolbox','nirs10','nirs10_templates','SD.mat'));
-    f.SD = SD;
-end
+
 switch int2str(job.system) % System used for the acquisition
     case '6'
-        
+        if ~isfield(f,'systemInfo')
+            [dir_spm, dummy1,dummy2] = fileparts(which('spm'));
+            load(fullfile(dir_spm, 'toolbox','nirs10','nirs10_templates','systemInfo.mat'));
+            f.systemInfo = systemInfo;
+            load(fullfile(dir_spm, 'toolbox','nirs10','nirs10_templates','SD.mat'));
+            f.SD = SD;
+        end
         sDtp = job.sDtp;
         NIRS = job.NIRS;
         
@@ -25,14 +25,16 @@ switch int2str(job.system) % System used for the acquisition
         NIRS.Cf.dev.n = 'CW6';
         NIRS.Cf.dev.wl = f.SD.Lambda;
         % Information about auxilaries
-        NIRS.Dt.aux = f.aux;
+        try NIRS.Dt.aux = f.aux;end
         if isfield(job.biopac, 'choice_biopac')
             biopac.n = job.biopac.choice_biopac;
             max.aux = 4;
             NIRS.Dt.aux.eprime = f.aux(:,1:max.aux-biopac.n);
             NIRS.Dt.aux.biopac = f.aux(:,biopac.n+1:max.aux);
         else
-            NIRS.Dt.aux.eprime = f.aux;
+            try
+                NIRS.Dt.aux.eprime = f.aux;
+            end
         end
         
         NIRS.Cf.dev.gn = f.systemInfo.gain;
@@ -141,6 +143,13 @@ switch int2str(job.system) % System used for the acquisition
         end
         
     case {'5','1'}  %System 1: Imaginc
+        if ~isfield(f,'systemInfo')
+            [dir_spm, dummy1,dummy2] = fileparts(which('spm'));
+            load(fullfile(dir_spm, 'toolbox','nirs10','nirs10_templates','systemInfo.mat'));
+            f.systemInfo = systemInfo;
+            load(fullfile(dir_spm, 'toolbox','nirs10','nirs10_templates','SD.mat'));
+            f.SD = SD;
+        end
         sDtp = job.sDtp;
         NIRS = job.NIRS;
         
@@ -154,7 +163,7 @@ switch int2str(job.system) % System used for the acquisition
             NIRS.Cf.dev.wl = f.SD.Lambda;
             %         NIRS.Cf.dev.gn = f.systemInfo.gain;
         end
-         NIRS.Cf.dev.fs = 1/(f.t(2)-f.t(1));
+        NIRS.Cf.dev.fs = 1/(f.t(2)-f.t(1));
         switch job.coregType
             
             case 'Brainsight(c)'
@@ -249,7 +258,54 @@ switch int2str(job.system) % System used for the acquisition
                 % Source-detector distance (usually 2D)
                 NIRS.Cf.H.C.gp = Cgen_s(:,5)';   % Cgp;
         end
+    case '2' %ImagincV2
+        sDtp = job.sDtp;
+        NIRS = job.NIRS;
         
+        NIRS.Cf.dev.n = 'Imaginc';
+        NIRS.Cf.dev.wl = [735 850];
+        NIRS.Cf.dev.fs = 1/(f.t(2)-f.t(1));
+        switch job.coregType
+            
+            case 'Brainsight(c)'
+                
+                Cgen = zeros(0);    % [iC iS iD wl gp]
+                
+                Sn = NIRS.Cf.H.S.n;
+                NS = NIRS.Cf.H.S.N;
+                
+                count = 1;
+                for iS =1:NS % for each source (in the BS file...)
+                    Snum = Sn{1,iS};
+                    Snum = Snum(2:end);
+                    %C_Snum(1,:) = (f.SD.MeasList(:,1)==str2num(Snum))';
+                    C_Snum(1,:) = (f.ml(:,1)==str2double(Snum))'; 
+                    for i=1:size(C_Snum,2)
+                        if C_Snum(1,i)==1
+                            Cgen(count,1) = i;
+                            Cgen(count,2) = iS;
+                            Cgen(count,3) = f.ml(i,2);
+                            Cgen(count,4) = f.ml(i,4);
+                            % Ne devrait-on pas corriger pour la courbure ?????
+                            Cgen(count,5) = sqrt(sum((f.SD.SrcPos(iS,:) - f.SD.DetPos(Cgen(count,3),:)).^2));
+                            count = count+1;
+                        end
+                    end
+                end
+                
+                % % Sort by channel number
+                % Cgen_s = sortrows(Cgen,[4 2]);
+                Cgen_s = sortrows(Cgen,1);
+                
+                % Number of channels (pairs)
+                NIRS.Cf.H.C.N = size(Cgen_s,1); % length(Cid);
+                % Measurement list: # of Pair / # of source / # of detector
+                NIRS.Cf.H.C.id = Cgen_s(:,1:3)'; % Cid;
+                % Wavelength
+                NIRS.Cf.H.C.wl = Cgen_s(:,4)';   % Cwl;
+                % Source-detector distance (usually 2D)
+                NIRS.Cf.H.C.gp = Cgen_s(:,5)';   % Cgp;
+        end
     otherwise
         disp('Reading of Techen file (.nirs) failed. For now only CW6 output files are supported.');
 end
