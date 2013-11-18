@@ -1,5 +1,4 @@
 function criugm1 = nirs_run_criugm_cfg
-
 redo1      = cfg_menu;
 redo1.tag  = 'force_redo';
 redo1.name = 'Force processing';
@@ -68,17 +67,6 @@ helm_temp.num     = [0 1];
 helm_temp.help = {['If you have chosen before ''template'' in choice : ''Individual T1 or template''.'...
     'If you have generated a template for a special helmet and that you want to coregister it with the subject anatomical image, please choose the NIRS.mat you have generated.']};
 
-% helmet         = cfg_choice;
-% helmet.tag     = 'helmet';
-% helmet.name    = 'Helmet';
-% if indvdata.val=={indvdata_chosen}
-%     helmet.values = {helm_temp};
-% else
-%     helmet.values = {text_brainsight T1_vitamins no_helmet};
-% end
-% helmet.val     = {helm_temp};
-% helmet.help    = {'If you choose a Brainsight text file, it will be used to determine all you need about sources, detectors and other points of interest.'};
-
 nirs_files         = cfg_files;
 nirs_files.name    = '''^.nirs'' files';
 nirs_files.tag     = 'nirs_files';
@@ -102,10 +90,10 @@ protocol.help   = {['Select the "SPM conditions" .mat files. The order must corr
 CWsystem      = cfg_menu;
 CWsystem.tag  = 'CWsystem';
 CWsystem.name = 'CW system used';
-CWsystem.labels = {'CW5','CW6'};
-CWsystem.values = {5,6};
+CWsystem.labels = {'CW5','CW6','ImagincV2'};
+CWsystem.values = {5,6,2};
 CWsystem.def  = @(val)nirs_get_defaults('readNIRS.criugm1.CWsystem', val{:});
-CWsystem.help = {'Help'};
+CWsystem.help = {'ImagincV2: 16 sources + 16 detectors, no auxiliaries'};
 
 boldmask        = cfg_files;
 boldmask.tag    = 'boldmask';
@@ -124,14 +112,6 @@ subj_id.num     = [1 Inf];
 subj_id.val     = {};
 subj_id.help    = {'A number must be entered.'};
 
-% study_path         = cfg_entry;
-% study_path.tag     = 'study_path';
-% study_path.name    = 'Choose study path';
-% study_path.strtype = 's';
-% study_path.num     = [1 Inf];
-% study_path.val     = {};
-% study_path.help    = {'.'};
-
 study_path        = cfg_files;
 study_path.tag     = 'study_path';
 study_path.name    = 'Choose study path';
@@ -139,13 +119,6 @@ study_path.filter  = 'dir';
 study_path.ufilter = '.*';
 study_path.num     = [1 1];
 study_path.help    = {'Choose directory where you want to put your study. If the directory does not exist you must create it then choose it in the batch.'};
-
-% study_path           = cfg_choice;
-% study_path.name      = 'Study path configuration';
-% study_path.tag       = 'study_path';
-% study_path.values    = {existing_study choose_path};%choose_path
-% study_path.val       = {existing_study};
-% study_path.help      = {'Choose the study the subject belongs to or specify a path (entire name should look like .\study_name).'};
 
 indvdata_chosen      = cfg_branch;
 indvdata_chosen.name = 'One set of data per subject';
@@ -166,7 +139,6 @@ anatT1.help    = {'CORRECTION: THIS IS NO LONGER OPTIONAL.'
     'Select raw anatomical image(s) for the subject(s). '
     'If several subjects, the images '
     'must be in the same order as the NIRS.mat structures.'}';
-
 
 anatT1_template         = cfg_files;
 anatT1_template.name    = 'Anatomical template image';
