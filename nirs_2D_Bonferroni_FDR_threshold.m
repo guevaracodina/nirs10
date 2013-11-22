@@ -48,7 +48,7 @@ switch CType
         switch t_type
             case 1  % One-sided t-test
                 if ch == 2 % HbR
-                    l0 = find(tmap > -u_thz);
+                    l0 = find(tmap >= -u_thz);
                     tmap2 = tmap;
                     tmap2(l0) = 0; %Apply the first threshold
                     if max(max(abs(tmap2))) == 0
@@ -62,7 +62,7 @@ switch CType
                     Zt = -Zt; % change back to negative
                     p_peak = spm_Tcdf(Zt,erdf);
                 else % HbO or HbT
-                    l0 = find(tmap < u_thz);
+                    l0 = find(tmap <= u_thz);
                     tmap2 = tmap;
                     tmap2(l0) = 0; %Apply the first threshold
                     if max(max(abs(tmap2))) == 0
@@ -76,7 +76,7 @@ switch CType
                     p_peak = 1 - spm_Tcdf(Zt,erdf); % for positive t-value, use 1-p_value
                 end
             case 2  % Two-sided t-test
-                l0 = find(abs(tmap) < u_thz);
+                l0 = find(abs(tmap) <= u_thz);
                 tmap2 = tmap;
                 tmap2(l0) = 0; %Apply the first threshold
                 if max(max(abs(tmap2))) == 0
