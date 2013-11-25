@@ -4,7 +4,7 @@ function nirs10 = tbx_cfg_nirs10
 %                    École Polytechnique de Montréal
 %______________________________________________________________________
 
-addpath(fileparts(which(mfilename)));
+addpath(genpath(fileparts(which(mfilename))));
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Configuration main modules
@@ -119,4 +119,4 @@ nirs10.tag    = 'nirs10'; %Careful, this tag nirs10 must be the same as
 nirs10.values = {readNIRS readOnsets preprocessNIRS preprocANAT coregNIRS aMRI_utilities...
     nirs_run_configMC2_cfg nirs_run_runMC_cfg nirs_run_generate_sensitivity_matrix_cfg...
     nirs_run_calculatePVE_cfg model_reconstruct model_specify ...
-    model_estimate nirs_utilities HDM_options CRIUGM};
+    model_estimate nirs_utilities HDM_options CRIUGM nirs_fcNIRS_cfg};
