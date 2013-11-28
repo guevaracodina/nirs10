@@ -9,7 +9,8 @@ function fcNIRS = nirs_fcNIRS_cfg
 fcNIRS          = cfg_choice;
 fcNIRS.name     = 'Functional connectivity NIRS (fcNIRS)';
 fcNIRS.tag      = 'fcNIRS';
-fcNIRS.values   = {nirs_filtdown_cfg nirs_send_email_cfg};
+fcNIRS.values   = { nirs_create_roi_cfg nirs_extract_roi_time_series_cfg...
+                    nirs_filtdown_cfg nirs_send_email_cfg};
 fcNIRS.help     = {'These modules perform resting-state functional connectivity mapping with near-infrared spectroscopy (fcNIRS).'
     'They should be run after the first 4 pre-processing modules, i.e. '
     '1) readBOXY'
