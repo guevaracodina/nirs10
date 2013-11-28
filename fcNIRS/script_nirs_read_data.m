@@ -9,6 +9,10 @@ NIRSmat = 'F:\Edgar\Data\NIRS\epiNIRS_data\epiNIRS_Processed\epiNIRS\epi104MAL\d
 load(NIRSmat)
 
 %% Read all files from the 4th processing level ODtoHbOHbR
+% 1) readBOXY
+% 2) remove_chn_stdev
+% 3) normalize_baseline
+% 4) ODtoHbOHbR
 preProcStep = 4;
 dataNIRS = [];
 for iFiles = 1:numel(NIRS.Dt.fir.pp(preProcStep).p)
@@ -23,14 +27,23 @@ h = figure; set(h,'color','w')
 set(h,'Name',sprintf('Pre-processing step: %s', NIRS.Dt.fir.pp(preProcStep).pre))
 subplot(211)
 fprintf('Wavelength: %dnm & %dnm\n',NIRS.Cf.dev.wl)
-chosenWL = 1;
-plot(t, dataNIRS(NIRS.Cf.H.C.wl == chosenWL,:)');
-% plot(t, dataNIRS(15,:)');
+% Choose chromophore
+%     case 1
+%         hb = 'HbO';
+%     case 2
+%         hb = 'HbR';
+%     case 3
+%         hb = 'HbT';
+% end
+hb = 1;
+plot(t, dataNIRS(NIRS.Cf.H.C.wl == hb,:)');
+ylabel('[\muM]')
 xlabel('t [s]')
-title(['\lambda' sprintf(' = %d nm',NIRS.Cf.dev.wl(chosenWL))])
+% title(['\lambda' sprintf(' = %d nm',NIRS.Cf.dev.wl(hb))])
+title('HbO ?')
 
 %% Compute FFT
-[fftNIRS, freq] = nirs_positiveFFT(dataNIRS(NIRS.Cf.H.C.wl == chosenWL,:)', NIRS.Cf.dev.fs);
+[fftNIRS, freq] = nirs_positiveFFT(dataNIRS(NIRS.Cf.H.C.wl == hb,:)', NIRS.Cf.dev.fs);
 fftNIRSmean = mean(abs(fftNIRS), 2);
 
 %% Plot FFT
@@ -38,4 +51,5 @@ figure(h)
 subplot(212)
 loglog(freq, fftNIRSmean)
 xlabel('f [Hz]')
+ylabel('Amplitude [a.u.]')
 % EOF
