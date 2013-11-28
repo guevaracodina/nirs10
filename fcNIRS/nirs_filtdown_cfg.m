@@ -5,7 +5,7 @@ function filtdown1 = nirs_filtdown_cfg
 %                    École Polytechnique de Montréal
 %_______________________________________________________________________________
 
-% Select IOI.mat
+% Select NIRS.mat
 [NIRSmat redo1 NIRSmatCopyChoice] = get_common_NIRSmat(1,'filtDown');
 % % Choose ROI selection method (all/selected)
 % ROI_choice          = ioi_dfg_ROI_choice;
@@ -50,10 +50,10 @@ return
 
 % Make IOI.mat available as a dependency
 function vout = nirs_cfg_vout_filtdown(job)
-vout                = cfg_dep; % The dependency object
-vout.sname          = 'NIRS.mat'; % Displayed dependency name
-vout.src_output     = substruct('.','NIRSmat'); %{1}); %,'IOImat');
-vout.tgt_spec       = cfg_findspec({{'filter','mat','strtype','e'}});
+vout                    = cfg_dep;                  % The dependency object
+vout.sname              = 'NIRS.mat';               % Displayed dependency name
+vout.src_output         = substruct('.','NIRSmat');
+vout.tgt_spec           = cfg_findspec({{'filter','mat','strtype','e'}});
 
 % EOF
 

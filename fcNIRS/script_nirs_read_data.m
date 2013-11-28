@@ -49,7 +49,7 @@ fftNIRSmean = mean(abs(fftNIRS), 2);
 %% Plot FFT
 figure(h)
 subplot(212)
-loglog(freq, fftNIRSmean)
+plot(freq, fftNIRSmean)
 xlabel('f [Hz]')
 ylabel('Amplitude [a.u.]')
 % EOF
