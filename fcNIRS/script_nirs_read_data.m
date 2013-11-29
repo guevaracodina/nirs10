@@ -52,4 +52,5 @@ subplot(212)
 plot(freq, fftNIRSmean)
 xlabel('f [Hz]')
 ylabel('Amplitude [a.u.]')
+
 % EOF
