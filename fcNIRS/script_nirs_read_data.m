@@ -6,6 +6,7 @@
 %% Read a random subject
 clear; close all; clc
 NIRSmat = 'F:\Edgar\Data\NIRS\epiNIRS_data\epiNIRS_Processed\epiNIRS\epi104MAL\dataSPMa\coreg\NIRS.mat';
+% NIRSmat = 'F:\Edgar\Data\NIRS\epiNIRS_data\epiNIRS_Processed\epiNIRS\epi140GG\dataSPMa\coreg\NIRS.mat';
 load(NIRSmat)
 
 %% Read all files from the 4th processing level ODtoHbOHbR
