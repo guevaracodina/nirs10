@@ -7,7 +7,7 @@ OP.pathbatch = 'F:\Edgar\Data\NIRS\epiNIRS_data\Batch_July2013'; %where to save 
 subj{1} = 'epi101LH';
 subj{2} = 'epi102FA';
 subj{3} = 'epi103GJ';
-subj{4} = 'epi104MAL';
+% subj{4} = 'epi104MAL';
 subj{5} = 'epi105MER';
 subj{6} = 'epi106VLL';
 subj{7} = 'epi107GC';
@@ -56,7 +56,11 @@ n = length(subj);
 OP.path_coreg = 'dataSPMa\coreg\';
 
 %%
-epiAge = nan([n 1]);
+clc
+epiAge      = nan([n 1]);
+nSessions   = nan([n 1]);
+nSources    = nan([n 1]);
+nDetectors  = nan([n 1]);
 for iSubjects = 1:n
     NIRSmat = fullfile(OP.path1, subj{iSubjects});
     NIRSmat = fullfile(NIRSmat, OP.path_coreg);
@@ -64,11 +68,16 @@ for iSubjects = 1:n
     % fprintf('%s\n',NIRSmat)
     try
         load(NIRSmat)
-        epiAge(iSubjects) = NIRS.Dt.s.age;
+        epiAge(iSubjects)       = NIRS.Dt.s.age;
+        nSessions(iSubjects)    = numel(NIRS.Dt.fir.pp(preProcStep).p);
+        nSources(iSubjects)     =  NIRS.Cf.H.S.N;
+        nDetectors(iSubjects)   =  NIRS.Cf.H.D.N;
     catch
-        epiAge(iSubjects) = nan;
         fprintf('%s not available\n', NIRSmat)
     end
 end
-fprintf('Mean age = %0.2fy, std. dev. = %0.2f', nanmean(epiAge), nanstd(epiAge));
+fprintf('Mean age = %0.2fy, std. dev. = %0.2fy\n', nanmean(epiAge), nanstd(epiAge));
+fprintf('Mean sessions = %0.2f, std. dev. = %0.2f\n', nanmean(nSessions), nanstd(nSessions));
+fprintf('Mean Sources = %0.2f, std. dev. = %0.2f\n', nanmean(nSources), nanstd(nSources));
+fprintf('Mean Detectors = %0.2f, std. dev. = %0.2f\n', nanmean(nDetectors), nanstd(nDetectors));
 % EOF

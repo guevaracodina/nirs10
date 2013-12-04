@@ -5,8 +5,10 @@
 %_______________________________________________________________________________
 %% Read a random subject
 clear; close all; clc
-NIRSmat = 'F:\Edgar\Data\NIRS\epiNIRS_data\epiNIRS_Processed\epiNIRS\epi104MAL\dataSPMa\coreg\NIRS.mat';
-% NIRSmat = 'F:\Edgar\Data\NIRS\epiNIRS_data\epiNIRS_Processed\epiNIRS\epi140GG\dataSPMa\coreg\NIRS.mat';
+% Le cas 104MAL est extrêmement inhabituel. Il ne pourra pas être utilisé
+% pour les analyses.
+% NIRSmat = 'F:\Edgar\Data\NIRS\epiNIRS_data\epiNIRS_Processed\epiNIRS\epi104MAL\dataSPMa\coreg\NIRS.mat';
+NIRSmat = 'F:\Edgar\Data\NIRS\epiNIRS_data\epiNIRS_Processed\epiNIRS\epi140GG\dataSPMa\coreg\NIRS.mat';
 load(NIRSmat)
 
 %% Read all files from the 4th processing level ODtoHbOHbR
@@ -15,8 +17,9 @@ load(NIRSmat)
 % 3) normalize_baseline
 % 4) ODtoHbOHbR
 preProcStep = 4;
+nSessions = numel(NIRS.Dt.fir.pp(preProcStep).p);
 dataNIRS = [];
-for iFiles = 1:numel(NIRS.Dt.fir.pp(preProcStep).p)
+for iFiles = 1:nSessions,
     currentData = fopen_NIR(NIRS.Dt.fir.pp(preProcStep).p{iFiles}, NIRS.Cf.H.C.N);
     dataNIRS = [dataNIRS, currentData];
 end
