@@ -92,7 +92,7 @@ dataNIRSorder = dataNIRS';
 dataNIRSorder = dataNIRSorder(:, PERM1);
 tic; corrMat = corrcoef(dataNIRSorder); toc
 axes(mainPanel);
-imagesc(corrMat,[-1 1]); colormap(nirs_get_colormap('rwbdoppler')); 
+imagesc(corrMat,[-1 1]); colormap(nirs_get_colormap('redbluecmap')); 
 set(mainPanel,'Xticklabel',[],'yticklabel',[]);
 axis xy; 
 
