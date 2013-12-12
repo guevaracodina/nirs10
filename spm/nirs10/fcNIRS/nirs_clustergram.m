@@ -17,6 +17,8 @@ nClusters       = 12;
 distanceType    = 'correlation';
 % Linkage method
 linkageMethod   = 'weighted';
+% FDR correction
+doFDR           = true;
 
 % nirs_clusterdata performs all of the necessary steps for you. You do not need
 % to execute the pdist, linkage, or cluster functions separately.
@@ -33,42 +35,6 @@ for i = 1:nIter,
     end
     fprintf('clusterData iter%d computed in: %s\n', i, datestr(datenum(0,0,0,0,0,toc),'HH:MM:SS'));
 end
-
-%% Display dendrogram
-% h1 = figure;
-% set(h1, 'color', 'w')
-% color = Z2(end-nClusters+2,3)-eps;
-% [H2, T3, PERM] = dendrogram(Z2, 0, 'colorthreshold', color);
-% title('Dendrogram','interpreter', 'none', 'FontSize', 14)
-% set(H2, 'LineWidth', 2);
-% set(gca, 'FontSize', 12);
-% xlabel('Cluster', 'FontSize', 12)
-% ylabel('Distance', 'FontSize', 12)
-% C = cell2mat(get(H2,'Color'));
-% Cu = unique(C,'rows');
-% [dum,J] = unique(Z2(:,1:2)','first');
-% J = ceil(J/2);
-% K = J(T3);
-
-%% Compute correlation matrix
-% tic; corrMat = corrcoef(dataNIRS'); toc
-% h = figure; set(h,'color','w')
-% set(h,'Name',sprintf('Correlation matrix for contrast: %s', titleString))
-% subplot(121)
-% imagesc(corrMat,[-1 1]); colormap(nirs_get_colormap('rwbdoppler')); 
-% title(sprintf('%s', titleString))
-% ylabel('Channel #'); xlabel('Channel #');
-% axis image; axis xy; colorbar
-% % Reordered dataNIRs according to the permutation vector issued by dendrogram
-% subplot(122)
-
-% imagesc(corrMat,[-1 1]); colormap(nirs_get_colormap('rwbdoppler')); 
-% title(sprintf('%s (Ordered)', titleString))
-% ylabel('Channel #'); xlabel('Channel #');
-% axis image; axis xy; colorbar
-% set(gca, 'XTickLabel', cellfun(@(x) num2str(x), num2cell(PERM), 'UniformOutput',false))
-% set(gca, 'YTickLabel', cellfun(@(x) num2str(x), num2cell(PERM), 'UniformOutput',false))
-% set(gca, 'XTickLabel',[])
 
 %% clustergram (dendrogram + correlation matrix)
 % position the figure
@@ -90,7 +56,15 @@ axes(topPanel);
 %% Correlation matrix
 dataNIRSorder = dataNIRS';
 dataNIRSorder = dataNIRSorder(:, PERM1);
-tic; corrMat = corrcoef(dataNIRSorder); toc
+tic; [corrMat p] = corrcoef(dataNIRSorder); toc
+if doFDR
+    fprintf('FDR correction done\n');
+    p = nirs_fdr(p(:));
+    p = reshape(p, size(corrMat));
+%     p = nirs_fdr(p);
+    % Make all non-significant elements equal to zero
+    corrMat(p>0.05) = 0;
+end
 axes(mainPanel);
 imagesc(corrMat,[-1 1]); colormap(nirs_get_colormap('redbluecmap')); 
 set(mainPanel,'Xticklabel',[],'yticklabel',[]);

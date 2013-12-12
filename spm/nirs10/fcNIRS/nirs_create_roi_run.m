@@ -8,23 +8,22 @@ function out = nirs_create_roi_run(job)
 % ------------------------------------------------------------------------------
 % REMOVE AFTER FINISHING THE FUNCTION //EGC
 % ------------------------------------------------------------------------------
-fprintf('Work in progress...\nEGC\n')
-out.NIRSmat = job.NIRSmat;
-return
+% fprintf('Work in progress...\nEGC\n')
+% out.NIRSmat = job.NIRSmat;
+% return
 % ------------------------------------------------------------------------------
-useGrayContrast = job.useGrayContrast;
 try
     SelectPreviousROI = job.SelectPreviousROI;
 catch
-    SelectPreviousROI = 0;
+    SelectPreviousROI = false;
 end
 % Manual/automatic selection of ROIs/seeds (pointNclickROI ManualROIspline)
 fNamesROIchoice         = fieldnames(job.AutoROIchoice);
-autoROI                 = 0;
-graphicalROI            = 0;
-ManualROIspline         = 0;
-pointNclickROI          = 0;
-pointNclickSquare       = 0;
+autoROI                 = false;
+graphicalROI            = false;
+ManualROIspline         = false;
+pointNclickROI          = false;
+pointNclickSquare       = false;
 switch(fNamesROIchoice{1})
     case 'AutoROI'
         autoROI         = 1;
@@ -49,40 +48,40 @@ switch(fNamesROIchoice{1})
         % Do nothing
 end
 
-for scanIdx=1:length(job.PATmat)
+for scanIdx=1:length(job.NIRSmat)
     try
-        %Load PAT.mat information
-        [PAT PATmat dir_patmat]= pat_get_PATmat(job,scanIdx);
-        [~, ~, ~, ~, ~, ~, splitStr] = regexp(PAT.input_dir,'\\');
+        %Load NIRS.mat information
+        [NIRS NIRSmat dir_nirsmat]= pat_get_PATmat(job,scanIdx);
+        [~, ~, ~, ~, ~, ~, splitStr] = regexp(NIRS.input_dir,'\\');
         scanName = splitStr{end-1};
         if pointNclickROI
             % radius in pixels
-            radiusX = job.AutoROIchoice.pointNclickROI.ManualROIradius/PAT.PAparam.pixWidth;
-            radiusY = job.AutoROIchoice.pointNclickROI.ManualROIradius/PAT.PAparam.pixDepth;
+            radiusX = job.AutoROIchoice.pointNclickROI.ManualROIradius/NIRS.PAparam.pixWidth;
+            radiusY = job.AutoROIchoice.pointNclickROI.ManualROIradius/NIRS.PAparam.pixDepth;
         end
         if pointNclickSquare
             % radius in pixels
-            radiusX = job.AutoROIchoice.pointNclickSquare.ManualROIwidth/PAT.PAparam.pixWidth;
-            radiusY = job.AutoROIchoice.pointNclickSquare.ManualROIheight/PAT.PAparam.pixDepth;
+            radiusX = job.AutoROIchoice.pointNclickSquare.ManualROIwidth/NIRS.PAparam.pixWidth;
+            radiusY = job.AutoROIchoice.pointNclickSquare.ManualROIheight/NIRS.PAparam.pixDepth;
         end
-        if ~isfield(PAT.jobsdone,'ROIOK') || job.force_redo
+        if ~isfield(NIRS.flags,'ROIOK') || job.force_redo
             if job.RemovePreviousROI
                 try
-                    PAT.res = rmfield(PAT.jobsdone,'ROIOK');
+                    NIRS.res = rmfield(NIRS.flags,'ROIOK');
                 end
                 try
-                    for i1=1:length(PAT.res.PAT)
+                    for i1=1:length(NIRS.res.NIRS)
                         %clean up: delete ROI mask files
-                        delete(PAT.res.ROI{i1}.fname);
+                        delete(NIRS.res.ROI{i1}.fname);
                     end
                 end
                 try
-                    PAT.res = rmfield(PAT.res,'ROI');
+                    NIRS.res = rmfield(NIRS.res,'ROI');
                 end
                 index = 0;
             else
-                if isfield(PAT.res,'ROI')
-                    index = length(PAT.res.ROI);
+                if isfield(NIRS.res,'ROI')
+                    index = length(NIRS.res.ROI);
                 else
                     index = 0;
                 end
@@ -90,12 +89,12 @@ for scanIdx=1:length(job.PATmat)
             
             % Display anatomical image
             try
-                vol_anat = spm_vol(PAT.res.file_anat);
+                vol_anat = spm_vol(NIRS.res.file_anat);
             catch
                 disp('Could not find anatomical image');
-                [t sts] = spm_select(1,'image','Select anatomical image','',dir_patmat,'.*',1);
-                PAT.res.file_anat = t;
-                vol_anat = spm_vol(PAT.res.file_anat);
+                [t sts] = spm_select(1,'image','Select anatomical image','',dir_nirsmat,'.*',1);
+                NIRS.res.file_anat = t;
+                vol_anat = spm_vol(NIRS.res.file_anat);
             end
             [dir1 fil1] = fileparts(vol_anat.fname);
             im_anat = spm_read_vols(vol_anat);
@@ -105,9 +104,9 @@ for scanIdx=1:length(job.PATmat)
             spm_figure('Clear', 'Graphics');
             
             if isfield(job,'displayBrainmask')
-                if job.displayBrainmask == 1 && isfield(PAT,'fcPAT') && isfield(PAT.fcPAT,'mask') && isfield(PAT.fcPAT.mask,'fname')
+                if job.displayBrainmask == 1 && isfield(NIRS,'fcPAT') && isfield(NIRS.fcPAT,'mask') && isfield(NIRS.fcNIRS.mask,'fname')
                     % Display only brain pixels mask
-                    vol = spm_vol(PAT.fcPAT.mask.fname);
+                    vol = spm_vol(NIRS.fcNIRS.mask.fname);
                     full_mask = logical(spm_read_vols(vol));
                 else
                     % Display all the image
@@ -126,29 +125,29 @@ for scanIdx=1:length(job.PATmat)
                 spm_input(['Subject ' int2str(scanIdx) ' ' scanName], 1, 'd');
                 SelPrevROI = spm_input('Select a previous list of ROIs?','+1','y/n');
                 if SelPrevROI == 'y'
-                    [tPrevROI stsPrevROI] = spm_select(1,'mat','Select PAT.mat structure containing information on desired ROIs','',dir_patmat,'PAT.mat',1);
+                    [tPrevROI stsPrevROI] = spm_select(1,'mat','Select NIRS.mat structure containing information on desired ROIs','',dir_nirsmat,'NIRS.mat',1);
                     if stsPrevROI
-                        PAT0 = PAT; %Store current PAT
+                        PAT0 = NIRS; %Store current NIRS
                         try
                             load(tPrevROI);
-                            PAT_withROIs = PAT;
-                            PAT = PAT0;
+                            PAT_withROIs = NIRS;
+                            NIRS = PAT0;
                             try
-                                if ~isfield(PAT.res,'ROI')
-                                    PAT.ROI.ROIname = PAT_withROIs.ROI.ROIname;
-                                    PAT.res.ROI = PAT_withROIs.res.ROI;
+                                if ~isfield(NIRS.res,'ROI')
+                                    NIRS.ROI.ROIname = PAT_withROIs.ROI.ROIname;
+                                    NIRS.res.ROI = PAT_withROIs.res.ROI;
                                 else
-                                    PAT.ROI.ROIname = [PAT.ROI.ROIname; PAT_withROIs.ROI.ROIname];
-                                    PAT.res.ROI = [PAT.res.ROI PAT_withROIs.res.ROI];
+                                    NIRS.ROI.ROIname = [NIRS.ROI.ROIname; PAT_withROIs.ROI.ROIname];
+                                    NIRS.res.ROI = [NIRS.res.ROI PAT_withROIs.res.ROI];
                                 end
-                                index = index+length(PAT.res.ROI);
+                                index = index+length(NIRS.res.ROI);
                                 clear PAT_withROIs
                             catch
-                                PAT = PAT0;
-                                disp('Specified PAT.mat structure does not contain valid ROI information')
+                                NIRS = PAT0;
+                                disp('Specified NIRS.mat structure does not contain valid ROI information')
                             end
                         catch
-                            disp('Could not load PAT.mat structure containing desired ROIs')
+                            disp('Could not load NIRS.mat structure containing desired ROIs')
                         end
                     end
                 end
@@ -157,21 +156,21 @@ for scanIdx=1:length(job.PATmat)
             if ~autoROI
                 %Display images of changes from 10th to 90th percentile for all sessions
                 try % <--- Needs a catch statement //EGC
-                    nCols = ceil(sqrt(length(PAT.sess_res)));
-                    nRows = ceil(length(PAT.sess_res) / nRows);
-                    for i0=1:length(PAT.sess_res)
+                    nCols = ceil(sqrt(length(NIRS.sess_res)));
+                    nRows = ceil(length(NIRS.sess_res) / nRows);
+                    for i0=1:length(NIRS.sess_res)
                         % Only open 1 figure for all the sessions
                         if i0 == 1,
                             hs = figure;
                             set(hs, 'Name', '10-90 percentile changes')
                         end
-                        V = spm_vol(PAT.sess_res{i0}.fname_change_90_10{1}); %color green
+                        V = spm_vol(NIRS.sess_res{i0}.fname_change_90_10{1}); %color green
                         tmp_image = spm_read_vols(V);
                         figure(hs);
                         subplot(nRows, nCols, i0);
                         imagesc(tmp_image); 
                         % axis image
-                        set(gca,'DataAspectRatio',[1 PAT.PAparam.pixWidth/PAT.PAparam.pixDepth 1])
+                        set(gca,'DataAspectRatio',[1 NIRS.PAparam.pixWidth/NIRS.PAparam.pixDepth 1])
                         title(['Session ' int2str(i0) ': ratio of 90th to 10th percentile']);
                     end
                 end
@@ -202,20 +201,20 @@ for scanIdx=1:length(job.PATmat)
                             colormap(gray);
                         end
                         % axis image;
-                        set(gca,'DataAspectRatio',[1 PAT.PAparam.pixWidth/PAT.PAparam.pixDepth 1])
+                        set(gca,'DataAspectRatio',[1 NIRS.PAparam.pixWidth/NIRS.PAparam.pixDepth 1])
                         if graphicalROI
                             % Specify polygonal region of interest (ROI)
-                            title(sprintf('Make ROI polygon, then double click in it to create ROI (scan %d of %d).', scanIdx, length(job.PATmat)));
+                            title(sprintf('Make ROI polygon, then double click in it to create ROI (scan %d of %d).', scanIdx, length(job.NIRSmat)));
                             mask = roipoly;
                         elseif ManualROIspline
                             % Start interactive ROI tool to choose spline
                             % ROI/seed
-                            mask = pat_roi_spline(im_anat,[],[],sprintf('Mark spline points, then right-click in it to create ROI/seed (scan %d of %d)',scanIdx, length(job.PATmat)));
+                            mask = pat_roi_spline(im_anat,[],[],sprintf('Mark spline points, then right-click in it to create ROI/seed (scan %d of %d)',scanIdx, length(job.NIRSmat)));
                         else
                             if pointNclickROI
                                 % Specify center of circular ROI/seed with mouse
                                 % point & click on the anatomical image
-                                title(sprintf('Click the center of circular ROI/seed (scan %d of %d)', scanIdx, length(job.PATmat)))
+                                title(sprintf('Click the center of circular ROI/seed (scan %d of %d)', scanIdx, length(job.NIRSmat)))
                                 % Circular seed setup
                                 t = 0:pi/100:2*pi;
                                 % Prompt user to point & click
@@ -231,13 +230,13 @@ for scanIdx=1:length(job.PATmat)
                                 mask = poly2mask(xi, yi, size(im_anat,1), size(im_anat,2));
                                 % Save coordinates of seed for later display.
                                 % NOTE: Row is 1st coordinate, Column is 2nd
-                                PAT.res.ROI{index+1}.center = [y0 x0];
-                                PAT.res.ROI{index+1}.radius = job.AutoROIchoice.pointNclickROI.ManualROIradius;
+                                NIRS.res.ROI{index+1}.center = [y0 x0];
+                                NIRS.res.ROI{index+1}.radius = job.AutoROIchoice.pointNclickROI.ManualROIradius;
                             else
                                 if pointNclickSquare
                                     % Specify center of a square ROI/seed with mouse
                                     % point & click on the anatomical image
-                                    title(sprintf('Click the center of rectangular ROI/seed (scan %d of %d)', scanIdx, length(job.PATmat)))
+                                    title(sprintf('Click the center of rectangular ROI/seed (scan %d of %d)', scanIdx, length(job.NIRSmat)))
                                     % Square setup
 %                                     hR = imrect(gca,[0 0 ManualROIwidth ManualROIheight]);
                                     hR = imrect(gca,[0 0 radiusX radiusY]);
@@ -253,9 +252,9 @@ for scanIdx=1:length(job.PATmat)
                                   
                                     % Save coordinates of seed for later display.
                                     % NOTE:  [xmin ymin width height]
-                                    PAT.res.ROI{index+1}.center = [round(pRr(1)+pRr(3)/2) round(pRr(2)+pRr(4)/2)];
-                                    PAT.res.ROI{index+1}.width_height = [pRr(3) pRr(4)];
-                                    PAT.res.ROI{index+1}.width_height_mm = [job.AutoROIchoice.pointNclickSquare.ManualROIwidth job.AutoROIchoice.pointNclickSquare.ManualROIheight];
+                                    NIRS.res.ROI{index+1}.center = [round(pRr(1)+pRr(3)/2) round(pRr(2)+pRr(4)/2)];
+                                    NIRS.res.ROI{index+1}.width_height = [pRr(3) pRr(4)];
+                                    NIRS.res.ROI{index+1}.width_height_mm = [job.AutoROIchoice.pointNclickSquare.ManualROIwidth job.AutoROIchoice.pointNclickSquare.ManualROIheight];
                                 else
                                     % Manual ROI coordinate entry
                                     linecount = linecount + 1;
@@ -276,8 +275,8 @@ for scanIdx=1:length(job.PATmat)
                                     end
                                     % Save coordinates of seed for later display
                                     % NOTE: Row is 1st coordinate, Column is 2nd
-                                    PAT.res.ROI{index+1}.center = rc;
-                                    PAT.res.ROI{index+1}.radius = radius;
+                                    NIRS.res.ROI{index+1}.center = rc;
+                                    NIRS.res.ROI{index+1}.radius = radius;
                                 end
                             end
                         end
@@ -292,12 +291,12 @@ for scanIdx=1:length(job.PATmat)
                         else
                             name = int2str(index);
                         end
-                        PAT.res.ROI{index}.name = name;
+                        NIRS.res.ROI{index}.name = name;
                         if index < 10, str0 = '0'; else str0 = ''; end
                         str = [str0 int2str(index)];
                         % Save nifti files in ROI sub-folder //EGC
-                        fname_mask = fullfile(dir_patmat,[fil1 '_ROI_' str '_' name '.nii']);
-                        PAT.res.ROI{index}.fname = fname_mask;
+                        fname_mask = fullfile(dir_nirsmat,[fil1 '_ROI_' str '_' name '.nii']);
+                        NIRS.res.ROI{index}.fname = fname_mask;
                         
                         % Correct data type for logical masks
                         switch (vol_anat(1).dt(1))
@@ -343,8 +342,8 @@ for scanIdx=1:length(job.PATmat)
                         if index < 10, str0 = '0'; else str0 = ''; end
                         str = [str0 int2str(index)];
                         % Save nifti files in ROI sub-folder //EGC
-                        fname_mask = fullfile(dir_patmat,[fil1 '_ROI_' str '_' int2str(i1) 'x' int2str(i2) '.nii']);
-                        PAT.res.ROI{index}.fname = fname_mask;
+                        fname_mask = fullfile(dir_nirsmat,[fil1 '_ROI_' str '_' int2str(i1) 'x' int2str(i2) '.nii']);
+                        NIRS.res.ROI{index}.fname = fname_mask;
                         
                         % Correct data type for logical masks
                         switch (vol_anat(1).dt(1))
@@ -367,24 +366,24 @@ for scanIdx=1:length(job.PATmat)
                     end
                 end
             end
-            PAT.ROI.ROIname = {};
-            for i0=1:length(PAT.res.ROI)
-                if isfield(PAT.res.ROI{i0},'name')
-                    PAT.ROI.ROIname = [PAT.ROI.ROIname; PAT.res.ROI{i0}.name];
+            NIRS.ROI.ROIname = {};
+            for i0=1:length(NIRS.res.ROI)
+                if isfield(NIRS.res.ROI{i0},'name')
+                    NIRS.ROI.ROIname = [NIRS.ROI.ROIname; NIRS.res.ROI{i0}.name];
                 else
-                    PAT.ROI.ROIname = [PAT.ROI.ROIname; ['ROI' gen_num_str(i0,3)]];
+                    NIRS.ROI.ROIname = [NIRS.ROI.ROIname; ['ROI' gen_num_str(i0,3)]];
                 end
             end
             % ROI creation succesful
-            PAT.jobsdone.ROIOK = true;
-            save(PATmat,'PAT');
+            NIRS.flags.ROIOK = true;
+            save(NIRSmat,'NIRS');
         end
-        fprintf('Scan %s, %d of %d complete\n', scanName, scanIdx, length(job.PATmat));
-        out.PATmat{scanIdx} = PATmat;
+        fprintf('Scan %s, %d of %d complete\n', scanName, scanIdx, length(job.NIRSmat));
+        out.NIRSmat{scanIdx} = NIRSmat;
     catch exception
         disp(exception.identifier)
         disp(exception.stack(1))
-        out.PATmat{scanIdx} = job.PATmat{scanIdx};
+        out.NIRSmat{scanIdx} = job.NIRSmat{scanIdx};
     end % End try
 end % Scans loop
 end % End function
