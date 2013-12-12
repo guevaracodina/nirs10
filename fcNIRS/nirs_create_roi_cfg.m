@@ -13,8 +13,8 @@ RemovePreviousROI       = cfg_menu;
 RemovePreviousROI.tag   = 'RemovePreviousROI';
 RemovePreviousROI.name  = 'Treatment of previous ROIs';
 RemovePreviousROI.labels= {'Keep','Remove'};
-RemovePreviousROI.values= {0,1};
-RemovePreviousROI.val   = {0};
+RemovePreviousROI.values= {false,true};
+RemovePreviousROI.val   = {false};
 RemovePreviousROI.help  = {'If previous ROIs had been selected, choose whether to keep'
     'or to remove this information.'}';
 
@@ -23,119 +23,39 @@ select_names            = cfg_menu;
 select_names.tag        = 'select_names';
 select_names.name       = 'Select names for ROIs';
 select_names.labels     = {'Yes','No'};
-select_names.values     = {1,0};
-select_names.val        = {1};
+select_names.values     = {true,false};
+select_names.val        = {true};
 select_names.help       = {'Option for user to manually enter names of ROIs.'
     'If No is selected, ROI names will be a number (enumeration).'}';
-
-% Array of automatic ROIs
-ArrayROI                = cfg_entry;
-ArrayROI.name           = 'Size of array of ROIs';
-ArrayROI.tag            = 'ArrayROI';       
-ArrayROI.strtype        = 'r';
-ArrayROI.val{1}         = [2 3];
-ArrayROI.num            = [1 2];     
-ArrayROI.help           = {'Enter array (number of rows by number of columns) '
-    'for automatically generated array of ROIs.'
-    'Make sure the product of rows by columns (total number of ROIs)'
-    'is less than 100.'
-    'Names of ROIs will include array positions, increasing from down to up'
-    'vertically and from left to right horizontally.'}'; 
-
-AutoROI                 = cfg_branch;
-AutoROI.tag             = 'AutoROI';
-AutoROI.name            = 'Automatic ROI selection'; 
-AutoROI.val             = {ArrayROI};
-AutoROI.help            = {'Automatic ROI selection.'}';
         
-ManualROI               = cfg_branch;
+ManualROI               = cfg_entry;
 ManualROI.tag           = 'ManualROI';
-ManualROI.name          = 'Manual ROI selection: graphical tool'; 
-ManualROI.val           = {};
-ManualROI.help          = {'Manual ROI selection: specify polygonal ROI/seed.'}';
+ManualROI.name          = 'Manual ROI selection'; 
+ManualROI.strtype       = 'e';
+ManualROI.val{1}        = {[1 2]; [3 4 5]};
+ManualROI.num           = [Inf 1];
+ManualROI.help          = {'Manual ROI selection: specify channels per ROI/seed in a cell column.'}';
 
-ManualROIspline         = cfg_branch;
-ManualROIspline.tag     = 'ManualROIspline';
-ManualROIspline.name    = 'Manual ROI selection: spline graphical tool'; 
-ManualROIspline.val     = {};
-ManualROIspline.help    = {'Manual ROI selection: specify spline ROI/seed.'}';
+ManualROIsel          	= cfg_branch;
+ManualROIsel.tag        = 'ManualROIsel';
+ManualROIsel.name       = 'Manual ROI selection';
+ManualROIsel.val        = {ManualROI};
+ManualROIsel.help       = {'Manual ROI selection.'}';
 
-ManualEnterROI          = cfg_branch;
-ManualEnterROI.tag      = 'ManualEnterROI';
-ManualEnterROI.name     = 'Manual ROI selection: coordinate entry'; 
-ManualEnterROI.val      = {};
-ManualEnterROI.help     = {'Manual ROI selection: coordinate entry.'}';
-
-ManualROIradius         = cfg_entry;
-ManualROIradius.name    = 'Radius size of ROIs/seeds';
-ManualROIradius.tag     = 'ManualROIradius';       
-ManualROIradius.strtype = 'r';
-ManualROIradius.val{1}  = 0.5;                    % Default value
-ManualROIradius.num     = [1 1];     
-ManualROIradius.help    = {'Enter radius of the ROIs/seeds in mm.'}'; 
 
 pointNclickROI          = cfg_branch;
 pointNclickROI.tag      = 'pointNclickROI';
-pointNclickROI.name     = 'Manual ROI selection: point & click (circle)'; 
-pointNclickROI.val      = {ManualROIradius};
-pointNclickROI.help     = {'Manual ROI selection: point & click the center of circular ROI/seed. Usually'
-                                '  1,2: Frontal'
-                                '  3,4: Motor'
-                                '  5,6: Cingulate'
-                                '  7,8: Somatosensory'
-                                ' 9,10: Retrosplenial'
-                                '11,12: Visual'}';
+pointNclickROI.name     = 'Graphic ROI selection: point & click (channels)'; 
+pointNclickROI.val      = {};
+pointNclickROI.help     = {'Graphic ROI selection: point & click the channels per ROI'
+                                }';
                             
-ManualROIwidth          = cfg_entry;
-ManualROIwidth.name     = 'Width of rectangle';
-ManualROIwidth.tag      = 'ManualROIwidth';       
-ManualROIwidth.strtype  = 'r';
-ManualROIwidth.val{1}   = 1;                   
-ManualROIwidth.num      = [1 1];     
-ManualROIwidth.help     = {'Enter width of rectangle in mm.'}'; 
-
-ManualROIheight         = cfg_entry;
-ManualROIheight.name    = 'Height of rectangle';
-ManualROIheight.tag     = 'ManualROIheight';       
-ManualROIheight.strtype = 'r';
-ManualROIheight.val{1}  = 0.5;                   
-ManualROIheight.num     = [1 1];     
-ManualROIheight.help    = {'Enter height of rectangle in mm.'}'; 
-
-pointNclickSquare       = cfg_branch;
-pointNclickSquare.tag   = 'pointNclickSquare';
-pointNclickSquare.name  = 'Manual ROI selection: point & click (rectangle)'; 
-pointNclickSquare.val   = {ManualROIwidth ManualROIheight};
-pointNclickSquare.help  = {'Manual ROI selection: point & click the center of rectangle ROI.'
-    'The position and shape of the rectangle can then be adjusted.'}';                            
-                            
-
 AutoROIchoice           = cfg_choice;
 AutoROIchoice.name      = 'Choose ROI generation method';
 AutoROIchoice.tag       = 'AutoROIchoice';
-AutoROIchoice.values    = {ManualROI ManualROIspline ManualEnterROI ...
-     pointNclickROI pointNclickSquare AutoROI}; 
-AutoROIchoice.val       = {pointNclickROI}; % Default value
-AutoROIchoice.help      = {'Choose whether to generate ROI manually or'
-        'automatically'}'; 
-
-% Display Brain Mask    
-displayBrainmask        = cfg_menu;
-displayBrainmask.tag    = 'displayBrainmask';
-displayBrainmask.name   = 'Display Brain Mask';
-displayBrainmask.labels = {'Yes','No'};
-displayBrainmask.values = {1,0};
-displayBrainmask.val    = {0}; % Default value = 0
-displayBrainmask.help   = {'Display network mask containing only brain pixels'};
-
-% Use gray contrast improvement
-useGrayContrast         = cfg_menu;
-useGrayContrast.tag     = 'useGrayContrast';
-useGrayContrast.name    = 'Use gray contrast';
-useGrayContrast.labels  = {'No','Yes'};
-useGrayContrast.values  = {0,1};
-useGrayContrast.val     = {0};
-useGrayContrast.help    = {'Use gray contrast.'}';
+AutoROIchoice.values    = {ManualROIsel pointNclickROI}; 
+AutoROIchoice.val       = {ManualROIsel}; % Default value
+AutoROIchoice.help      = {'Choose whether to generate ROI with a list of channels or by clicking'}'; 
 
 % Choose whether interface should ask whether to use a previously saved list of ROI
 SelectPreviousROI       = cfg_menu;
@@ -146,19 +66,17 @@ SelectPreviousROI.values= {0,1};
 SelectPreviousROI.val   = {0};
 SelectPreviousROI.help  = {'If this option is selected, then before manual selection of ROIs,'
     'The interface will ask the user if they want to use an ROI list from elsewhere.'
-    'This ROI list can then be selected by locating the PAT.mat structure that contains the information.'}';
+    'This ROI list can then be selected by locating the NIRS.mat structure that contains the information.'}';
 
 % Executable Branch
 create_roi1             = cfg_exbranch;       % This is the branch that has information about how to run this module
 create_roi1.name        = 'Create ROI/seed in channel space';             % The display name
 create_roi1.tag         = 'create_roi1'; %Very important: tag is used when calling for execution
-create_roi1.val         = {NIRSmat redo1 RemovePreviousROI NIRSmatCopyChoice ...
-    select_names AutoROIchoice displayBrainmask useGrayContrast ...
-    SelectPreviousROI };    % The items that belong to this branch. All items must be filled before this branch can run or produce virtual outputs
+create_roi1.val         = {NIRSmat redo1 NIRSmatCopyChoice RemovePreviousROI  ...
+    select_names AutoROIchoice SelectPreviousROI };    % The items that belong to this branch. All items must be filled before this branch can run or produce virtual outputs
 create_roi1.prog        = @nirs_create_roi_run;  % A function handle that will be called with the harvested job to run the computation
 create_roi1.vout        = @nirs_cfg_vout_create_roi; % A function handle that will be called with the harvested job to determine virtual outputs
 create_roi1.help        = {'Create regions of interest/seeds.'};
-
 return
 
 %make PAT.mat available as a dependency

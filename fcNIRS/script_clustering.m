@@ -4,11 +4,17 @@
 %                    École Polytechnique de Montréal
 %_______________________________________________________________________________
 %% Read a random subject
-clear; close all; clc
+clear; clc
 % Le cas 104MAL est extrêmement inhabituel. Il ne pourra pas être utilisé
 % pour les analyses.
-% NIRSmat = 'F:\Edgar\Data\NIRS\epiNIRS_data\epiNIRS_Processed\epiNIRS\epi104MAL\dataSPMa\coreg\NIRS.mat';
-NIRSmat = 'F:\Edgar\Data\NIRS\epiNIRS_data\epiNIRS_Processed\epiNIRS\epi140GG\dataSPMa\coreg\NIRS.mat';
+% epi127SD Good optodes coverage
+NIRSmat = 'F:\Edgar\Data\NIRS\epiNIRS_data\epiNIRS_Processed\epiNIRS\epi127SD\dataSPMa\coreg\NIRS.mat';
+% epi143MDM  Good optodes coverage
+% NIRSmat = 'F:\Edgar\Data\NIRS\epiNIRS_data\epiNIRS_Processed\epiNIRS\epi143MDM\dataSPMa\coreg\NIRS.mat';
+% Control subject 1
+% NIRSmat = 'F:\Edgar\Data\NIRS\epiNIRS_data\ControlNIRS_Processed\ControlNIRS\Sujet001\dataSPMa\coreg\NIRS.mat';
+% Control subject 2
+% NIRSmat = 'F:\Edgar\Data\NIRS\epiNIRS_data\ControlNIRS_Processed\ControlNIRS\Sujet002\dataSPMa\coreg\NIRS.mat';
 load(NIRSmat)
 
 %% Read all files from the 4th processing level ODtoHbOHbR
@@ -26,7 +32,8 @@ preProcStep = 4;
 %         hb = 'HbT';
 % end
 hb = 2;
-nSessions = numel(NIRS.Dt.fir.pp(preProcStep).p);
+% nSessions = numel(NIRS.Dt.fir.pp(preProcStep).p);
+nSessions = numel(NIRS.Dt.fir.Sess);
 dataNIRS = [];
 for iFiles = 1:nSessions,
     % currentData [nChannels x nTimePoints]
@@ -56,4 +63,10 @@ title(titleString)
 
 %% Using clusterdata (hierarchical clustering)
 nirs_clustergram(dataNIRS);
+
+%% Print clustergram
+set(gcf,'color',[1 1 1],'paperpositionmode','auto');
+[pathName,~,~] = fileparts(NIRSmat);
+[~, subjectName, ~] = fileparts(NIRS.Dt.s.p);
+print(gcf,'-dpng',fullfile(pathName,[subjectName '_corrMat_RAW']));
 % EOF

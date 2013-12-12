@@ -139,6 +139,12 @@ end
 % subj_fiducials{46} = 0; project_subject{46} = 0;
 % subj_fiducials{48} = 0;
 
+% Do not use custom fiducials if 0
+subj_fiducials{1} = 0;
+subj_fiducials{2} = 0;
+
+% Fcoord{1} = [-2.7 82.1 -27.7; -67.9 -13.4 -28.5; 64.4 -9.8 -28.5];
+% Fcoord{2} = [-4.9 102.7 -22.3; -84.9 -6.7 -22.3; 77.8 -16.4 -36.6];
 % Fcoord{1} = [-2.7 82.1 -27.7; -67.9 -13.4 -28.5; 64.4 -9.8 -28.5];
 % Fcoord{2} = [-4.9 102.7 -22.3; -84.9 -6.7 -22.3; 77.8 -16.4 -36.6];
 % Fcoord{3} = [0.9 95.4 -41.0; -61.7 -5.4 -27.7; 58.1 -8.0 -25.0];
@@ -185,7 +191,7 @@ end
 % Fcoord{10} = [3.8 101.2 -38.4; -75.5 -6.1 -80.8; 69.5 -5.2 -86.2]; %[1.7 106.4 -36.3; -75.6 -9.4 -53.5; 74.1 -11.2 -53.5]; %LFCDB
 
 %2) Subjects to run
-OP.subjects = [1:2]; %49; %[49 47 46 42 4]; %[ 48];
+OP.subjects = [2]; %49; %[49 47 46 42 4]; %[ 48];
 % volt{49} = 2; %run a: volt = 2; run b: volt = 1
 % volt{42} = 2; %run a: volt = 2; run b: volt = 1
 OP.includeHR = 1; %include heart rate as a regressor

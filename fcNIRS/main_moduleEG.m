@@ -40,11 +40,11 @@ for s1=1:length(subject)
     %1) find BOXYfiles
     [filesRec_dataBOXY,DirsRec_dataBOXY] = spm_select('FPListRec',dir_DATA,'.*');
     %2) find EEG files
-%     [filesRec_eeg,DirsRec_eeg] = spm_select('FPListRec',dir_EEG,'.*');
+    [filesRec_eeg,DirsRec_eeg] = spm_select('FPListRec',dir_EEG,'.*');
     %3) find mtg files
     [filesRec_mtg,DirsRec_mtg] = spm_select('FPListRec',dir_MTG,'.prj');
     %4) find T1 file(s)
-%     [filesRec_T1,DirsRec_T1] = spm_select('FPList',dir_T1,'epi*');
+    [filesRec_T1,DirsRec_T1] = spm_select('FPList',dir_T1,'.*');
     
     if OP.first_session
         filesRec_dataBOXY = {filesRec_dataBOXY{1}};
