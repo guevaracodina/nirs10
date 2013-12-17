@@ -100,7 +100,7 @@ OP.run_label = 'a';
 %focus{48} = occipital
 %focus{49} = occipital
 % OP.focus = focus;
-OP.coreg_size = 20;
+OP.coreg_size = 20; % Change to 30 or something bigger to have a better coregistration
 OP.test_hrf = 0;
 % Loop over subjects
 for i=1:n, 
