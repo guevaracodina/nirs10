@@ -1,5 +1,5 @@
-NC = 32; %Number of HbO channels
-load('TopoData.mat'); %this loads the structure rendered_MNI
+NC = 121; %Number of HbO channels
+load('W:\Ke\epiNIRS_Full_Jan2013\epiNIRS\epi143MDM\dataSPM\coreg\TopoData.mat'); %this loads the structure rendered_MNI
 
 % VIEWS
 % 1: 'ventral'
