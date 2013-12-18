@@ -62,11 +62,11 @@ end
 title(titleString)
 
 %% Using clusterdata (hierarchical clustering)
-nirs_clustergram(dataNIRS);
+[PERM1 T2 corrMat] = nirs_clustergram(dataNIRS);
 
 %% Print clustergram
-set(gcf,'color',[1 1 1],'paperpositionmode','auto');
-[pathName,~,~] = fileparts(NIRSmat);
-[~, subjectName, ~] = fileparts(NIRS.Dt.s.p);
-print(gcf,'-dpng',fullfile(pathName,[subjectName '_corrMat_RAW']));
+% set(gcf,'color',[1 1 1],'paperpositionmode','auto');
+% [pathName,~,~] = fileparts(NIRSmat);
+% [~, subjectName, ~] = fileparts(NIRS.Dt.s.p);
+% print(gcf,'-dpng',fullfile(pathName,[subjectName '_corrMat_RAW']));
 % EOF

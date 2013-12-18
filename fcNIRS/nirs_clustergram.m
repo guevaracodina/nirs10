@@ -1,12 +1,24 @@
-function varargout = nirs_clustergram(dataNIRS,varargin)
+function [PERM1 T2 corrMat] = nirs_clustergram(dataNIRS,varargin)
 % nirs_clustergram creates a dendrogram and heat map on the same figure.
-%
+
 %   nirs_clustergram(dataNIRS) creates a dendrogram and heat map from DATA using
 %   hierarchical clustering with Euclidean distance metric and average linkage
 %   used to generate the hierarchical tree. The clustering is performed on the
 %   rows of dataNIRS. The rows of dataNIRS are typically channels and the
 %   columns are time points.  To cluster the columns instead of the rows,
 %   transpose the data using the ' operator.
+% SYNTAX
+% [PERM1 T2 corrMat] = nirs_clustergram(dataNIRS)
+% INPUTS
+% dataNIRS  2-D data [nChannels x nTimePoints]
+% OUTPUTS
+% PERM1     the permutation vector of the node labels of the leaves of the dendrogram
+% T2        is a vector containing a cluster number for each observation
+% corrMat   Correlation coefficients ordered according to PERM1
+%_______________________________________________________________________________
+% Copyright (C) 2013 LIOM Laboratoire d'Imagerie Optique et Moléculaire
+%                    École Polytechnique de Montréal
+%_______________________________________________________________________________
 
 %% Using clusterdata (hierarchical clustering)
 % Number of independent runs
