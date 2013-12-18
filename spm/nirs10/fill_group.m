@@ -89,13 +89,13 @@ try
     erdf_group = max(G.erdf_group(:)); %quick fix...
     F.s_map = G.tmap_group;
 %     %******************Ke Peng, for one-tailed t-test, for display only
-    switch hb
-        case {'HbO','HbT'}
-            F.s_map(find(F.s_map < 0)) = 0;
-        case 'HbR'
-            F.s_map(find(F.s_map > 0)) = 0;
-        otherwise
-    end
+%     switch hb
+%         case {'HbO','HbT'}
+%             F.s_map(find(F.s_map < 0)) = 0;
+%         case 'HbR'
+%             F.s_map(find(F.s_map > 0)) = 0;
+%         otherwise
+%     end
     TOPO.v{v1}.(fg).hb{h1}.c{2*c1-shb}.Tmap = F.s_map;
     %*****
     filestr = [num2str(Z.p_value) '_' W.spec_hemi '_' hb str2t];
