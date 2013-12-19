@@ -58,12 +58,12 @@ topPanel =  axes('Position',[.25 .77 .69 .21]);
 %% Left dendrogram
 axes(leftPanel);
 color = Z2(end-nClusters+2,3)-eps;
-[H21, T31, PERM1] = dendrogram(Z2, 0, 'colorthreshold', color, 'orient','left');
-% h = dendrogram(Z_samples,'orient','left');
+[H21, T31, PERM1] = nirs_dendrogram(Z2, 0, 'colorthreshold', color, 'orient','left');
+% h = nirs_dendrogram(Z_samples,'orient','left');
 
 %% Top dendrogram
 axes(topPanel);
-[H22, T32, PERM2] = dendrogram(Z2, 0, 'colorthreshold', color);
+[H22, T32, PERM2] = nirs_dendrogram(Z2, 0, 'colorthreshold', color);
 
 %% Correlation matrix
 dataNIRSorder = dataNIRS';
