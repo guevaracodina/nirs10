@@ -105,7 +105,8 @@ for Idx=1:size(job.NIRSmat,1)
             
             switch job.coreg_type.NIRS_channels_optodes.channel_optode_select
                 case 0
-                    color_ity = 'Red: Channels onto Scalp; Yellow: Channels onto cortex';
+                    % color_ity = 'Red: Channels onto Scalp; Yellow: Channels onto cortex';
+                    color_ity = 'Cluster-colored channels';
                     hCol = axes('Parent',Fgraph,'Position',[0.02 0.80 0.96 0.02],'Visible','off');
                     text(0.5,0,color_ity,'Parent',hCol,...
                     'HorizontalAlignment','center','VerticalAlignment','baseline',...

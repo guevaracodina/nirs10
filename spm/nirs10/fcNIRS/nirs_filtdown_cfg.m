@@ -1,7 +1,7 @@
 function filtdown1 = nirs_filtdown_cfg
 % Graphical interface configuration function for nirs_filtdown_run
 %_______________________________________________________________________________
-% Copyright (C) 2010 LIOM Laboratoire d'Imagerie Optique et Moléculaire
+% Copyright (C) 2013 LIOM Laboratoire d'Imagerie Optique et Moléculaire
 %                    École Polytechnique de Montréal
 %_______________________________________________________________________________
 

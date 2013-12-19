@@ -1,4 +1,8 @@
 %% script_population_stats
+%_______________________________________________________________________________
+% Copyright (C) 2013 LIOM Laboratoire d'Imagerie Optique et Moléculaire
+%                    École Polytechnique de Montréal
+%_______________________________________________________________________________
 OP.path0 = 'F:\Edgar\Data\NIRS\epiNIRS_data\epiNIRS';% data path
 OP.path1 = 'F:\Edgar\Data\NIRS\epiNIRS_data\epiNIRS_Processed\epiNIRS';% analysis path
 OP.pathbatch = 'F:\Edgar\Data\NIRS\epiNIRS_data\Batch_July2013'; %where to save the batches

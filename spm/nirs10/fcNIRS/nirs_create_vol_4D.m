@@ -1,7 +1,7 @@
 function hdr = nirs_create_vol_4D(fname, vol, data)
 % Create a 4-D NIfTI volume,
 % SYNTAX
-% hdr = nirs_create_vol_4D(fname, vol, data)
+% hdr = pat_create_vol_4D(fname, vol, data)
 % INPUTS
 % fname     - the filename of the image.
 % vol       - Header structure with image volume information in the following
@@ -43,15 +43,23 @@ for iFrames = 1:nFrames
         squeeze(data(:,:,1,iFrames)));
     else
         % User chose the same parameters for all slices
-        hdr = nirs_create_vol(fname, vol(1).dim, vol(1).dt, ...
-        vol(1).pinfo, vol(1).mat, iFrames,...
-        squeeze(data(:,:,1,iFrames)));
+        vol(iFrames).fname  = fname;
+        vol(iFrames).dim    = vol(1).dim;
+        vol(iFrames).dt     = vol(1).dt;
+        vol(iFrames).pinfo  = vol(1).pinfo;
+        vol(iFrames).mat    = vol(1).mat;
+        vol(iFrames).n      = iFrames;
+        vol(iFrames).descrip= 'Created with nirs10';
+%         hdr = nirs_create_vol(fname, vol(1).dim, vol(1).dt, ...
+%         vol(1).pinfo, vol(1).mat, iFrames,...
+%         squeeze(data(:,:,1,iFrames)));
     end
     % Update progress bar
     spm_progress_bar('Set', iFrames);
     nirs_text_waitbar(iFrames/nFrames, sprintf('Frame %d of %d', iFrames, nFrames)); 
 end
-
+hdr = spm_create_vol(vol);
+spm_write_vol(hdr, data);
 % Clear progress bar
 spm_progress_bar('Clear');
 nirs_text_waitbar('Clear')
