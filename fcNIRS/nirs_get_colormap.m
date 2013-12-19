@@ -23,8 +23,7 @@ function colormapOut = nirs_get_colormap(map)
 %_______________________________________________________________________________
 % Copyright (C) 2013 LIOM Laboratoire d'Imagerie Optique et Moléculaire
 %                    École Polytechnique de Montréal
-% Edgar Guevara
-% 2013/05/22
+%_______________________________________________________________________________
 
 ColorMapSize = 128;
 

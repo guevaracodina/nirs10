@@ -1,7 +1,7 @@
 function sendmail1 = nirs_send_email_cfg
 % Graphical interface configuration that sends an automatic e-mail notifier.
 %_______________________________________________________________________________
-% Copyright (C) 2012 LIOM Laboratoire d'Imagerie Optique et Moléculaire
+% Copyright (C) 2013 LIOM Laboratoire d'Imagerie Optique et Moléculaire
 %                    École Polytechnique de Montréal
 %_______________________________________________________________________________
 
@@ -65,7 +65,7 @@ email.name          = 'E-mail';
 email.strtype       = 's';
 email.val           = {'nirs10notifier@gmail.com'};
 email.num           = [1 Inf];
-email.help          = {'The e-mail address of the notifier. Look in sendmail help how to store it. Default: ioi11notifier@gmail.com'};
+email.help          = {'The e-mail address of the notifier. Look in sendmail help how to store it. Default: nirs10notifier@gmail.com'};
 % ------------------------------------------------------------------------------
 % Password
 % ------------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-function hdr = nirs_create_vol(fname, dim, dt, pinfo, mat, data, varargin)
+function hdr = nirs_create_vol(fname, dim, dt, pinfo, mat, n, data, varargin)
 % Create a NIfTI volume slice by slice.
 % SYNTAX
 % hdr = nirs_create_vol(fname, dim, dt, pinfo, mat, n, data)

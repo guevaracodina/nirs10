@@ -18,7 +18,7 @@ function [z, p, k] = nirs_temporalBPFconfig(type, fs, cutoff, FilterOrder, varar
 % p             poles
 % k             gain
 %_______________________________________________________________________________
-% Copyright (C) 2012 LIOM Laboratoire d'Imagerie Optique et Moléculaire
+% Copyright (C) 2013 LIOM Laboratoire d'Imagerie Optique et Moléculaire
 %                    École Polytechnique de Montréal
 %_______________________________________________________________________________
 try

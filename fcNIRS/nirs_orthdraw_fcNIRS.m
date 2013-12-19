@@ -1,6 +1,10 @@
 function nirs_orthdraw_fcNIRS(xSPM, render)
 %Ke Peng, 2013-08-28, called in nirs_run_liom_orth_coreg
 % Modified version to display clusters //EGC
+%_______________________________________________________________________________
+% Copyright (C) 2013 LIOM Laboratoire d'Imagerie Optique et Moléculaire
+%                    École Polytechnique de Montréal
+%_______________________________________________________________________________
 
 V_render = spm_vol(render);
 

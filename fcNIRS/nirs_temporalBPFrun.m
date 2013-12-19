@@ -11,7 +11,7 @@ function Yfilt = nirs_temporalBPFrun(Y, z, p, k)
 % OUTPUTS
 % Yfilt         The filtered 1-D signal
 %_______________________________________________________________________________
-% Copyright (C) 2012 LIOM Laboratoire d'Imagerie Optique et Moléculaire
+% Copyright (C) 2013 LIOM Laboratoire d'Imagerie Optique et Moléculaire
 %                    École Polytechnique de Montréal
 %_______________________________________________________________________________
 try

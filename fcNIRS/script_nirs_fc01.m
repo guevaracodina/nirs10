@@ -14,7 +14,9 @@ clear; close all; clc
 % Control 02
 NIRSmat = 'F:\Edgar\Data\NIRS\epiNIRS_data\ControlNIRS_Processed\ControlNIRS\Sujet002\dataSPMa\coreg\NIRS.mat';
 load(NIRSmat)
-
+[pathName,~,~] = fileparts(NIRSmat);
+pathName = fullfile(pathName, 'GLM_fcNIRS');
+if ~exist(pathName,'dir'), mkdir(pathName); end
 
 %% Read all files from the 4th processing level ODtoHbOHbR
 % 1) readBOXY
@@ -58,7 +60,7 @@ Rp_Rs = [.5 80];
 fs = NIRS.Cf.dev.fs;
 [z, p, k] = nirs_temporalBPFconfig(fType, fs, BPFfreq, filterOrder, Rp_Rs);
 % nChannels = NIRS.Cf.H.C.N;
- nChannels = size(dataNIRSfilt{1}, 1);
+nChannels = size(dataNIRS{1}, 1);
 for iSessions = 1:nSessions,
     for iChannels = 1:nChannels
         dataNIRSfilt{iSessions}(iChannels,:) = temporalBPFrun(squeeze(dataNIRS{iSessions}(iChannels,:)), z, p, k);
@@ -71,40 +73,30 @@ toc
 % no short separation measurements available
 for iSessions = 1:nSessions,
     %% Get global brain signal
-    brainSignal{iSessions} = mean (dataNIRSfilt{iSessions}, 1);
+    brainSignal{iSessions} = mean(dataNIRSfilt{iSessions}, 1);
     % Initialize single voxel 4-D series
     brainSignalRep = zeros([1 1 1 numel(brainSignal)]);
+    
     %% Create NIfTI file from NIRS data
-    dataNIRSfiltRep = zeros([1 1 1 numel(dataNIRSfilt{iSessions})]);
+    nFrames = size(dataNIRSfilt{iSessions}, 2);
+    dataNIRSfiltRep = zeros([nChannels 1 1 nFrames]);
     % NIfTI file name
-    nifti_filename{1} = 'dataNIRSfilt.nii';
+    nifti_filename{1} = ['dataNIRSfilt_hb_' num2str(hb) '.nii'];
     % Affine matrix file name
     affine_mat_filename{1} = regexprep(nifti_filename{1},'.nii','.mat');
     % Single frame dimensions: [nChannels 1 1]
-    dim = [nChannels 1 1];
+    vol.dim = [nChannels 1 1];
     % Data type. Visualsonics Vevo LAZR exports HbT/SO2 data as ushort (16-bits)
     % dt = [spm_type('float64') spm_platform('bigend')];
-    dt = [spm_type('uint16') spm_platform('bigend')];
+    vol.dt = [spm_type('uint16') spm_platform('bigend')];
     % Plane info
-    pinfo = ones(3,1);
+    vol.pinfo = ones(3,1);
     % Affine transformation matrix: Scaling
-    matScaling = eye(4);
-    % Initialize progress bar
-    spm_progress_bar('Init', nFrames, sprintf('Write %d PA frames to NIfTI\n',nFrames), 'Frames');
-    pat_text_waitbar(0, sprintf('Write %d PA frames to NIfTI\n',nFrames))
-    % Creates NIfTI volume frame by frame
-    for iFrames = 1:nFrames
-        hdrSO2 = pat_create_vol(fnameSO2, dim, dt, pinfo, mat, iFrames,...
-            squeeze(rawDataSO2(:,:,1,iFrames)), 'SO2 created with pat12');
-        hdrHbT = pat_create_vol(fnameHbT, dim, dt, pinfo, mat, iFrames,...
-            squeeze(rawDataHbT(:,:,1,iFrames)), 'HbT created with pat12');
-        % Update progress bar
-        spm_progress_bar('Set', iFrames);
-        pat_text_waitbar(iFrames/nFrames, sprintf('Processing frame %d from %d', iFrames, nFrames));
-    end
-    % Clear progress bar
-    spm_progress_bar('Clear');
-    pat_text_waitbar('Clear');
+    vol.mat = eye(4);
+    
+    %% Creates NIfTI volume frame by frame
+    hdr = nirs_create_vol_4D(fullfile(pathName, nifti_filename{1}), vol, dataNIRSfiltRep);
+    
     %% GLM on 4-D data
     % Constructing inputs required for GLM analysis within the SPM framework
     clear SPM

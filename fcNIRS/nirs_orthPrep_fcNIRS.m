@@ -1,6 +1,10 @@
 function [coreg xSPM opt] = nirs_orthPrep_fcNIRS(coreg, sel, render_template, coreg_layer, m2v, dataNIRS)
 %Ke Peng, 2013-09-12, called in nirs_run_liom_orth_coreg
 % Modified to project channels color according to cluster//EGC
+%_______________________________________________________________________________
+% Copyright (C) 2013 LIOM Laboratoire d'Imagerie Optique et Moléculaire
+%                    École Polytechnique de Montréal
+%_______________________________________________________________________________
 
 ftemplate = fullfile(fileparts(which('spm')),'toolbox','nirs10','xSPMtemplate.mat');
 load(ftemplate);
