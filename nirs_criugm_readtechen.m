@@ -258,7 +258,7 @@ switch int2str(job.system) % System used for the acquisition
                 % Source-detector distance (usually 2D)
                 NIRS.Cf.H.C.gp = Cgen_s(:,5)';   % Cgp;
         end
-    case '2' %ImagincV2
+    case {'2','3','4'} %ImagincV2
         sDtp = job.sDtp;
         NIRS = job.NIRS;
         
@@ -305,6 +305,12 @@ switch int2str(job.system) % System used for the acquisition
                 NIRS.Cf.H.C.wl = Cgen_s(:,4)';   % Cwl;
                 % Source-detector distance (usually 2D)
                 NIRS.Cf.H.C.gp = Cgen_s(:,5)';   % Cgp;
+                %Accelerometers
+                try
+                    NIRS.Dt.aux.Acc1 = f.Acc1; %Accelerometers
+                    NIRS.Dt.aux.Acc2 = f.Acc2;
+                    NIRS.Dt.aux.Acc3 = f.Acc3;
+                end
         end
     otherwise
         disp('Reading of Techen file (.nirs) failed. For now only CW6 output files are supported.');
