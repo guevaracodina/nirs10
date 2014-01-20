@@ -90,10 +90,12 @@ protocol.help   = {['Select the "SPM conditions" .mat files. The order must corr
 CWsystem      = cfg_menu;
 CWsystem.tag  = 'CWsystem';
 CWsystem.name = 'CW system used';
-CWsystem.labels = {'CW5','CW6','ImagincV2'};
-CWsystem.values = {5,6,2};
+CWsystem.labels = {'CW5','CW6','ImagincV2','Jerome18','Imaginc16','Imaginc32'};
+CWsystem.values = {5,6,2,1,3,4};
 CWsystem.def  = @(val)nirs_get_defaults('readNIRS.criugm1.CWsystem', val{:});
-CWsystem.help = {'ImagincV2: 16 sources + 16 detectors, no auxiliaries'};
+CWsystem.help = {'ImagincV2: 16 sources + 16 detectors, no auxiliaries'
+    'Imaginc16: option with label 3, configured on Jan 16 2014'
+    'Imaginc32: option with label 4, configured on Jan 16 2014'}';
 
 boldmask        = cfg_files;
 boldmask.tag    = 'boldmask';
