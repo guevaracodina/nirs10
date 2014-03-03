@@ -96,8 +96,8 @@ try
 %             F.s_map(find(F.s_map > 0)) = 0;
 %         otherwise
 %     end
+%   *****
     TOPO.v{v1}.(fg).hb{h1}.c{2*c1-shb}.Tmap = F.s_map;
-    %*****
     filestr = [num2str(Z.p_value) '_' W.spec_hemi '_' hb str2t];
     filestr_fig = [num2str(Z.p_value) ' ' W.spec_hemi ' ' hb str2t2];
     info1 = [filestr '_' strA xCon(c1).name];
