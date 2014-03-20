@@ -1,5 +1,5 @@
 %% script_interpolate_channels
-clc
+clear all; close all; clc
 addpath(genpath('D:\spm8\toolbox\nirs10'))
 NIRSmat = 'F:\Edgar\Data\NIRS\epiNIRS_data\epiNIRS_Processed\epiNIRS\epi127SD\dataSPMa\coreg\NIRS.mat';
 load(NIRSmat)
@@ -34,6 +34,8 @@ figure; plot(t, dataNIRS(50, :));
 %% Configuration structure
 % Brain view, or a loop can be used here to generate all views
 config.brain_view = 2; 
+[side_hemi spec_hemi] = nirs_get_brain_view(config.brain_view);
+fprintf('Brain view: %s\n', spec_hemi);
 % Option: 0: do not extrapolate
 config.AllowExtrapolation = 0; 
 % Option: 0: interpolate
@@ -46,6 +48,16 @@ config.figure_name = 'interp_NIRS_test';
 config.thz = 20; 
 
 %% NIRS data interpolated to cortex
-out = nirs_interpolation_render_simplified(Dat, NIRS, config);
+% Precompute only once
+[W, Q, interpMap, Dat] = nirs_interpolation_render_precompute(Dat, NIRS, config);
+
+tic
+% Call nirs_interpolation_render_compute as many times as needed in the loop
+interpMap = nirs_interpolation_render_compute(Q, Dat, interpMap);
+toc
+
+% out = nirs_interpolation_render_simplified(Dat, NIRS, config);
+
+%% Display interpolated map
 
 % EOF
