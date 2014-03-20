@@ -82,6 +82,7 @@ nIter = numel(t);
 % z = mean(dataNIRS(NIRS.Cf.H.C.wl == hb,:));     % 1 channel
 % z = dataNIRS(NIRS.Cf.H.C.wl == hb,:);           % Channels at 1 wavelength
 z = dataNIRS;                                   % All Channels
+z = z(1:266,:);                                 % Except the last 2 channels
 sizeMat = size(z);
 nChannels = sizeMat(1);
 
@@ -113,6 +114,7 @@ xhatminus_DC = zeros(sizeMat);      % a priori estimate of x
 Pminus_DC = zeros(sizeMat);         % a priori error estimate
 K_DC = zeros(sizeMat);              % gain or blending factor
 OD = zeros(sizeMat);                % Optical Density
+c = zeros(sizeMat);                 % Concentrations
 
 % Initial guess the measurement is zero
 x_hat_DC(:,1) = 0;
@@ -137,9 +139,12 @@ Cgp = NIRS.Cf.H.C.gp;
 Cwl = NIRS.Cf.H.C.wl;
 % Device wavelength
 wl = NIRS.Cf.dev.wl;
-for iChannels = 1:nChannels
+% for iChannels = 1:nChannels
+for iChannels = 1:266
     EPF(1,iChannels) = Cgp(1,iChannels)*DPF(Cwl(1,iChannels),iChannels)./PVF(Cwl(1,iChannels),iChannels);
 end
+% Effective path length
+EPF2 = ones(nIter,1)*EPF; %PP used to be EPF2 = EPF *ones(1,size(d,2));
 % exs(:,1): HbO for each wavelength; exs(:,2): HbR for each wavelength Alexis's
 % choice of extinction coefficients corresponds to case 1 in Homer, which
 % appears to be their preferred choice too
@@ -188,22 +193,25 @@ for k = 2:nIter
     % Conversion to HbO & HbR
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    % Effective path length
-    EPF2 = ones(size(OD,2),1)*EPF; %PP used to be EPF2 = EPF *ones(1,size(d,2));
-    % Multiply by 1e6 to get micromolar units negative sign so that an increase in
-    % chromophore concentration corresponds to a decrease in intensity due to light
-    % absorption
-    OD(:, k) = -1e6 * OD(:, k) ./ EPF2'; %PP used to be d = d ./ EPF2;
+    % Multiply by 1e6 to get micromolar units negative sign so that an increase
+    % in chromophore concentration corresponds to a decrease in intensity due to
+    % light absorption
+    OD(:, k) = -1e6 * OD(:, k) ./ EPF2(k, :)'; %PP used to be d = d ./ EPF2;
     % Modified Beer-Lambert Law
     % MBLL - c consists now of HbO and HbR, even if we had more
     % than two wavelengths to begin
     c(:, k) = inv_exs2 * OD(:, k);
-  
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Topographical projection
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
 end
 eTime = toc;
-fprintf('Average processing time = %.4g\n', eTime/nIter);
-h = figure;
-set(h, 'color', 'w')
+fprintf('Average processing time = %.4g\n', eTime/(nIter - 1));
+h2 = figure;
+set(h2, 'color', 'w')
+set(h2, 'Name', 'Kalman estimations')
 subplot(211);
 hold on
 plot(t, z, 'r+', 'MarkerSize', 3);                  % noisy measurements
@@ -220,6 +228,7 @@ xlabel('t [s]', 'FontSize', 12); ylabel('Output', 'FontSize', 12);
 
 % Plot optical density
 subplot(212);
+hold on
 plot(t(2:end), OD(:, 2:end), 'k-', 'LineWidth',2);
 xlim([t(2) t(end)])
 set(gca , 'FontSize', 12)
@@ -233,6 +242,34 @@ legend('a priori error estimate')
 set(gca , 'FontSize', 12)
 xlabel('t [s]', 'FontSize', 12); ylabel('(Output)^2', 'FontSize', 12); 
 xlim([t(1) t(end)])
+
+% Plot Hb concentrations
+h3 = figure;
+set(h3, 'color', 'w')
+set(h3, 'Name', 'Hemoglobin concentrations')
+subplot(211);
+hold on
+plot(t, c(NIRS.Cf.H.C.wl == 1,:), 'r-', 'LineWidth',1);             % HbO
+plot(t, c(NIRS.Cf.H.C.wl == 2,:), 'b-', 'LineWidth',1);             % HbR
+xlim([t(2) t(end)])
+title(sprintf('Hemoglobin concentrations'), 'FontSize', 12)
+legend({'HbO_2' 'HbR' },...
+    'Location', 'SouthEast')
+set(gca , 'FontSize', 12)
+xlabel('t [s]', 'FontSize', 12); ylabel('Hb [\muM]', 'FontSize', 12);
+
+% Read offline processed data 
+dataNIRS = fopen_NIR(NIRS.Dt.fir.pp(4).p{iFiles}, NIRS.Cf.H.C.N);
+subplot(212)
+hold on
+plot(t, dataNIRS(NIRS.Cf.H.C.wl == 1,:), 'r-', 'LineWidth',1);             % HbO
+plot(t, dataNIRS(NIRS.Cf.H.C.wl == 2,:), 'b-', 'LineWidth',1);             % HbR
+xlim([t(2) t(end)])
+title(sprintf('Offline processing'), 'FontSize', 12)
+legend({'HbO_2' 'HbR' },...
+    'Location', 'SouthEast')
+set(gca , 'FontSize', 12)
+xlabel('t [s]', 'FontSize', 12); ylabel('Hb [\muM]', 'FontSize', 12); 
 
 % %% You can now compare the true and estimated output graphically.
 % h2 = figure;
