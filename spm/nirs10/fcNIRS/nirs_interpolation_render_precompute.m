@@ -1,4 +1,4 @@
-function [W, Q, interpMap, Dat] = nirs_interpolation_render_precompute(Dat, NIRS, config)
+function [Q, interpMap, Dat] = nirs_interpolation_render_precompute(Dat, NIRS, config)
 %%*************************************************************************
 %This function helps to inerpolate channel data and render to a selected 
 %brain view (white matter layer).
@@ -8,9 +8,10 @@ function [W, Q, interpMap, Dat] = nirs_interpolation_render_precompute(Dat, NIRS
 %Input: config - configuration structure
 %Output: out - DF figure structure
 %%*************************************************************************
+
 eTime = tic;
 
-%Config
+% Config
 Topodatafile = NIRS.Dt.ana.rend;
 brain_view = config.brain_view; %Brain view, or a loop can be used here to generate all views
 AllowExtrapolation = config.AllowExtrapolation; %Option: 0: do not extrapolate
@@ -19,30 +20,30 @@ new_path = config.new_path; %Path where interpolated images are saved
 figure_name = config.figure_name; %Name of interpolated image
 thz = config.thz; %Threshold value of the interpolated image. Attention: Cannot be zero
 %**************************************************************************
-%Interpolation kernel
+% Interpolation kernel
 load(Topodatafile);
 [side_hemi spec_hemi] = nirs_get_brain_view(brain_view);
 rchn = rendered_MNI{brain_view}.rchn;
 cchn = rendered_MNI{brain_view}.cchn;
-%Two options
+% Two options
 W.AllowExtrapolation = AllowExtrapolation;
 W.no_interpolation = no_interpolation;
-%find channels which are visible from this projection view
+% find channels which are visible from this projection view
 W.index_ch = find(rchn ~= -1);
-%rendering surface
+% rendering surface
 brain = rendered_MNI{brain_view}.ren;
 W.s1 = size(brain, 1);
 W.s2 = size(brain, 2);
-%split into HbO and HbR interpolations
+% split into HbO and HbR interpolations
 W.ch = W.index_ch;
 W.rchn = rchn(W.index_ch);
 W.cchn = cchn(W.index_ch);
-%Generate interpolation matrix
+% Generate interpolation matrix
 Q = interpolation_kernel_cine_simplified(W);
 Dat = Dat(W.ch,:);
 %******************************************************************
 %Rendering config
-[W, Z, F] = render_config(Dat, W, rendered_MNI, side_hemi, spec_hemi, new_path, brain_view, thz, figure_name);
+[W, ~, F] = render_config(Dat, W, rendered_MNI, side_hemi, spec_hemi, new_path, brain_view, thz, figure_name);
 if ~exist(F.pathn, 'dir')
     mkdir(F.pathn);
 end
@@ -52,32 +53,10 @@ if ~exist(newsavepath_fig, 'dir')
 end
 F.pathnsfig = newsavepath_fig;
 
-% Interpolated topographical map
+% Prea-allocate interpolated topographical map
 interpMap = zeros(W.s1, W.s2);
 
 disp(['Time to pre-compute interpolation kernel: ' datestr(datenum(0,0,0,0,0,toc(eTime)),'HH:MM:SS')]);
-
-% Start rendering
-% map_it = Dat' * Q.B;
-% map_it_reshaped = zeros(W.s1,W.s2);
-% map_it_reshaped(Q.index_mask) = map_it(1,:);
-% F.contrast_info_both = F.pathnsfig;
-% F.contrast_info_for_fig = F.contrast_info_both;
-% F.s_map = map_it_reshaped;
-% DF = nirs_render_map(F,W,Z);
-% %Save figure
-% if isfield(DF, 'fh2')
-%     set(DF.fh2, 'visible', 'on');
-%     DF.fh2 = save_figure(DF.fh2, Z, F);
-%     pause(0.5);
-%     set(DF.fh2, 'visible', 'off');
-% elseif isfield(DF, 'fh1')
-%     set(DF.fh1, 'visible', 'on');
-%     DF.fh1 = save_figure(DF.fh1, Z, F);
-%     pause(0.5);
-%     set(DF.fh1, 'visible', 'off');
-% end
-% out = DF;
 
 function [W, Z, F] = render_config(estiHRF, W, rendered_MNI0, side_hemi, spec_hemi, new_path, brain_view, thz, figure_name)
 W.side_hemi = side_hemi;
@@ -123,12 +102,4 @@ Z.cbar.colorbar_override = 1;
 Z.cbar.visible = 'off';
 Z.write_neg_pos = 0;
 
-function fh = save_figure(fh, Z, F)
-if ~Z.gen_fig %If not saved before
-    filen1 = fullfile(F.pathnsfig,[F.contrast_info '.fig']);
-    saveas(fh,filen1,'fig');
-end
-if ~Z.gen_tiff
-    filen2 = fullfile(F.pathn,[F.contrast_info '.png']);
-    print(fh, '-dpng', filen2,'-r300');
-end
+% EOF

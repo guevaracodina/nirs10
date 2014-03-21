@@ -101,6 +101,9 @@ x_hat(:,1) = 0;
 %  Initial guess Choose P_0 to be 1
 P(:,1) = 1;
 
+% R is the estimate of measurement variance, change to see effect
+R = 0.01*ones([nChannels 1]);
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % DC value
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -120,6 +123,9 @@ c = zeros(sizeMat);                 % Concentrations
 x_hat_DC(:,1) = 0;
 %  Initial guess Choose P_0 to be 1
 P_DC(:,1) = 1;
+
+% R is the estimate of measurement variance, change to see effect
+R_DC = 10*ones([nChannels 1]);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Hemoglobin concentrations
@@ -153,11 +159,19 @@ inv_exs = pinv(exs(:,1:2)); % inv_exs has size 2 x #wl
 inv_exs2 = kron(inv_exs,eye(nChannels/size(wl,2))); % size #pairs*2 x #pairs*#wl
 % (number of channels nChannels = number of pairs x number of wavelengths)
 
-%% Kalman estimation
-% R is the estimate of measurement variance, change to see effect
-R = 0.01*ones([nChannels 1]);
-R_DC = 10*ones([nChannels 1]);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Interpolation onto the cortex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Configuration structure
+config = nirs_interpolation_render_config (2, 0, 0,...
+    'F:\Edgar\Dropbox\PostDoc\NIRS\real_time', 'interp_NIRS_test', 20);
+% NIRS data interpolated to cortex
+% Precompute only once
+[Qinterp, interpMap, Dat] = nirs_interpolation_render_precompute(z(:, 1), NIRS, config);
+% Preallocate interpMapMovie
+interpMapMovie = zeros([size(interpMap) nIter]);
 
+%% Kalman estimation
 tic
 for k = 2:nIter
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -205,7 +219,12 @@ for k = 2:nIter
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Topographical projection
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
+    % Call nirs_interpolation_render_compute as many times as needed in the loop
+    hbO = c(:, k);
+    hbO = hbO(NIRS.Cf.H.C.wl == 1);
+    hbR = c(:, k);
+    hbR = hbR(NIRS.Cf.H.C.wl == 2);
+    interpMapMovie(:,:,k) = nirs_interpolation_render_compute(Qinterp, hbO, interpMap);
 end
 eTime = toc;
 fprintf('Average processing time = %.4g\n', eTime/(nIter - 1));
