@@ -22,40 +22,29 @@ dataNIRS = fopen_NIR(NIRS.Dt.fir.pp(preProcStep).p{iFiles}, NIRS.Cf.H.C.N);
 %     case 3
 %         hb = 'HbT';
 % end
-hb = 2;
-dataNIRS = dataNIRS(NIRS.Cf.H.C.wl == hb,:);
+hb = 1;
+% dataNIRS = dataNIRS(NIRS.Cf.H.C.wl == hb,:);
 % Time vector
 t = linspace(0, (size(dataNIRS,2)-1)/NIRS.Cf.dev.fs , size(dataNIRS,2));
 % figure; plot(t, dataNIRS');
 % Select 1 time point
-Dat = dataNIRS(:,100);
-figure; plot(t, dataNIRS(50, :));
+Dat = mean(dataNIRS(:,1000:2000),2);
+figure; plot(Dat);
 
 %% Configuration structure
-% Brain view, or a loop can be used here to generate all views
-config.brain_view = 2; 
-[side_hemi spec_hemi] = nirs_get_brain_view(config.brain_view);
-fprintf('Brain view: %s\n', spec_hemi);
-% Option: 0: do not extrapolate
-config.AllowExtrapolation = 0; 
-% Option: 0: interpolate
-config.no_interpolation = 0; 
-% Path where interpolated images are saved
-config.new_path = 'F:\Edgar\Dropbox\PostDoc\NIRS\real_time'; 
-% Name of interpolated image
-config.figure_name = 'interp_NIRS_test'; 
-% Threshold value of the interpolated image. Attention: Cannot be zero
-config.thz = 20; 
+config = nirs_interpolation_render_config (2, 0, 0,...
+    'F:\Edgar\Dropbox\PostDoc\NIRS\real_time', 'interp_NIRS_test', 20);
 
 %% NIRS data interpolated to cortex
 % Precompute only once
-[W, Q, interpMap, Dat] = nirs_interpolation_render_precompute(Dat, NIRS, config);
+[Q, interpMap, Dat] = nirs_interpolation_render_precompute(Dat, NIRS, config);
 
-tic
 % Call nirs_interpolation_render_compute as many times as needed in the loop
+tic
 interpMap = nirs_interpolation_render_compute(Q, Dat, interpMap);
 toc
 
+% old function
 % out = nirs_interpolation_render_simplified(Dat, NIRS, config);
 
 %% Display interpolated map
