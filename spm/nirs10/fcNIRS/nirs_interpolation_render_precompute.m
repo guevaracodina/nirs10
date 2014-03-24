@@ -1,4 +1,4 @@
-function [Q, interpMap, Dat] = nirs_interpolation_render_precompute(Dat, NIRS, config)
+function [Q, interpMap, Dat, W] = nirs_interpolation_render_precompute(Dat, NIRS, config)
 %%*************************************************************************
 %This function helps to inerpolate channel data and render to a selected 
 %brain view (white matter layer).
