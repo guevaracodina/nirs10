@@ -4,7 +4,7 @@
 %                    École Polytechnique de Montréal
 %_______________________________________________________________________________
 %% Read a subject
-clear; close all; clc
+% clear; close all; clc
 % NIRSmat = 'F:\Edgar\Data\NIRS\epiNIRS_data\ControlNIRS_Processed\ControlNIRS\Sujet001\dataSPMa\coreg\NIRS.mat';
 
 % 1) List of all NIRS matrices
@@ -12,7 +12,7 @@ NIRSmat{1} = 'epi101LH';
 NIRSmat{2} = 'epi102FA';
 NIRSmat{3} = 'epi103GJ';
 % Le cas 104MAL est extrêmement inhabituel. Il ne pourra pas être utilisé
-% pour les analyses.
+% pour les analyses. (M)
 NIRSmat{4} = 'F:\Edgar\Data\NIRS\epiNIRS_data\epiNIRS_Processed\epiNIRS\epi104MAL\dataSPMa\coreg\NIRS.mat';
 NIRSmat{5} = 'epi105MER';
 NIRSmat{6} = 'epi106VLL';
@@ -127,7 +127,6 @@ xlabel('t [s]')
 %% Kalman filtering initial settings
 % Numer of iterations ()
 nIter = numel(t);
-
 % Measurement (Observations)
 % z = mean(dataNIRS(NIRS.Cf.H.C.wl == hb,:));     % Mean of channels
 % z = dataNIRS(NIRS.Cf.H.C.wl == hb,:);           % Channels at 1 wavelength
@@ -135,10 +134,8 @@ z = dataNIRS;                                   % All Channels
 z = z(1:NIRS.Cf.H.C.N,:);                       % Except the last 2 channels
 sizeMat = size(z);
 nChannels = sizeMat(1);
-
 %  Very small process variance:
 Q = 1e-5*ones([nChannels 1]);
-
 % allocate space for arrays
 xhat = zeros(sizeMat);          % a posteriori estimate of x
 P = zeros(sizeMat);             % a posteriori error estimate
@@ -153,13 +150,13 @@ P(:,1) = 1;
 
 % R is the estimate of measurement variance, change to see effect
 R = 0.01*ones([nChannels 1]);
+% R = 2.2*ones([nChannels 1]);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % DC value
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %  Very small process variance:
 Q_DC = 1e-5*ones([nChannels 1]);
-
 % allocate space for arrays
 xhat_DC = zeros(sizeMat);           % a posteriori estimate of x
 P_DC = zeros(sizeMat);              % a posteriori error estimate
@@ -168,7 +165,6 @@ Pminus_DC = zeros(sizeMat);         % a priori error estimate
 K_DC = zeros(sizeMat);              % gain or blending factor
 OD = zeros(sizeMat);                % Optical Density
 c = zeros(sizeMat);                 % Concentrations
-
 % Initial guess the measurement is zero
 x_hat_DC(:,1) = 0;
 %  Initial guess Choose P_0 to be 1
@@ -180,7 +176,6 @@ R_DC = 10*ones([nChannels 1]);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Hemoglobin concentrations
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % Partial volume correction factor
 PVF = [50 50];
 % Differential pathlength factor
@@ -224,18 +219,23 @@ interpMapHbO = interpMap;
 % Preallocate interpMapMovie (very big matrix)
 % interpMapMovieHbO = zeros([size(interpMap) nIter]);
 % interpMapMovieHbR = zeros([size(interpMapHbR) nIter]);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Figure for live display
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 hLive = figure;
 set(hLive,'color','w')
 set(hLive,'name','Live display')
 % Pixel units
 set(hLive, 'Units', 'pixels');
 screenSize = get(0,'Screensize');
-screenSize = [0  100 screenSize(3) screenSize(4)- 100];
+screenSize = [0  300 screenSize(3) - 400 screenSize(4) - 300];
 % Maximize figure
 set(hLive, 'OuterPosition', screenSize);
 % Colorbar Limits
 hbLim = 200;
 haxHbO = subplot(121); himHbO = imagesc(interpMapHbO, [-hbLim hbLim]); axis image; colorbar
+title('HbO_2','FontSize',14);
 % Axes set to manual
 set(haxHbO, 'xlimmode','manual',...
            'ylimmode','manual',...
@@ -243,6 +243,7 @@ set(haxHbO, 'xlimmode','manual',...
            'climmode','manual',...
            'alimmode','manual');
 haxHbR = subplot(122); himHbR = imagesc(interpMapHbR, [-hbLim hbLim]); axis image; colorbar
+title('HbR','FontSize',14);
 set(haxHbR, 'xlimmode','manual',...
            'ylimmode','manual',...
            'zlimmode','manual',...
@@ -291,18 +292,17 @@ for k = 2:nIter
     % Optical Density computation
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     OD(:, k) = real(log10(xhat(:, k) ./ xhat_DC(:, k)));
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Conversion to HbO & HbR
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
     % Multiply by 1e6 to get micromolar units negative sign so that an increase
     % in chromophore concentration corresponds to a decrease in intensity due to
     % light absorption
     OD(:, k) = -1e6 * OD(:, k) ./ EPF2(k, :)'; %PP used to be d = d ./ EPF2;
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Conversion to HbO & HbR
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Modified Beer-Lambert Law
-    % MBLL - c consists now of HbO and HbR, even if we had more
-    % than two wavelengths to begin
+    % MBLL - c consists now of HbO and HbR, even if we had more than two
+    % wavelengths to begin
     c(:, k) = inv_exs2 * OD(:, k);
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
