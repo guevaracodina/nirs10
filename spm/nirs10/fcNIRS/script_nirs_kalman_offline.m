@@ -134,7 +134,7 @@ z = dataNIRS;                                   % All Channels
 z = z(1:NIRS.Cf.H.C.N,:);                       % Except the last 2 channels
 sizeMat = size(z);
 nChannels = sizeMat(1);
-%  Very small process variance:
+%  Very small process variance (%/s)^2
 Q = 1e-5*ones([nChannels 1]);
 % allocate space for arrays
 xhat = zeros(sizeMat);          % a posteriori estimate of x
@@ -148,14 +148,14 @@ x_hat(:,1) = 0;
 %  Initial guess Choose P_0 to be 1
 P(:,1) = 1;
 
-% R is the estimate of measurement variance, change to see effect
+% R is the estimate of measurement variance, change to see effect (\muM/2)^2
 R = 0.01*ones([nChannels 1]);
 % R = 2.2*ones([nChannels 1]);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % DC value
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%  Very small process variance:
+%  Very small process variance (%/s)^2
 Q_DC = 1e-5*ones([nChannels 1]);
 % allocate space for arrays
 xhat_DC = zeros(sizeMat);           % a posteriori estimate of x
@@ -170,40 +170,14 @@ x_hat_DC(:,1) = 0;
 %  Initial guess Choose P_0 to be 1
 P_DC(:,1) = 1;
 
-% R is the estimate of measurement variance, change to see effect
+% R is the estimate of measurement variance, change to see effect (\muM/2)^2
 R_DC = 10*ones([nChannels 1]);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Hemoglobin concentrations
+% Hemoglobin concentrations configuration & pre-computation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Partial volume correction factor
-PVF = [50 50];
-% Differential pathlength factor
-% From Duncan et al., Phys. Med. Biol. 1995 40(2):295-304.
-DPF = [6.51 5.86]; % For 690nm and 832nm
-% NOTE: Portable NIRS-EEG wavelengths are 735nm and 850nm
-DPF = repmat(DPF',[1 nChannels]); % nLambda x nChannels
-PVF = repmat(PVF',[1 nChannels]); % nLambda x nChannels
-EPF = zeros(1, nChannels); %EPF = L * PPF = L * DPF/PVF at each wavelength
-% Source-detector distances
-Cgp = NIRS.Cf.H.C.gp;
-% Channels wavelength
-Cwl = NIRS.Cf.H.C.wl;
-% Device wavelength
-wl = NIRS.Cf.dev.wl;
-% for iChannels = 1:nChannels
-for iChannels = 1:NIRS.Cf.H.C.N
-    EPF(1,iChannels) = Cgp(1,iChannels)*DPF(Cwl(1,iChannels),iChannels)./PVF(Cwl(1,iChannels),iChannels);
-end
-% Effective path length
-EPF2 = ones(nIter,1)*EPF; %PP used to be EPF2 = EPF *ones(1,size(d,2));
-% exs(:,1): HbO for each wavelength; exs(:,2): HbR for each wavelength Alexis's
-% choice of extinction coefficients corresponds to case 1 in Homer, which
-% appears to be their preferred choice too
-[exs, extcoeff_ref] = GetExtinctions(wl,1);
-inv_exs = pinv(exs(:,1:2)); % inv_exs has size 2 x #wl
-inv_exs2 = kron(inv_exs,eye(nChannels/size(wl,2))); % size #pairs*2 x #pairs*#wl
-% (number of channels nChannels = number of pairs x number of wavelengths)
+[inv_exs2, EPF2] = nirs_hb_config([50 50], [6.51 5.86], nChannels, NIRS.Cf.H.C.gp,...
+    NIRS.Cf.H.C.wl, NIRS.Cf.dev.wl, nIter);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Interpolation onto the cortex
@@ -213,7 +187,9 @@ config = nirs_interpolation_render_config (2, 0, 0,...
     'F:\Edgar\Dropbox\PostDoc\NIRS\real_time', 'interp_NIRS_test', 20);
 % NIRS data interpolated to cortex
 % Precompute only once for each contrast
-[Qinterp, interpMap, Dat, W] = nirs_interpolation_render_precompute(z(NIRS.Cf.H.C.wl == 1, 1), NIRS, config);
+[Qinterp, interpMap, Dat, W] = nirs_interpolation_render_precompute...
+        (z(NIRS.Cf.H.C.wl == 1, 1), NIRS, config);
+%    (z(NIRS.Cf.H.C.wl == 1, 1), NIRS, config, 'F:\Edgar\Dropbox\PostDoc\NIRS\real_time\Matlab_Mahya\TopoData_Walk.mat');
 interpMapHbR = interpMap;
 interpMapHbO = interpMap;
 % Preallocate interpMapMovie (very big matrix)
@@ -226,6 +202,9 @@ interpMapHbO = interpMap;
 hLive = figure;
 set(hLive,'color','w')
 set(hLive,'name','Live display')
+% Display bipolar colormap, with hot colors for positive values, cold for
+% negative and gray for values in the middle 
+colormap(nirs_get_colormap('bipolar'));
 % Pixel units
 set(hLive, 'Units', 'pixels');
 screenSize = get(0,'Screensize');
@@ -260,13 +239,14 @@ poshaxHbR = get(haxHbR,'Position');
 widthhaxHbR = poshaxHbR(3);
 heighthaxHbR = poshaxHbR(4);
 set(haxHbR,'Position',[poshaxHbR(1) poshaxHbR(2) size(interpMapHbR,2) size(interpMapHbR,1)]);
-
-% linkdata on
 drawnow();
-set(gcf,'doublebuffer','off');
+set(hLive,'doublebuffer','off');
+% Display live update
+UPDATE_MAP = false;
 
 %% Kalman estimation
 tic
+% for k = 3620:7920
 for k = 2:nIter
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Estimated signal
@@ -291,19 +271,12 @@ for k = 2:nIter
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Optical Density computation
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    OD(:, k) = real(log10(xhat(:, k) ./ xhat_DC(:, k)));
-    % Multiply by 1e6 to get micromolar units negative sign so that an increase
-    % in chromophore concentration corresponds to a decrease in intensity due to
-    % light absorption
-    OD(:, k) = -1e6 * OD(:, k) ./ EPF2(k, :)'; %PP used to be d = d ./ EPF2;
+    OD(:, k) = nirs_I2OD(xhat(:, k), xhat_DC(:, k), EPF2(k, :)');
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Conversion to HbO & HbR
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Modified Beer-Lambert Law
-    % MBLL - c consists now of HbO and HbR, even if we had more than two
-    % wavelengths to begin
-    c(:, k) = inv_exs2 * OD(:, k);
+    c(:, k) = nirs_OD2Hb(inv_exs2, OD(:, k));
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Topographical projection
@@ -325,9 +298,11 @@ for k = 2:nIter
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Live display
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    set(himHbO, 'CData', interpMapHbO);
-    set(himHbR, 'CData', interpMapHbR);
-    drawnow();
+    if UPDATE_MAP
+        set(himHbO, 'CData', interpMapHbO);
+        set(himHbR, 'CData', interpMapHbR);
+        drawnow();
+    end
 end
 eTime = toc;
 fprintf('Average processing time = %.4g\n', eTime/(nIter - 1)); 
@@ -391,7 +366,7 @@ subplot(212)
 hold on
 plot(t, dataNIRS(NIRS.Cf.H.C.wl == 1,:), 'r-', 'LineWidth',1);      % HbO
 plot(t, dataNIRS(NIRS.Cf.H.C.wl == 2,:), 'b-', 'LineWidth',1);      % HbR
-plot(eeg_t, eegAmp*sz_vector, 'k--', 'LineWidth',2);                  % seizure onset
+plot(eeg_t, eegAmp*sz_vector, 'k--', 'LineWidth',2);                % seizure onset
 xlim([t(2) t(end)])
 title(sprintf('Offline processing'), 'FontSize', 12)
 legend({'HbO_2' 'HbR' },...

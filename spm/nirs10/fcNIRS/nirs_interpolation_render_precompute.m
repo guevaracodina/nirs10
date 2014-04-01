@@ -1,4 +1,4 @@
-function [Q, interpMap, Dat, W] = nirs_interpolation_render_precompute(Dat, NIRS, config)
+function [Q, interpMap, Dat, W] = nirs_interpolation_render_precompute(Dat, NIRS, config, varargin)
 %%*************************************************************************
 %This function helps to inerpolate channel data and render to a selected 
 %brain view (white matter layer).
@@ -10,9 +10,26 @@ function [Q, interpMap, Dat, W] = nirs_interpolation_render_precompute(Dat, NIRS
 %%*************************************************************************
 
 eTime = tic;
+% ------------------------------------------------------------------------------
+% Optional inputs handling
+% ------------------------------------------------------------------------------
+% only want true optional input at most
+numvarargs              = length(varargin);
+if numvarargs > 1
+    error('nirs10:nirs_interpolation_render_precompute:TooManyInputs', ...
+        'Requires at most 1 optional input: Topodatafile');
+end
+% set defaults for optional inputs
+optargs                 = {NIRS.Dt.ana.rend};
+% now put these defaults into the optargs cell array, and overwrite the ones
+% specified in varargin.
+optargs(1:numvarargs)   = varargin;
+% Place optional args in memorable variable names
+[Topodatafile]       	= optargs{:};
+% ------------------------------------------------------------------------------
 
 % Config
-Topodatafile = NIRS.Dt.ana.rend;
+% Topodatafile = NIRS.Dt.ana.rend;
 brain_view = config.brain_view; %Brain view, or a loop can be used here to generate all views
 AllowExtrapolation = config.AllowExtrapolation; %Option: 0: do not extrapolate
 no_interpolation = config.no_interpolation; %Option: 0: interpolate
