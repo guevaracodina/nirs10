@@ -1,8 +1,8 @@
 function colormapOut = nirs_get_colormap(map)
 % Creates colormaps that are adequate to display images in SS-OCT system. Also
-% creates maps adequate for photoacoustic tomography.
+% creates maps adequate for photoacoustic tomography or NIRS
 % SYNTAX:
-% colormapOut = nirs_get_colormap(map)
+% colormapOut = pat_get_colormap(map)
 % INPUTS:
 % map           String that describes the colormap to retrieve:
 %               'octgold'
@@ -16,15 +16,20 @@ function colormapOut = nirs_get_colormap(map)
 %               'robdoppler'
 %               'bordoppler'
 %               'redmap'
+%               'greenmap'
+%               'bluemap'
 %               'so2'
-%               'redbluecmap'
+%               'bipolar'
 % OUTPUTS:
 % colormapOut   3 columns matrix, which values are in the range from 0 to 1.
 %_______________________________________________________________________________
-% Copyright (C) 2013 LIOM Laboratoire d'Imagerie Optique et Moléculaire
+% Copyright (C) 2014 LIOM Laboratoire d'Imagerie Optique et Moléculaire
 %                    École Polytechnique de Montréal
 %_______________________________________________________________________________
+% Edgar Guevara
+% 2014/03/26
 
+% Number of rows in the resulting colormap (actual colormap is twice this size)
 ColorMapSize = 128;
 
 switch lower(map)
@@ -169,20 +174,47 @@ switch lower(map)
         return
     case 'redmap'
         % Red map for HbT contrast in PAT, from VisualSonics
-        colormapOut = [1 0 0];
+        minColor    = [0 0 0]; % black
+        medianColor = [1 0 0]; % red
+        maxColor    = [1 1 1]; % white
+        for k=1:3
+            int1(:,k) = linspace(minColor(k), medianColor(k), ColorMapSize);
+            int2(:,k) = linspace(medianColor(k), maxColor(k), ColorMapSize);
+        end
+        colormapOut = [int1(1:end-1,:); int2];
         return
-    case 'redbluecmap'
-        % red represents values above the mean, white represents the mean, and
-        % blue represents values below the mean
-        colormapOut = redbluecmap;
+    case 'greenmap'
+        % Green map
+        minColor    = [0 0 0]; % black
+        medianColor = [0 1 0]; % green
+        maxColor    = [1 1 1]; % white
+        for k=1:3
+            int1(:,k) = linspace(minColor(k), medianColor(k), ColorMapSize);
+            int2(:,k) = linspace(medianColor(k), maxColor(k), ColorMapSize);
+        end
+        colormapOut = [int1(1:end-1,:); int2];
+        return
+    case 'bluemap'
+        % Blue map
+        minColor    = [0 0 0]; % black
+        medianColor = [0 0 1]; % blue
+        maxColor    = [1 1 1]; % white
+        for k=1:3
+            int1(:,k) = linspace(minColor(k), medianColor(k), ColorMapSize);
+            int2(:,k) = linspace(medianColor(k), maxColor(k), ColorMapSize);
+        end
+        colormapOut = [int1(1:end-1,:); int2];
+        return
+    case 'bipolar'
+        colormapOut = bipolar(2*ColorMapSize, 1/3);
         return
     otherwise
         % Inverted linear gray colormap
-        colormapOut = flipud(colormap(gray(255)));
+        colormapOut = flipud(colormap(gray(2*ColorMapSize)));
         return
 end
 
-%% Calculate colormap
+%% Calculate colormap for the first cases (those without return instruction)
 % ----------------------- Piecewise linear interpolation -----------------------
 nSegments           = numel(x) - 1;
 samplesPerSegment   = diff(x);
@@ -222,128 +254,122 @@ end
 %         samplesPerSegment(iSegments)+1);
 % end
 
-function c = redbluecmap(m,varargin)
-%REDBLUECMAP creates a red and blue colormap.
-%
-%   REDBLUECMAP(M) returns an M-by-3 matrix containing a red and blue
-%   diverging color palette. M is the number of different colors in the
-%   colormap with a minimun of 3 and a maximun of 11. Low values are dark
-%   blue, values in the center of the map are white, and high values are
-%   dark red. If M is empty, a default value of 11 will be used.
-%
-%   Example:
-% 
-%       % Reset the colormap of the current figure, type
-%             colormap(redbluecmap)
-%
-%   See also CLUSTERGRAM, COLORMAP, COLORMAPEDITOR, REDGREENCMAP.
-
-%   Copyright 2007 The MathWorks, Inc.
-%   $Revision: 1.1.6.2.4.1 $  $Date: 2008/01/23 21:09:34 $
-
-% Reference: 
-% http://colorbrewer.org.
-
-%== Setting default
-if nargin < 1 || isempty(m) || ~isnumeric(m)
-    m = 11;
-end
-
-if ~isscalar(m)
-    m = m(:);
-end
-
-m = max(abs(fix(m)), 3);
-m = min(m, 11);
-
-switch (m)
-    case 3
-        c = [239	138     98;
-             247	247     247;
-             103	169     207];
-    case 4
-        c = [202	0       32;
-             244	165     130;
-             146	197     222;
-             5      113     176];
-    case 5
-        c = [202	0       32;
-             244	165     130;
-             247	247     247;
-             146	197     222;
-             5      113     176];
-    case 6
-        c = [178	24      43;
-             239	138     98;
-             253	219     199;
-             209	229     240;
-             103	169     207;
-             33     102     172];
-    case 7
-        c = [178	24      43;
-             239	138     98;
-             253	219     199;
-            247     247     247;
-            209     229     240;
-            103     169     207;
-            33      102     172];
-    case 8
-        c = [178	24      43;
-             214	96      77;
-             244	165     130;
-             253	219     199;
-             209	229     240;
-             146	197     222;
-             67     147     195;
-             33     102     172];
-    case 9
-        c = [178	24      43;
-             214	96      77;
-             244	165     130;
-             253	219     199;
-             247	247     247;
-             209	229     240;
-             146	197     222;
-             67     147     195;
-             33     102     172];
-    case 10
-        c = [103	0       31;
-            178     24      43;
-            214     96      77;
-            244     165     130;
-            253     219     199;
-            209     229     240;
-            146     197     222;
-            67	    147     195;
-            33      102     172;
-            5       48      97];
-    case 11
-        c = [103    0       31;
-            178     24      43;
-            214     96      77;
-            244     165     130;
-            253     219     199;
-            247     247     247;
-            209     229     240;
-            146     197     222;
-            67      147     195;
-            33      102     172;
-            5       48      97];
-end
-c = flipud(c/255);
-x = round(linspace(1,256,11));
-% ----------------------- Piecewise linear interpolation -----------------------
-nSegments           = numel(x) - 1;
-samplesPerSegment   = diff(x);
-colormapOut         = zeros([sum(samplesPerSegment) 3]);
-
-for iSegments = 1:nSegments,
-    for iColors = 1:3,
-    colormapOut(x(iSegments):x(iSegments+1),iColors) = linspace(c(iSegments,iColors),...
-        c(iSegments+1,iColors),...
-        samplesPerSegment(iSegments)+1);
-    end
-end
-c = colormapOut;
 % ==============================================================================
+
+function cm = bipolar(m, n, interp)
+%bipolar: symmetric/diverging/bipolar colormap, with neutral central color.
+%
+% Usage: cm = bipolar(m, neutral, interp)
+%  neutral is the gray value for the middle of the colormap, default 1/3.
+%  m is the number of rows in the colormap, defaulting to copy the current
+%    colormap, or the colormap that MATLAB defaults for new figures.
+%  interp is the method used to interpolate the colors, see interp1.
+%
+% The colormap goes from cyan-blue-neutral-red-yellow if neutral is < 0.5
+% (the default) and from blue-cyan-neutral-yellow-red if neutral > 0.5.
+%
+% If neutral is exactly 0.5, then a map which yields a linear increase in
+% intensity when converted to grayscale is produced (as derived in
+% colormap_investigation.m). This colormap should also be reasonably good
+% for colorblind viewers, as it avoids green and is predominantly based on
+% the purple-yellow pairing which is easily discriminated by the two common
+% types of colorblindness. For more details on this, see Brewer (1996):
+% http://www.ingentaconnect.com/content/maney/caj/1996/00000033/00000002/art00002
+% 
+% Examples:
+%  surf(peaks)
+%  cmx = max(abs(get(gca, 'CLim')));
+%  set(gca, 'CLim', [-cmx cmx]);
+%  colormap(bipolar)
+%
+%  imagesc(linspace(-1, 1,201)) % symmetric data, if not set symmetric CLim
+%  colormap(bipolar(201, 0.1)) % dark gray as neutral
+%  axis off; colorbar
+%  pause(2)
+%  colormap(bipolar(201, 0.9)) % light gray as neutral
+%  pause(2)
+%  colormap(bipolar(201, 0.5)) % grayscale-friendly colormap
+%
+% See also: colormap, jet, interp1, colormap_investigation, dusk
+% dusk is a colormap like bipolar(m, 0.5), in Oliver Woodford's real2rgb:
+%  http://www.mathworks.com/matlabcentral/fileexchange/23342
+%
+% Copyright 2009 Ged Ridgway at gmail com
+% Based on Manja Lehmann's hand-crafted colormap for cortical visualisation
+
+if ~exist('interp', 'var')
+    interp = [];
+end
+
+if ~exist('n', 'var') || isempty(n)
+    n = 1/3;
+end
+
+if ~exist('m', 'var') || isempty(m)
+    if isempty(get(0, 'CurrentFigure'))
+        m = get(0, 'DefaultFigureColormap');
+    else
+        m = get(gcf, 'Colormap');
+    end
+    m = size(m, 1);
+end
+
+if n < 0
+    % undocumented rainbow-variant colormap, not recommended, as explained 
+    % by Borland & Taylor (2007) in IEEE Computer Graphics & Applications,
+    % http://doi.ieeecomputersociety.org/10.1109/10.1109/MCG.2007.46
+    if isempty(interp)
+        interp = 'cubic'; % linear produces bands at pure green and yellow
+    end
+    n = abs(n);
+    cm = [
+        0 0 1
+        0 1 0
+        n n n
+        1 1 0
+        1 0 0
+        ];
+elseif n < 0.5
+    if isempty(interp)
+        interp = 'linear'; % seems to work well with dark neutral colors
+    end
+    cm = [
+        0 1 1
+        0 0 1
+        n n n
+        1 0 0
+        1 1 0
+        ];
+elseif n > 0.5
+    if isempty(interp)
+        interp = 'cubic'; % seems to work better with bright neutral colors
+    end
+    cm = [
+        0 0 1
+        0 1 1
+        n n n
+        1 1 0
+        1 0 0
+        ];
+else % exactly 0.5, use the brew2 scheme from colormap_investigation
+    if isempty(interp)
+        interp = 'linear';
+    end
+    if ~strcmp(interp, 'linear')
+        warning('bipolar:nonlinearluminance', ...
+            'Nonlinear interpolation will not preserve linear luminance!')
+    end
+    cm = [
+        0.2157         0    0.3207
+        0.0291    0.3072    1.0000
+        0.5000    0.5000    0.5000
+        1.0000    0.6035    0.3992
+        0.9944    0.9891    0.1647
+        ];
+end
+
+if m ~= size(cm, 1)
+    xi = linspace(1, size(cm, 1), m);
+    cm = interp1(cm, xi, interp);
+end
 % [EOF]
