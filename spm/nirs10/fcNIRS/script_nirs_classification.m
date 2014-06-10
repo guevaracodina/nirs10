@@ -14,7 +14,7 @@ cDec = zeros(round(size(c,1)/round(NIRS.Cf.dev.fs)),size(c,2));
 for iChannels = nChannels
     cDec(:,iChannels) = decimate(c(:,iChannels), round(NIRS.Cf.dev.fs));
 end
-% No Seizures = 1; Seizures = 2; 
+% Categories: No Seizures = 1; Seizures = 2; 
 sz_vector = sz_vector + 1;
 class_train = round(decimate(sz_vector, round(eeg_fs / (NIRS.Cf.dev.fs/round(NIRS.Cf.dev.fs)))))';
 nSamples = numel(class_train);
