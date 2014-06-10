@@ -278,27 +278,28 @@ for k = 2:nIter
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     c(:, k) = nirs_OD2Hb(inv_exs2, OD(:, k));
     
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Topographical projection
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % hbO = c(:, k);
-    % Choose HbO channels, wl = 1
-    hbO = c(NIRS.Cf.H.C.wl == 1, k);
-    % Choose only channels that are visible from this view
-    hbO = hbO(W.ch);
-    % hbR = c(:, k);
-    % Choose HbR channels, wl = 2
-    hbR = c(NIRS.Cf.H.C.wl == 2, k);
-    % Choose only channels that are visible from this view
-    hbR = hbR(W.ch);
-    % Call nirs_interpolation_render_compute as many times as needed in the loop
-    interpMapHbO = nirs_interpolation_render_compute(Qinterp, hbO, interpMap);
-    interpMapHbR = nirs_interpolation_render_compute(Qinterp, hbR, interpMap);
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Live display
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     if UPDATE_MAP
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % Topographical projection
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % hbO = c(:, k);
+        % Choose HbO channels, wl = 1
+        hbO = c(NIRS.Cf.H.C.wl == 1, k);
+        % Choose only channels that are visible from this view
+        hbO = hbO(W.ch);
+        % hbR = c(:, k);
+        % Choose HbR channels, wl = 2
+        hbR = c(NIRS.Cf.H.C.wl == 2, k);
+        % Choose only channels that are visible from this view
+        hbR = hbR(W.ch);
+        % Call nirs_interpolation_render_compute as many times as needed in the loop
+        interpMapHbO = nirs_interpolation_render_compute(Qinterp, hbO, interpMap);
+        interpMapHbR = nirs_interpolation_render_compute(Qinterp, hbR, interpMap);
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % Live display
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
         set(himHbO, 'CData', interpMapHbO);
         set(himHbR, 'CData', interpMapHbR);
         drawnow();

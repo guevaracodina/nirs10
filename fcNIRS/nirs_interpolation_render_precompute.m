@@ -9,7 +9,7 @@ function [Q, interpMap, Dat, W] = nirs_interpolation_render_precompute(Dat, NIRS
 %Output: out - DF figure structure
 %%*************************************************************************
 
-eTime = tic;
+% eTime = tic;
 % ------------------------------------------------------------------------------
 % Optional inputs handling
 % ------------------------------------------------------------------------------
@@ -53,11 +53,16 @@ W.s1 = size(brain, 1);
 W.s2 = size(brain, 2);
 % split into HbO and HbR interpolations
 W.ch = W.index_ch;
-W.rchn = rchn(W.index_ch);
-W.cchn = cchn(W.index_ch);
+W.ch_HbO = W.ch(1:2:end);
+W.ch_HbR = W.ch(2:2:end);
+% W.rchn = rchn(W.index_ch);
+% W.cchn = cchn(W.index_ch);
+W.rchn = rchn(W.ch_HbO);
+W.cchn = cchn(W.ch_HbO);
 % Generate interpolation matrix
 Q = interpolation_kernel_cine_simplified(W);
-Dat = Dat(W.ch,:);
+% Dat = Dat(W.ch,:);
+Dat = Dat(W.ch_HbO,:);
 %******************************************************************
 %Rendering config
 [W, ~, F] = render_config(Dat, W, rendered_MNI, side_hemi, spec_hemi, new_path, brain_view, thz, figure_name);
@@ -73,7 +78,7 @@ F.pathnsfig = newsavepath_fig;
 % Prea-allocate interpolated topographical map
 interpMap = zeros(W.s1, W.s2);
 
-disp(['Time to pre-compute interpolation kernel: ' datestr(datenum(0,0,0,0,0,toc(eTime)),'HH:MM:SS')]);
+% disp(['Time to pre-compute interpolation kernel: ' datestr(datenum(0,0,0,0,0,toc(eTime)),'HH:MM:SS')]);
 
 function [W, Z, F] = render_config(estiHRF, W, rendered_MNI0, side_hemi, spec_hemi, new_path, brain_view, thz, figure_name)
 W.side_hemi = side_hemi;

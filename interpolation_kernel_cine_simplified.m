@@ -1,5 +1,6 @@
 function Q = interpolation_kernel_cine_simplified(W)
-nch = length(W.ch);
+% nch = length(W.ch);
+nch = length(W.ch_HbO);
 s1 = W.s1;
 s2 = W.s2;
 rchn = W.rchn;
