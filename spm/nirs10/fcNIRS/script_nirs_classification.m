@@ -7,6 +7,11 @@
 clear; close all; clc;
 addpath(genpath('F:\Edgar\Dropbox\PostDoc\NIRS\real_time\classification_toolbox_3.1'))
 load('F:\Edgar\Dropbox\PostDoc\NIRS\real_time\NIRS_test_data');
+clear k inv_exs2 interpMapHbR interpMapHbO interpMap iSubject iOnsets iFiles Dat...
+    EPF2 K K_DC P P_DC Pminus Pminus_DC Q Q_DC Qinterp R R_DC UPDATE_MAP W eTime...
+    h1 h2 h3 hLive haxHbO haxHbR hbLim heighthaxHbO heighthaxHbR himHbO himHbR...
+    poshaxHbO poshaxHbR screenSize widthhaxHbO widthhaxHbR x_hat x_hat_DC xhat...
+    xhat_DC xhatminus xhatminus_DC z eegAmp hb hbLabel;
 
 %% Downsample seizure and NIRS vectors
 c = c';
@@ -36,13 +41,14 @@ tic
 model = plsdafit(HbO_train,class_train,2,'none','bayes',1)
 toc
 
-%%
+%% Predict point-by-point
 tic
 for i=4:nSamples
     HbO_test = HbO_train(i,:);
     model = plsdafit(HbO_train(1:(i-1),:),class_train(1:(i-1),:),2,'none','bayes',1);
     pred(i) = plsdapred(HbO_test,model);
 end
+fprintf('Prediction done! \n');
 toc
 % figure; plot(model.class_calc,'k.')
 
