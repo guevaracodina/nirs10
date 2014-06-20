@@ -64,6 +64,7 @@ cv = plsdacv(HbO_train,class_train,2,'none','vene',5,'bayes')
 % Change HbO_train by HbO_test! TO DO...
 tic
 pred = plsdapred(HbO_train,model)
+class_param = calc_class_param(pred.class_pred,class_train)
 toc
 %% Plot classification results
 

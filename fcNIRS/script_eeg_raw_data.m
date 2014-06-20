@@ -65,7 +65,8 @@ nSubjects = length(NIRSmat);
 iSubject = 22;
 % Load info
 load(NIRSmat{iSubject})
-% addpath(genpath('F:\Edgar\Dropbox\PostDoc\NIRS\real_time\classification_toolbox_3.1'))
+addpath(genpath('F:\Edgar\Dropbox\Matlab'))
+addpath(genpath('F:\Edgar\Dropbox\PostDoc\NIRS\real_time\classification_toolbox_3.1'))
 % load('F:\Edgar\Dropbox\PostDoc\NIRS\real_time\NIRS_test_data');
 % clear k inv_exs2 interpMapHbR interpMapHbO interpMap iSubject iOnsets iFiles Dat...
 %     EPF2 K K_DC P P_DC Pminus Pminus_DC Q Q_DC Qinterp R R_DC UPDATE_MAP W eTime...
@@ -94,7 +95,7 @@ for iFiles = 1:numel(NIRS.Dt.fir.Sess)
         dataNIRS{iSubject}{iFiles} = fopen_NIR(fileName, NIRS.Cf.H.C.id(1,end))';
     end
     % Time vector
-    t{iSubject}{iFiles} = linspace(0, (size(dataNIRS{iSubject}{iFiles},1)-1)/NIRS.Cf.dev.fs , size(dataNIRS{iSubject}{iFiles},1));
+    t{iSubject}{iFiles} = linspace(0, (size(dataNIRS{iSubject}{iFiles},1)-1)/NIRS.Cf.dev.fs , size(dataNIRS{iSubject}{iFiles},1))';
     fprintf('Reading %s done!\n', fileName);
 end
 
@@ -114,12 +115,12 @@ dataPoints{iSubject}{4} = 456540;
 dataPoints{iSubject}{5} = 464120;
 dataPoints{iSubject}{6} = 215440;
 % Number of channels
-nChannels{iSubject}{1} = 22;
-nChannels{iSubject}{2} = 22;
-nChannels{iSubject}{3} = 22;
-nChannels{iSubject}{4} = 22;
-nChannels{iSubject}{5} = 22;
-nChannels{iSubject}{6} = 22;
+nChannelsEEG{iSubject}{1} = 22;
+nChannelsEEG{iSubject}{2} = 22;
+nChannelsEEG{iSubject}{3} = 22;
+nChannelsEEG{iSubject}{4} = 22;
+nChannelsEEG{iSubject}{5} = 22;
+nChannelsEEG{iSubject}{6} = 22;
 % Sampling interval (in us)
 SamplingInterval = 2000;
 % Sampling interval (in us)
@@ -129,13 +130,13 @@ eeg_fs = 1 / TR;
 % Preallocation
 EEGdata = cell([1 nSubjects]);
 EEGdata{iSubject} = cell([1 length(fName{iSubject})]);
-EEGtmp = cell([size(fName,1) nChannels{iSubject}{1}]);
-hdr = cell([size(fName,1) nChannels{iSubject}{1}]);
+EEGtmp = cell([size(fName,1) nChannelsEEG{iSubject}{1}]);
+hdr = cell([size(fName,1) nChannelsEEG{iSubject}{1}]);
 for iFiles = 1:length(fName{iSubject})
     fileName = fullfile(pathName,[fName{iSubject}{iFiles} '.dat']);
     fid = fopen(fileName);
     fprintf('Reading %s...\n', fileName);
-    for iChannels = 1:nChannels{iSubject}{iFiles}
+    for iChannels = 1:nChannelsEEG{iSubject}{iFiles}
         hdr(iFiles, iChannels) = textscan(fid,'%s', 1);
         EEGtmp(iFiles, iChannels) = textscan(fid, '%f', dataPoints{iSubject}{iFiles}, 'CollectOutput', 1);
         EEGdata{iSubject}{iFiles} = [EEGdata{iSubject}{iFiles} EEGtmp{iFiles, iChannels}];
@@ -229,59 +230,200 @@ sz_startIdx{iSubject}{6}    = 95117;
 sz_endIdx{iSubject}{6}      = 140462;
 
 for iFiles = 1:length(fName{iSubject})
+% iFiles=1
     % time vector for eeg
-    eeg_t{iSubject}{iFiles} = linspace(t{iSubject}{iFiles}(1), t{iSubject}{iFiles}(end), round(eeg_fs*(t{iSubject}{iFiles}(end) - t{iSubject}{iFiles}(1))));
+%     eeg_t{iSubject}{iFiles} = linspace(t{iSubject}{iFiles}(1), t{iSubject}{iFiles}(end), round(eeg_fs*(t{iSubject}{iFiles}(end) - t{iSubject}{iFiles}(1))));
+    eeg_t{iSubject}{iFiles} = linspace(t{iSubject}{iFiles}(1), t{iSubject}{iFiles}(end), size(EEGdata{iSubject}{iFiles},1))';
     % Seizure vector
     sz_vector{iSubject}{iFiles} = zeros(size(eeg_t{iSubject}{iFiles}));
+    sz_vector_NIRS{iSubject}{iFiles} = zeros(size(t{iSubject}{iFiles}));
     % Seizure start index
     sz_start{iSubject}{iFiles} = sz_startIdx{iSubject}{iFiles};
     % Seizure end index
     sz_end{iSubject}{iFiles} = sz_endIdx{iSubject}{iFiles};
     for iOnsets = 1:numel(sz_start{iSubject}{iFiles})
         sz_vector{iSubject}{iFiles}(sz_start{iSubject}{iFiles}(iOnsets):sz_end{iSubject}{iFiles}(iOnsets)) = 1;
+        sz_vector_NIRS{iSubject}{iFiles} = downsample(sz_vector{iSubject}{iFiles}, round(eeg_fs/NIRS.Cf.dev.fs));
+        if size(sz_vector_NIRS{iSubject}{iFiles},1) >= size(dataNIRS{iSubject}{iFiles},1)
+            sz_vector_NIRS{iSubject}{iFiles} = sz_vector_NIRS{iSubject}{iFiles}(1:size(dataNIRS{iSubject}{iFiles},1),:);
+        else
+            % append zeros at the end
+            zeros2append = zeros([(size(dataNIRS{iSubject}{iFiles},1)-size(sz_vector_NIRS{iSubject}{iFiles},1)), 1]);
+            sz_vector_NIRS{iSubject}{iFiles} = [sz_vector_NIRS{iSubject}{iFiles}; zeros2append];
+        end
     end
 end
 % Amplitud of seizure onset vector, to be displayes correctly
 eegAmp = 1000;
 % figure; stem(eeg_t, sz_vector)
 
-%% Downsample seizure and NIRS vectors
-c = c';
-cDec = zeros(round(size(c,1)/round(NIRS.Cf.dev.fs)),size(c,2));
-for iChannels = nChannels
-    cDec(:,iChannels) = decimate(c(:,iChannels), round(NIRS.Cf.dev.fs));
+%% Plot EEG and seizures for EPI122
+yLimits = [-1000 1000];
+figure; set(gcf,'color','w')
+% iFiles = 6;
+% The size of the matrix plot
+M = 3;
+N = 4;
+for iFiles = 1:length(fName{iSubject})
+    % The index according to your preferred ordering (column-wise)
+    % i_colwise = 4;
+    % Conversion function
+    [jj,ii] = ind2sub([N,M],2*iFiles-1);
+    i_rowwise = sub2ind([M,N],ii,jj); % This is the ordering MATLAB expects (row-wise)
+    subplot (N,M,i_rowwise)
+    plot(eeg_t{iSubject}{iFiles},EEGdata{iSubject}{iFiles},'k-')
+    ylim(yLimits)
+    ylabel('EEG (\muV)','FontSize',12)
+    xlabel('t (s)','FontSize',12)
+    [jj,ii] = ind2sub([N,M],2*iFiles);
+    i_rowwise = sub2ind([M,N],ii,jj); % This is the ordering MATLAB expects (row-wise)
+    subplot(N,M,i_rowwise)
+    plot(eeg_t{iSubject}{iFiles},sz_vector{iSubject}{iFiles},'k:','LineWidth',2)
+    ylim([-0.1 1.1])
+    xlabel('t (s)','FontSize',12)
+    ylabel('Seizure','FontSize',12)
+    set(gca,'YTick',[0 1]); set(gca,'YTickLabel',{'No' 'Yes'})
 end
+
+%% Plot NIRS and seizures for EPI122
+yLimits = [-1000 1000];
+figure; set(gcf,'color','w')
+% iFiles = 6;
+% The size of the matrix plot
+M = 3;
+N = 4;
+for iFiles = 1:length(fName{iSubject})
+    % The index according to your preferred ordering (column-wise)
+    % i_colwise = 4;
+    % Conversion function
+    [jj,ii] = ind2sub([N,M],2*iFiles-1);
+    i_rowwise = sub2ind([M,N],ii,jj); % This is the ordering MATLAB expects (row-wise)
+    subplot (N,M,i_rowwise)
+    hold on
+    % HbO=1
+    HbOdata = dataNIRS{iSubject}{iFiles}(:, NIRS.Cf.H.C.wl == 1);
+    % HbR=2
+    HbRdata = dataNIRS{iSubject}{iFiles}(:, NIRS.Cf.H.C.wl == 2);
+    plot(t{iSubject}{iFiles},HbOdata,'r-')
+    plot(t{iSubject}{iFiles},HbRdata,'b-')
+    ylim(yLimits)
+    ylabel('\DeltaHb (\muM)','FontSize',12)
+    xlabel('t (s)','FontSize',12)
+    [jj,ii] = ind2sub([N,M],2*iFiles);
+    i_rowwise = sub2ind([M,N],ii,jj); % This is the ordering MATLAB expects (row-wise)
+    subplot(N,M,i_rowwise)
+    plot(t{iSubject}{iFiles},sz_vector_NIRS{iSubject}{iFiles},'k:','LineWidth',2)
+    ylim([-0.1 1.1])
+    xlabel('t (s)','FontSize',12)
+    ylabel('Seizure','FontSize',12)
+    set(gca,'YTick',[0 1]); set(gca,'YTickLabel',{'No' 'Yes'})
+end
+
+%% Joining all data
+dataNIRS_total = [];
+sz_vector_NIRS_total = [];
+EEGdata_total = [];
+sz_vector_total = [];
+for iFiles = 1:length(fName{iSubject})
+    dataNIRS_total = [dataNIRS_total; dataNIRS{iSubject}{iFiles}];
+    sz_vector_NIRS_total = [sz_vector_NIRS_total; sz_vector_NIRS{iSubject}{iFiles}];
+    EEGdata_total = [EEGdata_total; EEGdata{iSubject}{iFiles}];
+    sz_vector_total = [sz_vector_total; sz_vector{iSubject}{iFiles}];
+end
+
+%% Plot amplitude distributions
+% HbO
+figure; set(gcf,'color','w')
+subplot(221)
+nhist({dataNIRS_total(sz_vector_NIRS_total==0,NIRS.Cf.H.C.wl == 1), dataNIRS_total(sz_vector_NIRS_total==1,NIRS.Cf.H.C.wl == 1)},...
+    'pdf','boxplot','legend',{'No Sz', 'Sz'},'color','sequential')
+title({'HbO_2'})
+ylim([0 0.04 ]);
+xlim([-500 1000]);
+subplot(222)
+nhist({dataNIRS_total(sz_vector_NIRS_total==0,NIRS.Cf.H.C.wl == 2), dataNIRS_total(sz_vector_NIRS_total==1,NIRS.Cf.H.C.wl == 2)},...
+    'pdf','boxplot','legend',{'No Sz', 'Sz'},'color','sequential')
+title({'HbR'})
+ylim([0 0.04 ]);
+xlim([-500 1000]);
+subplot(212)
+nhist({EEGdata_total(sz_vector_total==0,:), EEGdata_total(sz_vector_total==1,:)},...
+    'pdf','boxplot','legend',{'No Sz', 'Sz'},'color','sequential')
+title({'EEG'})
+
+
+%% Downsample seizure and NIRS vectors
+% dataNIRS_down = zeros(round(size(dataNIRS_total,1)/NIRS.Cf.dev.fs),size(dataNIRS_total,2));
+% sz_vector_NIRS_down = zeros(round(size(sz_vector_NIRS_total,1)/NIRS.Cf.dev.fs),size(sz_vector_NIRS_total,2));
+% EEGdata_down = zeros(round(size(EEGdata_total,1)/eeg_fs),size(EEGdata_total,2));
+% sz_vector_down = zeros(round(size(sz_vector_total,1)/eeg_fs),size(sz_vector_total,2));
+clear dataNIRS_down sz_vector_NIRS_down EEGdata_down EEGdata_down
+for iChannels=1:size(dataNIRS_total,2)
+    dataNIRS_down(:,iChannels) = decimate(dataNIRS_total(:,iChannels), round(NIRS.Cf.dev.fs));
+end
+sz_vector_NIRS_down = round(decimate(sz_vector_NIRS_total(:,1), round(NIRS.Cf.dev.fs)));
+for iChannels=1:size(EEGdata_total,2)
+    EEGdata_down(:,iChannels) = decimate(EEGdata_total(:,iChannels), round(eeg_fs));
+end
+sz_vector_down = round(decimate(sz_vector_total(:,1), round(eeg_fs)));
+
+% Find minimum number of time points to keep
+nTimePoints = min([size(sz_vector_down,1) size(EEGdata_down,1) size(sz_vector_NIRS_down,1) size(dataNIRS_down,1)]);
+dataNIRS_down = dataNIRS_down(1:nTimePoints,:);
+sz_vector_NIRS_down = sz_vector_NIRS_down(1:nTimePoints,:);
+EEGdata_down = EEGdata_down(1:nTimePoints,:);
+sz_vector_down = sz_vector_down(1:nTimePoints,:);
 % Categories: No Seizures = 1; Seizures = 2; 
-sz_vector = sz_vector + 1;
-class_train = round(decimate(sz_vector, round(eeg_fs / (NIRS.Cf.dev.fs/round(NIRS.Cf.dev.fs)))))';
-nSamples = numel(class_train);
-HbO_train = c(1:nSamples, NIRS.Cf.H.C.wl == 1);   % HbO
+sz_vector_NIRS_down = sz_vector_NIRS_down + 1;
+figure; stem(sz_vector_NIRS_down)
+
+%%
+% c = c';
+% cDec = zeros(round(size(c,1)/round(NIRS.Cf.dev.fs)),size(c,2));
+% for iChannels = nChannels{iSubject}
+%     cDec(:,iChannels) = decimate(c(:,iChannels), round(NIRS.Cf.dev.fs));
+% end
+
+% sz_vector = sz_vector + 1;
+% class_train = round(decimate(sz_vector, round(eeg_fs / (NIRS.Cf.dev.fs/round(NIRS.Cf.dev.fs)))))';
+% nSamples = numel(class_train);
+% HbO_train = c(1:nSamples, NIRS.Cf.H.C.wl == 1);   % HbO
 % HbR_train = c(1:nSamples, NIRS.Cf.H.C.wl == 2);   % HbR
 
+%% Choose training and test sets
+% Choose 10% of data points as training set
+idx_train = unique(randi(nTimePoints, [round(nTimePoints/10) 1]));
+% Choose the rest of data points as test set
+idx_test = setdiff(find(1:nTimePoints),idx_train);
+class_train = sz_vector_NIRS_down(idx_train);
+data_train = [dataNIRS_down(idx_train,:) EEGdata_down(idx_train,:)];
+class_test = sz_vector_NIRS_down(idx_test);
+data_test = [dataNIRS_down(idx_test,:) EEGdata_down(idx_test,:)];
+
 %% select the number of optimal components by using the plsdacompsel function
-HbO_res = plsdacompsel(HbO_train,class_train,'none','vene',5,'bayes');
+data_res = plsdacompsel(data_train,class_train,'none','vene',5,'bayes');
 % HbR_res = plsdacompsel(HbR_train,class_train,'none','vene',5,'bayes');
 
 %% We'll get the error rate in cross validation (and non-error rate in cross
 % validation) associated to each component value. Type on the MATLAB command
 % window to see the error rates.
-HbO_res.er
+data_res.er
 % HbR_res.er
 
 %% We can then calculate the PLSDA model with 2 components by typing:
 tic
-model = plsdafit(HbO_train,class_train,2,'none','bayes',1)
+model = plsdafit(data_train,class_train,2,'none','bayes',1)
 toc
 
-%% Predict point-by-point
-tic
-for i=4:nSamples
-    HbO_test = HbO_train(i,:);
-    model = plsdafit(HbO_train(1:(i-1),:),class_train(1:(i-1),:),2,'none','bayes',1);
-    pred(i) = plsdapred(HbO_test,model);
-end
-fprintf('Prediction done! \n');
-toc
+%% Predict point-by-point (Do ten 10-fold cross validation run)
+% tic
+% for i=4:nSamples
+%     HbO_test = HbO_train(i,:);
+%     model = plsdafit(HbO_train(1:(i-1),:),class_train(1:(i-1),:),2,'none','bayes',1);
+%     pred = plsdapred(data_test,model);
+% end
+
+% toc
 % figure; plot(model.class_calc,'k.')
 
 %% Once the model is calculated, we can see the model performances by typing:
@@ -290,13 +432,16 @@ model.class_param
 %% Scores, loadings, calculated class, leverages and many other statistics are
 % stored in the model structure. We can proceed by cross validating (with 5
 % venetian blind groups) the PLSDA model with 2 components:
-cv = plsdacv(HbO_train,class_train,2,'none','vene',5,'bayes')
+cv = plsdacv(data_train,class_train,2,'none','vene',5,'bayes')
 
 %% Finally, we can predict the test set samples by using the calibrated model:
 % Change HbO_train by HbO_test! TO DO...
 tic
-pred = plsdapred(HbO_train,model)
+pred = plsdapred(data_test,model)
+class_param = calc_class_param(pred.class_pred,class_test)
+fprintf('Prediction done! \n');
 toc
+
 %% Plot classification results
 
 % Classes
@@ -386,25 +531,25 @@ legend({'Real' 'True Negatives' 'True Positives' 'False Negatives'  'False Posit
 
 
 %% Kalman figure
-% Plot Hb concentrations
-h3 = figure;
-set(h3, 'color', 'w')
-set(h3, 'Name', 'Hemoglobin concentrations')
-hold on
-% iChannel < 133
-iChannel = 98;
-plot(t, dataNIRS(iChannel,:), 'r:', 'LineWidth',1);      % HbO
-plot(t, dataNIRS(iChannel + nChannels/2,:), 'b:', 'LineWidth',1);      % HbR
-plot(t, c(:,iChannel), 'r-', 'LineWidth',2);      % HbO
-plot(t, c(:,iChannel + nChannels/2), 'b-', 'LineWidth',2);      % HbR
-plot(eeg_t, 700*sz_vector, 'k--', 'LineWidth',2);                % seizure onset
-xlim([t(2) t(end)])
-
-title(sprintf('Offline processing'), 'FontSize', 12)
-legend({'HbO_2' 'HbR' 'HbO_2 (filt)' 'HbR (filt)' 'Seizure'},...
-    'Location', 'SouthEast')
-set(gca , 'FontSize', 12)
-xlabel('t [s]', 'FontSize', 12); ylabel('Hb [\muM]', 'FontSize', 12); 
+% % Plot Hb concentrations
+% h3 = figure;
+% set(h3, 'color', 'w')
+% set(h3, 'Name', 'Hemoglobin concentrations')
+% hold on
+% % iChannel < 133
+% iChannel = 98;
+% plot(t, dataNIRS(iChannel,:), 'r:', 'LineWidth',1);      % HbO
+% plot(t, dataNIRS(iChannel + nChannels/2,:), 'b:', 'LineWidth',1);      % HbR
+% plot(t, c(:,iChannel), 'r-', 'LineWidth',2);      % HbO
+% plot(t, c(:,iChannel + nChannels/2), 'b-', 'LineWidth',2);      % HbR
+% plot(eeg_t, 700*sz_vector, 'k--', 'LineWidth',2);                % seizure onset
+% xlim([t(2) t(end)])
+% 
+% title(sprintf('Offline processing'), 'FontSize', 12)
+% legend({'HbO_2' 'HbR' 'HbO_2 (filt)' 'HbR (filt)' 'Seizure'},...
+%     'Location', 'SouthEast')
+% set(gca , 'FontSize', 12)
+% xlabel('t [s]', 'FontSize', 12); ylabel('Hb [\muM]', 'FontSize', 12); 
 
 
 % EOF
