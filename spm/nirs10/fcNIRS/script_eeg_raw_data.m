@@ -382,13 +382,13 @@ sz_vector_NIRS_down = sz_vector_NIRS_down + 1;
 
 %% Choose training and test sets
 % dataType = 'EEG+NIRS';
-% dataType = 'NIRS';
+dataType = 'NIRS';
 % dataType = 'EEG';
 % dataType = 'HbO';
 % dataType = 'HbR';
 % dataType = 'EEG+HbO';
 % dataType = 'EEG+HbR';
-dataType = 'Sim';
+% dataType = 'Sim';
 
 % Choose 10% of data points as training set
 kFold = 0.1;
@@ -396,8 +396,9 @@ idx_train = unique(randi(nTimePoints, [round(kFold*nTimePoints) 1]));
 % idx_train = 1:round(kFold*nTimePoints);
 % Choose the rest of data points as test set
 idx_test = setdiff(find(1:nTimePoints),idx_train)';
-close all; figure; set (gcf,'color','w')
+clc; close all; figure; set (gcf,'color','w')
 set(gcf,'name','Indices')
+subplot(211)
 plot(idx_train,ones(size(idx_train)),'ro');  
 hold on; plot(idx_test,ones(size(idx_test)),'bx');
 legend({'Training set' 'Test set'})
@@ -448,7 +449,7 @@ switch(dataType)
         data_test = [dataNIRS_down(idx_test,NIRS.Cf.H.C.wl == 2) EEGdata_down(idx_test,:)];
     case 'Sim'
         % Set SNR
-        SNR = 1;
+        SNR = 0.3;
         % Amplitude of the features
         Amp = 1;
         % Number of channles
@@ -489,14 +490,24 @@ switch(dataType)
         data_test = [dataNIRS_down(idx_test,:) EEGdata_down(idx_test,:)];
 end
 % Plot data sets
-figure; set (gcf,'color','w')
-set(gcf,'name','Data sets')
+% figure; set (gcf,'color','w')
+% set(gcf,'name','Data sets')
 colormap(flipud(gray(256)))
-subplot(121); imagesc(1:nChannelsSim, idx_train, data_train);
-title('Training data'); xlabel('Channels'); ylabel('t(s)')
+subplot(223); imagesc(1:nChannelsSim, idx_train, data_train);
+if strcmp(dataType, 'Sim')
+    title(sprintf('Training data (SNR = %0.2f)',SNR)); 
+else
+    title('Training data'); 
+end
+xlabel('Channels'); ylabel('t(s)')
 ylim([0 nTimePoints])
-subplot(122); imagesc(1:nChannelsSim, idx_test, data_test);
-title('Testing data'); xlabel('Channels'); ylabel('t(s)')
+subplot(224); imagesc(1:nChannelsSim, idx_test, data_test);
+if strcmp(dataType, 'Sim')
+    title(sprintf('Testing data (SNR = %0.2f)',SNR)); 
+else
+    title('Testing data');
+end
+xlabel('Channels'); ylabel('t(s)')
 ylim([0 nTimePoints])
 
 
@@ -504,10 +515,9 @@ ylim([0 nTimePoints])
 tic
 nComps = 2;
 model = plsdafit(data_train,class_train,nComps,'auto','bayes',1);
-toc
-
-%% Once the model is calculated, we can see the model performances by typing:
+% Once the model is calculated, we can see the model performances by typing:
 model.class_param;
+toc
 
 %% Scores, loadings, calculated class, leverages and many other statistics are
 % stored in the model structure. We can proceed by cross validating (with 5
@@ -608,7 +618,7 @@ v7(idx2) = true;
 v7(idx0) = true;
 v8(class_test==1) = true;
 plot(find(v7&v8), pred.class_pred(v7&v8), 'rx')
-legend({'Real' 'True Negatives' 'True Positives' 'False Negatives'  'False Positives'})
+legend({'Real markers' 'True Negatives' 'True Positives' 'False Negatives'  'False Positives'})
 
 % EOF
 
