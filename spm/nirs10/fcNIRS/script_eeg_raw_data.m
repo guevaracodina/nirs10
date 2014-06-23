@@ -375,69 +375,134 @@ EEGdata_down = EEGdata_down(1:nTimePoints,:);
 sz_vector_down = sz_vector_down(1:nTimePoints,:);
 % Categories: No Seizures = 1; Seizures = 2; 
 sz_vector_NIRS_down = sz_vector_NIRS_down + 1;
-figure; stem(sz_vector_NIRS_down)
-
-%%
-% c = c';
-% cDec = zeros(round(size(c,1)/round(NIRS.Cf.dev.fs)),size(c,2));
-% for iChannels = nChannels{iSubject}
-%     cDec(:,iChannels) = decimate(c(:,iChannels), round(NIRS.Cf.dev.fs));
-% end
-
-% sz_vector = sz_vector + 1;
-% class_train = round(decimate(sz_vector, round(eeg_fs / (NIRS.Cf.dev.fs/round(NIRS.Cf.dev.fs)))))';
-% nSamples = numel(class_train);
-% HbO_train = c(1:nSamples, NIRS.Cf.H.C.wl == 1);   % HbO
-% HbR_train = c(1:nSamples, NIRS.Cf.H.C.wl == 2);   % HbR
+% figure; stem(sz_vector_NIRS_down)
 
 %% Choose training and test sets
+% dataType = 'EEG+NIRS';
+% dataType = 'NIRS';
+% dataType = 'EEG';
+% dataType = 'HbO';
+% dataType = 'HbR';
+% dataType = 'EEG+HbO';
+% dataType = 'EEG+HbR';
+dataType = 'Sim';
+
 % Choose 10% of data points as training set
-idx_train = unique(randi(nTimePoints, [round(nTimePoints/10) 1]));
+kFold = 0.9;
+idx_train = unique(randi(nTimePoints, [round(kFold*nTimePoints) 1]));
 % Choose the rest of data points as test set
-idx_test = setdiff(find(1:nTimePoints),idx_train);
+idx_test = setdiff(find(1:nTimePoints),idx_train)';
+figure;
+subplot(211); stem(idx_train,ones(size(idx_train))); xlim([600 800])
+subplot(212); stem(idx_test,ones(size(idx_test))); xlim([600 800])
+% Classes (labels) of the training set
 class_train = sz_vector_NIRS_down(idx_train);
-data_train = [dataNIRS_down(idx_train,:) EEGdata_down(idx_train,:)];
+% True classes (labels) of the test set
 class_test = sz_vector_NIRS_down(idx_test);
-data_test = [dataNIRS_down(idx_test,:) EEGdata_down(idx_test,:)];
+
+switch(dataType)
+    case 'EEG+NIRS'
+        % Training set 
+        data_train = [dataNIRS_down(idx_train,:) EEGdata_down(idx_train,:)];
+        % Testing data set 
+        data_test = [dataNIRS_down(idx_test,:) EEGdata_down(idx_test,:)];
+    case 'NIRS'
+        % Training set 
+        data_train = dataNIRS_down(idx_train,:);
+        % Testing data set 
+        data_test = dataNIRS_down(idx_test,:);
+    case 'EEG'
+        % Training set 
+        data_train = EEGdata_down(idx_train,:);
+        % Testing data set 
+        data_test = EEGdata_down(idx_test,:);
+    case 'HbO'
+        % Training set 
+        data_train = dataNIRS_down(idx_train,NIRS.Cf.H.C.wl == 1);
+        % Testing data set 
+        data_test = dataNIRS_down(idx_test,NIRS.Cf.H.C.wl == 1);
+    case 'HbR'
+        % Training set 
+        data_train = dataNIRS_down(idx_train,NIRS.Cf.H.C.wl == 2);
+        % Testing data set 
+        data_test = dataNIRS_down(idx_test,NIRS.Cf.H.C.wl == 2);
+    case 'EEG+HbO'
+        % Training set 
+        data_train = [dataNIRS_down(idx_train,NIRS.Cf.H.C.wl == 1) EEGdata_down(idx_train,:)];
+        % Testing data set 
+        data_test = [dataNIRS_down(idx_test,NIRS.Cf.H.C.wl == 1) EEGdata_down(idx_test,:)];
+    case 'EEG+HbR'
+        % Training set 
+        data_train = [dataNIRS_down(idx_train,NIRS.Cf.H.C.wl == 2) EEGdata_down(idx_train,:)];
+        % Testing data set 
+        data_test = [dataNIRS_down(idx_test,NIRS.Cf.H.C.wl == 2) EEGdata_down(idx_test,:)];
+    case 'Sim'
+        % Set SNR
+        SNR = Inf;
+        Amp = 1000;
+        % Simulate perfect features
+        nChannelsSim = size(dataNIRS_down,2);
+        nChannelsSim = 1;
+        simData = Amp*repmat(sz_vector_NIRS_down,[1 nChannelsSim]);
+        % Training set 
+        data_train = simData(idx_train,:);
+        % Testing data set 
+        data_test = simData(idx_test,:);
+        
+        % Add noise channel by channel (training data)
+        for iChannels = 1:size(data_test,2)
+            % Computing signal value (RMS)
+            signal = sqrt(mean(abs(data_train(:,iChannels)).^2));      % Define signal to be RMS signal
+            noiseRatio  = signal / SNR;
+            % Noise computation
+            noise = noiseRatio * randn(size(data_train(:,iChannels)));
+            % Adding noise to training signal
+            data_train(:,iChannels) = data_train(:,iChannels) + noise;
+        end
+        % Add noise channel by channel (data test)
+        for iChannels = 1:size(data_train,2)
+            % Computing signal value (RMS)
+            signal = sqrt(mean(abs(data_test(:,iChannels)).^2));      % Define signal to be RMS signal
+            noiseRatio  = signal / SNR;
+            % Noise computation
+            noise = noiseRatio * randn(size(data_test(:,iChannels)));
+            % Adding noise to training signal
+            data_test(:,iChannels) = data_test(:,iChannels) + noise;
+        end
+        figure;
+        subplot(211); imagesc(data_test); subplot(212); imagesc(data_train)
+    otherwise
+        % Training set 
+        data_train = [dataNIRS_down(idx_train,:) EEGdata_down(idx_train,:)];
+        % Testing data set 
+        data_test = [dataNIRS_down(idx_test,:) EEGdata_down(idx_test,:)];
+end
 
 %% select the number of optimal components by using the plsdacompsel function
 data_res = plsdacompsel(data_train,class_train,'none','vene',5,'bayes');
-% HbR_res = plsdacompsel(HbR_train,class_train,'none','vene',5,'bayes');
 
 %% We'll get the error rate in cross validation (and non-error rate in cross
 % validation) associated to each component value. Type on the MATLAB command
 % window to see the error rates.
-data_res.er
-% HbR_res.er
+data_res.er;
 
 %% We can then calculate the PLSDA model with 2 components by typing:
 tic
-model = plsdafit(data_train,class_train,2,'none','bayes',1)
+nComps = 5;
+model = plsdafit(data_train,class_train,nComps,'none','bayes',1);
 toc
 
-%% Predict point-by-point (Do ten 10-fold cross validation run)
-% tic
-% for i=4:nSamples
-%     HbO_test = HbO_train(i,:);
-%     model = plsdafit(HbO_train(1:(i-1),:),class_train(1:(i-1),:),2,'none','bayes',1);
-%     pred = plsdapred(data_test,model);
-% end
-
-% toc
-% figure; plot(model.class_calc,'k.')
-
 %% Once the model is calculated, we can see the model performances by typing:
-model.class_param
+model.class_param;
 
 %% Scores, loadings, calculated class, leverages and many other statistics are
 % stored in the model structure. We can proceed by cross validating (with 5
 % venetian blind groups) the PLSDA model with 2 components:
-cv = plsdacv(data_train,class_train,2,'none','vene',5,'bayes')
+cv = plsdacv(data_train,class_train,nComps,'none','vene',5,'bayes');
 
 %% Finally, we can predict the test set samples by using the calibrated model:
-% Change HbO_train by HbO_test! TO DO...
 tic
-pred = plsdapred(data_test,model)
+pred = plsdapred(data_test,model);
 class_param = calc_class_param(pred.class_pred,class_test)
 fprintf('Prediction done! \n');
 toc
