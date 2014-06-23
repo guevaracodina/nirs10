@@ -177,3 +177,12 @@ xlabel('t [s]', 'FontSize', 12); ylabel('Hb [\muM]', 'FontSize', 12);
 
 
 % EOF
+
+% 
+% %% select the number of optimal components by using the plsdacompsel function
+% data_res = plsdacompsel(data_train,class_train,'none','vene',5,'bayes');
+% 
+% %% We'll get the error rate in cross validation (and non-error rate in cross
+% % validation) associated to each component value. Type on the MATLAB command
+% % window to see the error rates.
+% data_res.er;
