@@ -260,6 +260,7 @@ eegAmp = 1000;
 %% Plot EEG and seizures for EPI122
 yLimits = [-1000 1000];
 figure; set(gcf,'color','w')
+set(gcf,'name','EEG & Seizures markers')
 % iFiles = 6;
 % The size of the matrix plot
 M = 3;
@@ -288,6 +289,7 @@ end
 %% Plot NIRS and seizures for EPI122
 yLimits = [-1000 1000];
 figure; set(gcf,'color','w')
+set(gcf,'name','NIRS & Seizure markers')
 % iFiles = 6;
 % The size of the matrix plot
 M = 3;
@@ -334,6 +336,7 @@ end
 %% Plot amplitude distributions
 % HbO
 figure; set(gcf,'color','w')
+set(gcf,'name','Amplitude distributions')
 subplot(221)
 nhist({dataNIRS_total(sz_vector_NIRS_total==0,NIRS.Cf.H.C.wl == 1), dataNIRS_total(sz_vector_NIRS_total==1,NIRS.Cf.H.C.wl == 1)},...
     'pdf','boxplot','legend',{'No Sz', 'Sz'},'color','sequential')
@@ -388,13 +391,20 @@ sz_vector_NIRS_down = sz_vector_NIRS_down + 1;
 dataType = 'Sim';
 
 % Choose 10% of data points as training set
-kFold = 0.9;
+kFold = 0.1;
 idx_train = unique(randi(nTimePoints, [round(kFold*nTimePoints) 1]));
+% idx_train = 1:round(kFold*nTimePoints);
 % Choose the rest of data points as test set
 idx_test = setdiff(find(1:nTimePoints),idx_train)';
-figure;
-subplot(211); stem(idx_train,ones(size(idx_train))); xlim([600 800])
-subplot(212); stem(idx_test,ones(size(idx_test))); xlim([600 800])
+close all; figure; set (gcf,'color','w')
+set(gcf,'name','Indices')
+plot(idx_train,ones(size(idx_train)),'ro');  
+hold on; plot(idx_test,ones(size(idx_test)),'bx');
+legend({'Training set' 'Test set'})
+title(sprintf('Training set percentage = %0.1f %%', kFold*100))
+xlabel('Index'); set(gca,'YTick',[])
+% xlim([700 800]); 
+ylim([0.98 1.02])
 % Classes (labels) of the training set
 class_train = sz_vector_NIRS_down(idx_train);
 % True classes (labels) of the test set
@@ -438,11 +448,13 @@ switch(dataType)
         data_test = [dataNIRS_down(idx_test,NIRS.Cf.H.C.wl == 2) EEGdata_down(idx_test,:)];
     case 'Sim'
         % Set SNR
-        SNR = Inf;
-        Amp = 1000;
-        % Simulate perfect features
+        SNR = 1;
+        % Amplitude of the features
+        Amp = 1;
+        % Number of channles
         nChannelsSim = size(dataNIRS_down,2);
-        nChannelsSim = 1;
+        % nChannelsSim = 10;
+        % Simulate features
         simData = Amp*repmat(sz_vector_NIRS_down,[1 nChannelsSim]);
         % Training set 
         data_train = simData(idx_train,:);
@@ -469,27 +481,29 @@ switch(dataType)
             % Adding noise to training signal
             data_test(:,iChannels) = data_test(:,iChannels) + noise;
         end
-        figure;
-        subplot(211); imagesc(data_test); subplot(212); imagesc(data_train)
+        
     otherwise
         % Training set 
         data_train = [dataNIRS_down(idx_train,:) EEGdata_down(idx_train,:)];
         % Testing data set 
         data_test = [dataNIRS_down(idx_test,:) EEGdata_down(idx_test,:)];
 end
+% Plot data sets
+figure; set (gcf,'color','w')
+set(gcf,'name','Data sets')
+colormap(flipud(gray(256)))
+subplot(121); imagesc(1:nChannelsSim, idx_train, data_train);
+title('Training data'); xlabel('Channels'); ylabel('t(s)')
+ylim([0 nTimePoints])
+subplot(122); imagesc(1:nChannelsSim, idx_test, data_test);
+title('Testing data'); xlabel('Channels'); ylabel('t(s)')
+ylim([0 nTimePoints])
 
-%% select the number of optimal components by using the plsdacompsel function
-data_res = plsdacompsel(data_train,class_train,'none','vene',5,'bayes');
 
-%% We'll get the error rate in cross validation (and non-error rate in cross
-% validation) associated to each component value. Type on the MATLAB command
-% window to see the error rates.
-data_res.er;
-
-%% We can then calculate the PLSDA model with 2 components by typing:
+%% We calculate the PLSDA model with 2 components by typing:
 tic
-nComps = 5;
-model = plsdafit(data_train,class_train,nComps,'none','bayes',1);
+nComps = 2;
+model = plsdafit(data_train,class_train,nComps,'auto','bayes',1);
 toc
 
 %% Once the model is calculated, we can see the model performances by typing:
@@ -498,39 +512,42 @@ model.class_param;
 %% Scores, loadings, calculated class, leverages and many other statistics are
 % stored in the model structure. We can proceed by cross validating (with 5
 % venetian blind groups) the PLSDA model with 2 components:
-cv = plsdacv(data_train,class_train,nComps,'none','vene',5,'bayes');
+cv = plsdacv(data_train,class_train,nComps,'auto','vene',5,'bayes');
+disp('Model metrics:')
+disp(cv.class_param)
 
 %% Finally, we can predict the test set samples by using the calibrated model:
 tic
 pred = plsdapred(data_test,model);
-class_param = calc_class_param(pred.class_pred,class_test)
 fprintf('Prediction done! \n');
+disp('Prediction metrics:')
+class_param = calc_class_param(pred.class_pred,class_test)
 toc
 
 %% Plot classification results
 
 % Classes
-idx0 = find(cv.class_pred==0);      % Unclassified
-idx1 = find(cv.class_pred==1);      % No seizure
-idx2 = find(cv.class_pred==2);      % Seizure
+idx0 = find(pred.class_pred==0);      % Unclassified
+idx1 = find(pred.class_pred==1);      % No seizure
+idx2 = find(pred.class_pred==2);      % Seizure
 % Total negatives
-N_tot = numel(class_train(class_train==1));
+N_tot = numel(class_test(class_test==1));
 % Total positives
-P_tot = numel(class_train(class_train==2));
+P_tot = numel(class_test(class_test==2));
 % True negatives
-v1 = zeros(size(class_train));
-v2 = zeros(size(class_train));
-% v1(idx1) = cv.class_pred(idx1);
-% v2(class_train==1) = class_train(class_train==1);
+v1 = zeros(size(class_test));
+v2 = zeros(size(class_test));
+% v1(idx1) = pred.class_pred(idx1);
+% v2(class_test==1) = class_test(class_test==1);
 v1(idx1) = true;
-v2(class_train==1) = true;
+v2(class_test==1) = true;
 
 TN = sum(v1&v2);
 % True positives
-v3 = zeros(size(class_train));
-v4 = zeros(size(class_train));
-v3(idx2) = cv.class_pred(idx2);
-v4(class_train==2) = class_train(class_train==2);
+v3 = zeros(size(class_test));
+v4 = zeros(size(class_test));
+v3(idx2) = pred.class_pred(idx2);
+v4(class_test==2) = class_test(class_test==2);
 TP = sum(v3&v4);
 
 % False Negatives
@@ -559,13 +576,14 @@ xCrit.PPV           = TP/(TP+FP);
 % Negative predictive value. 
 xCrit.NPV           = TN/(TN+FN);
 % Table 2x2
-table2x2 = [TP FP; FN TN]
+table2x2 = [TP FP; FN TN];
+fprintf('\tTP: %04d \tFP: %04d\n\tFN: %04d \tTN: %04d\n\n\tPPV: %0.2f\n',table2x2,xCrit.PPV);
 
 % Plot classification
 figure; set(gcf,'color','w')
-% plot(cv.class_pred,'r.')
+% plot(pred.class_pred,'r.')
 hold on
-plot(class_train,'k--')
+plot(class_test,'k--')
 ylim([0 2])
 set(gca,'YTick',[0 1 2]);
 set(gca,'YTickLabel',{'Unclassified' 'No Seizure' 'Seizure'});
@@ -573,49 +591,24 @@ xlabel('t (s)','FontSize',12)
 set(gca,'FontSize',12)
 hold on
 % TN
-plot(find(v1&v2), cv.class_pred(v1&v2),'x','Color',[0 127 14]/255)
+plot(find(v1&v2), pred.class_pred(v1&v2),'x','Color',[0 127 14]/255)
 % TP
-plot(find(v3&v4), cv.class_pred(v3&v4),'o','Color',[0 127 14]/255)
+plot(find(v3&v4), pred.class_pred(v3&v4),'o','Color',[0 127 14]/255)
 % FP
-v5 = zeros(size(class_train));
-v6 = zeros(size(class_train));
+v5 = zeros(size(class_test));
+v6 = zeros(size(class_test));
 v5(idx1) = true;
 v5(idx0) = true;
-v6(class_train==2) = true;
-plot(find(v5&v6), cv.class_pred(v5&v6), 'ro')
+v6(class_test==2) = true;
+plot(find(v5&v6), pred.class_pred(v5&v6), 'ro')
 % FN
-v7 = zeros(size(class_train));
-v8 = zeros(size(class_train));
+v7 = zeros(size(class_test));
+v8 = zeros(size(class_test));
 v7(idx2) = true;
 v7(idx0) = true;
-v8(class_train==1) = true;
-plot(find(v7&v8), cv.class_pred(v7&v8), 'rx')
-
-
+v8(class_test==1) = true;
+plot(find(v7&v8), pred.class_pred(v7&v8), 'rx')
 legend({'Real' 'True Negatives' 'True Positives' 'False Negatives'  'False Positives'})
-
-
-%% Kalman figure
-% % Plot Hb concentrations
-% h3 = figure;
-% set(h3, 'color', 'w')
-% set(h3, 'Name', 'Hemoglobin concentrations')
-% hold on
-% % iChannel < 133
-% iChannel = 98;
-% plot(t, dataNIRS(iChannel,:), 'r:', 'LineWidth',1);      % HbO
-% plot(t, dataNIRS(iChannel + nChannels/2,:), 'b:', 'LineWidth',1);      % HbR
-% plot(t, c(:,iChannel), 'r-', 'LineWidth',2);      % HbO
-% plot(t, c(:,iChannel + nChannels/2), 'b-', 'LineWidth',2);      % HbR
-% plot(eeg_t, 700*sz_vector, 'k--', 'LineWidth',2);                % seizure onset
-% xlim([t(2) t(end)])
-% 
-% title(sprintf('Offline processing'), 'FontSize', 12)
-% legend({'HbO_2' 'HbR' 'HbO_2 (filt)' 'HbR (filt)' 'Seizure'},...
-%     'Location', 'SouthEast')
-% set(gca , 'FontSize', 12)
-% xlabel('t [s]', 'FontSize', 12); ylabel('Hb [\muM]', 'FontSize', 12); 
-
 
 % EOF
 
