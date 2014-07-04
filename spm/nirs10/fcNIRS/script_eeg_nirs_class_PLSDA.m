@@ -1,6 +1,6 @@
 %% script_eeg_nirs_class
 %% Choose training and test sets
-% load('F:\Edgar\Data\NIRS\classifier_data');
+load('F:\Edgar\Data\NIRS\classifier_data');
 nFolds = 10;
 total_PPV = zeros([nFolds 1]);
 total_sensitivity = zeros([nFolds 1]);
