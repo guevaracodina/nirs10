@@ -43,5 +43,6 @@ else
     oldtxt = sprintf('%s',txt);
 end
 end % end nirs_cumdisp
+% EGC Git Test
 
 % EOF
