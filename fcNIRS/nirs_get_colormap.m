@@ -1,8 +1,8 @@
-function colormapOut = nirs_get_colormap(map)
+function colormapOut = nirs_get_colormap(map, varargin)
 % Creates colormaps that are adequate to display images in SS-OCT system. Also
-% creates maps adequate for photoacoustic tomography and NIRS.
+% creates maps adequate for photoacoustic tomography, OIS & NIRS.
 % SYNTAX:
-% colormapOut = pat_get_colormap(map)
+% colormapOut = nirs_get_colormap(map, nColors)
 % INPUTS:
 % map           String that describes the colormap to retrieve:
 %               'octgold'
@@ -22,8 +22,8 @@ function colormapOut = nirs_get_colormap(map)
 %               'kgreenmap'
 %               'kbluemap'
 %               'purplemap'
-%               'so2'
 %               'redbluecmap'
+%               'so2'
 %               'bipolar'
 %               'warm'
 %               'cold'
@@ -33,6 +33,8 @@ function colormapOut = nirs_get_colormap(map)
 %               'edge' 
 %               'cubicyf' 
 %               'linearl'
+% nColors       Integer number of RGB triplets to be generated, default is
+%               256 color levels
 % OUTPUTS:
 % colormapOut   3 columns matrix, which values are in the range from 0 to 1.
 %_______________________________________________________________________________
@@ -40,8 +42,26 @@ function colormapOut = nirs_get_colormap(map)
 %                    École Polytechnique de Montréal
 % Edgar Guevara
 % 2013/05/22
+% ------------------------------------------------------------------------------
+% Optional inputs handling
+% ------------------------------------------------------------------------------
+% only want 1 optional input at most
+numvarargs                  = length(varargin);
+if numvarargs > 1
+    error('ioi_get_colormap', ...
+        'Requires at most 2 optional inputs');
+end
+% set defaults for optional inputs
+optargs                     = { 256 };
+% now put these defaults into the optargs cell array, and overwrite the ones
+% specified in varargin.
+optargs(1:numvarargs)       = varargin;
+% Place optional args in memorable variable names
+ColorMapSize   = optargs{:};
+% ------------------------------------------------------------------------------
 
-ColorMapSize = 128;
+ColorMapSize = fix(ColorMapSize/2);
+% ColorMapSize = 256/2;
 
 switch lower(map)
     case 'octgold'
@@ -739,6 +759,7 @@ idx1 = linspace(1,n,size(baseMap,1));
 idx2 = 1:1:n;
 map = interp1(idx1,baseMap,idx2,'cubic');
 
+
 function baseMap = Edge
 baseMap =    [0 0 0;
               0 0 1;
@@ -792,6 +813,7 @@ function baseMap = CubicYF
              0.7066    0.9255    0.3414
              0.8000    0.9255    0.3529];  
 
+
 function baseMap = LinearL
  baseMap =  [0.0143	0.0143	0.0143
              0.1413	0.0555	0.1256
@@ -810,6 +832,7 @@ function baseMap = LinearL
              0.9712	0.8429	0.7287
              0.9692	0.9273	0.8961]; 
 
+
 function baseMap = LinLhot
  baseMap =  [0.0225	0.0121	0.0121
              0.1927	0.0225	0.0311
@@ -827,7 +850,7 @@ function baseMap = LinLhot
              0.8170	0.8296	0.0000
              0.8853	0.8896	0.4113
              0.9481	0.9486	0.7165]; 
-         
+
 function c = redbluecmap(m,varargin)
 %REDBLUECMAP creates a red and blue colormap.
 %
@@ -952,5 +975,4 @@ for iSegments = 1:nSegments,
 end
 c = colormapOut;
 % ==============================================================================
-
 % [EOF]
