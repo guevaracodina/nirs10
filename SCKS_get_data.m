@@ -13,7 +13,7 @@ M.HbTnorm = M.HbOnorm + M.HbRnorm;
     end    
     ty = private_baseline_correction(M,ty,1,r1,s1);
     Y(:,cl) = ty/M.HbRnorm; %to get percent change
-end
+
 if includeHbT
     cl = cl+1;
     ty1 = ROI{r1}{s1,cHbR};
@@ -50,6 +50,7 @@ end
 
 M.Y.y = Y;
 M.Y.dt = M.dt;
+end
 
 function y = private_baseline_correction(M,y,modality,r1,s1)
 if ~isempty(M.O.baseline_correction)
@@ -69,4 +70,5 @@ if ~isempty(M.O.baseline_correction)
         case 2
             y = y-M.O.baseline_correction{modality}(s2,r2);
     end
+end
 end
